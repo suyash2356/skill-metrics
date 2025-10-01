@@ -77,7 +77,6 @@ const MyRoadmaps = () => {
         toast({
           title: 'Roadmap Deleted!',
           description: 'The roadmap and all its associated steps and resources have been removed.',
-          variant: 'success'
         });
       } catch (e: any) {
         console.error('deleteRoadmap error', e);

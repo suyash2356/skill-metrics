@@ -42,7 +42,7 @@ export const useUserPreferences = () => {
         throw error;
       }
 
-      return data;
+      return data as UserPreferences | null;
     },
     enabled: !!user?.id,
     staleTime: 5 * 60 * 1000, // 5 minutes

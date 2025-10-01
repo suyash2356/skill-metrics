@@ -70,7 +70,15 @@ export const useUserProfileDetails = (userId?: string) => {
         throw error;
       }
 
-      return data;
+      if (!data) return null;
+
+      return {
+        ...data,
+        social_links: (data.social_links as any) || [],
+        skills: (data.skills as any) || [],
+        achievements: (data.achievements as any) || [],
+        learning_path: (data.learning_path as any) || [],
+      } as UserProfileDetails;
     },
     enabled: !!targetUserId,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -81,13 +89,14 @@ export const useUserProfileDetails = (userId?: string) => {
     mutationFn: async (updates: Partial<UserProfileDetails>) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      const payload = {
+        user_id: user.id,
+        ...updates,
+      } as any;
+
       const { data, error } = await supabase
         .from('user_profile_details')
-        .upsert({
-          user_id: user.id,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .upsert(payload)
         .select()
         .single();
 

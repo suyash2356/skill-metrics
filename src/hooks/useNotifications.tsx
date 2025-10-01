@@ -35,11 +35,11 @@ export function useNotifications(): UseNotificationsResult {
     setIsLoading(true);
     const { data, error } = await supabase
       .from("notifications")
-      .select("id,user_id,type,title,body,data,read_at,created_at")
+      .select("id,user_id,type,title,body,read_at,created_at")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(50);
-    if (!error && data) setNotifications(data as AppNotification[]);
+    if (!error && data) setNotifications(data.map(d => ({ ...d, data: null })));
     setIsLoading(false);
   }, [userId]);
 
