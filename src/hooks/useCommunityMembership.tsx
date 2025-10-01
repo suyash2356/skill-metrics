@@ -60,11 +60,11 @@ export function useCommunityMembership(communityId?: string) {
       toast({ title: `Failed to toggle membership: ${e.message}`, variant: "destructive" });
     } finally {
       // Always refetch to ensure consistency
-      queryClient.invalidateQueries(['isCommunityMember', currentUserId, communityId]);
+      queryClient.invalidateQueries({ queryKey: ['isCommunityMember', currentUserId, communityId] });
       // Also invalidate the 'joinedCommunities' query in MyCommunities.tsx
-      queryClient.invalidateQueries(['joinedCommunities', currentUserId]);
+      queryClient.invalidateQueries({ queryKey: ['joinedCommunities', currentUserId] });
       // Invalidate the overall communities list to update member counts
-      queryClient.invalidateQueries(['communities']);
+      queryClient.invalidateQueries({ queryKey: ['communities'] });
     }
   }, [currentUserId, communityId, isMember, toast, queryClient]);
 

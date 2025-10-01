@@ -57,19 +57,18 @@ export function useUserFollows(targetUserId?: string) {
 
         // Send notification to the followed user
         // You'd typically fetch the follower's name from their profile table
-        // For simplicity, we'll use a generic message or try to get a display name
+        // For simplicity, we'll use a generic message or try to get a full name
         const { data: followerProfile } = await supabase
           .from('profiles')
-          .select('display_name')
-          .eq('id', currentUserId)
+          .select('full_name')
+          .eq('user_id', currentUserId)
           .single();
 
         await supabase.from('notifications').insert({
           user_id: targetUserId,
           type: 'follow',
-          title: `${followerProfile?.display_name || 'Someone'} started following you!`,
-          body: `You now have a new follower: ${followerProfile?.display_name || 'Someone'}`,
-          data: { followerId: currentUserId, followerName: followerProfile?.display_name || 'Someone' },
+          title: `${followerProfile?.full_name || 'Someone'} started following you!`,
+          body: `You now have a new follower: ${followerProfile?.full_name || 'Someone'}`,
         });
 
       }
@@ -79,7 +78,7 @@ export function useUserFollows(targetUserId?: string) {
       toast({ title: `Failed to toggle follow: ${e.message}`, variant: "destructive" });
     } finally {
       // Always refetch to ensure consistency
-      queryClient.invalidateQueries(['isFollowing', currentUserId, targetUserId]);
+      queryClient.invalidateQueries({ queryKey: ['isFollowing', currentUserId, targetUserId] });
       // Also invalidate queries that depend on follow counts if you implement them
     }
   }, [currentUserId, targetUserId, isFollowing, toast, queryClient]);
