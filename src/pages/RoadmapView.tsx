@@ -1,7 +1,3 @@
-// Type guard for roadmap.user
-function isProfileUser(user: any): user is { id: string; full_name?: string; avatar_url?: string } {
-  return !!user && typeof user === 'object' && 'id' in user;
-}
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -29,6 +25,20 @@ import { CommentDialog } from "@/components/CommentDialog";
 import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useRoadmapTemplates } from "@/hooks/useRoadmapTemplates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Database } from "@/integrations/supabase/types";
+
+type RoadmapWithUser = Database['public']['Tables']['roadmaps']['Row'] & {
+  user?: { id: string; full_name?: string | null; avatar_url?: string | null } | null;
+};
+
+type CommentWithProfile = Database['public']['Tables']['comments']['Row'] & {
+  profile?: { user_id: string; full_name?: string | null; avatar_url?: string | null } | null;
+};
+
+// Type guard for roadmap.user
+function isProfileUser(user: any): user is { id: string; full_name?: string; avatar_url?: string } {
+  return !!user && typeof user === 'object' && 'id' in user;
+}
 
 const getFavicon = (url?: string | null) => {
   if (!url) return null;
@@ -51,17 +61,29 @@ const RoadmapView = () => {
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
-  const { data: roadmap, isLoading: isLoadingRoadmap } = useQuery({
+  const { data: roadmap, isLoading: isLoadingRoadmap } = useQuery<RoadmapWithUser | null>({
     queryKey: ['roadmap', id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase
+      const { data: roadmapData, error } = await supabase
         .from('roadmaps')
-        .select(`*, user:profiles!user_id(id, full_name, avatar_url)`)
+        .select('*')
         .eq('id', id)
         .single();
       if (error) throw error;
-      return data;
+      
+      // Fetch user profile separately
+      if (roadmapData && roadmapData.user_id) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .eq('user_id', roadmapData.user_id)
+          .single();
+        
+        return { ...roadmapData, user: profileData ? {id: profileData.id, full_name: profileData.full_name, avatar_url: profileData.avatar_url} : null };
+      }
+      
+      return roadmapData;
     },
     enabled: !!id,
   });
@@ -102,17 +124,37 @@ const RoadmapView = () => {
     enabled: !!steps && steps.length > 0,
   });
 
-  const { data: comments, isLoading: isLoadingComments } = useQuery({
+  const { data: comments, isLoading: isLoadingComments } = useQuery<CommentWithProfile[]>({
     queryKey: ['roadmapComments', id],
     queryFn: async () => {
       if (!id) return [];
-      const { data, error } = await supabase
+      const { data: commentsData, error } = await supabase
         .from('comments')
-        .select('*, profile:profiles!user_id(full_name, avatar_url)')
+        .select('*')
         .eq('roadmap_id', id)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false});
       if (error) throw error;
-      return data;
+      
+      // Fetch profiles for all comments
+      if (commentsData && commentsData.length > 0) {
+        const userIds = [...new Set(commentsData.map(c => c.user_id))];
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('user_id, full_name, avatar_url')
+          .in('user_id', userIds);
+        
+        const profileMap = (profiles || []).reduce((acc: any, p: any) => {
+          acc[p.user_id] = p;
+          return acc;
+        }, {});
+        
+        return commentsData.map(c => ({
+          ...c,
+          profile: profileMap[c.user_id] || null
+        }));
+      }
+      
+      return commentsData.map(c => ({...c, profile: null}));
     },
     enabled: !!id,
   });

@@ -11,7 +11,7 @@ export const usePostCollections = () => {
     const getCollections = async () => {
         if (!user) return [];
         const { data, error } = await supabase
-            .from('post_collections')
+            .from('saved_posts_collections')
             .select('*')
             .eq('user_id', user.id);
         if (error) throw error;
@@ -21,7 +21,7 @@ export const usePostCollections = () => {
     const addCollection = async (name: string) => {
         if (!user) throw new Error('User not authenticated');
         const { data, error } = await supabase
-            .from('post_collections')
+            .from('saved_posts_collections')
             .insert({ user_id: user.id, name })
             .select()
             .single();
@@ -31,7 +31,7 @@ export const usePostCollections = () => {
 
     const deleteCollection = async (id: string) => {
         const { error } = await supabase
-            .from('post_collections')
+            .from('saved_posts_collections')
             .delete()
             .eq('id', id);
         if (error) throw error;
@@ -39,9 +39,9 @@ export const usePostCollections = () => {
 
     const assignPostToCollection = async ({ postId, collectionId }: { postId: string, collectionId: string | null }) => {
         const { error } = await supabase
-            .from('posts')
-            .update({ post_collection_id: collectionId })
-            .eq('id', postId);
+            .from('saved_posts')
+            .update({ collection_id: collectionId })
+            .eq('post_id', postId);
         if (error) throw error;
     };
 

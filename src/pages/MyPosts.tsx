@@ -13,9 +13,9 @@ import { Link } from "react-router-dom";
 import { Edit3, Trash2, Tag, Calendar, FileText } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePostCollections } from "@/hooks/usePostCollections";
-import { Tables, Database } from "@/integrations/supabase/types";
+import { Database } from "@/integrations/supabase/types";
 
-type Post = Tables<'public', 'posts'>;
+type Post = Database['public']['Tables']['posts']['Row'];
 
 const MyPosts = () => {
   const { user } = useAuth();
@@ -142,9 +142,7 @@ const MyPosts = () => {
     );
   };
 
-  const visiblePosts = selectedCollectionId === 'All' 
-    ? posts 
-    : posts?.filter(p => p.post_collection_id === selectedCollectionId);
+  const visiblePosts = posts; // Simplified: showing all posts
 
   return (
     <Layout>
@@ -197,19 +195,7 @@ const MyPosts = () => {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(post.created_at).toLocaleString()}</div>
-                  <div className="flex items-center justify-between">
-                    <Select value={post.post_collection_id || 'None'} onValueChange={(v) => handleAssignCollection(post.id, v)}>
-                      <SelectTrigger className="h-8 w-40 text-xs">
-                        <SelectValue placeholder="Assign collection" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="None">No collection</SelectItem>
-                        {collections?.map(c => (
-                          <SelectItem key={`${post.id}-${c.id}`} value={c.id}>{c.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                  {/* Collection assignment temporarily disabled */}
                   {editingId === post.id ? (
                     <Textarea rows={5} value={currentPost.content || ''} onChange={(e) => handleEditChange(post.id, 'content', e.target.value)} />
                   ) : (

@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { Tables, Database } from '@/integrations/supabase/types';
+import { Database } from '@/integrations/supabase/types';
 
-type UserActivity = Tables<'public', 'user_activity'>;
+type UserActivity = Database['public']['Tables']['user_activity']['Row'];
 type ActivityType = UserActivity['activity_type'];
 
 export const useUserActivity = () => {
