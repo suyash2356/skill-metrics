@@ -282,6 +282,61 @@ const CreatePost = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Content */}
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle>Content</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="content">Post Content</Label>
+                <Textarea
+                  id="content"
+                  placeholder="Write your post content here..."
+                  rows={8}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Add Media</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,video/*,.pdf"
+                  multiple
+                  className="hidden"
+                  onChange={onFilesSelected}
+                />
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={handleUploadClick}>
+                    <Upload className="h-4 w-4 mr-2" />
+                    Upload Images/Videos
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Supports: Images (JPEG, PNG, GIF), Videos (MP4, WebM), PDFs (max 50MB)
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Submit */}
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => navigate(-1)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Publishing..." : "Publish Post"}
+            </Button>
+          </div>
         </form>
       </div>
     </Layout>
