@@ -82,7 +82,7 @@ export const InstagramPost = ({
   const avatarUrl = post.profiles?.avatar_url;
 
   return (
-    <Card className="max-w-[470px] mx-auto border-0 shadow-none bg-card mb-6">
+    <Card className="w-full max-w-[470px] mx-auto border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b">
         <Link to={`/profile/${post.user_id}`} className="flex items-center gap-3 flex-1">
