@@ -217,121 +217,125 @@ const Home = () => {
 
   return (
     <Layout>
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-8 container mx-auto px-4 py-6">
-        <aside className="md:col-span-3 space-y-6">
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-4">My Roadmaps</h3>
-              <div className="space-y-3">
-                <Link to="/my-roadmaps" className="flex items-center justify-between text-sm hover:text-primary">
-                  <span>🚀 My Learning Paths</span>
-                  <Badge variant="secondary">3</Badge>
-                </Link>
-                <Link to="/my-roadmaps" className="flex items-center justify-between text-sm hover:text-primary">
-                  <span>💡 AI Generated</span>
-                  <Badge variant="secondary">1</Badge>
-                </Link>
-              </div>
-              <Link to="/create-roadmap">
-                <Button className="w-full mt-4" size="sm"><Plus className="h-4 w-4 mr-2" />Create Roadmap</Button>
-              </Link>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-4">My Communities</h3>
-              <div className="space-y-3">
-                <Link to="/my-communities" className="flex items-center gap-3 text-sm hover:text-primary">
-                  <Avatar className="h-8 w-8"><AvatarImage src="/placeholder.svg" /><AvatarFallback>R</AvatarFallback></Avatar>
-                  <span>React Developers</span>
-                </Link>
-                <Link to="/my-communities" className="flex items-center gap-3 text-sm hover:text-primary">
-                  <Avatar className="h-8 w-8"><AvatarImage src="/placeholder.svg" /><AvatarFallback>V</AvatarFallback></Avatar>
-                  <span>Vite Enthusiasts</span>
-                </Link>
-              </div>
-              <Link to="/communities">
-                <Button variant="outline" className="w-full mt-4" size="sm"><Users className="h-4 w-4 mr-2" />Explore Communities</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </aside>
-
-        <main className="md:col-span-6">
-          <div className="mb-6 flex justify-end">
-            <Link to="/create-post">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Post
-              </Button>
-            </Link>
-          </div>
-
-          {isLoadingPosts ? (
-            <div className="text-center text-muted-foreground py-8">Loading feed...</div>
-          ) : (
-            <>
-              {feed.map((post) => (
-                <InstagramPost
-                  key={post.id}
-                  post={post}
-                  isLiked={likedPosts.has(post.id)}
-                  isBookmarked={bookmarkedPosts.has(post.id)}
-                  onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id) })}
-                  onBookmark={() => bookmarkMutation.mutate(post.id)}
-                  onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
-                  onShare={() => setShareDialogOpen({ open: true, post })}
-                />
-              ))}
-              {hasNextPage && (
-                <div className="flex justify-center pt-4">
-                  <Button 
-                    onClick={() => fetchNextPage()} 
-                    disabled={isFetchingNextPage}
-                    variant="outline"
-                  >
-                    {isFetchingNextPage ? 'Loading more...' : 'Load More Posts'}
-                  </Button>
+      <div className="w-full max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-6">
+          {/* Left Sidebar - Hidden on mobile */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-4">My Roadmaps</h3>
+                <div className="space-y-3">
+                  <Link to="/my-roadmaps" className="flex items-center justify-between text-sm hover:text-primary">
+                    <span>🚀 My Learning Paths</span>
+                    <Badge variant="secondary">3</Badge>
+                  </Link>
+                  <Link to="/my-roadmaps" className="flex items-center justify-between text-sm hover:text-primary">
+                    <span>💡 AI Generated</span>
+                    <Badge variant="secondary">1</Badge>
+                  </Link>
                 </div>
-              )}
-            </>
-          )}
-        </main>
+                <Link to="/create-roadmap">
+                  <Button className="w-full mt-4" size="sm"><Plus className="h-4 w-4 mr-2" />Create Roadmap</Button>
+                </Link>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-4">My Communities</h3>
+                <div className="space-y-3">
+                  <Link to="/my-communities" className="flex items-center gap-3 text-sm hover:text-primary">
+                    <Avatar className="h-8 w-8"><AvatarImage src="/placeholder.svg" /><AvatarFallback>R</AvatarFallback></Avatar>
+                    <span>React Developers</span>
+                  </Link>
+                  <Link to="/my-communities" className="flex items-center gap-3 text-sm hover:text-primary">
+                    <Avatar className="h-8 w-8"><AvatarImage src="/placeholder.svg" /><AvatarFallback>V</AvatarFallback></Avatar>
+                    <span>Vite Enthusiasts</span>
+                  </Link>
+                </div>
+                <Link to="/communities">
+                  <Button variant="outline" className="w-full mt-4" size="sm"><Users className="h-4 w-4 mr-2" />Explore Communities</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </aside>
 
-        <aside className="md:col-span-3 space-y-6">
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-4">Trending Topics</h3>
-              <div className="space-y-3">
-                <Link to="/explore?q=ai" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> AI & Machine Learning</Link>
-                <Link to="/explore?q=react19" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> React 19 Features</Link>
-                <Link to="/explore?q=serverless" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> Serverless GPUs</Link>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-4">
-              <h3 className="font-semibold mb-4">New Videos</h3>
-              <div className="space-y-4">
-                <Link to="/videos/1" className="flex items-start gap-3 group">
-                  <div className="relative">
-                    <img src="/placeholder.svg" alt="Video thumbnail" className="w-24 h-14 rounded-md object-cover" />
-                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                      <Play className="h-6 w-6 text-white" />
-                    </div>
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm leading-snug group-hover:text-primary">Full-stack Next.js 14 Tutorial</p>
-                    <p className="text-xs text-muted-foreground mt-1">The Net Ninja</p>
-                  </div>
+          {/* Main Feed - Full width on mobile, centered on desktop */}
+          <main className="w-full lg:col-span-6 px-0">
+            {isLoadingPosts ? (
+              <div className="text-center text-muted-foreground py-8">Loading feed...</div>
+            ) : feed.length === 0 ? (
+              <div className="text-center py-12 px-4">
+                <p className="text-muted-foreground mb-4">No posts yet. Be the first to share!</p>
+                <Link to="/create-post">
+                  <Button>Create Your First Post</Button>
                 </Link>
               </div>
-              <Link to="/new-videos">
-                <Button variant="outline" size="sm" className="w-full mt-4">View All Videos</Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </aside>
+            ) : (
+              <>
+                {feed.map((post) => (
+                  <InstagramPost
+                    key={post.id}
+                    post={post}
+                    isLiked={likedPosts.has(post.id)}
+                    isBookmarked={bookmarkedPosts.has(post.id)}
+                    onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id) })}
+                    onBookmark={() => bookmarkMutation.mutate(post.id)}
+                    onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
+                    onShare={() => setShareDialogOpen({ open: true, post })}
+                  />
+                ))}
+                {hasNextPage && (
+                  <div className="flex justify-center py-6 px-4">
+                    <Button 
+                      onClick={() => fetchNextPage()} 
+                      disabled={isFetchingNextPage}
+                      variant="outline"
+                      className="w-full max-w-md"
+                    >
+                      {isFetchingNextPage ? 'Loading more...' : 'Load More Posts'}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
+
+          {/* Right Sidebar - Hidden on mobile */}
+          <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-4">Trending Topics</h3>
+                <div className="space-y-3">
+                  <Link to="/explore?q=ai" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> AI & Machine Learning</Link>
+                  <Link to="/explore?q=react19" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> React 19 Features</Link>
+                  <Link to="/explore?q=serverless" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> Serverless GPUs</Link>
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-semibold mb-4">New Videos</h3>
+                <div className="space-y-4">
+                  <Link to="/videos/1" className="flex items-start gap-3 group">
+                    <div className="relative flex-shrink-0">
+                      <img src="/placeholder.svg" alt="Video thumbnail" className="w-24 h-14 rounded-md object-cover" />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-md">
+                        <Play className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm leading-snug group-hover:text-primary line-clamp-2">Full-stack Next.js 14 Tutorial</p>
+                      <p className="text-xs text-muted-foreground mt-1">The Net Ninja</p>
+                    </div>
+                  </Link>
+                </div>
+                <Link to="/new-videos">
+                  <Button variant="outline" size="sm" className="w-full mt-4">View All Videos</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </aside>
+        </div>
       </div>
       {commentDialogOpen.open && commentDialogOpen.postId && (
         <CommentDialog
@@ -344,7 +348,7 @@ const Home = () => {
             avatar: (c.profile as any)?.avatar_url,
             content: c.content,
             timestamp: new Date(c.created_at).toISOString(),
-            likes: 0, // Placeholder
+            likes: 0,
           })) || []}
         />
       )}
