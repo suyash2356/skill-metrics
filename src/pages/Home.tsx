@@ -74,21 +74,40 @@ const Home = () => {
     const from = pageParam * pageSize;
     const to = from + pageSize - 1;
 
-    const { data, error } = await supabase
+    // First get posts
+    const { data: postsData, error } = await supabase
       .from("posts")
-      .select("*, profiles(full_name, title, avatar_url)")
+      .select("*")
       .order("created_at", { ascending: false })
       .range(from, to);
 
     if (error) throw new Error("Failed to load posts: " + error.message);
+    if (!postsData || postsData.length === 0) {
+      return { posts: [], nextPage: undefined };
+    }
+
+    // Get unique user IDs
+    const userIds = [...new Set(postsData.map(p => p.user_id))];
     
-    const posts: PostWithProfile[] = (data || []).map((post: any) => ({
+    // Fetch profiles separately
+    const { data: profilesData } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, title, avatar_url")
+      .in("user_id", userIds);
+
+    // Create a map of profiles
+    const profilesMap = (profilesData || []).reduce((acc, profile) => {
+      acc[profile.user_id] = profile;
+      return acc;
+    }, {} as Record<string, any>);
+    
+    const posts: PostWithProfile[] = postsData.map((post: any) => ({
       ...post,
-      profiles: post.profiles ? {
-        full_name: post.profiles.full_name,
-        title: post.profiles.title,
-        avatar_url: post.profiles.avatar_url,
-      } : { full_name: '', title: '', avatar_url: '' },
+      profiles: profilesMap[post.user_id] ? {
+        full_name: profilesMap[post.user_id].full_name,
+        title: profilesMap[post.user_id].title,
+        avatar_url: profilesMap[post.user_id].avatar_url,
+      } : { full_name: 'Anonymous', title: 'User', avatar_url: null },
       likes_count: 0,
       comments_count: 0,
     }));

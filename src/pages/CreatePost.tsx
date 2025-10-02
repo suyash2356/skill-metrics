@@ -240,12 +240,12 @@ const CreatePost = () => {
 
               <div>
                 <Label htmlFor="community">Community (Optional)</Label>
-                <Select value={communityId || ""} onValueChange={setCommunityId}>
+                <Select value={communityId || "none"} onValueChange={(value) => setCommunityId(value === "none" ? null : value)}>
                   <SelectTrigger id="community" className="w-full">
                     <SelectValue placeholder="Select a community" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Community</SelectItem>
+                    <SelectItem value="none">No Community</SelectItem>
                     {(communities || []).map((community: any) => (
                       <SelectItem key={community.id} value={community.id}>
                         {community.name}
