@@ -1,28 +1,18 @@
 import { useMemo, useState } from "react";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CommentDialog } from "@/components/CommentDialog";
 import { ShareDialog } from "@/components/ShareDialog";
+import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Heart, 
-  MessageCircle, 
-  Share2, 
-  Bookmark, 
-  Play,
-  TrendingUp,
-  Users,
-  Plus,
-  FileText
-} from "lucide-react";
+import { Plus, TrendingUp, Users, Play } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { Tables } from "@/integrations/supabase/types";
 
 import type { Database } from '@/integrations/supabase/types';
 type Post = Database['public']['Tables']['posts']['Row'];
@@ -205,45 +195,6 @@ const Home = () => {
     },
   });
 
-  const renderContent = (raw: string | null) => {
-    if (!raw) return null;
-    const blocks = raw.split(/\n\n+/).slice(0, 3);
-    return (
-      <div className="space-y-3">
-        {blocks.map((block, idx) => {
-          const imgMatch = block.match(/!\[[^\]]*\]\(([^)]+)\)/);
-          if (imgMatch) {
-            const url = imgMatch[1];
-            if (url.startsWith('data:image') || url.startsWith('http')) {
-              return (
-                <div key={idx} className="rounded-lg overflow-hidden border">
-                  <img src={url} alt="post" className="w-full h-auto object-contain max-h-96" />
-                </div>
-              );
-            }
-          }
-          if (block.startsWith('data:image')) {
-            return (
-              <div key={idx} className="rounded-lg overflow-hidden border">
-                <img src={block} alt="post" className="w-full h-auto object-contain max-h-96" />
-              </div>
-            );
-          }
-          const urlMatch = block.match(/https?:\/\/\S+/);
-          if (urlMatch) {
-            const url = urlMatch[0];
-            return (
-              <a key={idx} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm break-all">
-                <FileText className="h-4 w-4" />
-                <span className="break-all">{url}</span>
-              </a>
-            );
-          }
-          return <p key={idx} className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">{block.length > 300 ? block.slice(0, 300) + '…' : block}</p>;
-        })}
-      </div>
-    );
-  };
 
   return (
     <Layout>
@@ -287,55 +238,44 @@ const Home = () => {
           </Card>
         </aside>
 
-        <main className="md:col-span-6 space-y-6">
+        <main className="md:col-span-6">
+          <div className="mb-6 flex justify-end">
+            <Link to="/create-post">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Create Post
+              </Button>
+            </Link>
+          </div>
+
           {isLoadingPosts ? (
-            <div className="text-center text-muted-foreground">Loading feed...</div>
+            <div className="text-center text-muted-foreground py-8">Loading feed...</div>
           ) : (
-            feed.map((post) => (
-              <Card key={post.id} className="shadow-sm hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-center mb-4">
-                    <Avatar className="h-10 w-10 mr-4">
-                      <AvatarImage src={post.profiles?.avatar_url || undefined} />
-                      <AvatarFallback>{post.profiles?.full_name?.[0] || 'A'}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h4 className="font-semibold">{post.profiles?.full_name || 'Anonymous'}</h4>
-                      <p className="text-sm text-muted-foreground">{post.profiles?.title || 'Learner'} • {new Date(post.created_at).toLocaleDateString()}</p>
-                    </div>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{post.title}</h3>
-                  <div className="mb-4">{renderContent(post.content)}</div>
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    <Badge variant="secondary">{post.category || 'General'}</Badge>
-                    {(post.tags || []).map((tag, i) => <Badge key={i} variant="outline">{tag}</Badge>)}
-                  </div>
-                  <div className="flex items-center justify-between text-muted-foreground">
-                    <div className="flex items-center gap-6">
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id) })}>
-                        <Heart className={`h-5 w-5 ${likedPosts.has(post.id) ? 'text-red-500 fill-current' : ''}`} />
-                        <span>{post.likes_count}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="flex items-center gap-2" onClick={() => setCommentDialogOpen({ open: true, postId: post.id })}>
-                        <MessageCircle className="h-5 w-5" />
-                        <span>{post.comments_count}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setShareDialogOpen({ open: true, post })}>
-                        <Share2 className="h-5 w-5" />
-                      </Button>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => bookmarkMutation.mutate(post.id)}>
-                      <Bookmark className={`h-5 w-5 ${bookmarkedPosts.has(post.id) ? 'text-blue-500 fill-current' : ''}`} />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-          {hasNextPage && (
-            <Button onClick={() => fetchNextPage()} disabled={isFetchingNextPage} className="w-full">
-              {isFetchingNextPage ? 'Loading more...' : 'Load More'}
-            </Button>
+            <>
+              {feed.map((post) => (
+                <InstagramPost
+                  key={post.id}
+                  post={post}
+                  isLiked={likedPosts.has(post.id)}
+                  isBookmarked={bookmarkedPosts.has(post.id)}
+                  onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id) })}
+                  onBookmark={() => bookmarkMutation.mutate(post.id)}
+                  onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
+                  onShare={() => setShareDialogOpen({ open: true, post })}
+                />
+              ))}
+              {hasNextPage && (
+                <div className="flex justify-center pt-4">
+                  <Button 
+                    onClick={() => fetchNextPage()} 
+                    disabled={isFetchingNextPage}
+                    variant="outline"
+                  >
+                    {isFetchingNextPage ? 'Loading more...' : 'Load More Posts'}
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </main>
 
