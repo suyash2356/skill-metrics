@@ -23,6 +23,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
+import { z } from "zod";
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -77,10 +78,25 @@ const CreatePost = () => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
+  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+  
   const handleUploadClick = () => fileInputRef.current?.click();
   const onFilesSelected: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
+    
+    // Validate file sizes
+    for (const file of Array.from(files)) {
+      if (file.size > MAX_FILE_SIZE) {
+        toast({
+          title: "File too large",
+          description: `${file.name} exceeds 5MB limit`,
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+    
     Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = () => {
@@ -92,8 +108,34 @@ const CreatePost = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  const postSchema = z.object({
+    title: z.string().min(1, "Title is required").max(200, "Title must be 200 characters or less"),
+    description: z.string().min(1, "Description is required").max(1000, "Description must be 1000 characters or less"),
+    content: z.string().max(50000, "Content must be 50,000 characters or less"),
+    category: z.string().min(1, "Please select a category"),
+    tags: z.array(z.string().max(50)).max(10, "Maximum 10 tags allowed"),
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate input
+    const validation = postSchema.safeParse({
+      title,
+      description,
+      content,
+      category,
+      tags,
+    });
+
+    if (!validation.success) {
+      toast({
+        title: "Validation Error",
+        description: validation.error.errors[0].message,
+        variant: "destructive",
+      });
+      return;
+    }
     if (!user) return;
     setIsSubmitting(true);
 
