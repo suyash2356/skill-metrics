@@ -25,6 +25,17 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
+// Validation schema
+const postSchema = z.object({
+  title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
+  content: z.string().max(50000, "Content must be less than 50,000 characters"),
+  description: z.string().min(1, "Description is required").max(1000, "Description must be less than 1,000 characters"),
+  category: z.string().min(1, "Category is required"),
+  tags: z.array(z.string().max(50, "Tag must be less than 50 characters")).max(10, "Maximum 10 tags allowed"),
+});
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+
 const CreatePost = () => {
   const navigate = useNavigate();
   const { user } = useAuth();

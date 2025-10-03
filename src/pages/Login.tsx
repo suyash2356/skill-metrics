@@ -36,11 +36,13 @@ const Login = () => {
       const { error } = await signIn(formData.email, formData.password);
 
       if (error) {
+        // Generic message to prevent user enumeration
         toast({
           title: "Login Failed",
-          description: error.message || "Please check your credentials and try again.",
+          description: "Invalid email or password. Please try again.",
           variant: "destructive",
         });
+        console.error('Login error:', error.code);
       } else {
         toast({
           title: "Login Successful!",

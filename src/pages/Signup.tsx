@@ -60,11 +60,13 @@ const Signup = () => {
       const { error } = await signUp(formData.email, formData.password, formData.fullName);
 
       if (error) {
+        // Generic message to prevent user enumeration
         toast({
-          title: "Signup Failed",
-          description: error.message || "Please check your information and try again.",
+          title: "Registration Error",
+          description: "Unable to create account. Please try a different email or check your information.",
           variant: "destructive",
         });
+        console.error('Signup error:', error.code);
       } else {
         toast({
           title: "Account Created!",
