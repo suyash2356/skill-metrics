@@ -162,14 +162,22 @@ const CommunityCard = ({ community }: CommunityCardProps) => {
           </span>
         </div>
 
-        <Button 
-          variant={isMember ? "outline" : "default"} 
-          className="w-full"
-          onClick={toggleMembership}
-          disabled={isLoadingMembershipStatus || !user}
-        >
-          {isMember ? "Joined" : "Join Community"}
-        </Button>
+        <div className="flex gap-2">
+          {isMember ? (
+            <Button asChild className="flex-1">
+              <Link to={`/communities/${community.id}/feed`}>Open Community</Link>
+            </Button>
+          ) : (
+            <Button 
+              variant="default" 
+              className="flex-1"
+              onClick={toggleMembership}
+              disabled={isLoadingMembershipStatus || !user}
+            >
+              Join Community
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
