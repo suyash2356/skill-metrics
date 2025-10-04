@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { useCommunityMembership } from "@/hooks/useCommunityMembership";
 import {
   Users,
   MessageSquare,
@@ -26,7 +27,9 @@ import {
   Award,
   ChevronRight,
   CheckCircle2,
-  Hash
+  Hash,
+  LogOut,
+  Link as LinkIcon
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
@@ -34,8 +37,10 @@ const CommunityFeed = () => {
   const { communityId } = useParams();
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("feed");
+  const { isMember, toggleMembership } = useCommunityMembership(communityId);
 
   // Fetch community details
   const { data: community, isLoading: loadingCommunity } = useQuery({
@@ -55,21 +60,21 @@ const CommunityFeed = () => {
     enabled: !!communityId,
   });
 
-  // Check membership
-  const { data: isMember } = useQuery({
-    queryKey: ['isMember', communityId, user?.id],
-    queryFn: async () => {
-      if (!user) return false;
-      const { data } = await supabase
-        .from('community_members')
-        .select('id')
-        .eq('community_id', communityId)
-        .eq('user_id', user.id)
-        .single();
-      return !!data;
-    },
-    enabled: !!user && !!communityId,
-  });
+  const handleLeaveCommunity = async () => {
+    if (!user || !communityId) return;
+    
+    try {
+      await toggleMembership();
+      toast({ title: "Left community" });
+      navigate('/communities');
+    } catch (error: any) {
+      toast({ 
+        title: "Error leaving community",
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
+  };
 
   if (loadingCommunity) {
     return <Layout><div className="container mx-auto px-4 py-8 text-center">Loading community...</div></Layout>;
@@ -124,9 +129,14 @@ const CommunityFeed = () => {
                   </div>
                 </div>
               </div>
-              <Button variant="outline" size="sm">
-                <Settings className="h-4 w-4 mr-2" />
-                Settings
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleLeaveCommunity}
+                className="text-destructive hover:text-destructive"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Leave
               </Button>
             </div>
           </div>
@@ -219,10 +229,11 @@ const FeedTab = ({ communityId }: { communityId: string }) => {
         .from('progress_updates')
         .select(`
           *,
-          profiles:user_id (full_name, avatar_url)
+          profiles!progress_updates_user_id_fkey (full_name, avatar_url)
         `)
         .eq('community_id', communityId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(50);
       if (error) throw error;
       return data;
     },
@@ -241,11 +252,12 @@ const FeedTab = ({ communityId }: { communityId: string }) => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['progress_updates', communityId] });
+      queryClient.invalidateQueries({ queryKey: ['community_leaderboard', communityId] });
       setUpdateText("");
-      toast({ title: "Update posted!" });
+      toast({ title: "Update posted! +10 points" });
     },
-    onError: () => {
-      toast({ title: "Failed to post update", variant: "destructive" });
+    onError: (error: any) => {
+      toast({ title: "Failed to post update", description: error.message, variant: "destructive" });
     },
   });
 
@@ -321,13 +333,13 @@ const QuestionsTab = ({ communityId }: { communityId: string }) => {
         .from('community_questions')
         .select(`
           *,
-          profiles:user_id (full_name, avatar_url),
+          profiles!community_questions_user_id_fkey (full_name, avatar_url),
           community_answers (
             id,
             answer,
             user_id,
             created_at,
-            profiles:user_id (full_name, avatar_url)
+            profiles!community_answers_user_id_fkey (full_name, avatar_url)
           )
         `)
         .eq('community_id', communityId)
@@ -470,7 +482,6 @@ const QuestionsTab = ({ communityId }: { communityId: string }) => {
                         className="mt-2"
                         onClick={() => setSelectedQuestion(question.id)}
                       >
-                        <MessageSquare className="h-3 w-3 mr-1" />
                         Answer
                       </Button>
                     )}
@@ -490,8 +501,9 @@ const ResourcesTab = ({ communityId }: { communityId: string }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ title: "", description: "", link: "" });
+  const [resourceTitle, setResourceTitle] = useState("");
+  const [resourceDescription, setResourceDescription] = useState("");
+  const [resourceLink, setResourceLink] = useState("");
 
   const { data: resources, isLoading } = useQuery({
     queryKey: ['community_resources', communityId],
@@ -500,7 +512,7 @@ const ResourcesTab = ({ communityId }: { communityId: string }) => {
         .from('community_resources')
         .select(`
           *,
-          profiles:user_id (full_name, avatar_url)
+          profiles!community_resources_user_id_fkey (full_name, avatar_url)
         `)
         .eq('community_id', communityId)
         .order('created_at', { ascending: false });
@@ -509,102 +521,102 @@ const ResourcesTab = ({ communityId }: { communityId: string }) => {
     },
   });
 
-  const addResourceMutation = useMutation({
-    mutationFn: async (resource: typeof formData) => {
+  const postResourceMutation = useMutation({
+    mutationFn: async (data: any) => {
       const { error } = await supabase
         .from('community_resources')
         .insert({
           community_id: communityId,
           user_id: user!.id,
-          ...resource,
+          ...data
         });
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['community_resources', communityId] });
-      setFormData({ title: "", description: "", link: "" });
-      setShowForm(false);
-      toast({ title: "Resource added!" });
+      setResourceTitle("");
+      setResourceDescription("");
+      setResourceLink("");
+      toast({ title: "Resource shared!" });
     },
   });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resourceTitle.trim()) return;
+    postResourceMutation.mutate({
+      title: resourceTitle,
+      description: resourceDescription,
+      link: resourceLink,
+    });
+  };
 
   return (
     <div className="space-y-4">
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-lg">Learning Resources</CardTitle>
-          <Button size="sm" onClick={() => setShowForm(!showForm)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add Resource
-          </Button>
+        <CardHeader>
+          <CardTitle className="text-lg">Share a Resource</CardTitle>
         </CardHeader>
-        {showForm && (
-          <CardContent className="border-t pt-4">
-            <div className="space-y-3">
-              <Input
-                placeholder="Resource title"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              />
-              <Textarea
-                placeholder="Description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              />
-              <Input
-                placeholder="Link (optional)"
-                value={formData.link}
-                onChange={(e) => setFormData({ ...formData, link: e.target.value })}
-              />
-              <div className="flex gap-2">
-                <Button
-                  onClick={() => addResourceMutation.mutate(formData)}
-                  disabled={!formData.title.trim()}
-                >
-                  Add Resource
-                </Button>
-                <Button variant="outline" onClick={() => setShowForm(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        )}
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-3">
+            <Input
+              placeholder="Resource title"
+              value={resourceTitle}
+              onChange={(e) => setResourceTitle(e.target.value)}
+            />
+            <Textarea
+              placeholder="Description (optional)"
+              value={resourceDescription}
+              onChange={(e) => setResourceDescription(e.target.value)}
+            />
+            <Input
+              type="url"
+              placeholder="Link (optional)"
+              value={resourceLink}
+              onChange={(e) => setResourceLink(e.target.value)}
+            />
+            <Button type="submit" disabled={!resourceTitle.trim() || postResourceMutation.isPending}>
+              <BookOpen className="h-4 w-4 mr-2" />
+              Share Resource
+            </Button>
+          </form>
+        </CardContent>
       </Card>
 
       <div className="space-y-3">
         {isLoading ? (
           <Card><CardContent className="p-6 text-center">Loading resources...</CardContent></Card>
         ) : resources?.length === 0 ? (
-          <Card><CardContent className="p-6 text-center text-muted-foreground">No resources yet. Add the first one!</CardContent></Card>
+          <Card><CardContent className="p-6 text-center text-muted-foreground">No resources yet. Share the first one!</CardContent></Card>
         ) : (
           resources?.map((resource: any) => (
-            <Card key={resource.id} className="hover:shadow-md transition-shadow">
+            <Card key={resource.id}>
               <CardContent className="p-4">
                 <div className="flex gap-3">
-                  <FileText className="h-5 w-5 text-primary mt-1" />
+                  <Avatar>
+                    <AvatarImage src={resource.profiles?.avatar_url} />
+                    <AvatarFallback>{resource.profiles?.full_name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
                   <div className="flex-1">
-                    <h3 className="font-semibold">{resource.title}</h3>
-                    <p className="text-sm text-muted-foreground mt-1">{resource.description}</p>
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold">{resource.profiles?.full_name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(resource.created_at), { addSuffix: true })}
+                      </span>
+                    </div>
+                    <h3 className="mt-1 font-medium">{resource.title}</h3>
+                    {resource.description && <p className="mt-1 text-sm text-muted-foreground">{resource.description}</p>}
                     {resource.link && (
-                      <a
-                        href={resource.link}
-                        target="_blank"
+                      <a 
+                        href={resource.link} 
+                        target="_blank" 
                         rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline mt-2 inline-block"
+                        className="inline-flex items-center mt-2 text-sm text-primary hover:underline"
                       >
-                        View Resource <ChevronRight className="h-3 w-3 inline" />
+                        <LinkIcon className="h-4 w-4 mr-1" />
+                        Open Resource
                       </a>
                     )}
-                    <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-                      <Avatar className="h-5 w-5">
-                        <AvatarImage src={resource.profiles?.avatar_url} />
-                        <AvatarFallback>{resource.profiles?.full_name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <span>Added by {resource.profiles?.full_name}</span>
-                      <span>•</span>
-                      <span>{formatDistanceToNow(new Date(resource.created_at), { addSuffix: true })}</span>
-                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -618,18 +630,17 @@ const ResourcesTab = ({ communityId }: { communityId: string }) => {
 
 // Progress Tab Component
 const ProgressTab = ({ communityId }: { communityId: string }) => {
-  const { data: progressUpdates, isLoading } = useQuery({
-    queryKey: ['all_progress', communityId],
+  const { data: leaderboard, isLoading } = useQuery({
+    queryKey: ['community_leaderboard', communityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('progress_updates')
+        .from('community_leaderboard')
         .select(`
           *,
-          profiles:user_id (full_name, avatar_url)
+          profiles!community_leaderboard_user_id_fkey (full_name, avatar_url)
         `)
         .eq('community_id', communityId)
-        .order('created_at', { ascending: false })
-        .limit(50);
+        .order('points', { ascending: false });
       if (error) throw error;
       return data;
     },
@@ -639,43 +650,37 @@ const ProgressTab = ({ communityId }: { communityId: string }) => {
     <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Target className="h-5 w-5" />
-            Community Progress
-          </CardTitle>
+          <CardTitle>Community Progress</CardTitle>
         </CardHeader>
-      </Card>
-
-      <div className="space-y-3">
-        {isLoading ? (
-          <Card><CardContent className="p-6 text-center">Loading progress...</CardContent></Card>
-        ) : progressUpdates?.length === 0 ? (
-          <Card><CardContent className="p-6 text-center text-muted-foreground">No progress updates yet.</CardContent></Card>
-        ) : (
-          progressUpdates?.map((update: any) => (
-            <Card key={update.id}>
-              <CardContent className="p-4">
-                <div className="flex gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-500 mt-1" />
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-6">Loading progress...</div>
+          ) : leaderboard?.length === 0 ? (
+            <div className="text-center py-6 text-muted-foreground">
+              No progress tracked yet. Start sharing updates to appear here!
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {leaderboard?.map((entry: any, index: number) => (
+                <div key={entry.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
+                  <div className="text-2xl font-bold w-8 text-center">#{index + 1}</div>
+                  <Avatar>
+                    <AvatarImage src={entry.profiles?.avatar_url} />
+                    <AvatarFallback>{entry.profiles?.full_name?.charAt(0)}</AvatarFallback>
+                  </Avatar>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={update.profiles?.avatar_url} />
-                        <AvatarFallback>{update.profiles?.full_name?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-semibold">{update.profiles?.full_name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatDistanceToNow(new Date(update.created_at), { addSuffix: true })}
-                      </span>
-                    </div>
-                    <p className="mt-2 text-sm">{update.update_text}</p>
+                    <div className="font-semibold">{entry.profiles?.full_name}</div>
+                    <div className="text-sm text-muted-foreground">{entry.points} points</div>
                   </div>
+                  <Badge variant={index === 0 ? "default" : "secondary"}>
+                    {entry.streak_days} day streak
+                  </Badge>
                 </div>
-              </CardContent>
-            </Card>
-          ))
-        )}
-      </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
@@ -683,13 +688,13 @@ const ProgressTab = ({ communityId }: { communityId: string }) => {
 // Members Tab Component
 const MembersTab = ({ communityId }: { communityId: string }) => {
   const { data: members, isLoading } = useQuery({
-    queryKey: ['community_members_list', communityId],
+    queryKey: ['community_members', communityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('community_members')
         .select(`
           *,
-          profiles:user_id (full_name, avatar_url, title)
+          profiles!community_members_user_id_fkey (full_name, avatar_url, title)
         `)
         .eq('community_id', communityId)
         .order('created_at', { ascending: false });
@@ -699,93 +704,92 @@ const MembersTab = ({ communityId }: { communityId: string }) => {
   });
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Members ({members?.length || 0})
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ScrollArea className="h-[600px]">
-            <div className="space-y-3">
-              {isLoading ? (
-                <p className="text-center text-muted-foreground">Loading members...</p>
-              ) : (
-                members?.map((member: any) => (
-                  <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-accent">
-                    <Avatar>
-                      <AvatarImage src={member.profiles?.avatar_url} />
-                      <AvatarFallback>{member.profiles?.full_name?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="font-semibold">{member.profiles?.full_name}</p>
-                      {member.profiles?.title && (
-                        <p className="text-sm text-muted-foreground">{member.profiles.title}</p>
-                      )}
-                    </div>
-                    <Badge variant="secondary">Member</Badge>
-                  </div>
-                ))
-              )}
-            </div>
-          </ScrollArea>
-        </CardContent>
-      </Card>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Members</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="text-center py-6">Loading members...</div>
+        ) : members?.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">No members yet</div>
+        ) : (
+          <div className="space-y-3">
+            {members?.map((member: any) => (
+              <div key={member.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50">
+                <Avatar>
+                  <AvatarImage src={member.profiles?.avatar_url} />
+                  <AvatarFallback>{member.profiles?.full_name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="font-semibold">{member.profiles?.full_name}</div>
+                  {member.profiles?.title && (
+                    <div className="text-sm text-muted-foreground">{member.profiles.title}</div>
+                  )}
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  Joined {formatDistanceToNow(new Date(member.created_at), { addSuffix: true })}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
 // Leaderboard Card Component
 const LeaderboardCard = ({ communityId }: { communityId: string }) => {
-  const { data: leaderboard } = useQuery({
-    queryKey: ['leaderboard', communityId],
+  const { data: leaderboard, isLoading } = useQuery({
+    queryKey: ['community_leaderboard', communityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('community_leaderboard')
         .select(`
           *,
-          profiles:user_id (full_name, avatar_url)
+          profiles!community_leaderboard_user_id_fkey (full_name, avatar_url)
         `)
         .eq('community_id', communityId)
         .order('points', { ascending: false })
-        .limit(10);
+        .limit(5);
       if (error) throw error;
       return data;
     },
   });
 
   return (
-    <Card className="sticky top-4">
+    <Card>
       <CardHeader>
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Award className="h-5 w-5 text-yellow-500" />
-          Leaderboard
+        <CardTitle className="flex items-center gap-2">
+          <Award className="h-5 w-5" />
+          Top Contributors
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <ScrollArea className="h-[400px]">
-          <div className="space-y-3">
-            {leaderboard?.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center">No rankings yet</p>
-            ) : (
-              leaderboard?.map((entry: any, index: number) => (
-                <div key={entry.id} className="flex items-center gap-3">
-                  <div className="font-bold text-lg w-6">#{index + 1}</div>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={entry.profiles?.avatar_url} />
-                    <AvatarFallback>{entry.profiles?.full_name?.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <p className="font-semibold text-sm">{entry.profiles?.full_name}</p>
-                    <p className="text-xs text-muted-foreground">{entry.points} points</p>
-                  </div>
-                </div>
-              ))
-            )}
+        {isLoading ? (
+          <div className="text-center py-4">Loading...</div>
+        ) : leaderboard?.length === 0 ? (
+          <div className="text-center py-4 text-sm text-muted-foreground">
+            No rankings yet
           </div>
-        </ScrollArea>
+        ) : (
+          <div className="space-y-2">
+            {leaderboard?.map((entry: any, index: number) => (
+              <div key={entry.id} className="flex items-center gap-2">
+                <span className="font-bold text-lg w-6">{index + 1}</span>
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={entry.profiles?.avatar_url} />
+                  <AvatarFallback>{entry.profiles?.full_name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium text-sm truncate">{entry.profiles?.full_name}</div>
+                  <div className="text-xs text-muted-foreground">{entry.points} pts</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
