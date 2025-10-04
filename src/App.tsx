@@ -18,6 +18,7 @@ import MyRoadmaps from "./pages/MyRoadmaps";
 import RoadmapView from "./pages/RoadmapView";
 import Communities from "./pages/Communities";
 import MyCommunities from "./pages/MyCommunities"; // Import new component
+import CommunityFeed from "./pages/CommunityFeed";
 import NewVideos from "./pages/NewVideos";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
@@ -64,6 +65,7 @@ const App = () => (
           <Route path="/roadmaps/:id" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
           <Route path="/communities" element={<ProtectedRoute><Communities /></ProtectedRoute>} />
           <Route path="/my-communities" element={<ProtectedRoute><MyCommunities /></ProtectedRoute>} /> {/* New route */}
+          <Route path="/communities/:communityId/feed" element={<ProtectedRoute><CommunityFeed /></ProtectedRoute>} />
           <Route path="/new-videos" element={<ProtectedRoute><NewVideos /></ProtectedRoute>} />
           <Route path="/my-posts" element={<ProtectedRoute><MyPosts /></ProtectedRoute>} />
           <Route path="/saved-posts" element={<ProtectedRoute><SavedPosts /></ProtectedRoute>} />
