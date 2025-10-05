@@ -96,7 +96,10 @@ export const useUserProfileDetails = (userId?: string) => {
 
       const { data, error } = await supabase
         .from('user_profile_details')
-        .upsert(payload)
+        .upsert(payload, { 
+          onConflict: 'user_id',
+          ignoreDuplicates: false 
+        })
         .select()
         .single();
 
