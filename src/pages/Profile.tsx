@@ -80,21 +80,85 @@ const Profile = () => {
     }
   }, [profileDetails, publicUserData]);
 
-  // Fetch user's roadmaps
+  // Fetch user's roadmaps (filtered by visibility)
   const { data: userRoadmaps, isLoading: isLoadingRoadmaps } = useQuery({
-    queryKey: ['userRoadmaps', targetUserId],
+    queryKey: ['userRoadmaps', targetUserId, currentUser?.id],
     queryFn: async () => {
       if (!targetUserId) return [];
-      const { data, error } = await supabase
+      
+      // If viewing own profile, show all roadmaps
+      // If viewing another user's profile, only show public roadmaps
+      const isOwnProfile = currentUser?.id === targetUserId;
+      
+      let query = supabase
         .from('roadmaps')
-        .select('id, title, description, progress, status, created_at')
+        .select('id, title, description, progress, status, created_at, is_public')
         .eq('user_id', targetUserId)
         .order('created_at', { ascending: false });
+      
+      // Filter by visibility if not own profile
+      if (!isOwnProfile) {
+        query = query.eq('is_public', true);
+      }
+      
+      const { data, error } = await query;
       if (error) throw error;
       return data;
     },
     enabled: !!targetUserId,
   });
+
+  // Fetch user activity
+  const { data: userActivity, isLoading: isLoadingActivity } = useQuery({
+    queryKey: ['userActivity', targetUserId],
+    queryFn: async () => {
+      if (!targetUserId) return [];
+      const { data, error } = await supabase
+        .from('user_activity')
+        .select('*')
+        .eq('user_id', targetUserId)
+        .order('created_at', { ascending: false })
+        .limit(20);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!targetUserId,
+  });
+
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !targetUserId) return;
+
+    try {
+      // Upload to storage
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${targetUserId}/${Date.now()}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Update profile
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: publicUrl })
+        .eq('user_id', targetUserId);
+
+      if (updateError) throw updateError;
+
+      setFormData({ ...formData, avatar: publicUrl });
+      toast({ title: "Avatar updated successfully!" });
+    } catch (error: any) {
+      toast({ title: "Failed to upload avatar", description: error.message, variant: "destructive" });
+    }
+  };
 
   const handleSave = async () => {
     if (!targetUserId) return;
@@ -151,10 +215,21 @@ const Profile = () => {
                     {initials}
                   </AvatarFallback>
                 </Avatar>
-                {editMode && (
-                  <Button size="sm" variant="outline" className="absolute -bottom-2 left-1/2 -translate-x-1/2">
-                    <Upload className="h-4 w-4 mr-1" /> Upload
-                  </Button>
+                {currentUser?.id === targetUserId && (
+                  <label htmlFor="avatar-upload" className="absolute -bottom-2 left-1/2 -translate-x-1/2 cursor-pointer">
+                    <Button size="sm" variant="outline" asChild>
+                      <span>
+                        <Upload className="h-4 w-4 mr-1" /> Upload
+                      </span>
+                    </Button>
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarUpload}
+                      className="hidden"
+                    />
+                  </label>
                 )}
               </div>
 
@@ -599,7 +674,41 @@ const Profile = () => {
                 <CardTitle>Learning Activity</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-sm text-muted-foreground">Activity tracking coming soon.</div>
+                {isLoadingActivity ? (
+                  <div className="text-sm text-muted-foreground">Loading activity...</div>
+                ) : (userActivity || []).length === 0 ? (
+                  <div className="text-sm text-muted-foreground text-center py-8">No activity yet.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {(userActivity || []).map((activity: any) => (
+                      <div key={activity.id} className="flex items-start gap-3 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex-shrink-0 mt-1">
+                          {activity.activity_type === 'post_created' && <BookOpen className="h-5 w-5 text-blue-500" />}
+                          {activity.activity_type === 'roadmap_created' && <Target className="h-5 w-5 text-green-500" />}
+                          {activity.activity_type === 'comment_created' && <Users className="h-5 w-5 text-purple-500" />}
+                          {activity.activity_type === 'like' && <Star className="h-5 w-5 text-yellow-500" />}
+                          {!['post_created', 'roadmap_created', 'comment_created', 'like'].includes(activity.activity_type) && 
+                            <TrendingUp className="h-5 w-5 text-gray-500" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium capitalize text-sm">
+                              {activity.activity_type.replace(/_/g, ' ')}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {new Date(activity.created_at).toLocaleDateString()} at {new Date(activity.created_at).toLocaleTimeString()}
+                            </span>
+                          </div>
+                          {activity.metadata && (
+                            <p className="text-sm text-muted-foreground line-clamp-2">
+                              {typeof activity.metadata === 'object' ? JSON.stringify(activity.metadata) : activity.metadata}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
