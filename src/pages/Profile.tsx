@@ -21,7 +21,8 @@ import {
   Plus,
   Upload,
   Edit,
-  Save
+  Save,
+  Trophy
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -386,58 +387,210 @@ const Profile = () => {
           <TabsContent value="skills" className="space-y-6">
             <Card className="shadow-card">
               <CardHeader>
-                <CardTitle>Skill Progress</CardTitle>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2">
+                    <Award className="h-5 w-5" />
+                    <span>Skills</span>
+                  </CardTitle>
+                  {editMode && (
+                    <Button size="sm" onClick={() => setFormData({ ...formData, skills: [...(formData.skills || []), { name: '', category: '', level: 0 }] })}>
+                      <Plus className="h-4 w-4 mr-1" /> Add Skill
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="grid gap-6">
-                  {(profileDetails?.skills || []).length === 0 && (
-                    <div className="text-sm text-muted-foreground">No skills yet.</div>
-                  )}
-                  {(profileDetails?.skills || []).map((skill: Skill, index: number) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center space-x-3">
-                          <h3 className="font-medium">{skill.name}</h3>
-                          <Badge variant="outline" className="text-xs">{skill.category}</Badge>
+                {editMode ? (
+                  <div className="space-y-4">
+                    {(formData.skills || []).map((skill: Skill, index: number) => (
+                      <div key={index} className="flex items-start gap-2 p-4 border rounded-lg">
+                        <div className="flex-1 space-y-2">
+                          <Input
+                            placeholder="Skill name (e.g., React)"
+                            value={skill.name}
+                            onChange={(e) => {
+                              const newSkills = [...formData.skills];
+                              newSkills[index].name = e.target.value;
+                              setFormData({ ...formData, skills: newSkills });
+                            }}
+                          />
+                          <Input
+                            placeholder="Category (e.g., Frontend)"
+                            value={skill.category}
+                            onChange={(e) => {
+                              const newSkills = [...formData.skills];
+                              newSkills[index].category = e.target.value;
+                              setFormData({ ...formData, skills: newSkills });
+                            }}
+                          />
+                          <div className="flex items-center gap-2">
+                            <Label className="text-sm">Level:</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="100"
+                              placeholder="0-100"
+                              value={skill.level}
+                              onChange={(e) => {
+                                const newSkills = [...formData.skills];
+                                newSkills[index].level = parseInt(e.target.value) || 0;
+                                setFormData({ ...formData, skills: newSkills });
+                              }}
+                              className="w-24"
+                            />
+                            <span className="text-sm text-muted-foreground">%</span>
+                          </div>
                         </div>
-                        <span className="text-sm font-medium">{skill.level}%</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormData({ ...formData, skills: formData.skills.filter((_: any, i: number) => i !== index) })}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <div className="w-full bg-muted rounded-full h-2">
-                        <div
-                          className="bg-gradient-primary h-2 rounded-full transition-all duration-500"
-                          style={{ width: `${skill.level}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                    {(formData.skills || []).length === 0 && (
+                      <div className="text-sm text-muted-foreground text-center py-8">No skills added yet. Click "Add Skill" to get started.</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(profileDetails?.skills || []).map((skill: Skill, index: number) => (
+                      <Card key={index} className="border-l-4 border-l-primary">
+                        <CardContent className="p-4">
+                          <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <h4 className="font-semibold">{skill.name}</h4>
+                              <Badge variant="secondary">{skill.category}</Badge>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-muted-foreground">Proficiency</span>
+                                <span className="font-medium">{skill.level}%</span>
+                              </div>
+                              <div className="w-full bg-muted rounded-full h-2">
+                                <div
+                                  className="bg-gradient-primary h-2 rounded-full transition-all duration-300"
+                                  style={{ width: `${skill.level}%` }}
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {(profileDetails?.skills || []).length === 0 && (
+                      <div className="text-sm text-muted-foreground col-span-2 text-center py-8">No skills added yet.</div>
+                    )}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
 
           <TabsContent value="achievements" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              {(profileDetails?.achievements || []).length === 0 && (
-                <Card className="shadow-card">
-                  <CardContent className="p-6 text-sm text-muted-foreground">No achievements yet.</CardContent>
-                </Card>
-              )}
-              {(profileDetails?.achievements || []).map((achievement: Achievement, index: number) => (
-                <Card key={index} className="shadow-card hover:shadow-elevated transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="flex items-start space-x-4">
-                      <div className="text-3xl">{achievement.icon || '🏆'}</div>
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{achievement.name}</h3>
-                        <p className="text-muted-foreground text-sm mb-2">{achievement.description}</p>
-                        <p className="text-xs text-muted-foreground">{achievement.date}</p>
+            <Card className="shadow-card">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center space-x-2">
+                    <Trophy className="h-5 w-5" />
+                    <span>Achievements</span>
+                  </CardTitle>
+                  {editMode && (
+                    <Button size="sm" onClick={() => setFormData({ ...formData, achievements: [...(formData.achievements || []), { name: '', description: '', icon: '🏆', date: new Date().toISOString().split('T')[0] }] })}>
+                      <Plus className="h-4 w-4 mr-1" /> Add Achievement
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                {editMode ? (
+                  <div className="space-y-4">
+                    {(formData.achievements || []).map((achievement: Achievement, index: number) => (
+                      <div key={index} className="flex items-start gap-2 p-4 border rounded-lg">
+                        <div className="flex-1 space-y-2">
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="Icon (emoji)"
+                              value={achievement.icon}
+                              onChange={(e) => {
+                                const newAchievements = [...formData.achievements];
+                                newAchievements[index].icon = e.target.value;
+                                setFormData({ ...formData, achievements: newAchievements });
+                              }}
+                              className="w-20"
+                            />
+                            <Input
+                              placeholder="Achievement name"
+                              value={achievement.name}
+                              onChange={(e) => {
+                                const newAchievements = [...formData.achievements];
+                                newAchievements[index].name = e.target.value;
+                                setFormData({ ...formData, achievements: newAchievements });
+                              }}
+                              className="flex-1"
+                            />
+                          </div>
+                          <Textarea
+                            placeholder="Description"
+                            value={achievement.description}
+                            onChange={(e) => {
+                              const newAchievements = [...formData.achievements];
+                              newAchievements[index].description = e.target.value;
+                              setFormData({ ...formData, achievements: newAchievements });
+                            }}
+                            rows={2}
+                          />
+                          <Input
+                            type="date"
+                            value={achievement.date}
+                            onChange={(e) => {
+                              const newAchievements = [...formData.achievements];
+                              newAchievements[index].date = e.target.value;
+                              setFormData({ ...formData, achievements: newAchievements });
+                            }}
+                          />
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setFormData({ ...formData, achievements: formData.achievements.filter((_: any, i: number) => i !== index) })}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
-                      <Award className="h-5 w-5 text-yellow-500" />
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    ))}
+                    {(formData.achievements || []).length === 0 && (
+                      <div className="text-sm text-muted-foreground text-center py-8">No achievements added yet. Click "Add Achievement" to get started.</div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(profileDetails?.achievements || []).map((achievement: Achievement, index: number) => (
+                      <Card key={index} className="hover:shadow-lg transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-start space-x-3">
+                            <div className="text-3xl flex-shrink-0">{achievement.icon}</div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-base mb-1">{achievement.name}</h4>
+                              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{achievement.description}</p>
+                              <div className="flex items-center text-xs text-muted-foreground">
+                                <Calendar className="h-3 w-3 mr-1" />
+                                {new Date(achievement.date).toLocaleDateString()}
+                              </div>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                    {(profileDetails?.achievements || []).length === 0 && (
+                      <div className="text-sm text-muted-foreground col-span-2 text-center py-8">No achievements added yet.</div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="activity" className="space-y-6">
