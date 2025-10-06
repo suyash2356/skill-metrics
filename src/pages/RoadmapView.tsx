@@ -160,6 +160,16 @@ const RoadmapView = () => {
   });
 
   const { templates, createTemplate, isLoading: isLoadingTemplate } = useRoadmapTemplates(id);
+  const [templateData, setTemplateData] = useState<any>({
+    goals: '',
+    timeline: '',
+    resources: '',
+    notes: '',
+    milestones: [],
+    weeklyPlan: '',
+    challenges: '',
+    progress: '',
+  });
   const { isFollowing, toggleFollow } = useUserFollows(roadmap?.user_id);
 
   const updateRoadmapMutation = useMutation({
@@ -255,6 +265,56 @@ const RoadmapView = () => {
       toast({ title: "Failed to delete roadmap", description: error.message, variant: "destructive" });
     }
   });
+
+  const updateTemplateMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (!user?.id || !id) throw new Error("User or roadmap not specified");
+      const existingTemplate = templates?.[0];
+      
+      if (existingTemplate) {
+        const { error } = await supabase
+          .from('roadmap_templates')
+          .update({ template_data: data })
+          .eq('id', existingTemplate.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('roadmap_templates')
+          .insert({
+            user_id: user.id,
+            roadmap_id: id,
+            name: 'My Learning Template',
+            template_data: data,
+          });
+        if (error) throw error;
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['roadmapTemplates', user?.id, id] });
+      toast({ title: "Template saved successfully!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to save template", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const handleTemplateUpdate = useCallback((field: string, value: any) => {
+    setTemplateData((prev: any) => ({ ...prev, [field]: value }));
+  }, []);
+
+  const saveTemplate = useCallback(() => {
+    updateTemplateMutation.mutate(templateData);
+  }, [templateData, updateTemplateMutation]);
+
+  // Load template data when available
+  useEffect(() => {
+    if (templates && templates.length > 0) {
+      const template = templates[0];
+      if (template.template_data && typeof template.template_data === 'object') {
+        setTemplateData(template.template_data);
+      }
+    }
+  }, [templates]);
 
   const isLoading = isLoadingRoadmap || isLoadingSteps || isLoadingResources || isLoadingComments || isLoadingTemplate;
 
@@ -434,15 +494,168 @@ const RoadmapView = () => {
             ))}
           </TabsContent>
           <TabsContent value="template">
-            <Card>
-              <CardHeader>
-                <CardTitle>Personalized Learning Template</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {/* Render the template sections here using the `template` state and `updateTemplate` function */}
-                <p className="text-muted-foreground">Editable template coming soon. Use this space to organize your personal notes, track resources, and customize your learning journey.</p>
-              </CardContent>
-            </Card>
+            <div className="space-y-6">
+              {/* Header with Save button */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">My Learning Template</h2>
+                {isOwner && (
+                  <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending}>
+                    <Save className="h-4 w-4 mr-2" />
+                    {updateTemplateMutation.isPending ? 'Saving...' : 'Save Template'}
+                  </Button>
+                )}
+              </div>
+
+              {/* Goals Section */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Learning Goals
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="What do you want to achieve with this roadmap? Define your main objectives..."
+                    value={templateData.goals}
+                    onChange={(e) => handleTemplateUpdate('goals', e.target.value)}
+                    disabled={!isOwner}
+                    rows={4}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Timeline & Schedule */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5" />
+                    Timeline & Schedule
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Create your learning schedule. Example: Week 1-2: Fundamentals, Week 3-4: Advanced Topics..."
+                    value={templateData.timeline}
+                    onChange={(e) => handleTemplateUpdate('timeline', e.target.value)}
+                    disabled={!isOwner}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Weekly Plan */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarCheck className="h-5 w-5" />
+                    Weekly Plan
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Break down your weekly tasks and activities. Monday: Study X, Tuesday: Practice Y..."
+                    value={templateData.weeklyPlan}
+                    onChange={(e) => handleTemplateUpdate('weeklyPlan', e.target.value)}
+                    disabled={!isOwner}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Resources & Materials */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookOpen className="h-5 w-5" />
+                    Resources & Materials
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="List all your learning resources: books, courses, videos, documentation, etc."
+                    value={templateData.resources}
+                    onChange={(e) => handleTemplateUpdate('resources', e.target.value)}
+                    disabled={!isOwner}
+                    rows={8}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Progress Tracker */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5" />
+                    Progress Tracker
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Track your daily/weekly progress. What you've learned, what clicked, what needs more work..."
+                    value={templateData.progress}
+                    onChange={(e) => handleTemplateUpdate('progress', e.target.value)}
+                    disabled={!isOwner}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Challenges & Solutions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="h-5 w-5" />
+                    Challenges & Solutions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Document challenges you face and how you overcome them. This helps track your problem-solving journey..."
+                    value={templateData.challenges}
+                    onChange={(e) => handleTemplateUpdate('challenges', e.target.value)}
+                    disabled={!isOwner}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Personal Notes */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PenLine className="h-5 w-5" />
+                    Personal Notes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Textarea
+                    placeholder="Add any additional notes, insights, or thoughts about your learning journey..."
+                    value={templateData.notes}
+                    onChange={(e) => handleTemplateUpdate('notes', e.target.value)}
+                    disabled={!isOwner}
+                    rows={6}
+                    className="resize-none"
+                  />
+                </CardContent>
+              </Card>
+
+              {/* Save button at bottom */}
+              {isOwner && (
+                <div className="flex justify-end">
+                  <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} size="lg">
+                    <Save className="h-4 w-4 mr-2" />
+                    {updateTemplateMutation.isPending ? 'Saving...' : 'Save Template'}
+                  </Button>
+                </div>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </div>
