@@ -399,14 +399,6 @@ const RoadmapView = () => {
                 <span className="flex items-center gap-1"><Target className="h-4 w-4" /> {roadmap.difficulty}</span>
                 <span className="flex items-center gap-1"><Calendar className="h-4 w-4" /> Created on {new Date(roadmap.created_at).toLocaleDateString()}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setCommentDialogOpen(true)}>
-                  <MessageCircle className="h-4 w-4 mr-2" /> Comments ({comments?.length || 0})
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => setShareDialogOpen(true)}>
-                  <Share2 className="h-4 w-4 mr-2" /> Share
-                </Button>
-              </div>
             </div>
             <div className="flex items-center gap-4">
               <Progress value={roadmap.progress} className="w-full" />
