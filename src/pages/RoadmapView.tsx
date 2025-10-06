@@ -493,169 +493,307 @@ const RoadmapView = () => {
               )
             ))}
           </TabsContent>
-          <TabsContent value="template">
-            <div className="space-y-6">
-              {/* Header with Save button */}
-              <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">My Learning Template</h2>
-                {isOwner && (
-                  <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending}>
-                    <Save className="h-4 w-4 mr-2" />
-                    {updateTemplateMutation.isPending ? 'Saving...' : 'Save Template'}
-                  </Button>
-                )}
+          <TabsContent value="template" className="max-w-4xl mx-auto">
+            {/* Notion-style Page Header */}
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-4">
+                <GraduationCap className="h-10 w-10 text-primary" />
+                <h1 className="text-4xl font-bold">AI/ML Learning Roadmap</h1>
               </div>
-
-              {/* Goals Section */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Learning Goals
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="What do you want to achieve with this roadmap? Define your main objectives..."
-                    value={templateData.goals}
-                    onChange={(e) => handleTemplateUpdate('goals', e.target.value)}
-                    disabled={!isOwner}
-                    rows={4}
-                    className="resize-none"
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Timeline & Schedule */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    Timeline & Schedule
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="Create your learning schedule. Example: Week 1-2: Fundamentals, Week 3-4: Advanced Topics..."
-                    value={templateData.timeline}
-                    onChange={(e) => handleTemplateUpdate('timeline', e.target.value)}
-                    disabled={!isOwner}
-                    rows={6}
-                    className="resize-none"
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Weekly Plan */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CalendarCheck className="h-5 w-5" />
-                    Weekly Plan
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="Break down your weekly tasks and activities. Monday: Study X, Tuesday: Practice Y..."
-                    value={templateData.weeklyPlan}
-                    onChange={(e) => handleTemplateUpdate('weeklyPlan', e.target.value)}
-                    disabled={!isOwner}
-                    rows={6}
-                    className="resize-none"
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Resources & Materials */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <BookOpen className="h-5 w-5" />
-                    Resources & Materials
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="List all your learning resources: books, courses, videos, documentation, etc."
-                    value={templateData.resources}
-                    onChange={(e) => handleTemplateUpdate('resources', e.target.value)}
-                    disabled={!isOwner}
-                    rows={8}
-                    className="resize-none"
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Progress Tracker */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5" />
-                    Progress Tracker
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="Track your daily/weekly progress. What you've learned, what clicked, what needs more work..."
-                    value={templateData.progress}
-                    onChange={(e) => handleTemplateUpdate('progress', e.target.value)}
-                    disabled={!isOwner}
-                    rows={6}
-                    className="resize-none"
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Challenges & Solutions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lightbulb className="h-5 w-5" />
-                    Challenges & Solutions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="Document challenges you face and how you overcome them. This helps track your problem-solving journey..."
-                    value={templateData.challenges}
-                    onChange={(e) => handleTemplateUpdate('challenges', e.target.value)}
-                    disabled={!isOwner}
-                    rows={6}
-                    className="resize-none"
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Personal Notes */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <PenLine className="h-5 w-5" />
-                    Personal Notes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <Textarea
-                    placeholder="Add any additional notes, insights, or thoughts about your learning journey..."
-                    value={templateData.notes}
-                    onChange={(e) => handleTemplateUpdate('notes', e.target.value)}
-                    disabled={!isOwner}
-                    rows={6}
-                    className="resize-none"
-                  />
-                </CardContent>
-              </Card>
-
-              {/* Save button at bottom */}
               {isOwner && (
                 <div className="flex justify-end">
-                  <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} size="lg">
+                  <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} variant="outline" size="sm">
                     <Save className="h-4 w-4 mr-2" />
-                    {updateTemplateMutation.isPending ? 'Saving...' : 'Save Template'}
+                    {updateTemplateMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
               )}
             </div>
+
+            {/* Notion-style Accordion Sections */}
+            <Accordion type="multiple" defaultValue={["overview", "goals", "schedule", "resources"]} className="space-y-4">
+              {/* Overview Section */}
+              <AccordionItem value="overview" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Rocket className="h-5 w-5 text-primary" />
+                    <span>📋 Overview</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-semibold text-muted-foreground">About this roadmap</Label>
+                      <Textarea
+                        placeholder="Describe your learning journey, what you want to achieve, and why..."
+                        value={templateData.goals}
+                        onChange={(e) => handleTemplateUpdate('goals', e.target.value)}
+                        disabled={!isOwner}
+                        rows={5}
+                        className="mt-2 resize-none border-0 bg-muted/50 focus-visible:ring-1"
+                      />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Learning Goals Section */}
+              <AccordionItem value="goals" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Target className="h-5 w-5 text-primary" />
+                    <span>🎯 Learning Goals</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-semibold text-muted-foreground">What I want to achieve</Label>
+                    <div className="space-y-2">
+                      <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
+                        <Checkbox disabled={!isOwner} className="mt-1" />
+                        <Input
+                          placeholder="Goal 1: Master fundamental concepts..."
+                          disabled={!isOwner}
+                          className="border-0 bg-transparent focus-visible:ring-0 p-0"
+                        />
+                      </div>
+                      <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
+                        <Checkbox disabled={!isOwner} className="mt-1" />
+                        <Input
+                          placeholder="Goal 2: Build real-world projects..."
+                          disabled={!isOwner}
+                          className="border-0 bg-transparent focus-visible:ring-0 p-0"
+                        />
+                      </div>
+                      <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
+                        <Checkbox disabled={!isOwner} className="mt-1" />
+                        <Input
+                          placeholder="Goal 3: Contribute to open source..."
+                          disabled={!isOwner}
+                          className="border-0 bg-transparent focus-visible:ring-0 p-0"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Study Schedule Section */}
+              <AccordionItem value="schedule" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    <span>📅 Study Schedule</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Timeline</Label>
+                      <Textarea
+                        placeholder="Week 1-2: Python Basics & Data Structures&#10;Week 3-4: Machine Learning Fundamentals&#10;Week 5-6: Deep Learning Introduction..."
+                        value={templateData.timeline}
+                        onChange={(e) => handleTemplateUpdate('timeline', e.target.value)}
+                        disabled={!isOwner}
+                        rows={8}
+                        className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Weekly Plan</Label>
+                      <Textarea
+                        placeholder="Monday: Theory (2 hours)&#10;Tuesday: Coding Practice (3 hours)&#10;Wednesday: Projects (2 hours)&#10;Thursday: Review & Notes (1 hour)&#10;Friday: Hands-on Labs (3 hours)..."
+                        value={templateData.weeklyPlan}
+                        onChange={(e) => handleTemplateUpdate('weeklyPlan', e.target.value)}
+                        disabled={!isOwner}
+                        rows={6}
+                        className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
+                      />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Resources Section */}
+              <AccordionItem value="resources" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                    <span>📚 Resources & Materials</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <div className="space-y-4">
+                    {/* Books */}
+                    <div className="p-4 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Book className="h-4 w-4" />
+                        <h4 className="font-semibold">Books</h4>
+                      </div>
+                      <Textarea
+                        placeholder="• Deep Learning by Ian Goodfellow&#10;• Hands-On Machine Learning by Aurélien Géron&#10;• Pattern Recognition and Machine Learning by Christopher Bishop"
+                        value={templateData.resources}
+                        onChange={(e) => handleTemplateUpdate('resources', e.target.value)}
+                        disabled={!isOwner}
+                        rows={4}
+                        className="resize-none border-0 bg-background focus-visible:ring-1 text-sm"
+                      />
+                    </div>
+
+                    {/* Online Courses */}
+                    <div className="p-4 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-3">
+                        <MonitorPlay className="h-4 w-4" />
+                        <h4 className="font-semibold">Online Courses</h4>
+                      </div>
+                      <Textarea
+                        placeholder="• Andrew Ng - Machine Learning (Coursera)&#10;• Fast.ai - Practical Deep Learning&#10;• MIT 6.S191 - Introduction to Deep Learning"
+                        disabled={!isOwner}
+                        rows={4}
+                        className="resize-none border-0 bg-background focus-visible:ring-1 text-sm"
+                      />
+                    </div>
+
+                    {/* Documentation & Links */}
+                    <div className="p-4 rounded-lg border bg-muted/30">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Globe className="h-4 w-4" />
+                        <h4 className="font-semibold">Documentation & Links</h4>
+                      </div>
+                      <Textarea
+                        placeholder="• TensorFlow Documentation&#10;• PyTorch Tutorials&#10;• Scikit-learn User Guide&#10;• Papers with Code"
+                        disabled={!isOwner}
+                        rows={4}
+                        className="resize-none border-0 bg-background focus-visible:ring-1 text-sm"
+                      />
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Progress Tracker Section */}
+              <AccordionItem value="progress" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    <span>✅ Progress Tracker</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <div className="space-y-4">
+                    <Label className="text-sm font-semibold text-muted-foreground">Daily/Weekly Progress Log</Label>
+                    <Textarea
+                      placeholder="📅 Week 1 - Day 1&#10;✅ Completed Python basics review&#10;✅ Finished NumPy tutorial&#10;🔄 Working on Pandas exercises&#10;&#10;💡 Key Insights:&#10;- NumPy broadcasting is powerful for vectorized operations&#10;- Need more practice with data manipulation&#10;&#10;🎯 Next Steps:&#10;- Complete Pandas practice problems&#10;- Start linear algebra review"
+                      value={templateData.progress}
+                      onChange={(e) => handleTemplateUpdate('progress', e.target.value)}
+                      disabled={!isOwner}
+                      rows={12}
+                      className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
+                    />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Projects Section */}
+              <AccordionItem value="projects" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Codepen className="h-5 w-5 text-primary" />
+                    <span>🚀 Projects & Practice</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-lg border-l-4 border-l-blue-500 bg-muted/50">
+                      <div className="flex items-start gap-3">
+                        <Checkbox disabled={!isOwner} className="mt-1" />
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Project 1: Build a sentiment analysis model"
+                            disabled={!isOwner}
+                            className="font-semibold border-0 bg-transparent focus-visible:ring-0 p-0 mb-2"
+                          />
+                          <Textarea
+                            placeholder="Description: Create a model to classify movie reviews...&#10;Status: In Progress&#10;Tech Stack: Python, TensorFlow, NLTK"
+                            disabled={!isOwner}
+                            rows={3}
+                            className="resize-none border-0 bg-transparent focus-visible:ring-0 text-sm text-muted-foreground"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg border-l-4 border-l-green-500 bg-muted/50">
+                      <div className="flex items-start gap-3">
+                        <Checkbox disabled={!isOwner} className="mt-1" />
+                        <div className="flex-1">
+                          <Input
+                            placeholder="Project 2: Image classification with CNNs"
+                            disabled={!isOwner}
+                            className="font-semibold border-0 bg-transparent focus-visible:ring-0 p-0 mb-2"
+                          />
+                          <Textarea
+                            placeholder="Description: Train a CNN to classify images...&#10;Status: Not Started&#10;Tech Stack: PyTorch, OpenCV"
+                            disabled={!isOwner}
+                            rows={3}
+                            className="resize-none border-0 bg-transparent focus-visible:ring-0 text-sm text-muted-foreground"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Challenges & Solutions Section */}
+              <AccordionItem value="challenges" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <Lightbulb className="h-5 w-5 text-primary" />
+                    <span>💡 Challenges & Solutions</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <Textarea
+                    placeholder="🔴 Challenge 1: Understanding backpropagation&#10;✅ Solution: Watched 3Blue1Brown videos, implemented from scratch&#10;&#10;🔴 Challenge 2: Overfitting in my model&#10;✅ Solution: Added dropout layers and data augmentation&#10;&#10;🔴 Challenge 3: Slow training times&#10;🔄 Working on: Optimizing batch size and using GPU acceleration"
+                    value={templateData.challenges}
+                    onChange={(e) => handleTemplateUpdate('challenges', e.target.value)}
+                    disabled={!isOwner}
+                    rows={10}
+                    className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
+                  />
+                </AccordionContent>
+              </AccordionItem>
+
+              {/* Notes & Insights Section */}
+              <AccordionItem value="notes" className="border rounded-lg px-6 bg-card">
+                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
+                  <div className="flex items-center gap-3">
+                    <PenLine className="h-5 w-5 text-primary" />
+                    <span>📝 Notes & Insights</span>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="pt-4 pb-6">
+                  <Textarea
+                    placeholder="Key Takeaways:&#10;• Neural networks are essentially function approximators&#10;• The learning rate is one of the most important hyperparameters&#10;• Data quality > Model complexity&#10;&#10;Important Concepts:&#10;1. Gradient Descent&#10;2. Regularization Techniques&#10;3. Batch Normalization&#10;&#10;Resources to Revisit:&#10;- Chapter 5 of Deep Learning book&#10;- Stanford CS231n lectures"
+                    value={templateData.notes}
+                    onChange={(e) => handleTemplateUpdate('notes', e.target.value)}
+                    disabled={!isOwner}
+                    rows={12}
+                    className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
+                  />
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+
+            {/* Bottom Save Button */}
+            {isOwner && (
+              <div className="mt-8 flex justify-center">
+                <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} size="lg" className="min-w-[200px]">
+                  <Save className="h-4 w-4 mr-2" />
+                  {updateTemplateMutation.isPending ? 'Saving...' : 'Save All Changes'}
+                </Button>
+              </div>
+            )}
           </TabsContent>
         </Tabs>
       </div>
