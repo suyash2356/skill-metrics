@@ -602,6 +602,41 @@ export type Database = {
           },
         ]
       }
+      roadmap_skills: {
+        Row: {
+          created_at: string
+          id: string
+          is_checked: boolean
+          roadmap_id: string
+          skill_name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          roadmap_id: string
+          skill_name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_checked?: boolean
+          roadmap_id?: string
+          skill_name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "roadmap_skills_roadmap_id_fkey"
+            columns: ["roadmap_id"]
+            isOneToOne: false
+            referencedRelation: "roadmaps"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       roadmap_step_resources: {
         Row: {
           created_at: string
