@@ -26,6 +26,7 @@ import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useRoadmapTemplates } from "@/hooks/useRoadmapTemplates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
+import { getSkillsForDomain } from "@/lib/roadmapSkills";
 
 type RoadmapWithUser = Database['public']['Tables']['roadmaps']['Row'] & {
   user?: { id: string; full_name?: string | null; avatar_url?: string | null } | null;
@@ -155,6 +156,21 @@ const RoadmapView = () => {
       }
       
       return commentsData.map(c => ({...c, profile: null}));
+    },
+    enabled: !!id,
+  });
+
+  const { data: roadmapSkills, isLoading: isLoadingSkills } = useQuery({
+    queryKey: ['roadmapSkills', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from('roadmap_skills')
+        .select('*')
+        .eq('roadmap_id', id)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data;
     },
     enabled: !!id,
   });
@@ -316,7 +332,7 @@ const RoadmapView = () => {
     }
   }, [templates]);
 
-  const isLoading = isLoadingRoadmap || isLoadingSteps || isLoadingResources || isLoadingComments || isLoadingTemplate;
+  const isLoading = isLoadingRoadmap || isLoadingSteps || isLoadingResources || isLoadingComments || isLoadingTemplate || isLoadingSkills;
 
   if (isLoading) {
     return <Layout><div>Loading roadmap...</div></Layout>;
@@ -327,6 +343,44 @@ const RoadmapView = () => {
   }
 
   const isOwner = user?.id === roadmap.user_id;
+
+  // Initialize skills if they don't exist
+  useEffect(() => {
+    const initializeSkills = async () => {
+      if (!roadmap || !user || !isOwner) return;
+      if (roadmapSkills && roadmapSkills.length > 0) return;
+      
+      const defaultSkills = getSkillsForDomain(roadmap.category);
+      if (defaultSkills.length === 0) return;
+      
+      const skillsToInsert = defaultSkills.map(skill => ({
+        roadmap_id: id!,
+        skill_name: skill,
+        is_checked: false
+      }));
+      
+      await supabase.from('roadmap_skills').insert(skillsToInsert);
+      queryClient.invalidateQueries({ queryKey: ['roadmapSkills', id] });
+    };
+    
+    initializeSkills();
+  }, [roadmap, roadmapSkills, user, isOwner, id, queryClient]);
+
+  const toggleSkillMutation = useMutation({
+    mutationFn: async ({ skillId, isChecked }: { skillId: string, isChecked: boolean }) => {
+      const { error } = await supabase
+        .from('roadmap_skills')
+        .update({ is_checked: isChecked })
+        .eq('id', skillId);
+      if (error) throw error;
+      return { skillId, isChecked };
+    },
+    onSuccess: ({ skillId, isChecked }) => {
+      queryClient.setQueryData(['roadmapSkills', id], (old: any[] | undefined) => 
+        old?.map(s => s.id === skillId ? { ...s, is_checked: isChecked } : s)
+      );
+    },
+  });
 
   const groupedSteps = (steps || []).reduce((acc, step) => {
     let phase = 'General';
@@ -406,6 +460,44 @@ const RoadmapView = () => {
             </div>
           </CardContent>
         </Card>
+
+        {roadmapSkills && roadmapSkills.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ListChecks className="h-5 w-5" />
+                {roadmap.category?.toLowerCase().includes('exam') ? 'Subjects/Topics to Learn' : 'Skills to Master'}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Track the key {roadmap.category?.toLowerCase().includes('exam') ? 'topics' : 'skills'} you need to learn for this roadmap
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {roadmapSkills.map((skill: any) => (
+                  <div key={skill.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
+                    <Checkbox
+                      checked={skill.is_checked}
+                      onCheckedChange={(checked) => {
+                        if (isOwner) {
+                          toggleSkillMutation.mutate({ skillId: skill.id, isChecked: !!checked });
+                        }
+                      }}
+                      disabled={!isOwner}
+                    />
+                    <span className={`flex-1 ${skill.is_checked ? 'line-through text-muted-foreground' : ''}`}>
+                      {skill.skill_name}
+                    </span>
+                    {skill.is_checked && <CheckCircle className="h-4 w-4 text-green-500" />}
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                Note: Checking these {roadmap.category?.toLowerCase().includes('exam') ? 'topics' : 'skills'} doesn't affect your overall roadmap progress
+              </p>
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs defaultValue="steps" className="space-y-6">
           <TabsList>
