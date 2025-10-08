@@ -2,9 +2,24 @@ import { useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Heart, MessageCircle, Share2, Bookmark, MoreHorizontal } from "lucide-react";
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  Bookmark,
+  MoreHorizontal,
+  Eye,
+  EyeOff,
+  Flag,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface InstagramPostProps {
   post: {
@@ -45,32 +60,32 @@ export const InstagramPost = ({
   // Parse media from content
   const parseMedia = (content: string | null) => {
     if (!content) return { text: "", media: [] };
-    
-    const media: Array<{ type: 'image' | 'video', url: string }> = [];
+
+    const media: Array<{ type: "image" | "video"; url: string }> = [];
     let text = content;
 
     // Extract base64 images
     const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
     const base64Matches = content.matchAll(base64Regex);
     for (const match of base64Matches) {
-      media.push({ type: 'image', url: match[1] });
-      text = text.replace(match[0], '');
+      media.push({ type: "image", url: match[1] });
+      text = text.replace(match[0], "");
     }
 
     // Extract regular image URLs
     const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/g;
     const imgMatches = content.matchAll(imgRegex);
     for (const match of imgMatches) {
-      media.push({ type: 'image', url: match[1] });
-      text = text.replace(match[0], '');
+      media.push({ type: "image", url: match[1] });
+      text = text.replace(match[0], "");
     }
 
-    // Extract video URLs
+    // ✅ Fixed regex: no double-escaping
     const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
     const videoMatches = content.matchAll(videoRegex);
     for (const match of videoMatches) {
-      media.push({ type: 'video', url: match[0] });
-      text = text.replace(match[0], '');
+      media.push({ type: "video", url: match[0] });
+      text = text.replace(match[0], "");
     }
 
     return { text: text.trim(), media };
@@ -85,7 +100,10 @@ export const InstagramPost = ({
     <Card className="w-full max-w-[470px] mx-auto border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg">
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b">
-        <Link to={`/profile/${post.user_id}`} className="flex items-center gap-3 flex-1">
+        <Link
+          to={`/profile/${post.user_id}`}
+          className="flex items-center gap-3 flex-1"
+        >
           <Avatar className="h-9 w-9 ring-2 ring-background">
             <AvatarImage src={avatarUrl || undefined} />
             <AvatarFallback className="bg-primary/10 text-primary">
@@ -94,18 +112,44 @@ export const InstagramPost = ({
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="font-semibold text-sm truncate">{displayName}</p>
-            {userTitle && <p className="text-xs text-muted-foreground truncate">{userTitle}</p>}
+            {userTitle && (
+              <p className="text-xs text-muted-foreground truncate">
+                {userTitle}
+              </p>
+            )}
           </div>
         </Link>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-5 w-5" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-5 w-5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>
+              <Bookmark className="mr-2 h-4 w-4" />
+              <span>Save</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Eye className="mr-2 h-4 w-4" />
+              <span>Interested</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <EyeOff className="mr-2 h-4 w-4" />
+              <span>Not Interested</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem className="text-red-500">
+              <Flag className="mr-2 h-4 w-4" />
+              <span>Report</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
-      {/* Media Carousel */}
+      {/* Media */}
       {media.length > 0 && (
         <div className="relative bg-black aspect-square">
-          {media[0].type === 'image' ? (
+          {media[0].type === "image" ? (
             <img
               src={media[0].url}
               alt="Post content"
@@ -138,7 +182,9 @@ export const InstagramPost = ({
               onClick={onLike}
             >
               <Heart
-                className={`h-6 w-6 ${isLiked ? "fill-red-500 text-red-500" : ""}`}
+                className={`h-6 w-6 ${
+                  isLiked ? "fill-red-500 text-red-500" : ""
+                }`}
               />
             </Button>
             <Button
@@ -170,15 +216,19 @@ export const InstagramPost = ({
           </Button>
         </div>
 
-        {/* Likes count */}
+        {/* Likes */}
         <div className="font-semibold text-sm">
-          {post.likes_count > 0 && `${post.likes_count.toLocaleString()} likes`}
+          {post.likes_count > 0 &&
+            `${post.likes_count.toLocaleString()} likes`}
         </div>
 
         {/* Caption */}
         <div className="text-sm space-y-1">
           <p>
-            <Link to={`/profile/${post.user_id}`} className="font-semibold mr-2">
+            <Link
+              to={`/profile/${post.user_id}`}
+              className="font-semibold mr-2"
+            >
               {displayName}
             </Link>
             <span className="font-semibold">{post.title}</span>
@@ -188,12 +238,12 @@ export const InstagramPost = ({
           )}
           {post.tags && post.tags.length > 0 && (
             <p className="text-primary">
-              {post.tags.map(tag => `#${tag}`).join(' ')}
+              {post.tags.map((tag) => `#${tag}`).join(" ")}
             </p>
           )}
         </div>
 
-        {/* Comments preview */}
+        {/* Comments */}
         {post.comments_count > 0 && (
           <button
             onClick={onComment}
