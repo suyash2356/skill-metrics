@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import NotificationBell from "@/components/NotificationBell";
 import { useOnlineStatus } from "@/hooks/use-mobile";
+import BottomNav from "./BottomNav";
 
 interface LayoutProps {
   children: ReactNode;
@@ -186,40 +187,13 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
       </header>
 
-      {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card border-t">
-        <div className="grid grid-cols-4 h-16">
-          {navigation.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex flex-col items-center justify-center space-y-1 text-xs transition-colors ${
-                  isActive(item.href)
-                    ? "text-primary"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                <Icon className="h-5 w-5" />
-                <span>{item.name.split(' ')[0]}</span>
-              </Link>
-            );
-          })}
-          <button
-            onClick={() => navigate('/create-post')}
-            className="flex flex-col items-center justify-center space-y-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Create</span>
-          </button>
-        </div>
-      </nav>
-
       {/* Main Content */}
       <main className="pb-16 md:pb-0">
         {children}
       </main>
+      
+      {/* Mobile Navigation */}
+      <BottomNav />
     </div>
   );
 };
