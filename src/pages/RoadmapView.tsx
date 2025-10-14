@@ -323,64 +323,88 @@ const RoadmapView = () => {
   }, [templateData, updateTemplateMutation]);
 
   // Load template data when available
-  useEffect(() => {
-    if (templates && templates.length > 0) {
-      const template = templates[0];
-      if (template.template_data && typeof template.template_data === 'object') {
-        setTemplateData(template.template_data);
-      }
+useEffect(() => {
+  if (templates && templates.length > 0) {
+    const template = templates[0];
+    if (template.template_data && typeof template.template_data === "object") {
+      setTemplateData(template.template_data);
     }
-  }, [templates]);
-
-  const isLoading = isLoadingRoadmap || isLoadingSteps || isLoadingResources || isLoadingComments || isLoadingTemplate || isLoadingSkills;
-
-  if (isLoading) {
-    return <Layout><div>Loading roadmap...</div></Layout>;
   }
+}, [templates]);
 
-  if (!roadmap) {
-    return <Layout><div>Roadmap not found.</div></Layout>;
-  }
+const isLoading =
+  isLoadingRoadmap ||
+  isLoadingSteps ||
+  isLoadingResources ||
+  isLoadingComments ||
+  isLoadingTemplate ||
+  isLoadingSkills;
 
-  const isOwner = user?.id === roadmap.user_id;
+const isOwner = user?.id === roadmap?.user_id;
 
-  // Initialize skills if they don't exist
-  useEffect(() => {
-    const initializeSkills = async () => {
-      if (!roadmap || !user || !isOwner) return;
-      if (roadmapSkills && roadmapSkills.length > 0) return;
-      
-      const defaultSkills = getSkillsForDomain(roadmap.category);
-      if (defaultSkills.length === 0) return;
-      
-      const skillsToInsert = defaultSkills.map(skill => ({
-        roadmap_id: id!,
-        skill_name: skill,
-        is_checked: false
-      }));
-      
-      await supabase.from('roadmap_skills').insert(skillsToInsert);
-      queryClient.invalidateQueries({ queryKey: ['roadmapSkills', id] });
-    };
-    
-    initializeSkills();
-  }, [roadmap, roadmapSkills, user, isOwner, id, queryClient]);
+// Initialize skills if they don't exist
+useEffect(() => {
+  const initializeSkills = async () => {
+    if (!roadmap || !user || !isOwner) return;
+    if (roadmapSkills && roadmapSkills.length > 0) return;
 
-  const toggleSkillMutation = useMutation({
-    mutationFn: async ({ skillId, isChecked }: { skillId: string, isChecked: boolean }) => {
-      const { error } = await supabase
-        .from('roadmap_skills')
-        .update({ is_checked: isChecked })
-        .eq('id', skillId);
-      if (error) throw error;
-      return { skillId, isChecked };
-    },
-    onSuccess: ({ skillId, isChecked }) => {
-      queryClient.setQueryData(['roadmapSkills', id], (old: any[] | undefined) => 
-        old?.map(s => s.id === skillId ? { ...s, is_checked: isChecked } : s)
-      );
-    },
-  });
+    const defaultSkills = getSkillsForDomain(roadmap.category);
+    if (defaultSkills.length === 0) return;
+
+    const skillsToInsert = defaultSkills.map((skill) => ({
+      roadmap_id: id!,
+      skill_name: skill,
+      is_checked: false,
+    }));
+
+    await supabase.from("roadmap_skills").insert(skillsToInsert);
+    queryClient.invalidateQueries({ queryKey: ["roadmapSkills", id] });
+  };
+
+  initializeSkills();
+}, [roadmap, roadmapSkills, user, isOwner, id, queryClient]);
+
+const toggleSkillMutation = useMutation({
+  mutationFn: async ({
+    skillId,
+    isChecked,
+  }: {
+    skillId: string;
+    isChecked: boolean;
+  }) => {
+    const { error } = await supabase
+      .from("roadmap_skills")
+      .update({ is_checked: isChecked })
+      .eq("id", skillId);
+    if (error) throw error;
+    return { skillId, isChecked };
+  },
+  onSuccess: ({ skillId, isChecked }) => {
+    queryClient.setQueryData(["roadmapSkills", id], (old: any[] | undefined) =>
+      old?.map((s) =>
+        s.id === skillId ? { ...s, is_checked: isChecked } : s
+      )
+    );
+  },
+});
+
+// ✅ Return JSX after all hooks are declared
+if (isLoading) {
+  return (
+    <Layout>
+      <div>Loading roadmap...</div>
+    </Layout>
+  );
+}
+
+if (!roadmap) {
+  return (
+    <Layout>
+      <div>Roadmap not found.</div>
+    </Layout>
+  );
+}
+
 
   const groupedSteps = (steps || []).reduce((acc, step) => {
     let phase = 'General';

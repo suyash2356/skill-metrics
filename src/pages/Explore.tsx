@@ -1,836 +1,502 @@
-// Local Skill type for frontend rendering
-type Skill = {
-  id: string;
-  name: string;
-  category: string;
-  description: string;
-  difficulty: string;
-  learners?: number;
-  rating?: number;
-  link?: string;
-  trending?: boolean;
-};
-import { supabase } from "@/integrations/supabase/client";
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+// src/pages/Explore.tsx
+import { useState, useEffect } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { DetailsModal } from "@/components/DetailsModal";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { useNavigate } from "react-router-dom";
 import {
-  Search,
-  TrendingUp,
-  Code,
-  Palette,
-  Database,
-  Brain,
-  Shield,
-  Smartphone,
-  Users,
-  Star,
-  Clock,
   BookOpen,
-  ExternalLink,
-  Bookmark,
-  Play,
-  Loader2
+  Brain,
+  Cloud,
+  Database,
+  Globe,
+  Shield,
+  TrendingUp,
+  Zap,
+  Laptop,
+  Layers,
+  Rocket,
+  Award,
+  Map,
+  GraduationCap,
+  Code,
+  PenTool,
+  MessageSquare,
 } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay } from "swiper/modules";
+import "swiper/css";
+import "swiper/css/autoplay";
+import { motion } from "framer-motion";
 
-const Explore = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [modalType, setModalType] = useState<'skill' | 'certification' | 'path' | null>(null);
+function Explore() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  // activeTab state is only used to reflect current tab; Tabs component handles visuals
+  const [activeTab, setActiveTab] = useState("popular");
 
-  const categories = [
-    { name: "Programming", icon: Code, count: 245, color: "bg-blue-500" },
-    { name: "Design", icon: Palette, count: 128, color: "bg-pink-500" },
-    { name: "Data Science", icon: Database, count: 187, color: "bg-green-500" },
-    { name: "AI/ML", icon: Brain, count: 156, color: "bg-purple-500" },
-    { name: "Cybersecurity", icon: Shield, count: 89, color: "bg-red-500" },
-    { name: "Mobile Dev", icon: Smartphone, count: 134, color: "bg-orange-500" }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchTerm.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+    }
+  };
+
+  const handleCategoryClick = (category: string) => {
+    navigate(`/search?q=${encodeURIComponent(category)}`);
+  };
+
+  // Animated title words
+  const rotatingWords = [
+    "AI & Machine Learning",
+    "Cybersecurity",
+    "Cloud Computing",
+    "Blockchain",
+    "Data Science",
+    "Software Development",
   ];
 
-  const fetchTrendingSkills = async (): Promise<Skill[]> => {
-    // The skills table is not available in Supabase types, so this query is commented out to avoid errors.
-    // Return an empty array for error-free operation.
-    return [];
-  };
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
-  const fetchExamCertifications = async () => {
-    // Simulate API call
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve([
-          {
-            name: "AWS Solutions Architect Associate",
-            provider: "Amazon Web Services",
-            difficulty: "Associate",
-            passingScore: "72%",
-            avgSalary: "$130k",
-            nextExam: "Available Year-round",
-            duration: "130 minutes",
-            cost: "$150",
-            description: "Design distributed systems on AWS platform",
-            link: "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
-            prerequisites: ["Basic AWS knowledge", "Networking fundamentals", "Security concepts"],
-            examTopics: [
-              "Design Resilient Architectures (30%)",
-              "Design High-Performing Architectures (28%)",
-              "Design Secure Applications and Architectures (24%)",
-              "Design Cost-Optimized Architectures (18%)"
-            ],
-            studyMaterials: [
-              "AWS Training and Certification",
-              "AWS Whitepapers",
-              "Hands-on Labs",
-              "Practice Exams",
-              "AWS Documentation",
-              "Community Forums"
-            ],
-            skillsValidated: ["AWS Architecture", "Security", "Cost Optimization", "Performance", "Reliability"],
-            careerPaths: ["Solutions Architect", "Cloud Architect", "DevOps Engineer", "Cloud Consultant"]
-          },
-          {
-            name: "Google Professional Cloud Architect",
-            provider: "Google Cloud",
-            difficulty: "Professional",
-            passingScore: "70%",
-            avgSalary: "$139k",
-            nextExam: "Available Year-round",
-            duration: "2 hours",
-            cost: "$200",
-            description: "Design and manage scalable, reliable Google Cloud solutions",
-            link: "https://cloud.google.com/certification/cloud-architect",
-            prerequisites: ["3+ years cloud experience", "Google Cloud fundamentals", "Solution architecture experience"],
-            examTopics: [
-              "Designing and planning a cloud solution architecture (24%)",
-              "Managing and provisioning a solution infrastructure (20%)",
-              "Designing for security and compliance (20%)",
-              "Analyzing and optimizing technical and business processes (18%)",
-              "Managing implementations of cloud architecture (18%)"
-            ],
-            studyMaterials: [
-              "Google Cloud Training",
-              "Hands-on Labs",
-              "Practice Exams",
-              "Cloud Architecture Center",
-              "Google Cloud Documentation",
-              "Case Studies"
-            ],
-            skillsValidated: ["Cloud Architecture", "Google Cloud Platform", "Solution Design", "Security", "Cost Optimization"],
-            careerPaths: ["Cloud Architect", "Solutions Architect", "Cloud Engineer", "Technical Lead"]
-          }
-        ]);
-      }, 700);
-    });
-  };
-
-  const fetchLearningPaths = async () => {
-    // Simulate API call
-    return new Promise(resolve => {
-      setTimeout(() => {
-        resolve([
-          {
-            title: "Full Stack Web Development",
-            description: "Complete curriculum from HTML/CSS to full-stack JavaScript",
-            duration: "1,800 hours",
-            skills: ["HTML/CSS", "JavaScript", "React", "Node.js", "Databases"],
-            level: "Beginner to Advanced",
-            students: "2.8M",
-            rating: 4.8,
-            price: "Free",
-            projects: 20,
-            link: "https://www.freecodecamp.org/learn/",
-            prerequisites: ["Basic computer literacy", "No programming experience required"],
-            modules: [
-              "Responsive Web Design",
-              "JavaScript Algorithms and Data Structures",
-              "Front End Development Libraries",
-              "Data Visualization",
-              "Back End Development and APIs",
-              "Quality Assurance",
-              "Scientific Computing with Python",
-              "Data Analysis with Python",
-              "Information Security",
-              "Machine Learning with Python"
-            ],
-            learningOutcomes: [
-              "Build responsive websites with HTML and CSS",
-              "Program interactive applications with JavaScript",
-              "Create dynamic user interfaces with React",
-              "Develop server-side applications with Node.js",
-              "Work with databases and APIs",
-              "Implement security best practices"
-            ],
-            tools: ["VS Code", "Git", "GitHub", "Node.js", "React", "Express", "MongoDB"],
-            assignments: [
-              "Build a Tribute Page",
-              "Build a Survey Form",
-              "Build a Product Landing Page",
-              "Build a Technical Documentation Page",
-              "Build a Personal Portfolio Webpage",
-              "JavaScript Calculator",
-              "Pomodoro Clock",
-              "Random Quote Machine",
-              "Markdown Previewer",
-              "Drum Machine"
-            ]
-          },
-          {
-            title: "Data Scientist Nanodegree",
-            description: "Data pipelines, experiments, recommendation systems",
-            duration: "4 months",
-            skills: ["Python", "Machine Learning", "Statistics", "SQL", "Data Visualization"],
-            level: "Intermediate",
-            students: "15.2k",
-            rating: 4.9,
-            price: "$399/month",
-            projects: 8,
-            link: "https://www.udacity.com/course/data-scientist-nanodegree--nd025",
-            prerequisites: ["Python programming", "Statistics knowledge", "SQL basics", "Linear algebra"],
-            modules: [
-              "Data Science Process",
-              "Software Engineering for Data Scientists",
-              "Data Engineering",
-              "Experiment Design and Recommendations",
-              "Data Science Projects"
-            ],
-            learningOutcomes: [
-              "Build data pipelines to collect and process data",
-              "Design and run A/B tests to make business decisions",
-              "Build recommendation engines using collaborative filtering",
-              "Deploy machine learning models to production",
-              "Communicate findings to stakeholders effectively"
-            ],
-            tools: ["Python", "Pandas", "NumPy", "Scikit-learn", "TensorFlow", "AWS", "Spark", "Jupyter"],
-            assignments: [
-              "Finding Donors for CharityML",
-              "Image Classifier Project",
-              "Data Engineering Pipeline",
-              "Experimental Design and Recommendations",
-              "Data Science Capstone Project"
-            ]
-          }
-        ]);
-      }, 900);
-    });
-  };
-
-  const { data: trendingSkills = [], isLoading: isLoadingSkills, isError: isErrorSkills, error: skillsError } = useQuery({
-    queryKey: ['trendingSkills'],
-    queryFn: fetchTrendingSkills,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  const { data: examCertifications = [], isLoading: isLoadingCertifications, isError: isErrorCertifications, error: certificationsError } = useQuery({
-    queryKey: ['examCertifications'],
-    queryFn: fetchExamCertifications,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  const { data: learningPaths = [], isLoading: isLoadingPaths, isError: isErrorPaths, error: pathsError } = useQuery({
-    queryKey: ['learningPaths'],
-    queryFn: fetchLearningPaths,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-  });
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      case 'expert': return 'bg-purple-100 text-purple-800';
-      case 'professional': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  // Filter data based on search query
-  const filteredSkills = useMemo(() => {
-    const skillsArr = Array.isArray(trendingSkills) ? trendingSkills : [];
-    if (!searchQuery) return skillsArr;
-    return skillsArr.filter(skill => 
-      skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      skill.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      skill.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, trendingSkills]);
-
-  const filteredCertifications = useMemo(() => {
-    const certArr = Array.isArray(examCertifications) ? examCertifications : [];
-    if (!searchQuery) return certArr;
-    return certArr.filter(cert => 
-      cert.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cert.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cert.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery, examCertifications]);
-
-  const filteredPaths = useMemo(() => {
-    const pathsArr = Array.isArray(learningPaths) ? learningPaths : [];
-    if (!searchQuery) return pathsArr;
-    return pathsArr.filter(path => 
-      path.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      path.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (Array.isArray(path.skills) && path.skills.some(skill => skill.toLowerCase().includes(searchQuery.toLowerCase())))
-    );
-  }, [searchQuery, learningPaths]);
-
-  const handleCategoryClick = (categoryName: string) => {
-    setSearchQuery(categoryName);
-    toast({
-      title: "Filter Applied",
-      description: `Showing results for ${categoryName}`,
-    });
-  };
-
-  const handleStartLearning = (skillName: string, link?: string) => {
-    if (link) {
-      window.open(link, '_blank');
-      toast({
-        title: "Opening Course",
-        description: `Opening ${skillName} in new tab...`,
-      });
-    } else {
-      toast({
-        title: "Course Started",
-        description: `Welcome to ${skillName}! Happy learning!`,
-      });
-    }
-  };
-
-  const handleViewDetails = (item: any, type: 'skill' | 'certification' | 'path') => {
-    setSelectedItem(item);
-    setModalType(type);
-  };
-
-  const handleCloseModal = () => {
-    setSelectedItem(null);
-    setModalType(null);
-  };
-
-  const handleStartFromModal = () => {
-    if (selectedItem?.link) {
-      window.open(selectedItem.link, '_blank');
-      toast({
-        title: "Opening Course",
-        description: `Opening ${selectedItem.name || selectedItem.title} in new tab...`,
-      });
-    }
-    handleCloseModal();
-  };
-
-  const handleBookmark = (itemName: string) => {
-    toast({
-      title: "Bookmarked",
-      description: `${itemName} added to your saved items`,
-    });
-  };
-
-  const handleStartPath = (pathTitle: string, link?: string) => {
-    if (link) {
-      window.open(link, '_blank');
-      toast({
-        title: "Opening Learning Path",
-        description: `Opening ${pathTitle} in new tab...`,
-      });
-    } else {
-      toast({
-        title: "Learning Path Started",
-        description: `Welcome to ${pathTitle}! Your journey begins now.`,
-      });
-    }
-  };
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentWordIndex((prev) => (prev + 1) % rotatingWords.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        {/* Header */}
-        <div className="text-center mb-6 md:mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3 md:mb-4">
-            Explore{" "}
-            <span className="bg-gradient-primary bg-clip-text text-transparent">
-              Trending Content
-            </span>
+      <div className="container mx-auto px-4 py-10 max-w-7xl">
+        {/* Hero Section */}
+        <section className="text-center mb-12">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
+            Explore Top Learning Resources
           </h1>
-          <p className="text-base md:text-xl text-muted-foreground max-w-2xl mx-auto">
-            Discover trending skills, popular technologies, and what's hot in the learning community
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Discover trending skills, domains, and career paths with the most popular and useful learning
+            materials on the web.
           </p>
-        </div>
 
-        {/* Search */}
-        <Card className="mb-6 md:mb-8 shadow-card">
-          <CardContent className="p-4 md:p-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input
-                placeholder="Search skills, technologies, or certifications..."
-                className="pl-10 h-10 md:h-12 text-base md:text-lg"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Categories */}
-        <Card className="mb-6 md:mb-8 shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2 text-lg md:text-xl">
-              <TrendingUp className="h-5 w-5" />
-              <span>Popular Categories</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
-              {categories.map((category, index) => {
-                const Icon = category.icon;
-                return (
-                  <Card 
-                    key={index} 
-                    className="p-3 md:p-4 text-center hover:shadow-elevated transition-all duration-300 cursor-pointer"
-                    onClick={() => handleCategoryClick(category.name)}
-                  >
-                    <div className={`w-10 h-10 md:w-12 md:h-12 ${category.color} rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3`}>
-                      <Icon className="h-5 w-5 md:h-6 md:w-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-xs md:text-sm mb-1 break-words">{category.name}</h3>
-                    <p className="text-[10px] md:text-xs text-muted-foreground">{category.count} resources</p>
-                  </Card>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Tabs */}
-        <Tabs defaultValue="skills" className="space-y-6">
-          <div className="w-full overflow-x-auto">
-            <TabsList className="flex w-max md:w-full md:grid md:grid-cols-3 gap-2 md:gap-0">
-              <TabsTrigger value="skills" className="whitespace-nowrap">🔥 Trending Skills</TabsTrigger>
-              <TabsTrigger value="certifications" className="whitespace-nowrap">🏆 Popular Certifications</TabsTrigger>
-              <TabsTrigger value="paths" className="whitespace-nowrap">🚀 Hot Learning Paths</TabsTrigger>
-            </TabsList>
+          {/* Dynamic rotating text */}
+          <div className="mt-6">
+            <span className="text-xl font-semibold text-indigo-600 transition-all duration-500">
+              {rotatingWords[currentWordIndex]}
+            </span>
           </div>
 
-          <TabsContent value="skills" className="space-y-6">
-            {searchQuery && (
-              <div className="text-center text-muted-foreground mb-4">
-                Showing {filteredSkills.length} results for "{searchQuery}"
-                {searchQuery && (
-                  <Button 
-                    variant="link" 
-                    className="ml-2 p-0 h-auto"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    Clear filter
-                  </Button>
-                )}
-              </div>
-            )}
-            {isLoadingSkills ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => (
-                  <Card key={i} className="shadow-card animate-pulse">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="h-6 bg-muted rounded w-3/4"></div>
-                      <div className="h-4 bg-muted rounded w-1/2"></div>
-                      <div className="h-4 bg-muted rounded"></div>
-                      <div className="flex justify-between items-center pt-2">
-                        <div className="h-4 bg-muted rounded w-1/4"></div>
-                        <div className="h-4 bg-muted rounded w-1/6"></div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : isErrorSkills ? (
-              <div className="text-center py-8 text-red-500">
-                Failed to load skills: {skillsError?.message || "Unknown error"}
-                <Button onClick={() => window.location.reload()} className="ml-2">Retry</Button>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {filteredSkills.map((skill, index) => (
-                  <Card key={index} className="shadow-card hover:shadow-elevated transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-lg mb-1">{skill.name}</h3>
-                          <Badge variant="outline" className="text-xs mb-2">
-                            {skill.category}
-                          </Badge>
-                          <p className="text-sm text-muted-foreground">{skill.description}</p>
-                        </div>
-                        <div className="flex flex-col space-y-1 ml-2">
-                          {skill.trending && (
-                            <Badge className="bg-red-500 text-white text-xs">
-                              🔥 Trending
-                            </Badge>
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleBookmark(skill.name)}
-                          >
-                            <Bookmark className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="mt-8 flex justify-center max-w-md mx-auto">
+            <Input
+              type="text"
+              placeholder="Search skills, exams, or topics..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="rounded-l-lg border border-gray-300 focus-visible:ring-indigo-500"
+            />
+            <Button
+              type="submit"
+              className="rounded-l-none bg-indigo-600 hover:bg-indigo-700 text-white"
+            >
+              Search
+            </Button>
+          </form>
+        </section>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>{skill.learners} learners</span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            <span>{skill.rating}</span>
-                          </span>
-                        </div>
+        {/* Tabs for Explore Sections */}
+        <Tabs defaultValue="popular" onValueChange={(v) => setActiveTab(v)} className="space-y-8">
+          <TabsList className="flex justify-center bg-transparent gap-2">
+            <TabsTrigger value="popular">Popular</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="certifications">Certifications</TabsTrigger>
+            <TabsTrigger value="learning">Learning Paths</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
+          </TabsList>
 
-                        <div className="flex justify-between items-center">
-                          <Badge className={getDifficultyColor(skill.difficulty)}>
-                            {skill.difficulty}
-                          </Badge>
-                          <div className="flex space-x-2">
-                            <Button 
-                              variant="outline" 
-                              size="sm"
-                              onClick={() => handleViewDetails(skill, 'skill')}
-                            >
-                              <ExternalLink className="h-3 w-3 mr-1" />
-                              Details
-                            </Button>
-                            <Button 
-                              size="sm"
-                              onClick={() => handleStartLearning(skill.name, skill.link)}
-                            >
-                              <Play className="h-3 w-3 mr-1" />
-                              Start
-                            </Button>
-                          </div>
+          {/* === Popular Categories Section === */}
+          <TabsContent value="popular">
+            <section>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold flex items-center gap-2">
+                  <TrendingUp className="h-6 w-6 text-indigo-500" />
+                  Popular Categories
+                </h2>
+              </div>
+
+              <Swiper
+                modules={[Autoplay]}
+                autoplay={{
+                  delay: 2500,
+                  disableOnInteraction: false,
+                }}
+                loop={true}
+                spaceBetween={24}
+                slidesPerView={1.2}
+                breakpoints={{
+                  640: { slidesPerView: 2 },
+                  1024: { slidesPerView: 3 },
+                  1280: { slidesPerView: 4 },
+                }}
+                className="pb-8"
+              >
+                {[
+                  {
+                    title: "Artificial Intelligence",
+                    icon: Brain,
+                    color: "from-indigo-500 to-purple-500",
+                    description: "Learn modern AI tools, ML algorithms, and neural networks.",
+                  },
+                  {
+                    title: "Data Science",
+                    icon: Database,
+                    color: "from-blue-500 to-cyan-500",
+                    description: "Analyze data, visualize insights, and build predictive models.",
+                  },
+                  {
+                    title: "Cloud Computing",
+                    icon: Cloud,
+                    color: "from-sky-500 to-indigo-500",
+                    description: "Master AWS, Azure, and Google Cloud to scale systems globally.",
+                  },
+                  {
+                    title: "Cybersecurity",
+                    icon: Shield,
+                    color: "from-rose-500 to-red-500",
+                    description: "Protect data and networks using ethical hacking and security tools.",
+                  },
+                  {
+                    title: "Blockchain",
+                    icon: Layers,
+                    color: "from-amber-500 to-orange-500",
+                    description: "Dive into Web3, smart contracts, and decentralized finance.",
+                  },
+                  {
+                    title: "DevOps",
+                    icon: Zap,
+                    color: "from-green-500 to-emerald-500",
+                    description: "Automate deployments, CI/CD pipelines, and Kubernetes clusters.",
+                  },
+                  {
+                    title: "Software Development",
+                    icon: Laptop,
+                    color: "from-purple-600 to-pink-500",
+                    description: "Build modern apps with React, Node.js, and full-stack tools.",
+                  },
+                  {
+                    title: "Product Management",
+                    icon: Rocket,
+                    color: "from-indigo-600 to-sky-500",
+                    description: "Learn agile strategy, user research, and product execution.",
+                  },
+                ].map((category, idx) => (
+                  <SwiperSlide key={idx}>
+                    <Card
+                      onClick={() => handleCategoryClick(category.title)}
+                      className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+                    >
+                      <CardHeader className="flex items-center gap-3">
+                        <div
+                          className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}
+                        >
+                          <category.icon className="h-6 w-6" />
                         </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground text-sm">{category.description}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                          onClick={() => handleCategoryClick(category.title)}
+                        >
+                          Explore
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </SwiperSlide>
                 ))}
-              </div>
-            )}
-            {filteredSkills.length === 0 && searchQuery && (
-              <div className="text-center py-8 text-muted-foreground">
-                No skills found matching "{searchQuery}". Try a different search term.
-              </div>
-            )}
+              </Swiper>
+            </section>
           </TabsContent>
 
-          <TabsContent value="certifications" className="space-y-6">
-            {searchQuery && (
-              <div className="text-center text-muted-foreground mb-4">
-                Showing {filteredCertifications.length} results for "{searchQuery}"
-                {searchQuery && (
-                  <Button 
-                    variant="link" 
-                    className="ml-2 p-0 h-auto"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    Clear filter
-                  </Button>
-                )}
-              </div>
-            )}
-            {isLoadingCertifications ? (
-              <div className="grid md:grid-cols-2 gap-6">
-                {[...Array(2)].map((_, i) => (
-                  <Card key={i} className="shadow-card animate-pulse">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="h-6 bg-muted rounded w-3/4"></div>
-                      <div className="h-4 bg-muted rounded w-1/2"></div>
-                      <div className="h-4 bg-muted rounded"></div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="h-4 bg-muted rounded"></div>
-                        <div className="h-4 bg-muted rounded"></div>
+          {/* === Categories Section (static grid as alternative view) === */}
+          <TabsContent value="categories">
+            <section>
+              <h2 className="text-2xl font-bold mb-4">All Categories</h2>
+              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {[
+                  "Artificial Intelligence",
+                  "Data Science",
+                  "Cloud Computing",
+                  "Cybersecurity",
+                  "Blockchain",
+                  "DevOps",
+                  "Software Development",
+                  "Product Management",
+                ].map((cat) => (
+                  <motion.div whileHover={{ y: -4 }} key={cat}>
+                    <Card
+                      onClick={() => handleCategoryClick(cat)}
+                      className="cursor-pointer p-4 hover:shadow-lg transition-shadow"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-semibold">{cat}</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Top courses, books & channels</p>
+                        </div>
+                        <div className="text-muted-foreground">
+                          <Badge variant="secondary">Top</Badge>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="h-4 bg-muted rounded"></div>
-                        <div className="h-4 bg-muted rounded"></div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="h-4 bg-muted rounded"></div>
-                        <div className="h-4 bg-muted rounded"></div>
-                      </div>
-                      <div className="flex space-x-2 pt-2">
-                        <div className="h-9 bg-muted rounded w-1/2"></div>
-                        <div className="h-9 bg-muted rounded w-1/2"></div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
-            ) : isErrorCertifications ? (
-              <div className="text-center py-8 text-red-500">
-                Failed to load certifications: {certificationsError?.message || "Unknown error"}
-                <Button onClick={() => window.location.reload()} className="ml-2">Retry</Button>
-              </div>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-6">
-                {filteredCertifications.map((cert, index) => (
-                  <Card key={index} className="shadow-card hover:shadow-elevated transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h3 className="font-semibold text-lg mb-1">{cert.name}</h3>
-                            <p className="text-muted-foreground text-sm mb-2">{cert.provider}</p>
-                            <p className="text-sm text-muted-foreground">{cert.description}</p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => handleBookmark(cert.name)}
-                          >
-                            <Bookmark className="h-4 w-4" />
-                          </Button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Difficulty</p>
-                            <Badge className={getDifficultyColor(cert.difficulty)}>
-                              {cert.difficulty}
-                            </Badge>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Passing Score</p>
-                            <p className="font-semibold">{cert.passingScore}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Duration</p>
-                            <p className="font-semibold">{cert.duration}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Cost</p>
-                            <p className="font-semibold">{cert.cost}</p>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-muted-foreground">Avg Salary</p>
-                            <p className="font-semibold text-success">{cert.avgSalary}</p>
-                          </div>
-                          <div>
-                            <p className="text-muted-foreground">Next Exam</p>
-                            <p className="font-semibold">{cert.nextExam}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex space-x-2">
-                          <Button 
-                            className="flex-1"
-                            onClick={() => handleViewDetails(cert, 'certification')}
-                          >
-                            View Details
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex-1"
-                            onClick={() => handleStartLearning(`${cert.name} preparation`, cert.link)}
-                          >
-                            <BookOpen className="h-4 w-4 mr-2" />
-                            Study Path
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-            {filteredCertifications.length === 0 && searchQuery && (
-              <div className="text-center py-8 text-muted-foreground">
-                No certifications found matching "{searchQuery}". Try a different search term.
-              </div>
-            )}
+            </section>
           </TabsContent>
 
-          <TabsContent value="paths" className="space-y-6">
-            {searchQuery && (
-              <div className="text-center text-muted-foreground mb-4">
-                Showing {filteredPaths.length} results for "{searchQuery}"
-                {searchQuery && (
-                  <Button 
-                    variant="link" 
-                    className="ml-2 p-0 h-auto"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    Clear filter
-                  </Button>
-                )}
-              </div>
-            )}
-            {isLoadingPaths ? (
-              <div className="space-y-6">
-                {[...Array(2)].map((_, i) => (
-                  <Card key={i} className="shadow-card animate-pulse">
-                    <CardContent className="p-6">
-                      <div className="grid md:grid-cols-3 gap-6">
-                        <div className="md:col-span-2 space-y-4">
-                          <div className="h-6 bg-muted rounded w-full mb-2"></div>
-                          <div className="h-4 bg-muted rounded w-5/6"></div>
-                          <div className="flex flex-wrap gap-2">
-                            {[...Array(4)].map((_, j) => (
-                              <Badge key={j} variant="secondary" className="h-6 w-20 bg-muted rounded"></Badge>
-                            ))}
-                          </div>
-                          <div className="flex items-center space-x-6 pt-2">
-                            <div className="h-4 bg-muted rounded w-1/5"></div>
-                            <div className="h-4 bg-muted rounded w-1/4"></div>
-                            <div className="h-4 bg-muted rounded w-1/6"></div>
-                          </div>
+          {/* === Certifications Section === */}
+          <TabsContent value="certifications">
+            <section className="space-y-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Award className="h-6 w-6 text-yellow-500" />
+                Top Certifications
+              </h2>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  {
+                    name: "AWS Certified Solutions Architect",
+                    provider: "Amazon Web Services",
+                    icon: Cloud,
+                    color: "from-sky-500 to-blue-600",
+                    link: "https://aws.amazon.com/certification/",
+                  },
+                  {
+                    name: "Google Data Analytics",
+                    provider: "Coursera",
+                    icon: Database,
+                    color: "from-green-500 to-emerald-500",
+                    link: "https://www.coursera.org/professional-certificates/google-data-analytics",
+                  },
+                  {
+                    name: "Certified Ethical Hacker (CEH)",
+                    provider: "EC-Council",
+                    icon: Shield,
+                    color: "from-red-500 to-rose-600",
+                    link: "https://www.eccouncil.org/programs/certified-ethical-hacker-ceh/",
+                  },
+                  {
+                    name: "TensorFlow Developer Certificate",
+                    provider: "Google",
+                    icon: Brain,
+                    color: "from-purple-500 to-pink-500",
+                    link: "https://www.tensorflow.org/certificate",
+                  },
+                  {
+                    name: "PMI Project Management Professional",
+                    provider: "PMI",
+                    icon: Rocket,
+                    color: "from-indigo-500 to-violet-500",
+                    link: "https://www.pmi.org/certifications",
+                  },
+                  {
+                    name: "Microsoft Azure Fundamentals",
+                    provider: "Microsoft",
+                    icon: Cloud,
+                    color: "from-blue-600 to-cyan-600",
+                    link: "https://learn.microsoft.com/en-us/certifications/azure-fundamentals/",
+                  },
+                ].map((cert, i) => (
+                  <motion.div key={i} whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 300 }}>
+                    <Card
+                      onClick={() => window.open(cert.link, "_blank")}
+                      className="cursor-pointer bg-gradient-to-br from-background to-muted shadow-md hover:shadow-lg transition-all border-0"
+                    >
+                      <CardHeader className="flex items-center gap-3">
+                        <div className={`p-3 rounded-full bg-gradient-to-r ${cert.color} text-white shadow-lg`}>
+                          <cert.icon className="h-6 w-6" />
                         </div>
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <div className="h-4 bg-muted rounded w-1/2"></div>
-                            <div className="h-6 bg-muted rounded w-3/4"></div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="h-9 bg-muted rounded w-full"></div>
-                            <div className="h-9 bg-muted rounded w-full"></div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <CardTitle className="text-lg font-semibold">{cert.name}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-muted-foreground text-sm">Offered by {cert.provider}</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
-            ) : isErrorPaths ? (
-              <div className="text-center py-8 text-red-500">
-                Failed to load learning paths: {pathsError?.message || "Unknown error"}
-                <Button onClick={() => window.location.reload()} className="ml-2">Retry</Button>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {filteredPaths.map((path, index) => (
-                  <Card key={index} className="shadow-card hover:shadow-elevated transition-all duration-300">
-                    <CardContent className="p-6">
-                      <div className="grid md:grid-cols-3 gap-6">
-                        <div className="md:col-span-2 space-y-4">
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-xl mb-2">{path.title}</h3>
-                              <p className="text-muted-foreground mb-3">{path.description}</p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => handleBookmark(path.title)}
-                            >
-                              <Bookmark className="h-4 w-4" />
-                            </Button>
-                          </div>
+            </section>
+          </TabsContent>
 
-                          <div className="flex flex-wrap gap-2">
-                            {path.skills.map((skill, skillIndex) => (
-                              <Badge 
-                                key={skillIndex} 
-                                variant="secondary"
-                                className="cursor-pointer hover:bg-secondary/80"
-                                onClick={() => setSearchQuery(skill)}
-                              >
-                                {skill}
-                              </Badge>
-                            ))}
-                          </div>
+          {/* === Learning Paths Section === */}
+          <TabsContent value="learning">
+            <section className="space-y-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <Map className="h-6 w-6 text-green-500" />
+                Recommended Learning Paths
+              </h2>
 
-                          <div className="flex items-center space-x-6 text-sm text-muted-foreground">
-                            <div className="flex items-center space-x-1">
-                              <Clock className="h-4 w-4" />
-                              <span>{path.duration}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Users className="h-4 w-4" />
-                              <span>{path.students} students</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <Star className="h-4 w-4 text-yellow-500" />
-                              <span>{path.rating}</span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <BookOpen className="h-4 w-4" />
-                              <span>{path.projects} projects</span>
-                            </div>
-                          </div>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  {
+                    title: "Become a Data Scientist",
+                    steps: 7,
+                    duration: "6 months",
+                    icon: Database,
+                    color: "from-blue-500 to-cyan-500",
+                  },
+                  {
+                    title: "AI Engineer Roadmap",
+                    steps: 9,
+                    duration: "8 months",
+                    icon: Brain,
+                    color: "from-purple-500 to-indigo-500",
+                  },
+                  {
+                    title: "Full-Stack Developer",
+                    steps: 10,
+                    duration: "9 months",
+                    icon: Laptop,
+                    color: "from-pink-500 to-rose-500",
+                  },
+                  {
+                    title: "Cybersecurity Expert",
+                    steps: 8,
+                    duration: "7 months",
+                    icon: Shield,
+                    color: "from-red-500 to-orange-500",
+                  },
+                  {
+                    title: "Cloud & DevOps Engineer",
+                    steps: 6,
+                    duration: "5 months",
+                    icon: Cloud,
+                    color: "from-sky-500 to-indigo-500",
+                  },
+                  {
+                    title: "Product Manager",
+                    steps: 5,
+                    duration: "4 months",
+                    icon: Rocket,
+                    color: "from-indigo-600 to-purple-600",
+                  },
+                ].map((path, idx) => (
+                  <motion.div key={idx} whileHover={{ scale: 1.04 }} transition={{ type: "spring", stiffness: 250 }}>
+                    <Card className="bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500">
+                      <CardHeader className="flex items-center gap-3">
+                        <div className={`p-3 rounded-full bg-gradient-to-r ${path.color} text-white shadow-lg`}>
+                          <path.icon className="h-6 w-6" />
                         </div>
-
-                        <div className="space-y-4">
-                          <div className="space-y-2">
-                            <div>
-                              <p className="text-muted-foreground text-sm mb-1">Level</p>
-                              <Badge className={getDifficultyColor(path.level.split(' ')[0])}>
-                                {path.level}
-                              </Badge>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground text-sm mb-1">Price</p>
-                              <p className="font-semibold text-lg">{path.price}</p>
-                            </div>
-                          </div>
-
-                          <div className="space-y-2">
-                            <Button 
-                              className="w-full"
-                              onClick={() => handleStartPath(path.title, path.link)}
-                            >
-                              Start Path
-                            </Button>
-                            <Button 
-                              variant="outline" 
-                              className="w-full"
-                              onClick={() => handleViewDetails(path, 'path')}
-                            >
-                              View Curriculum
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        <CardTitle className="text-lg font-bold">{path.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground mb-3">{path.steps} Steps • {path.duration}</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full hover:bg-green-600 hover:text-white transition-colors"
+                          onClick={() => handleCategoryClick(path.title.toLowerCase())}
+                        >
+                          Start Path
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 ))}
               </div>
-            )}
-            {filteredPaths.length === 0 && searchQuery && (
-              <div className="text-center py-8 text-muted-foreground">
-                No learning paths found matching "{searchQuery}". Try a different search term.
+            </section>
+          </TabsContent>
+
+          {/* === Trending Resources Section === */}
+          <TabsContent value="resources">
+            <section className="space-y-8">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                <BookOpen className="h-6 w-6 text-orange-500" />
+                Trending Resources
+              </h2>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  {
+                    title: "Deep Learning Specialization — Coursera",
+                    desc: "Andrew Ng's legendary deep learning course series.",
+                    link: "https://www.coursera.org/specializations/deep-learning",
+                    icon: GraduationCap,
+                    color: "from-indigo-500 to-blue-600",
+                  },
+                  {
+                    title: "The Data Science Handbook",
+                    desc: "Insights from top data scientists around the world.",
+                    link: "https://www.thedatasciencehandbook.com/",
+                    icon: BookOpen,
+                    color: "from-green-500 to-emerald-600",
+                  },
+                  {
+                    title: "FreeCodeCamp — Machine Learning",
+                    desc: "Hands-on tutorials for ML, Python, and TensorFlow.",
+                    link: "https://www.freecodecamp.org/learn/",
+                    icon: Code,
+                    color: "from-cyan-500 to-sky-500",
+                  },
+                  {
+                    title: "r/learnprogramming (Reddit)",
+                    desc: "Join 4M+ learners discussing tips and resources.",
+                    link: "https://www.reddit.com/r/learnprogramming/",
+                    icon: MessageSquare,
+                    color: "from-orange-500 to-red-500",
+                  },
+                  {
+                    title: "Medium — Towards Data Science",
+                    desc: "The most-read blog for AI and ML learners.",
+                    link: "https://towardsdatascience.com/",
+                    icon: PenTool,
+                    color: "from-yellow-500 to-amber-500",
+                  },
+                  {
+                    title: "MIT OpenCourseWare",
+                    desc: "Free online courses from MIT covering all domains.",
+                    link: "https://ocw.mit.edu/",
+                    icon: Globe,
+                    color: "from-blue-500 to-violet-500",
+                  },
+                ].map((res, i) => (
+                  <motion.div key={i} whileHover={{ y: -5, scale: 1.03 }} transition={{ type: "spring", stiffness: 300 }}>
+                    <Card
+                      onClick={() => window.open(res.link, "_blank")}
+                      className="cursor-pointer bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-lg transition-all"
+                    >
+                      <CardHeader className="flex items-center gap-3">
+                        <div className={`p-3 rounded-full bg-gradient-to-r ${res.color} text-white shadow-lg`}>
+                          <res.icon className="h-6 w-6" />
+                        </div>
+                        <CardTitle className="text-lg font-semibold leading-snug">{res.title}</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">{res.desc}</p>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
               </div>
-            )}
+            </section>
           </TabsContent>
         </Tabs>
 
-        <DetailsModal
-          isOpen={modalType !== null}
-          onClose={handleCloseModal}
-          type={modalType || 'skill'}
-          data={selectedItem}
-          onStart={handleStartFromModal}
-        />
+        {/* === Footer === */}
+        <footer className="mt-16 text-center text-sm text-muted-foreground">
+          <p>🚀 Explore. Learn. Grow. — Powered by SkillMetrics AI</p>
+          <p className="mt-1">
+            Built with ❤️ using <span className="text-primary font-semibold">React + Tailwind</span>
+          </p>
+        </footer>
       </div>
     </Layout>
   );
-};
+}
 
 export default Explore;
