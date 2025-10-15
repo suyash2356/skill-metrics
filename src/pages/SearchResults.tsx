@@ -1,190 +1,191 @@
-// pages/SearchResults.tsx
-import { useState, useEffect } from "react";
-import { Layout } from "@/components/Layout";
-import { useSearchParams } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
-  BookOpen, 
-  ExternalLink, 
-  Youtube, 
-  Globe, 
-  MessageSquare, 
-  GraduationCap 
-} from "lucide-react";
-import { fetchRecommendations, Recommendation } from "@/api/searchAPI";
+// components/SearchResults.tsx
+"use client";
 
-const SearchResults = () => {
-  const [searchParams] = useSearchParams();
-  const query = searchParams.get("q") || "";
-  const [loading, setLoading] = useState(false);
+import { useEffect, useRef, useState } from "react";
+import { fetchSearchSuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
+import { Search, Star, Users, Layers, Book, Globe, Youtube, Brain } from "lucide-react";
+
+export default function SearchResults() {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [activeIndex, setActiveIndex] = useState(-1);
+  const [isFocused, setIsFocused] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
+  // ------------------------------
+  // 🔹 Fetch Suggestions
+  // ------------------------------
   useEffect(() => {
-    const getRecommendations = async () => {
-      setLoading(true);
-      try {
-        const res = await fetchRecommendations(query);
-        setRecommendations(res);
-      } catch (err) {
-        console.error(err);
-        setRecommendations([]);
-      }
-      setLoading(false);
-    };
-    getRecommendations();
+    if (!query) {
+      setSuggestions([]);
+      return;
+    }
+
+    const handler = setTimeout(async () => {
+      const res = await fetchSearchSuggestions(query);
+      setSuggestions(res);
+    }, 250);
+
+    return () => clearTimeout(handler);
   }, [query]);
 
-  const getTypeIcon = (type: string) => {
-    switch (type) {
-      case "youtube": return Youtube;
-      case "book": return BookOpen;
-      case "course": return GraduationCap;
-      case "website": return Globe;
-      case "reddit": return MessageSquare;
-      case "discord": return MessageSquare;
-      case "blog": return BookOpen;
-      default: return BookOpen;
+  // ------------------------------
+  // 🔹 Fetch Recommendations when a skill is selected
+  // ------------------------------
+  async function handleSelectSuggestion(s: Suggestion) {
+    setQuery(s.name || "");
+    setSuggestions([]);
+    if (s.kind === "skill") {
+      const res = await fetchRecommendations(s.name);
+      setRecommendations(res);
+    } else {
+      setRecommendations([]);
     }
-  };
-
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "youtube": return "bg-red-500";
-      case "book": return "bg-green-500";
-      case "course": return "bg-blue-500";
-      case "website": return "bg-purple-500";
-      case "reddit": return "bg-orange-500";
-      case "discord": return "bg-indigo-500";
-      case "blog": return "bg-pink-500";
-      default: return "bg-gray-500";
-    }
-  };
-
-  if (loading) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
-          <p className="text-lg text-muted-foreground">Loading recommendations...</p>
-        </div>
-      </Layout>
-    );
   }
 
-  if (!recommendations.length) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-6 max-w-6xl">
-          <h1 className="text-3xl font-bold mb-4">Search results for "{query}"</h1>
-          <p className="text-muted-foreground text-lg">No recommendations found. Try another topic.</p>
-        </div>
-      </Layout>
-    );
+  // ------------------------------
+  // 🔹 Keyboard Navigation
+  // ------------------------------
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (suggestions.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev + 1) % suggestions.length);
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((prev) => (prev - 1 + suggestions.length) % suggestions.length);
+    } else if (e.key === "Enter" && activeIndex >= 0) {
+      e.preventDefault();
+      handleSelectSuggestion(suggestions[activeIndex]);
+    }
   }
 
-  const types = ["youtube","book","course","website","reddit","discord","blog"];
+  // ------------------------------
+  // 🔹 Handle Outside Click
+  // ------------------------------
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsFocused(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // ------------------------------
+  // 🔹 Render Icon per suggestion type
+  // ------------------------------
+  function renderIcon(s: Suggestion) {
+    if (s.kind === "user") return <Users className="w-4 h-4 text-blue-400" />;
+    if (s.kind === "community") return <Layers className="w-4 h-4 text-green-400" />;
+    return <Brain className="w-4 h-4 text-purple-400" />;
+  }
+
+  // ------------------------------
+  // 🔹 Render Recommendation Icon
+  // ------------------------------
+  function recommendationIcon(type: Recommendation["type"]) {
+    switch (type) {
+      case "book": return <Book className="w-4 h-4 text-yellow-400" />;
+      case "course": return <Layers className="w-4 h-4 text-blue-400" />;
+      case "youtube": return <Youtube className="w-4 h-4 text-red-500" />;
+      case "website": return <Globe className="w-4 h-4 text-teal-400" />;
+      default: return <Book className="w-4 h-4 text-gray-400" />;
+    }
+  }
 
   return (
-    <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-6xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Search results for "{query}"</h1>
-          <p className="text-muted-foreground">Found {recommendations.length} resources</p>
-        </div>
-
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-7">
-            <TabsTrigger value="all">All</TabsTrigger>
-            {types.map((type) => (
-              <TabsTrigger key={type} value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {/* All Recommendations */}
-          <TabsContent value="all" className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {recommendations.map((item, index) => {
-                const Icon = getTypeIcon(item.type);
-                return (
-                  <Card key={index} className="shadow-card hover:shadow-elevated transition-all duration-300">
-                    <CardContent className="p-6 flex flex-col justify-between h-full">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <div className={`w-10 h-10 ${getTypeColor(item.type)} rounded-lg flex items-center justify-center`}>
-                            <Icon className="h-5 w-5 text-white" />
-                          </div>
-                          <Badge variant="outline" className="text-xs capitalize">{item.type}</Badge>
-                        </div>
-                        <h3 className="font-semibold text-lg">{item.title}</h3>
-                        {item.description && <p className="text-muted-foreground text-sm">{item.description}</p>}
-                        {item.author && <p className="text-muted-foreground text-sm">Author: {item.author}</p>}
-                        {item.provider && <p className="text-muted-foreground text-sm">Provider: {item.provider}</p>}
-                        {item.duration && <p className="text-muted-foreground text-sm">Duration: {item.duration}</p>}
-                        {item.rating && <p className="text-muted-foreground text-sm">Rating: {item.rating}</p>}
-                      </div>
-                      <Button 
-                        asChild
-                        variant="outline" 
-                        className="w-full mt-4"
-                      >
-                        <a href={item.url} target="_blank" rel="noopener noreferrer">
-                          <ExternalLink className="h-4 w-4 mr-2 inline-block" /> Visit
-                        </a>
-                      </Button>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </TabsContent>
-
-          {/* Individual type tabs */}
-          {types.map((type) => (
-            <TabsContent key={type} value={type} className="space-y-6">
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {recommendations.filter(item => item.type === type).map((item, index) => {
-                  const Icon = getTypeIcon(item.type);
-                  return (
-                    <Card key={index} className="shadow-card hover:shadow-elevated transition-all duration-300">
-                      <CardContent className="p-6 flex flex-col justify-between h-full">
-                        <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <div className={`w-10 h-10 ${getTypeColor(item.type)} rounded-lg flex items-center justify-center`}>
-                              <Icon className="h-5 w-5 text-white" />
-                            </div>
-                            <Badge variant="outline" className="text-xs capitalize">{item.type}</Badge>
-                          </div>
-                          <h3 className="font-semibold text-lg">{item.title}</h3>
-                          {item.description && <p className="text-muted-foreground text-sm">{item.description}</p>}
-                          {item.author && <p className="text-muted-foreground text-sm">Author: {item.author}</p>}
-                          {item.provider && <p className="text-muted-foreground text-sm">Provider: {item.provider}</p>}
-                          {item.duration && <p className="text-muted-foreground text-sm">Duration: {item.duration}</p>}
-                          {item.rating && <p className="text-muted-foreground text-sm">Rating: {item.rating}</p>}
-                        </div>
-                        <Button 
-                          asChild
-                          variant="outline" 
-                          className="w-full mt-4"
-                        >
-                          <a href={item.url} target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="h-4 w-4 mr-2 inline-block" /> Visit
-                          </a>
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            </TabsContent>
-          ))}
-        </Tabs>
+    <div ref={containerRef} className="relative max-w-xl mx-auto mt-10">
+      {/* Search Bar */}
+      <div
+        className={`flex items-center px-4 py-2 rounded-full transition-all duration-200 border ${
+          isFocused ? "border-blue-500 bg-gray-900 shadow-lg" : "border-gray-700 bg-gray-800"
+        }`}
+      >
+        <Search className="w-5 h-5 text-gray-400 mr-3" />
+        <input
+          type="text"
+          placeholder="Search for profiles, skills, or communities..."
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          className="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none"
+        />
       </div>
-    </Layout>
-  );
-};
 
-export default SearchResults;
+      {/* Suggestions Dropdown */}
+      {isFocused && suggestions.length > 0 && (
+        <div className="absolute left-0 w-full mt-2 bg-gray-900 border border-gray-700 rounded-xl shadow-xl overflow-hidden z-50">
+          {suggestions.map((s, i) => (
+            <button
+              key={`${s.kind}-${i}`}
+              onClick={() => handleSelectSuggestion(s)}
+              className={`flex items-center w-full px-4 py-2 text-left hover:bg-gray-800 transition-colors ${
+                activeIndex === i ? "bg-gray-800" : ""
+              }`}
+            >
+              {renderIcon(s)}
+              <span className="ml-3 text-gray-200 text-sm font-medium">
+                {s.name}
+              </span>
+              <span className="ml-auto text-xs text-gray-500 capitalize">{s.kind}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Recommendations Display */}
+      {recommendations.length > 0 && (
+        <div className="mt-6 bg-gray-900 border border-gray-700 rounded-2xl p-5 shadow-xl space-y-4">
+          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Brain className="w-5 h-5 text-purple-400" /> Recommended Resources
+          </h2>
+          <div className="space-y-4">
+            {recommendations.map((r, i) => (
+              <a
+                key={i}
+                href={r.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block bg-gray-800 hover:bg-gray-750 transition-all rounded-xl p-4"
+              >
+                <div className="flex items-start gap-3">
+                  {recommendationIcon(r.type)}
+                  <div className="flex-1">
+                    <h3 className="text-sm font-semibold text-gray-100">{r.title}</h3>
+                    {r.description && (
+                      <p className="text-xs text-gray-400 line-clamp-2 mt-1">{r.description}</p>
+                    )}
+                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
+                      {r.rating && (
+                        <span className="flex items-center gap-1">
+                          <Star className="w-3 h-3 text-yellow-400" /> {r.rating.toFixed(1)}
+                        </span>
+                      )}
+                      {r.views && <span>{r.views}</span>}
+                      {r.isPaid !== undefined && (
+                        <span
+                          className={`${
+                            r.isPaid ? "text-red-400" : "text-green-400"
+                          } font-medium`}
+                        >
+                          {r.isPaid ? "Paid" : "Free"}
+                        </span>
+                      )}
+                      {r.difficulty && (
+                        <span className="capitalize text-gray-400">{r.difficulty}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

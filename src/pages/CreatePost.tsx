@@ -28,13 +28,14 @@ import { z } from "zod";
 // Validation schema
 const postSchema = z.object({
   title: z.string().min(1, "Title is required").max(200, "Title must be less than 200 characters"),
-  content: z.string().max(50000, "Content must be less than 50,000 characters"),
+  content: z.string().max(1000000, "Content must be less than 1,000,000 characters"),
   description: z.string().min(1, "Description is required").max(1000, "Description must be less than 1,000 characters"),
   category: z.string().min(1, "Category is required"),
   tags: z.array(z.string().max(50, "Tag must be less than 50 characters")).max(10, "Maximum 10 tags allowed"),
 });
 
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+// Allow up to 100MB uploads for posts
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
 const CreatePost = () => {
   const navigate = useNavigate();
@@ -89,40 +90,55 @@ const CreatePost = () => {
     setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
-  const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
-  
   const handleUploadClick = () => fileInputRef.current?.click();
-  const onFilesSelected: React.ChangeEventHandler<HTMLInputElement> = (e) => {
+  const onFilesSelected: React.ChangeEventHandler<HTMLInputElement> = async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
-    
-    // Validate file sizes
+
     for (const file of Array.from(files)) {
       if (file.size > MAX_FILE_SIZE) {
         toast({
           title: "File too large",
-          description: `${file.name} exceeds 5MB limit`,
+          description: `${file.name} exceeds ${Math.round(MAX_FILE_SIZE / (1024 * 1024))}MB limit`,
           variant: "destructive",
         });
         return;
       }
+
+      // Upload to Supabase storage (bucket: 'uploads')
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user?.id || 'anon'}_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('uploads')
+          .upload(fileName, file, { cacheControl: '3600', upsert: false });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data: publicData } = supabase.storage.from('uploads').getPublicUrl(uploadData.path);
+        const publicUrl = publicData.publicUrl;
+
+        // Append to content appropriately
+        if (file.type.startsWith('image/')) {
+          setContent(prev => `${prev}\n\n![image](${publicUrl})`);
+        } else if (file.type.startsWith('video/')) {
+          setContent(prev => `${prev}\n\n<video controls src="${publicUrl}" />`);
+        } else {
+          setContent(prev => `${prev}\n\n[File](${publicUrl})`);
+        }
+      } catch (err: any) {
+        toast({ title: 'Upload failed', description: err?.message || 'Unknown error', variant: 'destructive' });
+      }
     }
-    
-    Array.from(files).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = reader.result as string;
-        setContent(prev => `${prev}\n\n![image](${dataUrl})`);
-      };
-      reader.readAsDataURL(file);
-    });
+
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
   const postSchema = z.object({
     title: z.string().min(1, "Title is required").max(200, "Title must be 200 characters or less"),
     description: z.string().min(1, "Description is required").max(1000, "Description must be 1000 characters or less"),
-    content: z.string().max(50000, "Content must be 50,000 characters or less"),
+    content: z.string().max(1000000, "Content must be 1,000,000 characters or less"),
     category: z.string().min(1, "Please select a category"),
     tags: z.array(z.string().max(50)).max(10, "Maximum 10 tags allowed"),
   });
@@ -370,7 +386,7 @@ const CreatePost = () => {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Supports: Images (JPEG, PNG, GIF), Videos (MP4, WebM), PDFs (max 50MB)
+                  Supports: Images (JPEG, PNG, GIF), Videos (MP4, WebM), PDFs (max 100MB)
                 </p>
               </div>
             </CardContent>
