@@ -1,7 +1,9 @@
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { fetchSearchSuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
+import { debounce } from "lodash";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   Home, 
@@ -38,6 +40,22 @@ export const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
   const currentPath = location.pathname;
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [skillRecommendations, setSkillRecommendations] = useState<Recommendation[]>([]);
+  const [isSkillLoading, setIsSkillLoading] = useState(false);
+  const [showSkillResults, setShowSkillResults] = useState(false);
+  const searchRef = useRef<HTMLDivElement | null>(null);
+
+  const fetchSuggestions = debounce(async (q: string) => {
+    if (!q) return setSuggestions([]);
+    try {
+      const res = await fetchSearchSuggestions(q, 6);
+      setSuggestions(res);
+    } catch (err) {
+      setSuggestions([]);
+    }
+  }, 200);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { signOut } = useAuth();
   const online = useOnlineStatus();
@@ -57,6 +75,21 @@ export const Layout = ({ children }: LayoutProps) => {
       navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
+
+  useEffect(() => {
+    fetchSuggestions(searchQuery);
+    return () => fetchSuggestions.cancel();
+  }, [searchQuery]);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, []);
 
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -108,15 +141,74 @@ export const Layout = ({ children }: LayoutProps) => {
           </nav>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-4">
+          <div className="flex-1 max-w-md mx-4" ref={searchRef}>
             <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search skills, domains, exams..."
                 className="pl-10 h-9"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
+                onFocus={() => setShowSuggestions(true)}
               />
+
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute left-0 right-0 mt-2 bg-card border rounded-md shadow z-50 overflow-hidden">
+                    {/* If user clicked a skill and is viewing inline skill results, show cards */}
+                    {showSkillResults ? (
+                      <div className="p-3">
+                        {isSkillLoading ? (
+                          <div className="text-sm text-muted-foreground">Loading suggestions...</div>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {skillRecommendations.slice(0,6).map((item, i) => (
+                              <div key={i} className="border rounded-md p-3 bg-white">
+                                <div className="flex items-center justify-between">
+                                  <div className="font-medium">{item.title}</div>
+                                  <div className="text-xs text-muted-foreground">{item.provider || item.type}</div>
+                                </div>
+                                {item.description && <div className="text-sm text-muted-foreground mt-2">{item.description}</div>}
+                                <div className="mt-3">
+                                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Visit</a>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="mt-3 text-right">
+                          <Button size="sm" variant="ghost" onMouseDown={(e) => { e.preventDefault(); setShowSkillResults(false); navigate(`/search?q=${encodeURIComponent(searchQuery)}`); }}>See all</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      suggestions.map((s, idx) => (
+                        <button
+                          key={`${s.kind}-${idx}`}
+                          className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-3"
+                          onMouseDown={(e) => { e.preventDefault();
+                            if (s.kind === 'user') {
+                              setShowSuggestions(false);
+                              navigate(`/profile/${s.id}`);
+                            } else if (s.kind === 'community') {
+                              setShowSuggestions(false);
+                              navigate(`/communities/${s.id}/feed`);
+                            } else {
+                              // skill: navigate to search page for this skill so SearchResults loads recommendations
+                              setShowSuggestions(false);
+                              navigate(`/search?q=${encodeURIComponent(s.name)}`);
+                            }
+                          }}
+                        >
+                          {s.kind === 'user' && <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full" />}
+                          {s.kind === 'community' && <img src={s.image} alt={s.name} className="w-8 h-8 rounded" />}
+                          <div className="flex-1">
+                            <div className="font-medium">{s.name}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5">{s.kind}</div>
+                          </div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                )}
             </form>
           </div>
 
