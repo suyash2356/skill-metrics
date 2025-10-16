@@ -1,5 +1,6 @@
 import { ReactNode, useState, useEffect, useRef } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import logoImg from '@/logo.jpg';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchSearchSuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
@@ -56,7 +57,17 @@ export const Layout = ({ children }: LayoutProps) => {
       setSuggestions([]);
     }
   }, 200);
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  // Default to dark mode for all users unless they explicitly choose light
+  const [isDarkMode, setIsDarkMode] = useState<boolean>(() => {
+    try {
+      const stored = localStorage.getItem('theme');
+      if (stored === 'light') return false;
+      if (stored === 'dark') return true;
+    } catch (e) {
+      // ignore (e.g., during SSR or restricted environments)
+    }
+    return true; // default dark
+  });
   const { signOut } = useAuth();
   const online = useOnlineStatus();
 
@@ -92,9 +103,23 @@ export const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
+    setIsDarkMode((prev) => !prev);
   };
+
+  // Apply theme class and persist preference
+  useEffect(() => {
+    try {
+      if (isDarkMode) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+      }
+    } catch (e) {
+      // ignore errors writing to localStorage
+    }
+  }, [isDarkMode]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -111,9 +136,7 @@ export const Layout = ({ children }: LayoutProps) => {
         <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
           {/* Logo */}
           <Link to="/home" className="flex items-center space-x-2 flex-shrink-0">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">SM</span>
-            </div>
+            <img src={logoImg} alt="Skill Metrics" className="w-8 h-8 rounded-lg object-cover" />
             <span className="font-bold text-xl bg-gradient-primary bg-clip-text text-transparent hidden sm:block">
               Skill-Metrics
             </span>

@@ -3,8 +3,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
 export interface SocialLink {
-  platform: string;
+  platform?: string;
   url: string;
+  title?: string;
 }
 
 export interface Skill {

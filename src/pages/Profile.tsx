@@ -8,6 +8,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { motion } from "framer-motion";
+
 import {
   MapPin,
   Calendar,
@@ -47,6 +49,7 @@ const Profile = () => {
 
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<any>({});
+  const [previewPost, setPreviewPost] = useState<any | null>(null);
 
   const { data: publicUserData, isLoading: isLoadingPublicUser } = useQuery({
     queryKey: ['publicProfile', targetUserId],
@@ -73,13 +76,23 @@ const Profile = () => {
         avatar: publicUserData.avatar_url || '',
         bio: profileDetails.bio || '',
         portfolioUrl: profileDetails.portfolio_url || '',
-        socialLinks: profileDetails.social_links || [],
+        // socialLinks is an array of { title?: string, platform?: string, url: string }
+        socialLinks: (profileDetails.social_links || []).map((s: any) => ({ title: s.title || s.platform || s.url, platform: s.platform, url: s.url })) || [],
         skills: profileDetails.skills || [],
         achievements: profileDetails.achievements || [],
         learningPath: profileDetails.learning_path || [],
       });
     }
   }, [profileDetails, publicUserData, editMode]);
+
+  // Close preview on Escape key
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPreviewPost(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
 
   const { data: userRoadmaps, isLoading: isLoadingRoadmaps } = useQuery({
     queryKey: ['userRoadmaps', targetUserId, currentUser?.id],
@@ -119,6 +132,22 @@ const Profile = () => {
     enabled: !!targetUserId,
   });
 
+  const { data: userPosts, isLoading: isLoadingUserPosts } = useQuery({
+    queryKey: ['userPosts', targetUserId],
+    queryFn: async () => {
+      if (!targetUserId) return [];
+      const { data, error } = await supabase
+        .from('posts')
+        .select('id, title, content, created_at')
+        .eq('user_id', targetUserId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!targetUserId,
+  });
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !targetUserId) return;
@@ -154,6 +183,21 @@ const Profile = () => {
   const handleSave = async () => {
     if (!targetUserId) return;
     try {
+      // Build social_links array from explicit fields if provided
+      // Normalize and dedupe links by URL
+      const rawLinks = (formData.socialLinks || []).filter((l: any) => l && l.url).slice();
+      const seen = new Set<string>();
+      const socialLinks: any[] = [];
+      for (const l of rawLinks) {
+        try {
+          const url = (l.url || '').trim();
+          if (!url) continue;
+          if (seen.has(url)) continue;
+          seen.add(url);
+          socialLinks.push({ title: l.title || undefined, platform: undefined, url });
+        } catch (e) { continue; }
+      }
+
       await updateProfileDetails({
         user_id: targetUserId,
         job_title: formData.title,
@@ -161,7 +205,7 @@ const Profile = () => {
         join_date: formData.joinDate,
         bio: formData.bio,
         portfolio_url: formData.portfolioUrl,
-        social_links: formData.socialLinks,
+        social_links: socialLinks,
         skills: formData.skills,
         achievements: formData.achievements,
         learning_path: formData.learningPath,
@@ -238,13 +282,46 @@ const Profile = () => {
                   <p className="text-foreground max-w-2xl mx-auto sm:mx-0">{profileDetails?.bio || 'No bio provided.'}</p>
                 )}
                 
-                 <div className="flex flex-wrap justify-center sm:justify-start items-center gap-3">
+                {editMode ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-sm">Portfolio URL (optional)</Label>
+                        <Input placeholder="https://your-portfolio.example" value={formData.portfolioUrl || ''} onChange={(e) => setFormData({ ...formData, portfolioUrl: e.target.value })} />
+                      </div>
+                      <div />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <Label className="text-sm">Links (title + URL)</Label>
+                        <Button size="sm" onClick={() => setFormData({ ...formData, socialLinks: [...(formData.socialLinks || []), { title: '', url: '' }] })}><Plus className="h-4 w-4 mr-1" /> Add Link</Button>
+                      </div>
+                      <div className="space-y-2">
+                        {(formData.socialLinks || []).map((s: any, idx: number) => (
+                          <div key={idx} className="flex gap-2 items-center">
+                            <Input placeholder="Title (e.g., GitHub)" value={s.title || ''} onChange={(e) => {
+                              const newLinks = [...(formData.socialLinks || [])]; newLinks[idx].title = e.target.value; setFormData({ ...formData, socialLinks: newLinks });
+                            }} />
+                            <Input placeholder="https://" value={s.url || ''} onChange={(e) => {
+                              const newLinks = [...(formData.socialLinks || [])]; newLinks[idx].url = e.target.value; setFormData({ ...formData, socialLinks: newLinks });
+                            }} />
+                            <Button variant="ghost" size="icon" onClick={() => { const newLinks = (formData.socialLinks || []).filter((_: any, i: number) => i !== idx); setFormData({ ...formData, socialLinks: newLinks }); }}><X className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                        {(formData.socialLinks || []).length === 0 && <p className="text-sm text-muted-foreground">No links added yet.</p>}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap justify-center sm:justify-start items-center gap-3">
                     {(profileDetails?.social_links || []).map((link: SocialLink, index: number) => (
                       <a key={index} href={link.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors">
-                        <ExternalLink className="h-4 w-4" /> <span>{link.platform}</span>
+                        <ExternalLink className="h-4 w-4" /> <span>{link.title || link.platform || link.url}</span>
                       </a>
                     ))}
-                 </div>
+                  </div>
+                )}
               </div>
 
               <div className="w-full sm:w-auto flex flex-col sm:items-end gap-2">
@@ -438,11 +515,111 @@ const Profile = () => {
                     ))}
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                {/* User posts section */}
+<div className="mt-6">
+  <h3 className="text-lg font-semibold mb-3">Posts by this user</h3>
+  {isLoadingUserPosts ? (
+    <p>Loading posts...</p>
+  ) : (userPosts || []).length === 0 ? (
+    <p className="text-sm text-muted-foreground">No posts yet.</p>
+  ) : (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {(userPosts || []).map((p: any) => {
+        const thumb =
+          (p.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/)?.[1] || null;
+        return (
+          <div
+            key={p.id}
+            className="rounded overflow-hidden shadow-card hover:shadow-elevated transition-all group relative cursor-pointer"
+            onMouseEnter={() => setPreviewPost(p)}
+            onMouseLeave={() => setPreviewPost(null)}
+          >
+            {thumb ? (
+              <div className="w-full h-28 bg-black/5 overflow-hidden">
+                <img
+                  src={thumb}
+                  alt={p.title || "Post image"}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                />
+              </div>
+            ) : (
+              <div className="w-full h-28 bg-muted flex items-center justify-center text-sm text-muted-foreground">
+                No image
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  )}
+</div>
+
+          </CardContent>
+        </Card>
+      </TabsContent>
+
+    </Tabs>
+  </div>
+
+        {/* Hover preview overlay */}
+{previewPost && (
+  <motion.div
+    initial={{ opacity: 0 }}
+    animate={{ opacity: 1 }}
+    exit={{ opacity: 0 }}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+    onMouseLeave={() => setPreviewPost(null)}
+    onClick={() => setPreviewPost(null)}
+  >
+    <motion.div
+      initial={{ scale: 0.9, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.9, opacity: 0 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
+      className="max-w-3xl w-full max-h-[90vh] overflow-auto"
+      onClick={(e) => e.stopPropagation()}
+    >
+      <Card>
+        <div className="flex justify-end p-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setPreviewPost(null)}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+        <CardContent>
+          <h3 className="text-xl font-semibold mb-3">{previewPost.title}</h3>
+          {(() => {
+            const thumb =
+              (previewPost.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/)?.[1] ||
+              null;
+            if (thumb) {
+              return (
+                <div className="w-full h-80 bg-black/5 mb-4 overflow-hidden rounded-lg">
+                  <img
+                    src={thumb}
+                    alt={previewPost.title || "Post image"}
+                    className="w-full h-full object-contain"
+                  />
+                </div>
+              );
+            }
+            return null;
+          })()}
+          <div
+            className="prose max-w-none break-words text-sm sm:text-base"
+            dangerouslySetInnerHTML={{
+              __html: (previewPost.content || "").replace(/\n/g, "<br/>"),
+            }}
+          />
+        </CardContent>
+      </Card>
+    </motion.div>
+  </motion.div>
+)}
+
     </Layout>
   );
 };

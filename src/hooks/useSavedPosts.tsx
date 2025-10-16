@@ -191,6 +191,32 @@ export const useSavedPosts = () => {
     },
   });
 
+  // Update saved post metadata (assign to collection, notes)
+  const updateSavedPost = useMutation({
+    mutationFn: async (data: { id: string; collectionId?: string | null; notes?: string | null }) => {
+      if (!user?.id) throw new Error('User not authenticated');
+
+      const updates: any = {};
+      if (data.collectionId !== undefined) updates.collection_id = data.collectionId;
+      if (data.notes !== undefined) updates.notes = data.notes;
+      updates.updated_at = new Date().toISOString();
+
+      const { data: result, error } = await supabase
+        .from('saved_posts')
+        .update(updates)
+        .eq('id', data.id)
+        .eq('user_id', user.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['savedPosts', user?.id] });
+    },
+  });
+
   // Migrate from localStorage (one-time migration)
   const migrateFromLocalStorage = useMutation({
     mutationFn: async () => {
@@ -257,10 +283,12 @@ export const useSavedPosts = () => {
     savePost: savePost.mutate,
     removeSavedPost: removeSavedPost.mutate,
     updateCollection: updateCollection.mutate,
+    updateSavedPost: updateSavedPost.mutate,
     deleteCollection: deleteCollection.mutate,
     isCreating: createCollection.isPending,
     isSaving: savePost.isPending,
     isRemoving: removeSavedPost.isPending,
+    isUpdating: updateSavedPost.isPending,
     migrateFromLocalStorage: migrateFromLocalStorage.mutate,
   };
 };

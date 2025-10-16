@@ -129,7 +129,7 @@ function Explore() {
               <Swiper
                 modules={[Autoplay]}
                 autoplay={{
-                  delay: 2500,
+                  delay: 2200,
                   disableOnInteraction: false,
                 }}
                 loop={true}
@@ -220,6 +220,148 @@ function Explore() {
                   </SwiperSlide>
                 ))}
               </Swiper>
+              {/* Popular Non-Tech Fields: moving opposite direction */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3">Popular Non-Tech Fields</h3>
+                <Swiper
+                  modules={[Autoplay]}
+                  autoplay={{
+                    delay: 2200,
+                    disableOnInteraction: false,
+                    reverseDirection: true,
+                  }}
+                  loop={true}
+                  spaceBetween={20}
+                  slidesPerView={1.2}
+                  breakpoints={{
+                    640: { slidesPerView: 2 },
+                    1024: { slidesPerView: 3 },
+                    1280: { slidesPerView: 4 },
+                  }}
+                  className="pb-6"
+                >
+                  {[
+                    {
+                      title: 'Design',
+                      icon: PenTool,
+                      color: 'from-pink-500 to-rose-500',
+                      description: 'UI/UX, visual design and product aesthetics.',
+                      link: '',
+                    },
+                    {
+                      title: 'Business & Management',
+                      icon: Map,
+                      color: 'from-indigo-500 to-sky-500',
+                      description: 'Strategy, operations, and leadership skills.',
+                      link: '',
+                    },
+                    {
+                      title: 'Creative Writing',
+                      icon: BookOpen,
+                      color: 'from-amber-500 to-orange-500',
+                      description: 'Storytelling, content creation and editing.',
+                      link: '',
+                    },
+                    {
+                      title: 'Marketing',
+                      icon: TrendingUp,
+                      color: 'from-green-500 to-emerald-500',
+                      description: 'Digital marketing, branding and growth tactics.',
+                      link: '',
+                    },
+                    {
+                      title: 'Photography',
+                      icon: Globe,
+                      color: 'from-violet-500 to-purple-500',
+                      description: 'Capture, edit and present compelling images.',
+                      link: '',
+                    },
+                  ].map((category, idx) => (
+                    <SwiperSlide key={`nontech-${idx}`}>
+                      <Card
+                        onClick={() => {
+                          if (category.link) window.open(category.link, '_blank');
+                          else handleCategoryClick(category.title);
+                        }}
+                        className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+                      >
+                        <CardHeader className="flex items-center gap-3">
+                          <div className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}>
+                            <category.icon className="h-6 w-6" />
+                          </div>
+                          <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground text-sm">{category.description}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                            onClick={() => { if (category.link) window.open(category.link, '_blank'); else handleCategoryClick(category.title); }}
+                          >
+                            Explore
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </div>
+
+              {/* Popular Exams: opposite of non-tech (so same direction as tech) */}
+              <div className="mt-6">
+                <h3 className="text-lg font-semibold mb-3">Popular Exams</h3>
+                <Swiper
+                  modules={[Autoplay]}
+                  autoplay={{
+                    delay: 2200,
+                    disableOnInteraction: false,
+                    reverseDirection: false,
+                  }}
+                  loop={true}
+                  spaceBetween={20}
+                  slidesPerView={1.2}
+                  breakpoints={{
+                    640: { slidesPerView: 2 },
+                    1024: { slidesPerView: 3 },
+                    1280: { slidesPerView: 4 },
+                  }}
+                  className="pb-6"
+                >
+                  {[
+                    { title: 'GRE', icon: GraduationCap, color: 'from-indigo-500 to-blue-500', description: 'Graduate record examinations prep.', link: '' },
+                    { title: 'GMAT', icon: GraduationCap, color: 'from-green-500 to-emerald-500', description: 'Business school entrance test prep.', link: '' },
+                    { title: 'CAT', icon: GraduationCap, color: 'from-rose-500 to-red-500', description: 'Management entrance exam prep.', link: '' },
+                    { title: 'JEE', icon: GraduationCap, color: 'from-yellow-500 to-amber-500', description: 'Engineering entrance exam prep.', link: '' },
+                    { title: 'NEET', icon: GraduationCap, color: 'from-pink-500 to-purple-500', description: 'Medical entrance exam prep.', link: '' },
+                  ].map((exam, idx) => (
+                    <SwiperSlide key={`exam-${idx}`}>
+                      <Card
+                        onClick={() => { if (exam.link) window.open(exam.link, '_blank'); else handleCategoryClick(exam.title); }}
+                        className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+                      >
+                        <CardHeader className="flex items-center gap-3">
+                          <div className={`p-3 rounded-full bg-gradient-to-r ${exam.color} text-white shadow-lg`}>
+                            <exam.icon className="h-6 w-6" />
+                          </div>
+                          <CardTitle className="text-lg font-bold">{exam.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-muted-foreground text-sm">{exam.description}</p>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                            onClick={() => { if (exam.link) window.open(exam.link, '_blank'); else handleCategoryClick(exam.title); }}
+                          >
+                            Explore
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </SwiperSlide>
+                  ))}
+                </Swiper>
+              </div>
             </section>
           </TabsContent>
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -44,6 +44,8 @@ interface InstagramPostProps {
   onBookmark: () => void;
   onComment: () => void;
   onShare: () => void;
+  connectedAbove?: boolean;
+  connectedBelow?: boolean;
 }
 
 export const InstagramPost = ({
@@ -54,6 +56,8 @@ export const InstagramPost = ({
   onBookmark,
   onComment,
   onShare,
+  connectedAbove = false,
+  connectedBelow = false,
 }: InstagramPostProps) => {
   const [imageError, setImageError] = useState(false);
 
@@ -92,12 +96,39 @@ export const InstagramPost = ({
   };
 
   const { text, media } = parseMedia(post.content);
+  // track media natural size to set aspect ratio
+  const [mediaSize, setMediaSize] = useState<{ width: number; height: number } | null>(null);
+
+  const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+    const img = e.currentTarget;
+    if (img.naturalWidth && img.naturalHeight) {
+      setMediaSize({ width: img.naturalWidth, height: img.naturalHeight });
+    }
+  }, []);
+
+  const onVideoMeta = useCallback((e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    const v = e.currentTarget;
+    if ((v as any).videoWidth && (v as any).videoHeight) {
+      setMediaSize({ width: (v as any).videoWidth, height: (v as any).videoHeight });
+    }
+  }, []);
   const displayName = post.profiles?.full_name || "Anonymous";
   const userTitle = post.profiles?.title || "";
   const avatarUrl = post.profiles?.avatar_url;
 
   return (
-    <Card className="w-full max-w-[470px] mx-auto border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg">
+    <div className="relative">
+      {/* Connector visuals */}
+      {(connectedAbove || connectedBelow) && (
+        <div className="absolute left-4 top-0 bottom-0 w-0 flex items-center" aria-hidden>
+          <div className="w-px bg-slate-200 h-full" />
+        </div>
+      )}
+      <Card className="w-full max-w-[470px] mx-auto border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg">
+        {/* small pointed square to visually connect to the line */}
+        {(connectedAbove || connectedBelow) && (
+          <div className="absolute left-2 top-3 w-3 h-3 bg-slate-200 rotate-45 transform" style={{ zIndex: 10 }} />
+        )}
       {/* Header */}
       <div className="flex items-center justify-between p-3 border-b">
         <Link
@@ -148,19 +179,24 @@ export const InstagramPost = ({
 
       {/* Media */}
       {media.length > 0 && (
-        <div className="relative bg-black aspect-square">
+        <div
+          className="relative bg-black w-full overflow-hidden"
+          style={mediaSize ? { aspectRatio: `${mediaSize.width} / ${mediaSize.height}` } : {}}
+        >
           {media[0].type === "image" ? (
             <img
               src={media[0].url}
               alt="Post content"
               className="w-full h-full object-contain"
               onError={() => setImageError(true)}
+              onLoad={onImageLoad}
             />
           ) : (
             <video
               src={media[0].url}
               controls
               className="w-full h-full object-contain"
+              onLoadedMetadata={onVideoMeta}
             />
           )}
           {media.length > 1 && (
@@ -259,5 +295,6 @@ export const InstagramPost = ({
         </p>
       </div>
     </Card>
+    </div>
   );
 };
