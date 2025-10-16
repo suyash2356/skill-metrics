@@ -18,6 +18,7 @@ const SavedPosts = () => {
     savePost,
     removeSavedPost,
     updateCollection,
+    updateSavedPost,
     deleteCollection,
     migrateFromLocalStorage,
   } = useSavedPosts();
@@ -133,7 +134,12 @@ const SavedPosts = () => {
                   <div className="p-3 border-t flex items-center justify-between gap-2">
                     <Select
                       value={post.collection_id || 'none'}
-                      // assignPostToCollection logic removed; implement if needed
+                      onValueChange={(val) => {
+                        const collectionId = val === 'none' ? null : val;
+                        // update saved post's collection
+                        // updateSavedPost is provided by hook
+                        updateSavedPost({ id: post.id, collectionId });
+                      }}
                     >
                       <SelectTrigger className="h-8 w-full text-xs">
                         <SelectValue placeholder="Assign collection" />
