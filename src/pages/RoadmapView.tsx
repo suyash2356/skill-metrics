@@ -176,34 +176,37 @@ const RoadmapView = () => {
   });
 
   const { templates, createTemplate, isLoading: isLoadingTemplate } = useRoadmapTemplates(id);
+  const genId = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
   const [templateData, setTemplateData] = useState<any>({
     // Basic sections
     intro: '', // Welcome / description
     howToUse: '',
     // Progress table rows (4 rows by default)
     progressRows: [
-      { phase: 'Foundations', status: '', timeline: '', notes: '' },
-      { phase: 'DSA', status: '', timeline: '', notes: '' },
-      { phase: 'Machine Learning', status: '', timeline: '', notes: '' },
-      { phase: 'Deep Learning', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: 'Foundations', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: 'DSA', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: 'Machine Learning', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: 'Deep Learning', status: '', timeline: '', notes: '' },
     ],
     // Goals and profile
     experienceLevel: '',
     weeklyTime: '',
     totalMonths: '',
-    sideTopics: '',
-    // Skills checklist (freeform)
-    skillsList: '',
+    // Side topics as checklist
+    sideTopics: [], // {id, name, checked}
+    // Skills checklist
+    skills: [], // {id, name, checked}
+    // Goals
+    goals: [], // {id, text, checked}
     // Resources
-    books: '',
-    courses: '',
-    youtube: '',
-    blogs: '',
+    resources: [], // {id, title, url}
     // Additional tools & communities
     practicePlatforms: '',
     communities: '',
     newsletters: '',
     // Achievements & portfolio
+    achievements: [], // {id, text}
     certificates: '',
     projectsPortfolio: '',
     contributions: '',
@@ -218,6 +221,30 @@ const RoadmapView = () => {
     careerMedium: '',
     careerLong: '',
   });
+
+  // Handlers for dynamic lists
+  const addSkill = () => setTemplateData((prev:any) => ({ ...prev, skills: [...(prev.skills||[]), { id: genId(), name: '', checked: false }] }));
+  const updateSkill = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, skills: (prev.skills||[]).map((s:any)=> s.id===id ? {...s, ...patch} : s) }));
+  const removeSkill = (id: string) => setTemplateData((prev:any) => ({ ...prev, skills: (prev.skills||[]).filter((s:any)=> s.id!==id) }));
+
+  const addSideTopic = () => setTemplateData((prev:any) => ({ ...prev, sideTopics: [...(prev.sideTopics||[]), { id: genId(), name: '', checked: false }] }));
+  const updateSideTopic = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, sideTopics: (prev.sideTopics||[]).map((t:any)=> t.id===id ? {...t, ...patch} : t) }));
+  const removeSideTopic = (id: string) => setTemplateData((prev:any) => ({ ...prev, sideTopics: (prev.sideTopics||[]).filter((t:any)=> t.id!==id) }));
+
+  const addResource = () => setTemplateData((prev:any) => ({ ...prev, resources: [...(prev.resources||[]), { id: genId(), title: '', url: '' }] }));
+  const updateResource = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, resources: (prev.resources||[]).map((r:any)=> r.id===id ? {...r, ...patch} : r) }));
+  const removeResource = (id: string) => setTemplateData((prev:any) => ({ ...prev, resources: (prev.resources||[]).filter((r:any)=> r.id!==id) }));
+
+  const addGoal = () => setTemplateData((prev:any) => ({ ...prev, goals: [...(prev.goals||[]), { id: genId(), text: '', checked: false }] }));
+  const updateGoal = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, goals: (prev.goals||[]).map((g:any)=> g.id===id ? {...g, ...patch} : g) }));
+  const removeGoal = (id: string) => setTemplateData((prev:any) => ({ ...prev, goals: (prev.goals||[]).filter((g:any)=> g.id!==id) }));
+
+  const addAchievement = () => setTemplateData((prev:any) => ({ ...prev, achievements: [...(prev.achievements||[]), { id: genId(), text: '' }] }));
+  const updateAchievement = (id: string, text: string) => setTemplateData((prev:any) => ({ ...prev, achievements: (prev.achievements||[]).map((a:any)=> a.id===id ? {...a, text} : a) }));
+  const removeAchievement = (id: string) => setTemplateData((prev:any) => ({ ...prev, achievements: (prev.achievements||[]).filter((a:any)=> a.id!==id) }));
+
+  const addProgressRow = () => setTemplateData((prev:any) => ({ ...prev, progressRows: [...(prev.progressRows||[]), { id: genId(), phase: '', status: '', timeline: '', notes: '' }] }));
+  const removeProgressRow = (id: string) => setTemplateData((prev:any) => ({ ...prev, progressRows: (prev.progressRows||[]).filter((r:any)=> r.id!==id) }));
   const { isFollowing, toggleFollow } = useUserFollows(roadmap?.user_id);
 
   const updateRoadmapMutation = useMutation({
@@ -633,349 +660,258 @@ if (!roadmap) {
               )
             ))}
           </TabsContent>
-          <TabsContent value="template" className="max-w-4xl mx-auto">
-            {/* Notion-style Page Header */}
-            <div className="mb-8">
-              <div className="flex items-center gap-2 mb-4">
-                <GraduationCap className="h-10 w-10 text-primary" />
-                <h1 className="text-4xl font-bold">AI/ML Learning Roadmap</h1>
-              </div>
-                <div className="flex justify-end">
-                  <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} variant="outline" size="sm">
-                    <Save className="h-4 w-4 mr-2" />
-                    {updateTemplateMutation.isPending ? 'Saving...' : 'Save'}
+          <TabsContent value="template" className="w-full">
+            <div className="max-w-5xl mx-auto bg-white dark:bg-muted rounded-xl shadow-md p-6 md:p-10">
+              {/* Header */}
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 text-purple-700">
+                    <GraduationCap className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <h1 className="text-2xl md:text-3xl font-bold">{roadmap?.title ?? 'Learning Roadmap'}</h1>
+                    <p className="text-sm text-muted-foreground">A structured, editable learning template you can customize.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button variant="ghost" size="sm" onClick={() => setShareDialogOpen(true)}>
+                    <Share2 className="h-4 w-4 mr-2" /> Share
+                  </Button>
+                  <Button variant="ghost" size="sm">
+                    <Award className="h-4 w-4 mr-2" /> Favorite
+                  </Button>
+                  <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} size="sm">
+                    <Save className="h-4 w-4 mr-2" /> {updateTemplateMutation.isPending ? 'Saving...' : 'Save'}
                   </Button>
                 </div>
-            </div>
+              </div>
 
-            {/* Notion-style Accordion Sections */}
-            <Accordion type="multiple" defaultValue={["overview", "goals", "schedule", "resources"]} className="space-y-4">
-              {/* Overview Section */}
-              <AccordionItem value="overview" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Rocket className="h-5 w-5 text-primary" />
-                    <span>📋 Overview</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-semibold text-muted-foreground">About this roadmap</Label>
-                      <Textarea
-                        placeholder="Describe your learning journey, what you want to achieve, and why..."
-                        value={templateData.goals}
-                        onChange={(e) => handleTemplateUpdate('goals', e.target.value)}
-                        
-                        rows={5}
-                        className="mt-2 resize-none border-0 bg-muted/50 focus-visible:ring-1"
-                      />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+              {/* Main grid */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left / Main Column */}
+                <div className="lg:col-span-2 space-y-6">
+                  {/* How to Use */}
+                  <Card className="p-4">
+                    <CardHeader>
+                      <CardTitle className="text-lg font-semibold">How to use this template</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-2">
+                        <li>Start by filling out your learning goals and experience level.</li>
+                        <li>Use the progress tracker to break down phases and timelines.</li>
+                        <li>Add resources and projects as you progress; save changes when done.</li>
+                      </ul>
+                    </CardContent>
+                  </Card>
 
-              {/* Learning Goals Section */}
-              <AccordionItem value="goals" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Target className="h-5 w-5 text-primary" />
-                    <span>🎯 Learning Goals</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <div className="space-y-3">
-                    <Label className="text-sm font-semibold text-muted-foreground">What I want to achieve</Label>
-                    <div className="space-y-2">
-                      <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
-                        <Checkbox className="mt-1" />
-                        <Input
-                          placeholder="Goal 1: Master fundamental concepts..."
-                          className="border-0 bg-transparent focus-visible:ring-0 p-0"
-                        />
-                      </div>
-                      <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
-                        <Checkbox className="mt-1" />
-                        <Input
-                          placeholder="Goal 2: Build real-world projects..."
-                          className="border-0 bg-transparent focus-visible:ring-0 p-0"
-                        />
-                      </div>
-                      <div className="flex items-start gap-2 p-3 rounded-md bg-muted/50">
-                        <Checkbox className="mt-1" />
-                        <Input
-                          placeholder="Goal 3: Contribute to open source..."
-                          className="border-0 bg-transparent focus-visible:ring-0 p-0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Study Schedule Section */}
-              <AccordionItem value="schedule" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    <span>📅 Study Schedule</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <div className="space-y-4">
-                    <div>
-                      <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Timeline</Label>
-                      <Textarea
-                        placeholder="Week 1-2: Python Basics & Data Structures&#10;Week 3-4: Machine Learning Fundamentals&#10;Week 5-6: Deep Learning Introduction..."
-                        value={templateData.timeline}
-                        onChange={(e) => handleTemplateUpdate('timeline', e.target.value)}
-                        
-                        rows={8}
-                        className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
-                      />
-                    </div>
-                    <div>
-                      <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Weekly Plan</Label>
-                      <Textarea
-                        placeholder="Monday: Theory (2 hours)&#10;Tuesday: Coding Practice (3 hours)&#10;Wednesday: Projects (2 hours)&#10;Thursday: Review & Notes (1 hour)&#10;Friday: Hands-on Labs (3 hours)..."
-                        value={templateData.weeklyPlan}
-                        onChange={(e) => handleTemplateUpdate('weeklyPlan', e.target.value)}
-                        
-                        rows={6}
-                        className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
-                      />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Resources Section */}
-              <AccordionItem value="resources" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <BookOpen className="h-5 w-5 text-primary" />
-                    <span>📚 Resources & Materials</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <div className="space-y-4">
-                    {/* Books */}
-                    <div className="p-4 rounded-lg border bg-muted/30">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Book className="h-4 w-4" />
-                        <h4 className="font-semibold">Books</h4>
-                      </div>
-                      <Textarea
-                        placeholder="• Deep Learning by Ian Goodfellow&#10;• Hands-On Machine Learning by Aurélien Géron&#10;• Pattern Recognition and Machine Learning by Christopher Bishop"
-                        value={templateData.resources}
-                        onChange={(e) => handleTemplateUpdate('resources', e.target.value)}
-                        
-                        rows={4}
-                        className="resize-none border-0 bg-background focus-visible:ring-1 text-sm"
-                      />
-                    </div>
-
-                    {/* Online Courses */}
-                    <div className="p-4 rounded-lg border bg-muted/30">
-                      <div className="flex items-center gap-2 mb-3">
-                        <MonitorPlay className="h-4 w-4" />
-                        <h4 className="font-semibold">Online Courses</h4>
-                      </div>
-                      <Textarea
-                        placeholder="• Andrew Ng - Machine Learning (Coursera)&#10;• Fast.ai - Practical Deep Learning&#10;• MIT 6.S191 - Introduction to Deep Learning"
-                        rows={4}
-                        className="resize-none border-0 bg-background focus-visible:ring-1 text-sm"
-                      />
-                    </div>
-
-                    {/* Documentation & Links */}
-                    <div className="p-4 rounded-lg border bg-muted/30">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Globe className="h-4 w-4" />
-                        <h4 className="font-semibold">Documentation & Links</h4>
-                      </div>
-                      <Textarea
-                        placeholder="• TensorFlow Documentation&#10;• PyTorch Tutorials&#10;• Scikit-learn User Guide&#10;• Papers with Code"
-                        rows={4}
-                        className="resize-none border-0 bg-background focus-visible:ring-1 text-sm"
-                      />
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Progress Tracker Section */}
-              <AccordionItem value="progress" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    <span>✅ Progress Tracker</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <div className="space-y-4">
-                    <Label className="text-sm font-semibold text-muted-foreground">Daily/Weekly Progress Log</Label>
-                      <Textarea
-                      placeholder="📅 Week 1 - Day 1&#10;✅ Completed Python basics review&#10;✅ Finished NumPy tutorial&#10;🔄 Working on Pandas exercises&#10;&#10;💡 Key Insights:&#10;- NumPy broadcasting is powerful for vectorized operations&#10;- Need more practice with data manipulation&#10;&#10;🎯 Next Steps:&#10;- Complete Pandas practice problems&#10;- Start linear algebra review"
-                      value={templateData.progress}
-                      onChange={(e) => handleTemplateUpdate('progress', e.target.value)}
-                      rows={12}
-                      className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
-                    />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-
-              {/* Projects Section */}
-              <AccordionItem value="projects" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Codepen className="h-5 w-5 text-primary" />
-                    <span>🚀 Projects & Practice</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <div className="space-y-3">
-                    <div className="p-4 rounded-lg border-l-4 border-l-blue-500 bg-muted/50">
-                      <div className="flex items-start gap-3">
-                        <Checkbox className="mt-1" />
-                        <div className="flex-1">
-                          <Input
-                            placeholder="Project 1: Build a sentiment analysis model"
-                            className="font-semibold border-0 bg-transparent focus-visible:ring-0 p-0 mb-2"
-                          />
-                          <Textarea
-                            placeholder="Description: Create a model to classify movie reviews...&#10;Status: In Progress&#10;Tech Stack: Python, TensorFlow, NLTK"
-                            rows={3}
-                            className="resize-none border-0 bg-transparent focus-visible:ring-0 text-sm text-muted-foreground"
-                          />
+                  {/* Progress Tracker (table) */}
+                  <Card className="p-4">
+                    <CardHeader>
+                      <div className="flex justify-between items-center w-full">
+                        <CardTitle className="text-lg font-semibold flex items-center gap-2"><CheckCircle className="h-5 w-5 text-primary" /> Progress Tracker</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="ghost" onClick={addProgressRow}><Plus className="h-4 w-4" /></Button>
                         </div>
                       </div>
-                    </div>
-                    <div className="p-4 rounded-lg border-l-4 border-l-green-500 bg-muted/50">
-                      <div className="flex items-start gap-3">
-                        <Checkbox className="mt-1" />
-                        <div className="flex-1">
-                          <Input
-                            placeholder="Project 2: Image classification with CNNs"
-                            className="font-semibold border-0 bg-transparent focus-visible:ring-0 p-0 mb-2"
-                          />
-                          <Textarea
-                            placeholder="Description: Train a CNN to classify images...&#10;Status: Not Started&#10;Tech Stack: PyTorch, OpenCV"
-                            rows={3}
-                            className="resize-none border-0 bg-transparent focus-visible:ring-0 text-sm text-muted-foreground"
-                          />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[720px] table-fixed border-collapse">
+                          <thead>
+                            <tr className="text-left text-sm text-muted-foreground">
+                              <th className="p-3 w-1/4">Phase</th>
+                              <th className="p-3 w-1/6">Status</th>
+                              <th className="p-3 w-1/6">Timeline</th>
+                              <th className="p-3">Notes</th>
+                              <th className="p-3 w-12"> </th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(templateData.progressRows || []).map((row: any, idx: number) => (
+                              <tr key={row.id} className="border-t">
+                                <td className="p-3 align-top">
+                                  <Input value={row.phase} placeholder={`Phase ${idx + 1}`} onChange={(e) => setTemplateData((prev:any)=>{
+                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, phase: e.target.value} : r);
+                                    return {...prev, progressRows: rows};
+                                  })} />
+                                </td>
+                                <td className="p-3 align-top">
+                                  <Input value={row.status} placeholder="Not Started" onChange={(e) => setTemplateData((prev:any)=>{
+                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, status: e.target.value} : r);
+                                    return {...prev, progressRows: rows};
+                                  })} />
+                                </td>
+                                <td className="p-3 align-top">
+                                  <Input value={row.timeline} placeholder="2-4 weeks" onChange={(e) => setTemplateData((prev:any)=>{
+                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, timeline: e.target.value} : r);
+                                    return {...prev, progressRows: rows};
+                                  })} />
+                                </td>
+                                <td className="p-3 align-top">
+                                  <Textarea value={row.notes} placeholder="Notes..." rows={2} onChange={(e) => setTemplateData((prev:any)=>{
+                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, notes: e.target.value} : r);
+                                    return {...prev, progressRows: rows};
+                                  })} className="resize-none" />
+                                </td>
+                                <td className="p-3 align-top">
+                                  <Button size="icon" variant="ghost" onClick={() => removeProgressRow(row.id)}><Trash2 className="h-4 w-4" /></Button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Learning Goals & Experience */}
+                  <Card className="p-4">
+                    <CardHeader>
+                      <div className="flex justify-between items-center w-full">
+                        <CardTitle className="text-lg font-semibold flex items-center gap-2"><Target className="h-5 w-5 text-primary" /> Learning Goals</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="ghost" onClick={addGoal}><Plus className="h-4 w-4" /></Button>
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium">Top Goals</Label>
+                          <div className="space-y-2">
+                            {(templateData.goals||[]).map((g:any)=> (
+                              <div key={g.id} className="flex items-start gap-2 p-2 rounded-md bg-muted/50">
+                                <Checkbox checked={g.checked} onCheckedChange={(c)=> updateGoal(g.id, { checked: !!c })} className="mt-1" />
+                                <Input placeholder="Goal..." value={g.text} onChange={(e)=> updateGoal(g.id, { text: e.target.value })} className="border-0 bg-transparent" />
+                                <Button size="icon" variant="ghost" onClick={()=> removeGoal(g.id)}><Trash2 className="h-4 w-4" /></Button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
 
-              {/* Challenges & Solutions Section */}
-              <AccordionItem value="challenges" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Lightbulb className="h-5 w-5 text-primary" />
-                    <span>💡 Challenges & Solutions</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <Textarea
-                    placeholder="🔴 Challenge 1: Understanding backpropagation&#10;✅ Solution: Watched 3Blue1Brown videos, implemented from scratch&#10;&#10;🔴 Challenge 2: Overfitting in my model&#10;✅ Solution: Added dropout layers and data augmentation&#10;&#10;🔴 Challenge 3: Slow training times&#10;🔄 Working on: Optimizing batch size and using GPU acceleration"
-                    value={templateData.challenges}
-                    onChange={(e) => handleTemplateUpdate('challenges', e.target.value)}
-                    rows={10}
-                    className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
-                  />
-                </AccordionContent>
-              </AccordionItem>
+                        <div className="space-y-3">
+                          <Label className="text-sm font-medium">Experience & Time</Label>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <Input placeholder="Experience (Beginner/Intermediate)" value={templateData.experienceLevel} onChange={(e)=>handleTemplateUpdate('experienceLevel', e.target.value)} />
+                            <Input placeholder="Weekly hrs" value={templateData.weeklyTime} onChange={(e)=>handleTemplateUpdate('weeklyTime', e.target.value)} />
+                            <Input placeholder="Total months" value={templateData.totalMonths} onChange={(e)=>handleTemplateUpdate('totalMonths', e.target.value)} />
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              {/* Notes & Insights Section */}
-              <AccordionItem value="notes" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <PenLine className="h-5 w-5 text-primary" />
-                    <span>📝 Notes & Insights</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <Textarea
-                    placeholder="Key Takeaways:&#10;• Neural networks are essentially function approximators&#10;• The learning rate is one of the most important hyperparameters&#10;• Data quality > Model complexity&#10;&#10;Important Concepts:&#10;1. Gradient Descent&#10;2. Regularization Techniques&#10;3. Batch Normalization&#10;&#10;Resources to Revisit:&#10;- Chapter 5 of Deep Learning book&#10;- Stanford CS231n lectures"
-                    value={templateData.notes}
-                    onChange={(e) => handleTemplateUpdate('notes', e.target.value)}
-                    rows={12}
-                    className="resize-none border-0 bg-muted/50 focus-visible:ring-1 font-mono text-sm"
-                  />
-                </AccordionContent>
-              </AccordionItem>
-              {/* Achievements & Portfolio */}
-              <AccordionItem value="achievements_portfolio" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Trophy className="h-5 w-5 text-primary" />
-                    <span>🏆 Achievements & Portfolio</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <Label className="text-sm font-semibold text-muted-foreground">Certificates</Label>
-                  <Textarea placeholder="List certificates and achievements" value={templateData.certificates} onChange={(e) => handleTemplateUpdate('certificates', e.target.value)} rows={4} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                  <Label className="text-sm font-semibold text-muted-foreground mt-4">Projects & Portfolio</Label>
-                  <Textarea placeholder="Links to projects and short descriptions" value={templateData.projectsPortfolio} onChange={(e) => handleTemplateUpdate('projectsPortfolio', e.target.value)} rows={4} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                  <Label className="text-sm font-semibold text-muted-foreground mt-4">Community Contributions</Label>
-                  <Textarea placeholder="Contributions to OSS, blogs, talks" value={templateData.contributions} onChange={(e) => handleTemplateUpdate('contributions', e.target.value)} rows={3} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                </AccordionContent>
-              </AccordionItem>
+                  {/* Projects / Journal */}
+                  <Card className="p-4">
+                    <CardHeader>
+                      <div className="flex justify-between items-center w-full">
+                        <CardTitle className="text-lg font-semibold flex items-center gap-2"><ClipboardCheck className="h-5 w-5 text-primary" /> Journal & Achievements</CardTitle>
+                        <div className="flex items-center gap-2">
+                          <Button size="sm" variant="ghost" onClick={addAchievement}><Plus className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Label className="text-sm font-medium">Learning Journal</Label>
+                      <Textarea value={templateData.learningJournal} onChange={(e)=>handleTemplateUpdate('learningJournal', e.target.value)} rows={6} className="resize-none" placeholder="Daily/weekly notes..." />
 
-              {/* Learning Journal & Quarterly Reviews */}
-              <AccordionItem value="journal_reviews" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <ClipboardCheck className="h-5 w-5 text-primary" />
-                    <span>📝 Learning Journal & Quarterly Reviews</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <Label className="text-sm font-semibold text-muted-foreground">Learning Journal</Label>
-                  <Textarea placeholder="Daily/weekly logs..." value={templateData.learningJournal} onChange={(e) => handleTemplateUpdate('learningJournal', e.target.value)} rows={8} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                  <Label className="text-sm font-semibold text-muted-foreground mt-4">Q1 Review</Label>
-                  <Textarea placeholder="Q1 review" value={templateData.q1Review} onChange={(e) => handleTemplateUpdate('q1Review', e.target.value)} rows={4} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                  <Label className="text-sm font-semibold text-muted-foreground mt-4">Q2 Review</Label>
-                  <Textarea placeholder="Q2 review" value={templateData.q2Review} onChange={(e) => handleTemplateUpdate('q2Review', e.target.value)} rows={4} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                </AccordionContent>
-              </AccordionItem>
+                      <div className="mt-4 space-y-2">
+                        <Label className="text-sm font-medium">Achievements</Label>
+                        {(templateData.achievements||[]).map((a:any)=> (
+                          <div key={a.id} className="flex items-center gap-2">
+                            <Input placeholder="Achievement" value={a.text} onChange={(e)=> updateAchievement(a.id, e.target.value)} className="flex-1" />
+                            <Button size="icon" variant="ghost" onClick={()=> removeAchievement(a.id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
 
-              {/* Next Steps & Career Planning */}
-              <AccordionItem value="next_steps" className="border rounded-lg px-6 bg-card">
-                <AccordionTrigger className="text-xl font-semibold hover:no-underline">
-                  <div className="flex items-center gap-3">
-                    <Target className="h-5 w-5 text-primary" />
-                    <span>🔮 Next Steps & Career Planning</span>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pt-4 pb-6">
-                  <Label className="text-sm font-semibold text-muted-foreground">Skills to Further Develop</Label>
-                  <Textarea placeholder="Skills to work on" value={templateData.skillsToDevelop} onChange={(e) => handleTemplateUpdate('skillsToDevelop', e.target.value)} rows={4} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                  <Label className="text-sm font-semibold text-muted-foreground mt-4">Research Interests</Label>
-                  <Textarea placeholder="Research topics" value={templateData.researchInterests} onChange={(e) => handleTemplateUpdate('researchInterests', e.target.value)} rows={3} className="resize-none border-0 bg-muted/50 focus-visible:ring-1" />
-                  <Label className="text-sm font-semibold text-muted-foreground mt-4">Career Goals</Label>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-2">
-                    <Input placeholder="Short-term (6-12 months)" value={templateData.careerShort} onChange={(e) => handleTemplateUpdate('careerShort', e.target.value)} />
-                    <Input placeholder="Medium-term (1-2 years)" value={templateData.careerMedium} onChange={(e) => handleTemplateUpdate('careerMedium', e.target.value)} />
-                    <Input placeholder="Long-term (3-5 years)" value={templateData.careerLong} onChange={(e) => handleTemplateUpdate('careerLong', e.target.value)} />
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                {/* Right / Sidebar */}
+                  <aside className="space-y-6">
+                  {/* Skills Checklist */}
+                  <Card className="p-4">
+                    <CardHeader>
+                      <div className="flex justify-between items-center w-full">
+                        <CardTitle className="text-md font-semibold flex items-center gap-2"><ListChecks className="h-4 w-4" /> Skills</CardTitle>
+                        <div>
+                          <Button size="sm" variant="ghost" onClick={addSkill}><Plus className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {(templateData.skills||[]).map((s:any)=> (
+                          <div key={s.id} className="flex items-center gap-2">
+                            <Checkbox checked={s.checked} onCheckedChange={(c)=> updateSkill(s.id, { checked: !!c })} />
+                            <Input value={s.name} placeholder="Skill name" onChange={(e)=> updateSkill(s.id, { name: e.target.value })} className="flex-1" />
+                            <Button size="icon" variant="ghost" onClick={()=> removeSkill(s.id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-            </Accordion>
+                  {/* Side Topics */}
+                  <Card className="p-4">
+                    <CardHeader>
+                      <div className="flex justify-between items-center w-full">
+                        <CardTitle className="text-md font-semibold flex items-center gap-2"><Lightbulb className="h-4 w-4" /> Side Topics</CardTitle>
+                        <div>
+                          <Button size="sm" variant="ghost" onClick={addSideTopic}><Plus className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {(templateData.sideTopics||[]).map((t:any)=> (
+                          <div key={t.id} className="flex items-center gap-2">
+                            <Checkbox checked={t.checked} onCheckedChange={(c)=> updateSideTopic(t.id, { checked: !!c })} />
+                            <Input value={t.name} placeholder="Topic name" onChange={(e)=> updateSideTopic(t.id, { name: e.target.value })} className="flex-1" />
+                            <Button size="icon" variant="ghost" onClick={()=> removeSideTopic(t.id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
 
-            {/* Bottom Save Button */}
-              <div className="mt-8 flex justify-center">
-                <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} size="lg" className="min-w-[200px]">
-                  <Save className="h-4 w-4 mr-2" />
-                  {updateTemplateMutation.isPending ? 'Saving...' : 'Save All Changes'}
+                  {/* Resources Cards */}
+                  <Card className="p-4">
+                    <CardHeader>
+                      <div className="flex justify-between items-center w-full">
+                        <CardTitle className="text-md font-semibold flex items-center gap-2"><BookOpen className="h-4 w-4" /> Resources</CardTitle>
+                        <div>
+                          <Button size="sm" variant="ghost" onClick={addResource}><Plus className="h-4 w-4" /></Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-1 gap-3">
+                        {(templateData.resources||[]).map((r:any)=> (
+                          <div key={r.id} className="p-2 rounded-md border bg-background flex items-center gap-2">
+                            <LinkIcon className="h-4 w-4" />
+                            <div className="flex-1">
+                              <Input placeholder="Resource title" value={r.title} onChange={(e)=> updateResource(r.id, { title: e.target.value })} className="border-0 bg-transparent" />
+                              <Input placeholder="https://example.com" value={r.url} onChange={(e)=> updateResource(r.id, { url: e.target.value })} className="border-0 bg-transparent text-xs text-muted-foreground mt-1" />
+                            </div>
+                            <Button size="icon" variant="ghost" onClick={()=> removeResource(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </aside>
+              </div>
+
+              {/* Bottom save */}
+              <div className="mt-6 flex justify-center">
+                <Button onClick={saveTemplate} disabled={updateTemplateMutation.isPending} size="lg" className="min-w-[220px]">
+                  <Save className="h-4 w-4 mr-2" /> {updateTemplateMutation.isPending ? 'Saving...' : 'Save All Changes'}
                 </Button>
               </div>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
