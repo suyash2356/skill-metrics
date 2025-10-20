@@ -27,6 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TypedSupabaseClient } from "@/integrations/supabase/client";
 import { TablesInsert, Database } from "@/integrations/supabase/types";
 import { generateAIPrompt, callAIGenerator, generateMockRoadmap } from "@/lib/aiRoadmapGenerator";
+import { FunctionsClient } from '@supabase/functions-js';
 
 const supabase = rawSupabase as TypedSupabaseClient;
 
@@ -42,6 +43,8 @@ const CreateRoadmap = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [isGenerating, setIsGenerating] = useState(false);
+  const [aiPreview, setAiPreview] = useState<any | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [recommendedResources, setRecommendedResources] = useState<any[]>([]);
   const [useRecommendedResources, setUseRecommendedResources] = useState(false);
   const [isPublic, setIsPublic] = useState(false); // New state for public/private
@@ -142,14 +145,35 @@ const CreateRoadmap = () => {
 
       console.log("AI Prompt:", aiPrompt);
 
-      // 2. Make actual AI API call
-      const aiResponse = await callAIGenerator(aiPrompt);
-      console.log("AI Response:", aiResponse);
+      // 2. Call Supabase Edge Function (if available) to generate structured plan
+      let roadmapDataFromAI: any = null;
+      try {
+        const functions = new FunctionsClient(window.location.origin, {
+          // Supabase functions-js doesn't need keys in browser when proxied through Supabase
+        } as any);
+        const res = await functions.invoke('generate-roadmap', {
+          method: 'POST',
+          body: JSON.stringify({
+            title: formData.title,
+            targetRole: formData.targetRole,
+            skillLevel: formData.skillLevel,
+            timeCommitment: formData.timeCommitment,
+            description: formData.description,
+            focusAreas: formData.focusAreas,
+          })
+        });
+  const text = await (res as any).text();
+  let json: any = null;
+  try { json = JSON.parse(text); } catch { json = text; }
+  if (json && json.plan) roadmapDataFromAI = json.plan;
+  else roadmapDataFromAI = json;
+      } catch (err) {
+        console.warn('Edge function call failed, falling back to direct generator', err);
+        const aiResponse = await callAIGenerator(aiPrompt);
+        roadmapDataFromAI = aiResponse;
+      }
 
-      // 3. Use the AI response directly, assuming it returns structured data
-      const roadmapDataFromAI = aiResponse;
-
-      // 4. Insert the main roadmap entry
+  // 4. Insert the main roadmap entry (same as before)
       const insertedRoadmapData: TablesInsert<'roadmaps'> = {
         user_id: user.id,
         title: roadmapDataFromAI.title || formData.title || 'Custom Roadmap',
@@ -571,40 +595,47 @@ const CreateRoadmap = () => {
                     </div>
                   </div>
                 )}
-
-                <div>
-                  <h4 className="font-medium mb-3">Learning Phases</h4>
-                  <div className="space-y-3">
-                    {previewRoadmap.phases.map((phase, index) => (
-                      <div key={index} className="border-l-2 border-primary pl-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h5 className="font-medium text-sm">{phase.name}</h5>
-                            <p className="text-xs text-muted-foreground">{phase.description}</p>
-                            <p className="text-xs text-muted-foreground">Duration: {phase.duration}</p>
-                          </div>
-                          <Badge variant="secondary" className="text-xs">
-                            {phase.resources?.length || 0} resources
-                          </Badge>
-                        </div>
-                        {phase.resources && phase.resources.length > 0 && (
-                          <div className="mt-2 space-y-1 text-xs">
-                            <p className="font-medium text-muted-foreground">Key Resources:</p>
-                            {phase.resources.map((res: any, resIndex: number) => (
-                              <div key={resIndex} className="flex items-center space-x-1">
-                                <LinkIcon className="h-3 w-3" />
-                                <a href={res.url || '#'} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
-                                  {res.title} ({res.type})
-                                </a>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                  <div className="flex items-center space-x-2 mt-6">
+                    <Button onClick={() => { setIsGenerating(true); generateRoadmap().finally(()=>setIsGenerating(false)); }} disabled={isGenerating}>
+                      {isGenerating ? 'Generating...' : 'Generate Roadmap'}
+                    </Button>
+                    <Button variant="ghost" onClick={saveDraft} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Draft'}</Button>
                   </div>
-                </div>
 
+                  {/* AI Preview Modal (simple inline dialog) */}
+                  {previewOpen && aiPreview && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                      <div className="max-w-3xl w-full bg-white rounded-lg p-6">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-xl font-semibold">AI-generated Roadmap Preview</h3>
+                          <div className="flex gap-2">
+                            <Button variant="ghost" onClick={() => setPreviewOpen(false)}>Close</Button>
+                          </div>
+                        </div>
+                        <div className="mt-4 space-y-3 max-h-[60vh] overflow-auto">
+                          <h4 className="font-semibold">Phases</h4>
+                          {(aiPreview.phases || []).map((p:any, i:number)=>(
+                            <div key={i} className="p-3 rounded-md border bg-muted/10">
+                              <div className="flex justify-between items-center">
+                                <strong>{p.name}</strong>
+                                <span className="text-sm text-muted-foreground">{p.duration}</span>
+                              </div>
+                              <p className="text-sm mt-2">{p.description}</p>
+                              {p.topics && p.topics.length>0 && (
+                                <div className="mt-2 text-sm">
+                                  <strong>Topics:</strong> {p.topics.join(', ')}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="mt-4 flex justify-end gap-2">
+                          <Button variant="outline" onClick={() => setPreviewOpen(false)}>Edit</Button>
+                          <Button onClick={generateRoadmap}>Confirm & Create Roadmap</Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 <div className="pt-4 border-t">
                   <p className="text-xs text-muted-foreground">
                     This is a preview based on your selections. The final roadmap will include 

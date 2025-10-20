@@ -31,22 +31,37 @@ import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/autoplay";
 import { motion } from "framer-motion";
+import { fetchExploreSuggestions } from "@/api/searchAPI";
+import { debounce } from "lodash";
 
 function Explore() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const fetchSuggestions = debounce(async (q: string) => {
+    if (!q) return setSuggestions([]);
+    try {
+      const res = await fetchExploreSuggestions(q, 8);
+      setSuggestions(res);
+    } catch (e) {
+      setSuggestions([]);
+    }
+  }, 200);
   // activeTab state is only used to reflect current tab; Tabs component handles visuals
   const [activeTab, setActiveTab] = useState("popular");
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}`);
+      // if the user typed and pressed Enter, prefer to navigate to search with scope=explore
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&scope=explore`);
     }
   };
 
   const handleCategoryClick = (category: string) => {
-    navigate(`/search?q=${encodeURIComponent(category)}`);
+    navigate(`/search?q=${encodeURIComponent(category)}&scope=explore`);
   };
 
   // Animated title words
@@ -94,7 +109,7 @@ function Explore() {
               type="text"
               placeholder="Search skills, exams, or topics..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => { setSearchTerm(e.target.value); fetchSuggestions(e.target.value); setShowSuggestions(true); }}
               className="rounded-l-lg border border-gray-300 focus-visible:ring-indigo-500"
             />
             <Button
@@ -103,6 +118,33 @@ function Explore() {
             >
               Search
             </Button>
+
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute mt-12 bg-card border rounded-md shadow z-50 w-full max-w-md">
+                {suggestions.map((s: any, idx: number) => (
+                  <button key={`exp-${idx}`} className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-3"
+                    onMouseDown={(ev) => { ev.preventDefault();
+                      // If the suggestion includes an external link, open it directly
+                      if (s.link) {
+                        window.open(s.link, '_blank');
+                      } else if (s.kind === 'skill') {
+                        navigate(`/skills/${encodeURIComponent(s.name)}`);
+                      } else if (s.kind === 'explore') {
+                        navigate(`/search?q=${encodeURIComponent(s.name)}&scope=explore`);
+                      }
+                      setShowSuggestions(false);
+                    }}
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium">{s.name}</div>
+                      {s.description && <div className="text-xs text-muted-foreground mt-0.5">{s.description}</div>}
+                      {!s.description && <div className="text-xs text-muted-foreground mt-0.5">{s.kind}</div>}
+                    </div>
+                    {s.link && <div className="text-xs text-primary">External</div>}
+                  </button>
+                ))}
+              </div>
+            )}
           </form>
         </section>
 
@@ -110,7 +152,7 @@ function Explore() {
         <Tabs defaultValue="popular" onValueChange={(v) => setActiveTab(v)} className="space-y-8">
           <TabsList className="flex justify-center bg-transparent gap-2">
             <TabsTrigger value="popular">Popular</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
+            <TabsTrigger value="categories">Degrees</TabsTrigger>
             <TabsTrigger value="certifications">Certifications</TabsTrigger>
             <TabsTrigger value="learning">Learning Paths</TabsTrigger>
             <TabsTrigger value="resources">Resources</TabsTrigger>
@@ -365,35 +407,107 @@ function Explore() {
             </section>
           </TabsContent>
 
-          {/* === Categories Section (static grid as alternative view) === */}
+          {/* === Degrees Section (replaces Categories) === */}
           <TabsContent value="categories">
             <section>
-              <h2 className="text-2xl font-bold mb-4">All Categories</h2>
-              <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              <h2 className="text-2xl font-bold mb-4">Top Degrees</h2>
+              <p className="text-sm text-muted-foreground mb-6">Explore top university degrees (online & offline) — compare fees, duration, rating and what you'll learn.</p>
+
+              <div className="grid sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                  "Artificial Intelligence",
-                  "Data Science",
-                  "Cloud Computing",
-                  "Cybersecurity",
-                  "Blockchain",
-                  "DevOps",
-                  "Software Development",
-                  "Product Management",
-                ].map((cat) => (
-                  <motion.div whileHover={{ y: -4 }} key={cat}>
-                    <Card
-                      onClick={() => handleCategoryClick(cat)}
-                      className="cursor-pointer p-4 hover:shadow-lg transition-shadow"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="font-semibold">{cat}</h3>
-                          <p className="text-sm text-muted-foreground mt-1">Top courses, books & channels</p>
+                  {
+                    title: "MSc in Computer Science",
+                    university: "Stanford University",
+                    mode: "offline",
+                    fees: "$55,000",
+                    rating: 4.8,
+                    duration: "2 years",
+                    teaches: ["Algorithms", "Systems", "AI & ML", "Software Engineering"],
+                    link: "https://cs.stanford.edu/"
+                  },
+                  {
+                    title: "Online MSc in Data Science",
+                    university: "University of London",
+                    mode: "online",
+                    fees: "$12,000",
+                    rating: 4.5,
+                    duration: "1.5 years",
+                    teaches: ["Statistics", "Machine Learning", "Data Visualization", "Big Data"],
+                    link: "https://london.ac.uk/courses/data-science"
+                  },
+                  {
+                    title: "BSc in Cybersecurity",
+                    university: "Carnegie Mellon University",
+                    mode: "offline",
+                    fees: "$48,000",
+                    rating: 4.7,
+                    duration: "4 years",
+                    teaches: ["Network Security", "Cryptography", "Ethical Hacking", "Forensics"],
+                    link: "https://www.cmu.edu/cybersecurity/"
+                  },
+                  {
+                    title: "Online MBA (Technology)",
+                    university: "MIT xPRO",
+                    mode: "online",
+                    fees: "$18,000",
+                    rating: 4.6,
+                    duration: "12 months",
+                    teaches: ["Product Strategy", "Tech Leadership", "Data-Driven Decisions"],
+                    link: "https://xpro.mit.edu/"
+                  },
+                  {
+                    title: "BEng Software Engineering",
+                    university: "University of Oxford",
+                    mode: "offline",
+                    fees: "$40,000",
+                    rating: 4.6,
+                    duration: "3 years",
+                    teaches: ["Software Design", "Databases", "Web Systems", "Testing"],
+                    link: "https://www.ox.ac.uk/"
+                  },
+                  {
+                    title: "Online Certificate in Cloud Engineering",
+                    university: "Google Cloud",
+                    mode: "online",
+                    fees: "$399",
+                    rating: 4.4,
+                    duration: "3 months",
+                    teaches: ["Cloud Architecture", "Kubernetes", "CI/CD"],
+                    link: "https://cloud.google.com/training"
+                  }
+                ].map((deg, i) => (
+                  <motion.div key={`deg-${i}`} whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 280 }}>
+                    <Card className="bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-lg transition-all">
+                      <CardHeader className="flex items-start gap-3">
+                        <div className={`p-3 rounded-full bg-gradient-to-r ${deg.mode === 'online' ? 'from-teal-400 to-cyan-500' : 'from-sky-500 to-indigo-500'} text-white shadow-lg` }>
+                          <GraduationCap className="h-6 w-6" />
                         </div>
-                        <div className="text-muted-foreground">
-                          <Badge variant="secondary">Top</Badge>
+                        <div className="flex-1">
+                          <CardTitle className="text-lg font-semibold">{deg.title}</CardTitle>
+                          <div className="text-sm text-muted-foreground">{deg.university} • <span className="capitalize">{deg.mode}</span></div>
                         </div>
-                      </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between text-sm text-muted-foreground">
+                          <div>Fees: <span className="text-gray-900 font-medium">{deg.fees}</span></div>
+                          <div>Rating: <span className="text-gray-900 font-medium">{deg.rating}</span></div>
+                          <div>Duration: <span className="text-gray-900 font-medium">{deg.duration}</span></div>
+                        </div>
+
+                        <div className="mt-3 text-sm">
+                          <div className="font-medium mb-1">What you'll learn</div>
+                          <ul className="list-disc list-inside text-muted-foreground">
+                            {deg.teaches.map((t: string, idx2: number) => (
+                              <li key={idx2}>{t}</li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="mt-4 flex items-center justify-between">
+                          <Button size="sm" variant="outline" onClick={() => window.open(deg.link || '#', '_blank')}>View Program</Button>
+                          <Badge variant="secondary" className="capitalize">{deg.mode}</Badge>
+                        </div>
+                      </CardContent>
                     </Card>
                   </motion.div>
                 ))}
