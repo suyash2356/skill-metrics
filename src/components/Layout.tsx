@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import logoImg from '@/logo.jpg';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchSearchSuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
+import { fetchPeopleCommunitySuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
 import { debounce } from "lodash";
 import { useAuth } from "@/hooks/useAuth";
 import { 
@@ -51,7 +51,7 @@ export const Layout = ({ children }: LayoutProps) => {
   const fetchSuggestions = debounce(async (q: string) => {
     if (!q) return setSuggestions([]);
     try {
-      const res = await fetchSearchSuggestions(q, 6);
+      const res = await fetchPeopleCommunitySuggestions(q, 6);
       setSuggestions(res);
     } catch (err) {
       setSuggestions([]);
@@ -215,9 +215,10 @@ export const Layout = ({ children }: LayoutProps) => {
                               setShowSuggestions(false);
                               navigate(`/communities/${s.id}/feed`);
                             } else {
-                              // skill: navigate to search page for this skill so SearchResults loads recommendations
+                              // By default the header only shows people/communities, but
+                              // keep a safe fallback if other kinds appear: navigate to people search
                               setShowSuggestions(false);
-                              navigate(`/search?q=${encodeURIComponent(s.name)}`);
+                              navigate(`/search?q=${encodeURIComponent(s.name)}&scope=people`);
                             }
                           }}
                         >

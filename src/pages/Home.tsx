@@ -214,6 +214,97 @@ const Home = () => {
     },
   });
 
+  // My Roadmaps (left sidebar)
+  const { data: myRoadmaps = [], isLoading: isLoadingMyRoadmaps } = useQuery({
+    queryKey: ['myRoadmaps', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('roadmaps')
+        .select('id, title, progress, status')
+        .eq('user_id', user.id)
+        .order('updated_at', { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user,
+  });
+
+  // My Communities (left sidebar)
+  const { data: myCommunities = [], isLoading: isLoadingMyCommunities } = useQuery({
+    queryKey: ['myCommunities', user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('community_members')
+        .select('communities(id, name, image)')
+        .eq('user_id', user.id)
+        .limit(5);
+      if (error) throw error;
+      // Be defensive: some selects return { communities: { ... } }, others may return the joined row directly
+      return (data || []).map((m: any) => m.communities || m.community || m);
+    },
+    enabled: !!user,
+  });
+
+  // Trending topics (derive from recent posts' tags)
+  const { data: trendingTopics = [], isLoading: isLoadingTrending } = useQuery({
+    queryKey: ['trendingTopics'],
+    queryFn: async () => {
+      const computeTopics = (rows: any[]) => {
+        const freq: Record<string, number> = {};
+        (rows || []).forEach((row: any) => {
+          const tags: string[] = row.tags || [];
+          tags.forEach(t => { if (!t) return; freq[t] = (freq[t] || 0) + 1; });
+        });
+        return Object.entries(freq)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 6)
+          .map(([tag]) => tag);
+      };
+
+      // Try last 30 days
+      const tryWindow = async (days: number) => {
+        const since = new Date();
+        since.setDate(since.getDate() - days);
+        const { data, error } = await supabase
+          .from('posts')
+          .select('tags')
+          .gte('created_at', since.toISOString())
+          .limit(500);
+        if (error) throw error;
+        return computeTopics(data || []);
+      };
+
+      let topics = await tryWindow(30);
+      if (!topics || topics.length === 0) {
+        topics = await tryWindow(90);
+      }
+
+      // Final static fallback if still empty
+      if (!topics || topics.length === 0) {
+        return ['javascript', 'react', 'webdev', 'ai', 'python', 'devops'];
+      }
+
+      return topics;
+    },
+  });
+
+  // New videos (right sidebar)
+  const { data: newVideos = [], isLoading: isLoadingNewVideos } = useQuery({
+    queryKey: ['newVideos'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('videos')
+        .select('id, title, thumbnail, channel, channel_avatar, views, upload_time')
+        .order('upload_time', { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
 
   return (
     <Layout>
@@ -224,15 +315,19 @@ const Home = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">My Roadmaps</h3>
-                <div className="space-y-3">
-                  <Link to="/my-roadmaps" className="flex items-center justify-between text-sm hover:text-primary">
-                    <span>🚀 My Learning Paths</span>
-                    <Badge variant="secondary">3</Badge>
-                  </Link>
-                  <Link to="/my-roadmaps" className="flex items-center justify-between text-sm hover:text-primary">
-                    <span>💡 AI Generated</span>
-                    <Badge variant="secondary">1</Badge>
-                  </Link>
+                <div className="space-y-2">
+                  {isLoadingMyRoadmaps ? (
+                    <div className="text-sm text-muted-foreground">Loading...</div>
+                  ) : myRoadmaps.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No roadmaps yet</div>
+                  ) : (
+                    myRoadmaps.map((r: any) => (
+                      <Link key={r.id} to={`/roadmaps/${r.id}`} className="flex items-center justify-between text-sm hover:text-primary">
+                        <span>{r.title}</span>
+                        <Badge variant="secondary">{r.progress || 0}%</Badge>
+                      </Link>
+                    ))
+                  )}
                 </div>
                 <Link to="/create-roadmap">
                   <Button className="w-full mt-4" size="sm"><Plus className="h-4 w-4 mr-2" />Create Roadmap</Button>
@@ -242,15 +337,19 @@ const Home = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">My Communities</h3>
-                <div className="space-y-3">
-                  <Link to="/my-communities" className="flex items-center gap-3 text-sm hover:text-primary">
-                    <Avatar className="h-8 w-8"><AvatarImage src="/placeholder.svg" /><AvatarFallback>R</AvatarFallback></Avatar>
-                    <span>React Developers</span>
-                  </Link>
-                  <Link to="/my-communities" className="flex items-center gap-3 text-sm hover:text-primary">
-                    <Avatar className="h-8 w-8"><AvatarImage src="/placeholder.svg" /><AvatarFallback>V</AvatarFallback></Avatar>
-                    <span>Vite Enthusiasts</span>
-                  </Link>
+                <div className="space-y-2">
+                  {isLoadingMyCommunities ? (
+                    <div className="text-sm text-muted-foreground">Loading...</div>
+                  ) : myCommunities.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">Not a member of any communities yet</div>
+                  ) : (
+                    myCommunities.map((c: any) => (
+                      <Link key={c.id} to={`/communities/${c.id}/feed`} className="flex items-center gap-3 text-sm hover:text-primary">
+                        <Avatar className="h-8 w-8"><AvatarImage src={c.image || c.avatar_url || '/placeholder.svg'} /><AvatarFallback>{(c.name || 'C')[0]}</AvatarFallback></Avatar>
+                        <span>{c.name}</span>
+                      </Link>
+                    ))
+                  )}
                 </div>
                 <Link to="/communities">
                   <Button variant="outline" className="w-full mt-4" size="sm"><Users className="h-4 w-4 mr-2" />Explore Communities</Button>
@@ -305,10 +404,16 @@ const Home = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">Trending Topics</h3>
-                <div className="space-y-3">
-                  <Link to="/explore?q=ai" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> AI & Machine Learning</Link>
-                  <Link to="/explore?q=react19" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> React 19 Features</Link>
-                  <Link to="/explore?q=serverless" className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> Serverless GPUs</Link>
+                <div className="space-y-2">
+                  {isLoadingTrending ? (
+                    <div className="text-sm text-muted-foreground">Loading...</div>
+                  ) : trendingTopics.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No trending topics</div>
+                  ) : (
+                    trendingTopics.map((t: string) => (
+                      <Link key={t} to={`/explore?q=${encodeURIComponent(t)}`} className="flex items-center gap-2 text-sm hover:text-primary"><TrendingUp className="h-4 w-4" /> {t}</Link>
+                    ))
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -316,18 +421,26 @@ const Home = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">New Videos</h3>
                 <div className="space-y-4">
-                  <Link to="/videos/1" className="flex items-start gap-3 group">
-                    <div className="relative flex-shrink-0">
-                      <img src="/placeholder.svg" alt="Video thumbnail" className="w-24 h-14 rounded-md object-cover" />
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-md">
-                        <Play className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm leading-snug group-hover:text-primary line-clamp-2">Full-stack Next.js 14 Tutorial</p>
-                      <p className="text-xs text-muted-foreground mt-1">The Net Ninja</p>
-                    </div>
-                  </Link>
+                  {isLoadingNewVideos ? (
+                    <div className="text-sm text-muted-foreground">Loading...</div>
+                  ) : newVideos.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No videos found</div>
+                  ) : (
+                    newVideos.map((video: any) => (
+                      <Link key={video.id} to={`/videos/${video.id}`} className="flex items-start gap-3 group">
+                        <div className="relative flex-shrink-0">
+                          <img src={video.thumbnail || '/placeholder.svg'} alt={video.title} className="w-24 h-14 rounded-md object-cover" />
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-md">
+                            <Play className="h-6 w-6 text-white" />
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm leading-snug group-hover:text-primary line-clamp-2">{video.title}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{video.channel || 'Channel'}</p>
+                        </div>
+                      </Link>
+                    ))
+                  )}
                 </div>
                 <Link to="/new-videos">
                   <Button variant="outline" size="sm" className="w-full mt-4">View All Videos</Button>

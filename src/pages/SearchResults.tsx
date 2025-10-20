@@ -2,20 +2,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchSearchSuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
+import { fetchSearchSuggestions, fetchPeopleCommunitySuggestions, fetchExploreSuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Search, Star, Users, Layers, Book, Globe, Youtube, Brain } from "lucide-react";
 
 export default function SearchResults() {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [activeIndex, setActiveIndex] = useState(-1);
   const [isFocused, setIsFocused] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   // ------------------------------
   // 🔹 Fetch Suggestions
   // ------------------------------
+  const location = useLocation();
+  const params = new URLSearchParams(location.search);
+  const scope = params.get('scope') || 'people';
+  // initialize query from URL param so user doesn't need to retype
+  useEffect(() => {
+    const q = params.get('q') || '';
+    setQuery(q);
+  // run once on mount or when location.search changes
+  }, [location.search]);
+
   useEffect(() => {
     if (!query) {
       setSuggestions([]);
@@ -23,12 +34,21 @@ export default function SearchResults() {
     }
 
     const handler = setTimeout(async () => {
-      const res = await fetchSearchSuggestions(query);
-      setSuggestions(res);
+      try {
+        let res: Suggestion[] = [];
+        if (scope === 'explore') {
+          res = await fetchExploreSuggestions(query);
+        } else {
+          res = await fetchPeopleCommunitySuggestions(query);
+        }
+        setSuggestions(res);
+      } catch (e) {
+        setSuggestions([]);
+      }
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [query]);
+  }, [query, scope]);
 
   // ------------------------------
   // 🔹 Fetch Recommendations when a skill is selected
@@ -36,11 +56,26 @@ export default function SearchResults() {
   async function handleSelectSuggestion(s: Suggestion) {
     setQuery(s.name || "");
     setSuggestions([]);
-    if (s.kind === "skill") {
-      const res = await fetchRecommendations(s.name);
-      setRecommendations(res);
-    } else {
-      setRecommendations([]);
+    // If the selected suggestion is a skill, navigate to the skill recommendations page
+    if (s.kind === 'skill') {
+      navigate(`/skills/${encodeURIComponent(s.name)}`);
+      return;
+    }
+
+    // If it's an explore item (certification/category/path), open the search results scoped to explore
+    if (s.kind === 'explore') {
+      navigate(`/search?q=${encodeURIComponent(s.name)}&scope=explore`);
+      return;
+    }
+
+    // user/community
+    if (s.kind === 'user') {
+      navigate(`/profile/${s.id}`);
+      return;
+    }
+    if (s.kind === 'community') {
+      navigate(`/communities/${s.id}/feed`);
+      return;
     }
   }
 
@@ -137,55 +172,7 @@ export default function SearchResults() {
         </div>
       )}
 
-      {/* Recommendations Display */}
-      {recommendations.length > 0 && (
-        <div className="mt-6 bg-gray-900 border border-gray-700 rounded-2xl p-5 shadow-xl space-y-4">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-            <Brain className="w-5 h-5 text-purple-400" /> Recommended Resources
-          </h2>
-          <div className="space-y-4">
-            {recommendations.map((r, i) => (
-              <a
-                key={i}
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block bg-gray-800 hover:bg-gray-750 transition-all rounded-xl p-4"
-              >
-                <div className="flex items-start gap-3">
-                  {recommendationIcon(r.type)}
-                  <div className="flex-1">
-                    <h3 className="text-sm font-semibold text-gray-100">{r.title}</h3>
-                    {r.description && (
-                      <p className="text-xs text-gray-400 line-clamp-2 mt-1">{r.description}</p>
-                    )}
-                    <div className="flex flex-wrap items-center gap-3 mt-2 text-xs text-gray-500">
-                      {r.rating && (
-                        <span className="flex items-center gap-1">
-                          <Star className="w-3 h-3 text-yellow-400" /> {r.rating.toFixed(1)}
-                        </span>
-                      )}
-                      {r.views && <span>{r.views}</span>}
-                      {r.isPaid !== undefined && (
-                        <span
-                          className={`${
-                            r.isPaid ? "text-red-400" : "text-green-400"
-                          } font-medium`}
-                        >
-                          {r.isPaid ? "Paid" : "Free"}
-                        </span>
-                      )}
-                      {r.difficulty && (
-                        <span className="capitalize text-gray-400">{r.difficulty}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Recommendations are shown on the dedicated skill page. SearchResults now only handles suggestions and navigation. */}
     </div>
   );
 }
