@@ -184,10 +184,10 @@ const RoadmapView = () => {
     howToUse: '',
     // Progress table rows (4 rows by default)
     progressRows: [
-      { id: genId(), phase: 'Foundations', status: '', timeline: '', notes: '' },
-      { id: genId(), phase: 'DSA', status: '', timeline: '', notes: '' },
-      { id: genId(), phase: 'Machine Learning', status: '', timeline: '', notes: '' },
-      { id: genId(), phase: 'Deep Learning', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: '', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: '', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: '', status: '', timeline: '', notes: '' },
+      { id: genId(), phase: '', status: '', timeline: '', notes: '' },
     ],
     // Goals and profile
     experienceLevel: '',
