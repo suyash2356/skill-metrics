@@ -90,31 +90,43 @@ export type Database = {
       }
       communities: {
         Row: {
+          banner: string | null
           category: string | null
           created_at: string
+          created_by: string | null
           description: string | null
           id: string
           image: string | null
+          is_private: boolean | null
+          logo: string | null
           members_count: number
           name: string
           posts_count: number
         }
         Insert: {
+          banner?: string | null
           category?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           image?: string | null
+          is_private?: boolean | null
+          logo?: string | null
           members_count?: number
           name: string
           posts_count?: number
         }
         Update: {
+          banner?: string | null
           category?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string | null
           id?: string
           image?: string | null
+          is_private?: boolean | null
+          logo?: string | null
           members_count?: number
           name?: string
           posts_count?: number
@@ -199,6 +211,41 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["user_id"]
+          },
+        ]
+      }
+      community_member_roles: {
+        Row: {
+          assigned_at: string
+          assigned_by: string | null
+          community_id: string
+          id: string
+          role: Database["public"]["Enums"]["community_role"]
+          user_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assigned_by?: string | null
+          community_id: string
+          id?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          user_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assigned_by?: string | null
+          community_id?: string
+          id?: string
+          role?: Database["public"]["Enums"]["community_role"]
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_member_roles_community_id_fkey"
+            columns: ["community_id"]
+            isOneToOne: false
+            referencedRelation: "communities"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -929,7 +976,7 @@ export type Database = {
           created_at: string
           device_type: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           metadata: Json | null
           post_id: string | null
           roadmap_id: string | null
@@ -943,7 +990,7 @@ export type Database = {
           created_at?: string
           device_type?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           post_id?: string | null
           roadmap_id?: string | null
@@ -957,7 +1004,7 @@ export type Database = {
           created_at?: string
           device_type?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           metadata?: Json | null
           post_id?: string | null
           roadmap_id?: string | null
@@ -1125,7 +1172,7 @@ export type Database = {
           device_type: string | null
           expires_at: string | null
           id: string
-          ip_address: unknown | null
+          ip_address: unknown
           is_active: boolean | null
           last_activity: string
           os: string | null
@@ -1142,7 +1189,7 @@ export type Database = {
           device_type?: string | null
           expires_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           last_activity?: string
           os?: string | null
@@ -1159,7 +1206,7 @@ export type Database = {
           device_type?: string | null
           expires_at?: string | null
           id?: string
-          ip_address?: unknown | null
+          ip_address?: unknown
           is_active?: boolean | null
           last_activity?: string
           os?: string | null
@@ -1213,25 +1260,27 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      cleanup_old_activity: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      cleanup_old_activity: { Args: never; Returns: undefined }
       create_default_collections_for_existing_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: undefined
       }
       create_default_preferences_for_existing_users: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: undefined
       }
-      migrate_profile_data: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
+      has_community_role: {
+        Args: {
+          _community_id: string
+          _role: Database["public"]["Enums"]["community_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
+      migrate_profile_data: { Args: never; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      community_role: "admin" | "moderator" | "member"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1358,6 +1407,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      community_role: ["admin", "moderator", "member"],
+    },
   },
 } as const

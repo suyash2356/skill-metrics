@@ -74,10 +74,11 @@ const Home = () => {
     const from = pageParam * pageSize;
     const to = from + pageSize - 1;
 
-    // First get posts
+    // First get posts (exclude community posts)
     const { data: postsData, error } = await supabase
       .from("posts")
       .select("*")
+      .is("community_id", null)
       .order("created_at", { ascending: false })
       .range(from, to);
 
