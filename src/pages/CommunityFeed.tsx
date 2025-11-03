@@ -1,163 +1,99 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/components/ui/tabs";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useCommunityMembership } from "@/hooks/useCommunityMembership";
+import { useCommunityRole } from "@/hooks/useCommunityRole";
+import { useCommunityStats } from "@/hooks/useCommunityStats";
 import {
   Users,
   MessageSquare,
   BookOpen,
-  TrendingUp,
   Settings,
   LogOut,
   Hash,
   Award,
-  Paperclip,
+  Send,
+  Crown,
+  Shield,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
-/* ---------- Types ---------- */
 type Community = {
   id: string;
   name: string;
   category: string;
   description: string;
   image: string | null;
+  logo: string | null;
+  banner: string | null;
   created_at: string;
-  member_count: number;
+  created_by: string | null;
+  is_private: boolean;
 };
 
-type TabProps = { communityId: string; isMember: boolean; toggleMembership?: () => Promise<void> | void };
+type TabProps = { 
+  communityId: string; 
+  isMember: boolean; 
+  toggleMembership?: () => Promise<void> | void;
+  isAdmin: boolean;
+};
 
 /* ---------- Feed Tab ---------- */
 const FeedTab: React.FC<TabProps> = ({ communityId, isMember, toggleMembership }) => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [newPost, setNewPost] = useState("");
-
-  // Ref to the scrollable messages container
   const messagesRef = useRef<HTMLDivElement | null>(null);
 
-  // Fetch posts (messages) for the community
   const { data: posts, isLoading, refetch } = useQuery({
     queryKey: ["community-feed", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("posts")
-        .select("*")
+        .select("*, profiles!posts_user_id_fkey(full_name, avatar_url)")
         .eq("community_id", communityId)
         .order("created_at", { ascending: true });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId,
+    enabled: !!communityId && isMember,
+    refetchInterval: 5000,
   });
 
-  // localMessages holds posts + optimistic messages
-  const [localMessages, setLocalMessages] = useState<any[]>([]);
-
-  // When posts load, fetch profiles for involved user_ids and merge
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      if (!posts) return;
-      const uniqueIds = Array.from(new Set(posts.map((p: any) => p.user_id))).filter(Boolean);
-      let profileMap: Record<string, any> = {};
-      if (uniqueIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, full_name, avatar_url")
-          .in("user_id", uniqueIds as string[]);
-        if (profiles) {
-          profileMap = profiles.reduce((acc: any, prof: any) => {
-            acc[prof.user_id] = prof;
-            return acc;
-          }, {});
-        }
-      }
-
-      if (!mounted) return;
-      const merged = posts.map((p: any) => ({
-        ...p,
-        user_name: profileMap[p.user_id]?.full_name || undefined,
-        user_avatar: profileMap[p.user_id]?.avatar_url || undefined,
-      }));
-      setLocalMessages(merged);
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [posts]);
-
-  // Auto-scroll to bottom when localMessages change
   useEffect(() => {
     if (messagesRef.current) {
       messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
-  }, [localMessages]);
+  }, [posts]);
 
   const handlePost = async () => {
     if (!newPost.trim() || !communityId || !isMember) return;
     const content = newPost.trim();
     const title = content.slice(0, 60) || "Post";
 
-    // Create optimistic message
-    const tempId = `temp-${Date.now()}`;
-    const tempMessage = {
-      id: tempId,
-      community_id: communityId,
-      user_id: user?.id,
-      content,
-      created_at: new Date().toISOString(),
-      user_name: user?.user_metadata?.full_name || undefined,
-      user_avatar: user?.user_metadata?.avatar_url || undefined,
-      pending: true,
-    };
-    setLocalMessages((m) => [...m, tempMessage]);
     setNewPost("");
 
-    // Send to server
-    const { data: inserted, error } = await supabase
+    const { error } = await supabase
       .from("posts")
-      .insert({ community_id: communityId, user_id: user?.id, title, content })
-      .select("*")
-      .single();
+      .insert({ community_id: communityId, user_id: user?.id, title, content });
 
     if (error) {
-      // remove temp message
-      setLocalMessages((m) => m.filter((msg) => msg.id !== tempId));
       toast({ title: "Error sending message", description: error.message, variant: "destructive" });
-      return;
+    } else {
+      refetch();
     }
-
-    // replace temp message with server message
-    setLocalMessages((m) => m.map((msg) => (msg.id === tempId ? { ...inserted } : msg)));
-    refetch();
   };
 
-  // Enter to send, Shift+Enter for newline
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -165,65 +101,59 @@ const FeedTab: React.FC<TabProps> = ({ communityId, isMember, toggleMembership }
     }
   };
 
-  if (isLoading) return <p>Loading chat...</p>;
+  if (!isMember) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12">
+        <p className="text-muted-foreground mb-4">Join the community to view and participate in conversations</p>
+        <Button onClick={toggleMembership}>Join Community</Button>
+      </div>
+    );
+  }
+
+  if (isLoading) return <div className="text-center py-8">Loading messages...</div>;
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-sm">
-      {/* Message list */}
+    <div className="flex flex-col h-[calc(100vh-16rem)] bg-background rounded-lg border">
       <div
         ref={messagesRef}
-        className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50"
+        className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/30"
         style={{ scrollbarGutter: "stable" }}
       >
         {(!posts || posts.length === 0) && (
-          <div className="text-center text-sm text-muted-foreground mt-8">
-            No messages yet. Say hello to the community 👋
+          <div className="text-center text-muted-foreground mt-8">
+            No messages yet. Start the conversation! 👋
           </div>
         )}
 
         {posts?.map((p: any) => {
           const isMe = user?.id && p.user_id === user.id;
           return (
-            <div
-              key={p.id}
-              className={`flex items-end gap-3 ${
-                isMe ? "justify-end" : "justify-start"
-              }`}
-            >
+            <div key={p.id} className={`flex items-end gap-3 ${isMe ? "justify-end" : "justify-start"}`}>
               {!isMe && (
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={p.user_avatar || undefined} />
-                  <AvatarFallback>
-                    {(p.user_name && p.user_name.charAt(0)) || "U"}
-                  </AvatarFallback>
+                  <AvatarImage src={p.profiles?.avatar_url || undefined} />
+                  <AvatarFallback>{p.profiles?.full_name?.[0] || "U"}</AvatarFallback>
                 </Avatar>
               )}
 
-              <div className={`max-w-[75%]`}>
-                <div
-                  className={`px-4 py-2 rounded-xl break-words leading-relaxed text-sm ${
-                    isMe
-                      ? "bg-blue-600 text-white rounded-br-none"
-                      : "bg-white text-slate-900 shadow rounded-bl-none"
-                  }`}
-                >
+              <div className="max-w-[70%]">
+                {!isMe && <p className="text-xs text-muted-foreground mb-1 ml-1">{p.profiles?.full_name || "Unknown"}</p>}
+                <div className={`px-4 py-2 rounded-2xl break-words ${
+                  isMe
+                    ? "bg-primary text-primary-foreground rounded-br-sm"
+                    : "bg-card text-card-foreground border rounded-bl-sm"
+                }`}>
                   {p.content}
                 </div>
-                <div
-                  className={`text-[11px] mt-1 ${
-                    isMe ? "text-right text-slate-200" : "text-left text-muted-foreground"
-                  }`}
-                >
+                <div className={`text-[10px] mt-1 px-1 text-muted-foreground ${isMe ? "text-right" : "text-left"}`}>
                   {formatDistanceToNow(new Date(p.created_at), { addSuffix: true })}
                 </div>
               </div>
 
               {isMe && (
                 <Avatar className="h-8 w-8">
-                  <AvatarImage src={p.user_avatar || undefined} />
-                  <AvatarFallback>
-                    {(p.user_name && p.user_name.charAt(0)) || "U"}
-                  </AvatarFallback>
+                  <AvatarImage src={p.profiles?.avatar_url || undefined} />
+                  <AvatarFallback>{p.profiles?.full_name?.[0] || "U"}</AvatarFallback>
                 </Avatar>
               )}
             </div>
@@ -231,27 +161,19 @@ const FeedTab: React.FC<TabProps> = ({ communityId, isMember, toggleMembership }
         })}
       </div>
 
-      {/* Input bar */}
-      <div className="p-3 border-t bg-white">
-        {!isMember ? (
-          <div className="flex items-center justify-between gap-3">
-            <div className="text-sm text-muted-foreground">Join the community to participate in conversations.</div>
-            <Button onClick={toggleMembership} className="h-10">Join</Button>
-          </div>
-        ) : (
-          <div className="flex items-end gap-2">
-            <textarea
-              className="flex-1 resize-none rounded-md border px-3 py-2 text-sm h-12 focus:outline-none focus:ring-2 focus:ring-primary"
-              placeholder="Type a message... (Enter to send, Shift+Enter for newline)"
-              value={newPost}
-              onChange={(e) => setNewPost(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <Button onClick={handlePost} className="h-12" aria-label="Send message">
-              Send
-            </Button>
-          </div>
-        )}
+      <div className="p-4 border-t bg-background">
+        <div className="flex items-end gap-2">
+          <textarea
+            className="flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm min-h-[44px] max-h-32 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            placeholder="Type a message... (Enter to send)"
+            value={newPost}
+            onChange={(e) => setNewPost(e.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          <Button onClick={handlePost} size="icon" className="h-11 w-11" aria-label="Send message">
+            <Send className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -267,14 +189,14 @@ const QuestionsTab: React.FC<TabProps> = ({ communityId, isMember }) => {
     queryKey: ["community-questions", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("community_questions") // id, community_id, user_id, question, created_at
-        .select("*")
+        .from("community_questions")
+        .select("*, profiles!community_questions_user_id_fkey(full_name, avatar_url)")
         .eq("community_id", communityId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId,
+    enabled: !!communityId && isMember,
   });
 
   const handleAsk = async () => {
@@ -285,11 +207,7 @@ const QuestionsTab: React.FC<TabProps> = ({ communityId, isMember }) => {
       question,
     });
     if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       setQuestion("");
       toast({ title: "Question posted" });
@@ -297,37 +215,55 @@ const QuestionsTab: React.FC<TabProps> = ({ communityId, isMember }) => {
     }
   };
 
-  if (isLoading) return <p>Loading questions...</p>;
+  if (!isMember) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Join the community to ask questions
+      </div>
+    );
+  }
+
+  if (isLoading) return <div className="text-center py-8">Loading questions...</div>;
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
-        <input
-          type="text"
-          className="flex-1 border rounded-lg px-3 py-2"
-          placeholder={isMember ? "Ask a question..." : "Join to ask a question..."}
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          disabled={!isMember}
-        />
-        <Button onClick={handleAsk} disabled={!isMember}>Ask</Button>
-      </div>
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="flex-1 border rounded-lg px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder="Ask a question..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+            />
+            <Button onClick={handleAsk}>Ask</Button>
+          </div>
+        </CardContent>
+      </Card>
 
-      {questions.length ? (
+      {questions && questions.length ? (
         questions.map((q: any) => (
           <Card key={q.id}>
             <CardContent className="p-4">
-              <p>{q.question}</p>
-              <span className="text-xs text-muted-foreground">
-                {formatDistanceToNow(new Date(q.created_at), {
-                  addSuffix: true,
-                })}
-              </span>
+              <div className="flex items-start gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={q.profiles?.avatar_url || ""} />
+                  <AvatarFallback>{q.profiles?.full_name?.[0] || "U"}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="font-medium text-sm">{q.profiles?.full_name || "Anonymous"}</p>
+                  <p className="mt-1">{q.question}</p>
+                  <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(q.created_at), { addSuffix: true })}
+                  </span>
+                </div>
+              </div>
             </CardContent>
           </Card>
         ))
       ) : (
-        <p className="text-muted-foreground">No questions yet.</p>
+        <p className="text-center text-muted-foreground py-8">No questions yet. Be the first to ask!</p>
       )}
     </div>
   );
@@ -339,99 +275,140 @@ const ResourcesTab: React.FC<TabProps> = ({ communityId, isMember }) => {
     queryKey: ["community-resources", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("community_resources") // id, community_id, title, link, created_at
-        .select("*")
+        .from("community_resources")
+        .select("*, profiles!community_resources_user_id_fkey(full_name, avatar_url)")
         .eq("community_id", communityId)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId,
+    enabled: !!communityId && isMember,
   });
 
-  if (isLoading) return <p>Loading resources...</p>;
-  if (!resources.length)
-    return <p className="text-muted-foreground">No resources shared yet.</p>;
+  if (!isMember) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Join the community to access resources
+      </div>
+    );
+  }
+
+  if (isLoading) return <div className="text-center py-8">Loading resources...</div>;
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-4">
       {isMember && (
-        <div className="flex items-center gap-2">
-          <Link to={`/communities/${communityId}/resources/new`} className="text-sm text-primary hover:underline">Share a resource</Link>
-        </div>
-      )}
-      {resources.map((r: any) => (
-        <Card key={r.id}>
+        <Card>
           <CardContent className="p-4">
-            <a
-              href={r.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline"
-            >
-              {r.title}
-            </a>
+            <Link to={`/communities/${communityId}/resources/new`}>
+              <Button className="w-full">Share a Resource</Button>
+            </Link>
           </CardContent>
         </Card>
-      ))}
+      )}
+
+      {resources && resources.length > 0 ? (
+        resources.map((r: any) => (
+          <Card key={r.id} className="hover:shadow-md transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-start gap-3">
+                <BookOpen className="h-5 w-5 text-primary mt-1" />
+                <div className="flex-1">
+                  <a
+                    href={r.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    {r.title}
+                  </a>
+                  {r.description && <p className="text-sm text-muted-foreground mt-1">{r.description}</p>}
+                  <div className="flex items-center gap-2 mt-2">
+                    <Avatar className="h-5 w-5">
+                      <AvatarImage src={r.profiles?.avatar_url || ""} />
+                      <AvatarFallback className="text-[10px]">{r.profiles?.full_name?.[0] || "U"}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-xs text-muted-foreground">
+                      Shared by {r.profiles?.full_name || "Unknown"} • {formatDistanceToNow(new Date(r.created_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <p className="text-center text-muted-foreground py-8">No resources shared yet.</p>
+      )}
     </div>
   );
 };
 
-/* ---------- Progress Tab (placeholder) ---------- */
-const ProgressTab: React.FC<TabProps> = ({ communityId, isMember }) => (
-  <div>
-    {!isMember ? (
-      <p className="text-muted-foreground">Join the community to view progress tracking.</p>
-    ) : (
-      <p className="text-muted-foreground">Progress tracking coming soon for {communityId}.</p>
-    )}
-  </div>
-);
-
 /* ---------- Members Tab ---------- */
 const MembersTab: React.FC<TabProps> = ({ communityId, isMember }) => {
   const { data: members, isLoading } = useQuery({
-    queryKey: ["community-members", communityId],
+    queryKey: ["community-members-with-roles", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("community_members") // id, community_id, user_id, joined_at
-        .select("user_id, joined_at, profiles(username, avatar_url)")
-        .eq("community_id", communityId);
+        .from("community_member_roles")
+        .select("user_id, role, assigned_at, profiles!community_member_roles_user_id_fkey(full_name, avatar_url)")
+        .eq("community_id", communityId)
+        .order("role", { ascending: true })
+        .order("assigned_at", { ascending: false });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId,
+    enabled: !!communityId && isMember,
   });
 
-  if (isLoading) return <p>Loading members...</p>;
+  if (!isMember) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        Join the community to see members
+      </div>
+    );
+  }
+
+  if (isLoading) return <div className="text-center py-8">Loading members...</div>;
+
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case "admin": return <Crown className="h-4 w-4 text-yellow-500" />;
+      case "moderator": return <Shield className="h-4 w-4 text-blue-500" />;
+      default: return null;
+    }
+  };
 
   return (
     <div className="space-y-2">
-      {!isMember && (
-        <p className="text-muted-foreground">Join the community to see full member details.</p>
+      {members && members.length > 0 ? (
+        members.map((m: any) => (
+          <Card key={m.user_id}>
+            <CardContent className="flex items-center justify-between p-4">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={m.profiles?.avatar_url || ""} />
+                  <AvatarFallback>{m.profiles?.full_name?.[0]?.toUpperCase() || "U"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-medium">{m.profiles?.full_name || "Unknown"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Joined {formatDistanceToNow(new Date(m.assigned_at), { addSuffix: true })}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {getRoleIcon(m.role)}
+                <Badge variant={m.role === "admin" ? "default" : m.role === "moderator" ? "secondary" : "outline"}>
+                  {m.role}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      ) : (
+        <p className="text-center text-muted-foreground py-8">No members found</p>
       )}
-      {members.map((m: any) => (
-        <Card key={m.user_id}>
-          <CardContent className="flex items-center gap-3 p-3">
-            <Avatar>
-              <AvatarImage src={m.profiles?.avatar_url || ""} />
-              <AvatarFallback>
-                {m.profiles?.username?.[0]?.toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <p className="font-medium">{m.profiles?.username}</p>
-              <p className="text-xs text-muted-foreground">
-                Joined{" "}
-                {formatDistanceToNow(new Date(m.joined_at), {
-                  addSuffix: true,
-                })}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
     </div>
   );
 };
@@ -442,28 +419,18 @@ const CommunityFeed: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("feed");
-  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  const {
-    isMember,
-    isLoadingMembershipStatus: isLoadingMembership,
-    toggleMembership,
-  } = useCommunityMembership(communityId || "");
+  const { isMember, isLoadingMembershipStatus, toggleMembership } = useCommunityMembership(communityId || "");
+  const { data: userRole } = useCommunityRole(communityId);
+  const { data: stats } = useCommunityStats(communityId);
+
+  const isAdmin = userRole === "admin";
 
   useEffect(() => {
     document.title = "Community • Feed";
   }, []);
 
-  useEffect(() => {
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
-  }, [activeTab]);
-
-  // Load community info
-  const {
-    data: community,
-    isLoading: loadingCommunity,
-    error: communityError,
-  } = useQuery<Community, Error>({
+  const { data: community, isLoading: loadingCommunity, error: communityError } = useQuery<Community, Error>({
     queryKey: ["community", communityId],
     queryFn: async () => {
       if (!communityId) throw new Error("Community ID is required");
@@ -473,14 +440,7 @@ const CommunityFeed: React.FC = () => {
         .eq("id", communityId)
         .single();
       if (cErr) throw cErr;
-
-      const { count, error: mErr } = await supabase
-        .from("community_members")
-        .select("*", { count: "exact", head: true })
-        .eq("community_id", communityId);
-      if (mErr) throw mErr;
-
-      return { ...c, member_count: count ?? 0 };
+      return c;
     },
     enabled: Boolean(communityId),
   });
@@ -491,35 +451,50 @@ const CommunityFeed: React.FC = () => {
     toast({ title: "Left the community" });
   };
 
-  if (loadingCommunity || isLoadingMembership)
+  if (loadingCommunity || isLoadingMembershipStatus) {
     return (
       <Layout>
         <div className="container mx-auto p-4 text-center">Loading...</div>
       </Layout>
     );
+  }
 
-  if (communityError)
+  if (communityError) {
     return (
       <Layout>
-        <div className="container mx-auto p-4 text-destructive">
-          Failed to load community.
-        </div>
+        <div className="container mx-auto p-4 text-destructive">Failed to load community.</div>
       </Layout>
     );
+  }
 
-  if (!isMember && !loadingCommunity)
+  if (!isMember && !loadingCommunity) {
     return (
       <Layout>
-        <div className="container mx-auto px-4 py-12 text-center max-w-md">
-          <Card>
+        <div className="container mx-auto px-4 py-12 max-w-2xl">
+          <Card className="text-center">
             <CardHeader>
-              <CardTitle>Join {community?.name}</CardTitle>
+              <div className="flex justify-center mb-4">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={community?.logo || community?.image || undefined} />
+                  <AvatarFallback className="text-2xl">{community?.name?.[0] || "C"}</AvatarFallback>
+                </Avatar>
+              </div>
+              <CardTitle className="text-2xl">{community?.name}</CardTitle>
+              <Badge variant="secondary" className="mt-2">{community?.category}</Badge>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground mb-4">
-                Join the community to view and participate in posts.
-              </p>
-              <Button onClick={toggleMembership} disabled={isLoadingMembership}>
+              <p className="text-muted-foreground mb-6">{community?.description}</p>
+              <div className="flex items-center justify-center gap-6 mb-6 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  {stats?.memberCount || 0} members
+                </div>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4" />
+                  {stats?.recentPosts || 0} posts/week
+                </div>
+              </div>
+              <Button onClick={toggleMembership} size="lg" disabled={isLoadingMembershipStatus}>
                 Join Community
               </Button>
             </CardContent>
@@ -527,140 +502,125 @@ const CommunityFeed: React.FC = () => {
         </div>
       </Layout>
     );
+  }
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 grid grid-cols-12 gap-6 h-[calc(100vh-4.1rem)]">
-        {/* Left Sidebar */}
-        <aside className="hidden lg:block lg:col-span-3 xl:col-span-2 py-6">
-          <Card className="sticky top-6">
-            <CardHeader className="p-3 flex items-center gap-3">
-              <Avatar className="h-10 w-10 border">
-                <AvatarImage
-                  src={community?.image || undefined}
-                  alt={community?.name || "Community"}
-                />
-                <AvatarFallback>
-                  {community?.name?.charAt(0) || "C"}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <h2 className="text-lg font-bold">
-                  {community?.name || "Community"}
-                </h2>
-                <Badge variant="secondary" className="text-xs">
-                  {community?.category || "General"}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 text-sm text-muted-foreground">
-              {community?.description || "Welcome to the community!"}
-            </CardContent>
-            <CardContent className="p-4 flex flex-col space-y-2">
-              <Button variant="outline" size="sm" asChild>
-                <Link
-                  to={`/communities/${communityId}/settings`}
-                  className="flex items-center gap-2"
-                >
-                  <Settings className="h-4 w-4" />
-                  Settings
-                </Link>
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="flex items-center gap-2"
-                onClick={handleLeaveCommunity}
-              >
-                <LogOut className="h-4 w-4" />
-                Leave
-              </Button>
-            </CardContent>
-            <CardContent className="p-4 text-sm text-muted-foreground space-y-2">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                {community?.member_count || 0} members
-              </div>
-              <div className="flex items-center gap-2">
-                <Hash className="h-4 w-4" />
-                {community?.created_at && (
+      <div className="container mx-auto px-4 py-6">
+        {community?.banner && (
+          <div className="w-full h-48 rounded-lg overflow-hidden mb-6">
+            <img src={community.banner} alt={community.name} className="w-full h-full object-cover" />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <aside className="lg:col-span-3 space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <div className="flex items-center gap-3">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={community?.logo || community?.image || undefined} />
+                    <AvatarFallback>{community?.name?.[0] || "C"}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h2 className="font-bold text-lg">{community?.name}</h2>
+                    <Badge variant="secondary" className="text-xs">{community?.category}</Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="text-sm text-muted-foreground space-y-3">
+                <p>{community?.description}</p>
+                <Separator />
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    <span className="font-medium">{stats?.memberCount || 0}</span> members
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    <span className="font-medium">{stats?.recentPosts || 0}</span> posts this week
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Hash className="h-4 w-4" />
+                    Created {community?.created_at && formatDistanceToNow(new Date(community.created_at), { addSuffix: true })}
+                  </div>
+                </div>
+                
+                {stats?.topContributors && stats.topContributors.length > 0 && (
                   <>
-                    Created{" "}
-                    {formatDistanceToNow(new Date(community.created_at), {
-                      addSuffix: true,
-                    })}
+                    <Separator />
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Award className="h-4 w-4 text-yellow-500" />
+                        <span className="font-semibold">Top Contributors</span>
+                      </div>
+                      <div className="space-y-2">
+                        {stats.topContributors.map((contributor) => (
+                          <div key={contributor.userId} className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={contributor.avatar || ""} />
+                              <AvatarFallback className="text-xs">{contributor.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-xs">{contributor.name}</span>
+                            <Badge variant="outline" className="ml-auto text-xs">{contributor.postCount}</Badge>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </>
                 )}
-              </div>
-              <div className="flex items-center gap-2">
-                <Award className="h-4 w-4" />
-                Top contributors weekly
-              </div>
-              <div className="flex items-center gap-2">
-                <Paperclip className="h-4 w-4" />
-                Share files & resources
-              </div>
-            </CardContent>
-          </Card>
-        </aside>
 
-        {/* Main */}
-        <main className="col-span-12 lg:col-span-9 xl:col-span-7 flex flex-col h-full py-6">
-          <div ref={scrollRef} className="flex-1">
-              <Tabs
-                defaultValue="feed"
-                value={activeTab}
-                onValueChange={setActiveTab}
-                className="flex flex-col h-full"
-              >
-              <TabsList className="w-full flex flex-wrap">
+                <Separator />
+                <div className="space-y-2">
+                  {isAdmin && (
+                    <Button variant="outline" size="sm" className="w-full" asChild>
+                      <Link to={`/communities/${communityId}/settings`}>
+                        <Settings className="h-4 w-4 mr-2" />
+                        Settings
+                      </Link>
+                    </Button>
+                  )}
+                  <Button variant="destructive" size="sm" className="w-full" onClick={handleLeaveCommunity}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Leave Community
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </aside>
+
+          <main className="lg:col-span-9">
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className="w-full grid grid-cols-4 mb-4">
                 <TabsTrigger value="feed">
-                  <MessageSquare className="h-4 w-4 mr-1" /> Feed
+                  <MessageSquare className="h-4 w-4 mr-2" /> Feed
                 </TabsTrigger>
                 <TabsTrigger value="questions">
-                  <MessageSquare className="h-4 w-4 mr-1" /> Questions
+                  <MessageSquare className="h-4 w-4 mr-2" /> Q&A
                 </TabsTrigger>
                 <TabsTrigger value="resources">
-                  <BookOpen className="h-4 w-4 mr-1" /> Resources
-                </TabsTrigger>
-                <TabsTrigger value="progress">
-                  <TrendingUp className="h-4 w-4 mr-1" /> Progress
+                  <BookOpen className="h-4 w-4 mr-2" /> Resources
                 </TabsTrigger>
                 <TabsTrigger value="members">
-                  <Users className="h-4 w-4 mr-1" /> Members
+                  <Users className="h-4 w-4 mr-2" /> Members
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="feed" className="mt-4 flex-1">
-                <FeedTab communityId={communityId || ""} isMember={isMember} toggleMembership={toggleMembership} />
+              <TabsContent value="feed">
+                <FeedTab communityId={communityId || ""} isMember={isMember} toggleMembership={toggleMembership} isAdmin={isAdmin} />
               </TabsContent>
-              <TabsContent value="questions" className="mt-4 flex-1">
-                <QuestionsTab communityId={communityId || ""} isMember={isMember} />
+              <TabsContent value="questions">
+                <QuestionsTab communityId={communityId || ""} isMember={isMember} isAdmin={isAdmin} />
               </TabsContent>
-              <TabsContent value="resources" className="mt-4 flex-1">
-                <ResourcesTab communityId={communityId || ""} isMember={isMember} />
+              <TabsContent value="resources">
+                <ResourcesTab communityId={communityId || ""} isMember={isMember} isAdmin={isAdmin} />
               </TabsContent>
-              <TabsContent value="progress" className="mt-4 flex-1">
-                <ProgressTab communityId={communityId || ""} isMember={isMember} />
-              </TabsContent>
-              <TabsContent value="members" className="mt-4 flex-1">
-                <MembersTab communityId={communityId || ""} isMember={isMember} />
+              <TabsContent value="members">
+                <MembersTab communityId={communityId || ""} isMember={isMember} isAdmin={isAdmin} />
               </TabsContent>
             </Tabs>
-          </div>
-        </main>
-
-        {/* Right Sidebar */}
-        <aside className="hidden xl:block xl:col-span-3 py-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Guidelines</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              Be respectful, stay on topic, and help others grow.
-            </CardContent>
-          </Card>
-        </aside>
+          </main>
+        </div>
       </div>
     </Layout>
   );

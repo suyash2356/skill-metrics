@@ -44,10 +44,10 @@ export const ProfileWithDatabase = ({ userId }: ProfileWithDatabaseProps) => {
         company: profileDetails.company || '',
         experience_level: profileDetails.experience_level || 'beginner',
         portfolio_url: profileDetails.portfolio_url || '',
-        social_links: profileDetails.social_links || [],
-        skills: profileDetails.skills || [],
-        achievements: profileDetails.achievements || [],
-        learning_path: profileDetails.learning_path || [],
+        social_links: (profileDetails.social_links as any) || [],
+        skills: (profileDetails.skills as any) || [],
+        achievements: (profileDetails.achievements as any) || [],
+        learning_path: (profileDetails.learning_path as any) || [],
       });
     }
   }, [profileDetails]);
