@@ -64,6 +64,8 @@ Skill-Metric offers an integrated suite of tools for personalized and collaborat
 * **🔐 Secure Authentication:**  
   Sign in easily and securely using modern authentication methods (email, OAuth, etc.).
 
+*[Note: This project is build using all free versions, so it can have limits related to storage or uploading]  
+
 ---
 
 ## 🛠️ Tech Stack & Architecture
@@ -76,8 +78,8 @@ Skill-Metric is built with a modern, performant, and scalable technology stack:
 * **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 * **State Management:** React Hooks & Context API
 * **AI Integration:** Custom AI models for resource recommendation and roadmap generation
-* **Backend (Future Integration):** Firebase / Supabase for real-time data and storage
-* **Community & Chat:** WebSocket / Firebase (planned)
+* **Backend and Database:** Supabase for real-time data and storage
+* **Community & Chat:** WebSocket (planned)
 
 ---
 
@@ -123,19 +125,12 @@ Follow these instructions to run Skill-Metric locally for development and testin
 ## ☁️ Deployment
 
 Skill-Metric can be deployed via:
-* [Lovable](https://lovable.dev/) → Open your project, go to **Share → Publish**
-* Or deploy manually on:
+* Deploy manually on:
   * [Vercel](https://vercel.com/)
   * [Netlify](https://www.netlify.com/)
   * [Firebase Hosting](https://firebase.google.com/products/hosting)
 
 ---
-
-## 🌐 Custom Domain Setup
-
-If deployed via **Lovable**, you can add a custom domain by navigating to  
-**Project → Settings → Domains → Connect Domain**.  
-For step-by-step instructions, see the [Lovable custom domain guide](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide).
 
 ---
 
@@ -152,5 +147,17 @@ This project demonstrates how **AI can enhance human creativity**, empowering bu
 
 Skill-Metric was conceptualized, designed, and implemented with a strong focus on innovation and user-centric learning experiences.  
 It’s more than just a recommendation platform — it’s your **AI learning companion**, designed to help you **grow smarter, faster, and together**.
+ 
+---
 
+## 🎓 About the Project & Future Goals
+
+This project was developed as part of a **college initiative**, understanding foundation of development in **Web App** and **Machine Learning**.  
+Currently, the recommendation system utilizes **Hugging Face models** for intelligent resource suggestions.  
+
+My long-term goal is to become a **dedicated AI/ML Engineer** — and as I continue learning machine learning, I plan to build and integrate **custom ML models** specifically optimized for Skill-Metric’s recommendation engine.  
+Future versions of this platform will be **fully developed and trained by me**, combining hands-on engineering with the creative power of AI.
+
+Your feedback will be highly usefull for me.
+Mail - suyashbabad09@gmail.com
 ---
