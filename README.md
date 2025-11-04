@@ -1,73 +1,156 @@
-# Welcome to your Lovable project
+# Skill-Metric: Your Personalized Learning Companion
 
-## Project info
+<p align="center">
+  <strong>Your Personalized AI-Powered Learning Recommendation Platform.</strong><br/>
+  Empowering learners with tailored learning paths, smart recommendations, and collaborative communities — all in one place.
+</p>
 
-**URL**: https://lovable.dev/projects/d124d94c-1697-4963-afa6-c02f4f4a0476
+---
 
-## How can I edit this code?
+## 📸 Preview
 
-There are several ways of editing your application.
+<p align="center">
+  <img src="https://your-preview-image-or-gif-link-here" alt="Skill-Metric Preview" width="800">
+</p>
 
-**Use Lovable**
+<p align="center">
+  <em>Experience personalized learning, intelligent recommendations, and community collaboration — all in one seamless platform.</em>
+</p>
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/d124d94c-1697-4963-afa6-c02f4f4a0476) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🎯 The Problem It Solves
 
-**Use your preferred IDE**
+In today’s world, learners are overwhelmed by the sheer number of available resources — courses, tutorials, and tools.  
+Most struggle to find **personalized learning paths**, lack a **structured roadmap**, and miss out on **community-driven growth** opportunities.  
+Traditional platforms focus on content delivery, not learner experience or personalization.
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## ✨ Our Solution
 
-Follow these steps:
+**Skill-Metric** bridges this gap by offering a **personalized AI-driven recommendation platform** that adapts to each learner’s interests, goals, and progress.  
+From generating **custom skill roadmaps** to **recommending curated resources**, and from **social-style feeds** to **community learning groups**, Skill-Metric brings together everything a learner needs to grow — intelligently and collaboratively.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Our mission is to create a dynamic ecosystem that **measures, visualizes, and enhances learning progress**, helping individuals and teams achieve their goals faster.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🚀 Key Features
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+Skill-Metric offers an integrated suite of tools for personalized and collaborative learning:
 
-**Edit a file directly in GitHub**
+* **🧠 Personalized AI Recommendations:**  
+  Get curated learning resources (videos, articles, courses, etc.) based on your learning goals, preferences, and current skills.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+* **📈 AI Roadmap Generator:**  
+  Automatically generate a customized learning roadmap that integrates your recommended resources directly into the roadmap flow.
 
-**Use GitHub Codespaces**
+* **🏠 Home Feed (Social Learning Hub):**  
+  A community-driven feed where users can post updates, share insights, publish resources, or post learning news — inspired by Instagram’s simplicity and engagement.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+* **🔍 Explore Page:**  
+  Discover trending and top-rated learning resources across various domains for easy access and exploration.
 
-## What technologies are used for this project?
+* **💼 Smart Profile Dashboard:**  
+  Showcase your skills visually with percentage-based progress indicators, add achievements, current work, and learning milestones — inspired by LinkedIn & Instagram-style profiles.
 
-This project is built with:
+* **👥 Community Learning Spaces:**  
+  Join or create communities for group learning. Collaborate like on Discord — chat, ask questions, share notes, track collective progress, and even work on projects together.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+* **⚡ Integrated Skill Tracking:**  
+  Monitor your skill growth and learning journey through analytics-driven insights and progress graphs.
 
-## How can I deploy this project?
+* **🔐 Secure Authentication:**  
+  Sign in easily and securely using modern authentication methods (email, OAuth, etc.).
 
-Simply open [Lovable](https://lovable.dev/projects/d124d94c-1697-4963-afa6-c02f4f4a0476) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 🛠️ Tech Stack & Architecture
 
-Yes, you can!
+Skill-Metric is built with a modern, performant, and scalable technology stack:
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+* **Framework:** [Vite](https://vitejs.dev/) + [React](https://react.dev/)
+* **Language:** [TypeScript](https://www.typescriptlang.org/)
+* **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
+* **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+* **State Management:** React Hooks & Context API
+* **AI Integration:** Custom AI models for resource recommendation and roadmap generation
+* **Backend (Future Integration):** Firebase / Supabase for real-time data and storage
+* **Community & Chat:** WebSocket / Firebase (planned)
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+---
+
+## ⚙️ Getting Started: Local Setup
+
+Follow these instructions to run Skill-Metric locally for development and testing.
+
+### Prerequisites
+
+* [Node.js](https://nodejs.org/en/) (v18.x or newer)
+* npm, yarn, or pnpm
+* (Optional) Access to an AI API or backend instance for recommendations
+
+---
+
+### Installation Steps
+
+1. **Clone the Repository**
+    ```bash
+    git clone https://github.com/your-username/skill-metric.git
+    cd skill-metric
+    ```
+
+2. **Install Dependencies**
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+
+3. **Set Up Environment Variables**
+    Create a `.env` file in the root directory and configure the required environment variables (API keys, DB URLs, etc.).
+
+4. **Run the Development Server**
+    ```bash
+    npm run dev
+    ```
+
+5. Open [http://localhost:5173](http://localhost:5173) in your browser to view Skill-Metric locally.
+
+---
+
+## ☁️ Deployment
+
+Skill-Metric can be deployed via:
+* [Lovable](https://lovable.dev/) → Open your project, go to **Share → Publish**
+* Or deploy manually on:
+  * [Vercel](https://vercel.com/)
+  * [Netlify](https://www.netlify.com/)
+  * [Firebase Hosting](https://firebase.google.com/products/hosting)
+
+---
+
+## 🌐 Custom Domain Setup
+
+If deployed via **Lovable**, you can add a custom domain by navigating to  
+**Project → Settings → Domains → Connect Domain**.  
+For step-by-step instructions, see the [Lovable custom domain guide](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide).
+
+---
+
+## 🤖 Built with AI Assistance
+
+Skill-Metric was developed with the help of modern **AI-assisted tools and frameworks**.  
+While AI contributed to parts of the implementation, every feature — from the **concept, design, and technology decisions** to the **user experience and functionality** — was **carefully planned, directed, and refined manually**.  
+
+This project demonstrates how **AI can enhance human creativity**, empowering builders to transform ideas into reality through learning, experimentation, and innovation.
+
+---
+
+## 💡 Vision
+
+Skill-Metric was conceptualized, designed, and implemented with a strong focus on innovation and user-centric learning experiences.  
+It’s more than just a recommendation platform — it’s your **AI learning companion**, designed to help you **grow smarter, faster, and together**.
+
+---
