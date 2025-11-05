@@ -1,12 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -15,19 +12,18 @@ import { useCommunityMembership } from "@/hooks/useCommunityMembership";
 import { useCommunityRole } from "@/hooks/useCommunityRole";
 import { useCommunityStats } from "@/hooks/useCommunityStats";
 import {
-  Users,
   MessageSquare,
   BookOpen,
   Settings,
-  LogOut,
   Send,
-  Crown,
-  Shield,
   Trash2,
   Paperclip,
   Award,
+  FolderKanban,
+  HelpCircle,
+  Users,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 
 type Community = {
   id: string;
@@ -42,22 +38,232 @@ type Community = {
   is_private: boolean;
 };
 
-type TabProps = {
-  communityId: string;
-  isMember: boolean;
-  toggleMembership?: () => Promise<void> | void;
-  isAdmin: boolean;
-};
-
-/* ---------- Feed Tab (Real-time Messages) ---------- */
-const FeedTab: React.FC<TabProps> = ({ communityId, isMember, toggleMembership }) => {
+export default function CommunityFeed() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [newMessage, setNewMessage] = useState("");
-  const messagesRef = useRef<HTMLDivElement | null>(null);
+  const [activeTab, setActiveTab] = useState("feed");
 
-  const { data: messages, isLoading } = useQuery({
+  const { data: community, isLoading: loadingCommunity } = useQuery({
+    queryKey: ["community", id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("communities")
+        .select("*")
+        .eq("id", id!)
+        .single();
+      if (error) throw error;
+      return data as Community;
+    },
+    enabled: !!id,
+  });
+
+  const { isMember, isLoadingMembershipStatus: loadingMembership } = useCommunityMembership(id);
+  const { data: userRole } = useCommunityRole(id);
+  const { data: stats } = useCommunityStats(id);
+
+  const isAdmin = userRole === "admin" || userRole === "moderator";
+
+  const joinMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("community_members")
+        .insert({ community_id: id!, user_id: user?.id });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-membership", id] });
+      queryClient.invalidateQueries({ queryKey: ["communityStats", id] });
+      toast({ title: "Joined community!" });
+    },
+  });
+
+  const leaveMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("community_members")
+        .delete()
+        .eq("community_id", id!)
+        .eq("user_id", user?.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-membership", id] });
+      queryClient.invalidateQueries({ queryKey: ["communityStats", id] });
+      toast({ title: "Left community" });
+    },
+  });
+
+  if (loadingCommunity || loadingMembership) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-lg">Loading community...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!community) {
+    return (
+      <Layout>
+        <div className="text-center py-12">Community not found</div>
+      </Layout>
+    );
+  }
+
+  return (
+    <Layout>
+      <div className="min-h-screen bg-background">
+        <div className="flex gap-0 h-[calc(100vh-4rem)]">
+          {/* Left Sidebar - Community Info */}
+          <div className="w-72 bg-card border-r flex flex-col">
+            <div className="p-6 flex flex-col items-center border-b">
+              <div className="relative">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={community.logo || community.image || ""} />
+                  <AvatarFallback className="text-2xl">{community.name[0]}</AvatarFallback>
+                </Avatar>
+                {isAdmin && (
+                  <Link
+                    to={`/communities/${id}/settings`}
+                    className="absolute -top-1 -right-1 p-1.5 rounded-full bg-muted hover:bg-muted/80 border"
+                  >
+                    <Settings className="h-4 w-4" />
+                  </Link>
+                )}
+              </div>
+              <h2 className="font-bold text-xl mt-3">{community.name}</h2>
+              <p className="text-sm text-muted-foreground mt-1 text-center px-2">
+                {community.description}
+              </p>
+            </div>
+
+            <div className="p-6 space-y-3 text-center border-b">
+              <div>
+                <div className="text-2xl font-bold">{stats?.memberCount || 0}</div>
+                <div className="text-xs text-muted-foreground">members</div>
+              </div>
+              <div>
+                <div className="text-2xl font-bold">{stats?.recentPosts || 0}</div>
+                <div className="text-xs text-muted-foreground">resources this week</div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                created {formatDistanceToNow(new Date(community.created_at))} ago
+              </div>
+            </div>
+
+            <div className="flex-1"></div>
+
+            <div className="p-4 border-t">
+              {isMember ? (
+                <Button
+                  onClick={() => leaveMutation.mutate()}
+                  variant="destructive"
+                  className="w-full"
+                  disabled={leaveMutation.isPending}
+                >
+                  LEAVE
+                </Button>
+              ) : (
+                <Button
+                  onClick={() => joinMutation.mutate()}
+                  className="w-full"
+                  disabled={joinMutation.isPending}
+                >
+                  JOIN
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Center - Main Content */}
+          <div className="flex-1 flex flex-col">
+            {/* Tab Navigation */}
+            <div className="bg-card border-b px-6 py-3">
+              <div className="flex gap-2">
+                <TabButton
+                  active={activeTab === "feed"}
+                  onClick={() => setActiveTab("feed")}
+                  icon={<MessageSquare className="h-4 w-4" />}
+                  label="Feed"
+                />
+                <TabButton
+                  active={activeTab === "qa"}
+                  onClick={() => setActiveTab("qa")}
+                  icon={<HelpCircle className="h-4 w-4" />}
+                  label="Q&A"
+                />
+                <TabButton
+                  active={activeTab === "project"}
+                  onClick={() => setActiveTab("project")}
+                  icon={<FolderKanban className="h-4 w-4" />}
+                  label="Project"
+                />
+                <TabButton
+                  active={activeTab === "resources"}
+                  onClick={() => setActiveTab("resources")}
+                  icon={<BookOpen className="h-4 w-4" />}
+                  label="Resources"
+                />
+                <TabButton
+                  active={activeTab === "members"}
+                  onClick={() => setActiveTab("members")}
+                  icon={<Users className="h-4 w-4" />}
+                  label="Members"
+                />
+              </div>
+            </div>
+
+            {/* Tab Content */}
+            <div className="flex-1 overflow-hidden">
+              {activeTab === "feed" && <FeedTab communityId={id!} isMember={isMember} />}
+              {activeTab === "qa" && <QATab communityId={id!} isMember={isMember} />}
+              {activeTab === "project" && <ProjectTab communityId={id!} isMember={isMember} />}
+              {activeTab === "resources" && <ResourcesTab communityId={id!} isMember={isMember} />}
+              {activeTab === "members" && <MembersTab communityId={id!} isMember={isMember} isAdmin={isAdmin} />}
+            </div>
+          </div>
+
+          {/* Right Sidebar - Leaderboard */}
+          <div className="w-80 bg-card border-l p-6">
+            <h3 className="font-bold text-xl mb-6">Leader Board</h3>
+            <LeaderboardSection communityId={id!} />
+          </div>
+        </div>
+      </div>
+    </Layout>
+  );
+}
+
+// Tab Button Component
+function TabButton({ active, onClick, icon, label }: { active: boolean; onClick: () => void; icon: React.ReactNode; label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${
+        active
+          ? "bg-primary text-primary-foreground"
+          : "text-muted-foreground hover:bg-muted"
+      }`}
+    >
+      {icon}
+      <span className="font-medium">{label}</span>
+    </button>
+  );
+}
+
+// Feed Tab - WhatsApp-like Chat
+function FeedTab({ communityId, isMember }: { communityId: string; isMember: boolean }) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [message, setMessage] = useState("");
+  const messagesRef = useRef<HTMLDivElement>(null);
+
+  const { data: messages } = useQuery({
     queryKey: ["community-messages", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -68,26 +274,19 @@ const FeedTab: React.FC<TabProps> = ({ communityId, isMember, toggleMembership }
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId && isMember,
+    enabled: isMember,
   });
 
   // Real-time subscription
   useEffect(() => {
-    if (!communityId || !isMember) return;
+    if (!isMember) return;
 
     const channel = supabase
-      .channel(`community-messages-${communityId}`)
+      .channel(`messages-${communityId}`)
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "community_messages",
-          filter: `community_id=eq.${communityId}`,
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["community-messages", communityId] });
-        }
+        { event: "*", schema: "public", table: "community_messages", filter: `community_id=eq.${communityId}` },
+        () => queryClient.invalidateQueries({ queryKey: ["community-messages", communityId] })
       )
       .subscribe();
 
@@ -102,138 +301,105 @@ const FeedTab: React.FC<TabProps> = ({ communityId, isMember, toggleMembership }
     }
   }, [messages]);
 
-  const sendMessageMutation = useMutation({
+  const sendMutation = useMutation({
     mutationFn: async (content: string) => {
       const { error } = await supabase
         .from("community_messages")
         .insert({ community_id: communityId, user_id: user?.id, content });
       if (error) throw error;
     },
-    onSuccess: () => {
-      setNewMessage("");
-    },
-    onError: (error: any) => {
-      toast({ title: "Error sending message", description: error.message, variant: "destructive" });
-    },
+    onSuccess: () => setMessage(""),
+    onError: () => toast({ title: "Failed to send message", variant: "destructive" }),
   });
 
-  const deleteMessageMutation = useMutation({
-    mutationFn: async (messageId: string) => {
-      const { error } = await supabase
-        .from("community_messages")
-        .delete()
-        .eq("id", messageId);
+  const deleteMutation = useMutation({
+    mutationFn: async (msgId: string) => {
+      const { error } = await supabase.from("community_messages").delete().eq("id", msgId);
       if (error) throw error;
     },
-    onSuccess: () => {
-      toast({ title: "Message deleted" });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error deleting message", description: error.message, variant: "destructive" });
-    },
+    onSuccess: () => toast({ title: "Message deleted" }),
   });
-
-  const handleSend = () => {
-    if (!newMessage.trim()) return;
-    sendMessageMutation.mutate(newMessage.trim());
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  };
 
   if (!isMember) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-20rem)]">
-        <MessageSquare className="h-16 w-16 text-muted-foreground mb-4" />
-        <p className="text-muted-foreground mb-4">Join the community to view and participate in conversations</p>
-        <Button onClick={toggleMembership}>Join Community</Button>
+      <div className="flex items-center justify-center h-full">
+        <div className="text-center">
+          <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
+          <p className="text-muted-foreground">Join the community to chat</p>
+        </div>
       </div>
     );
   }
 
-  if (isLoading) return <div className="text-center py-8">Loading messages...</div>;
-
   return (
-    <div className="flex flex-col h-[calc(100vh-16rem)] bg-background rounded-lg border">
-      <div
-        ref={messagesRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 bg-muted/20"
-      >
-        {(!messages || messages.length === 0) && (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-            <MessageSquare className="h-12 w-12 mb-2 opacity-50" />
-            <p>No messages yet. Start the conversation! 👋</p>
+    <div className="flex flex-col h-full">
+      {/* Messages Area */}
+      <div ref={messagesRef} className="flex-1 overflow-y-auto p-6 space-y-4">
+        {!messages?.length ? (
+          <div className="flex items-center justify-center h-full text-muted-foreground">
+            <div className="text-center">
+              <MessageSquare className="h-12 w-12 mx-auto mb-2 opacity-50" />
+              <p>No messages yet. Start the conversation!</p>
+            </div>
           </div>
-        )}
-
-        {messages?.map((msg: any) => {
-          const isMe = user?.id && msg.user_id === user.id;
-          return (
-            <div key={msg.id} className={`flex items-start gap-2 ${isMe ? "justify-end" : "justify-start"}`}>
-              {!isMe && (
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarImage src={msg.profiles?.avatar_url || undefined} />
+        ) : (
+          messages.map((msg: any) => {
+            const isMe = user?.id === msg.user_id;
+            return (
+              <div key={msg.id} className={`flex gap-3 ${isMe ? "flex-row-reverse" : "flex-row"}`}>
+                <Avatar className="h-10 w-10 flex-shrink-0">
+                  <AvatarImage src={msg.profiles?.avatar_url} />
                   <AvatarFallback>{msg.profiles?.full_name?.[0] || "U"}</AvatarFallback>
                 </Avatar>
-              )}
-
-              <div className={`max-w-[70%] ${isMe ? "items-end" : "items-start"} flex flex-col`}>
-                {!isMe && <p className="text-xs text-muted-foreground mb-1 px-1">{msg.profiles?.full_name || "Unknown"}</p>}
-                <div className="group relative">
-                  <div className={`px-4 py-2 rounded-2xl break-words ${
-                    isMe
-                      ? "bg-primary text-primary-foreground rounded-br-md"
-                      : "bg-card border rounded-bl-md"
-                  }`}>
-                    {msg.content}
-                  </div>
-                  {isMe && (
-                    <button
-                      onClick={() => deleteMessageMutation.mutate(msg.id)}
-                      className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:text-destructive"
-                      aria-label="Delete message"
+                <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[70%]`}>
+                  <div className="group relative">
+                    <div
+                      className={`px-4 py-2.5 rounded-2xl ${
+                        isMe
+                          ? "bg-primary text-primary-foreground rounded-br-sm"
+                          : "bg-muted text-foreground rounded-bl-sm border"
+                      }`}
                     >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  )}
-                </div>
-                <div className={`text-[10px] mt-0.5 px-1 text-muted-foreground ${isMe ? "text-right" : "text-left"}`}>
-                  {format(new Date(msg.created_at), "HH:mm")}
+                      {msg.content}
+                    </div>
+                    {isMe && (
+                      <button
+                        onClick={() => deleteMutation.mutate(msg.id)}
+                        className="absolute -right-8 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <span className="text-[10px] text-muted-foreground mt-1">
+                    {format(new Date(msg.created_at), "HH:mm")}
+                  </span>
                 </div>
               </div>
-
-              {isMe && (
-                <Avatar className="h-8 w-8 flex-shrink-0">
-                  <AvatarImage src={msg.profiles?.avatar_url || undefined} />
-                  <AvatarFallback>{msg.profiles?.full_name?.[0] || "U"}</AvatarFallback>
-                </Avatar>
-              )}
-            </div>
-          );
-        })}
+            );
+          })
+        )}
       </div>
 
+      {/* Input Area */}
       <div className="p-4 border-t bg-background">
-        <div className="flex items-end gap-2">
-          <Button variant="ghost" size="icon" className="flex-shrink-0">
+        <div className="flex items-center gap-2 bg-muted rounded-full px-4 py-2">
+          <Button variant="ghost" size="icon" className="flex-shrink-0 rounded-full">
             <Paperclip className="h-5 w-5" />
           </Button>
-          <textarea
-            className="flex-1 resize-none rounded-2xl border bg-background px-4 py-3 text-sm min-h-[44px] max-h-32 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          <input
+            type="text"
             placeholder="Type a message..."
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={handleKeyDown}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && message.trim() && sendMutation.mutate(message.trim())}
+            className="flex-1 bg-transparent outline-none"
           />
           <Button
-            onClick={handleSend}
             size="icon"
-            className="h-11 w-11 rounded-full flex-shrink-0"
-            disabled={!newMessage.trim()}
+            className="flex-shrink-0 rounded-full"
+            onClick={() => message.trim() && sendMutation.mutate(message.trim())}
+            disabled={!message.trim()}
           >
             <Send className="h-4 w-4" />
           </Button>
@@ -241,16 +407,16 @@ const FeedTab: React.FC<TabProps> = ({ communityId, isMember, toggleMembership }
       </div>
     </div>
   );
-};
+}
 
-/* ---------- Questions Tab ---------- */
-const QuestionsTab: React.FC<TabProps> = ({ communityId, isMember }) => {
+// Q&A Tab
+function QATab({ communityId, isMember }: { communityId: string; isMember: boolean }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [question, setQuestion] = useState("");
 
-  const { data: questions, isLoading } = useQuery({
+  const { data: questions } = useQuery({
     queryKey: ["community-questions", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -261,122 +427,232 @@ const QuestionsTab: React.FC<TabProps> = ({ communityId, isMember }) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId && isMember,
+    enabled: isMember,
   });
 
   const askMutation = useMutation({
-    mutationFn: async (questionText: string) => {
+    mutationFn: async (q: string) => {
       const { error } = await supabase.from("community_questions").insert({
         community_id: communityId,
         user_id: user?.id,
-        question: questionText,
+        question: q,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       setQuestion("");
-      toast({ title: "Question posted" });
       queryClient.invalidateQueries({ queryKey: ["community-questions", communityId] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Question posted" });
     },
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (questionId: string) => {
-      const { error } = await supabase
-        .from("community_questions")
-        .delete()
-        .eq("id", questionId);
+    mutationFn: async (qId: string) => {
+      const { error } = await supabase.from("community_questions").delete().eq("id", qId);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Question deleted" });
       queryClient.invalidateQueries({ queryKey: ["community-questions", communityId] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: "Question deleted" });
     },
   });
 
-  const handleAsk = () => {
-    if (!question.trim()) return;
-    askMutation.mutate(question.trim());
-  };
-
   if (!isMember) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Join the community to ask questions
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">Join to ask questions</p>
       </div>
     );
   }
 
-  if (isLoading) return <div className="text-center py-8">Loading questions...</div>;
-
   return (
-    <div className="space-y-4">
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              className="flex-1 border rounded-lg px-3 py-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              placeholder="Ask a question..."
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleAsk()}
-            />
-            <Button onClick={handleAsk} disabled={!question.trim()}>Ask</Button>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto space-y-4">
+        {/* Ask Question */}
+        <div className="bg-card border rounded-lg p-4">
+          <input
+            type="text"
+            placeholder="Ask a question..."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && question.trim() && askMutation.mutate(question.trim())}
+            className="w-full bg-background border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-ring"
+          />
+          <Button onClick={() => question.trim() && askMutation.mutate(question.trim())} className="mt-2 w-full" disabled={!question.trim()}>
+            Ask Question
+          </Button>
+        </div>
 
-      {questions && questions.length ? (
-        questions.map((q: any) => (
-          <Card key={q.id} className="group">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={q.profiles?.avatar_url || ""} />
-                  <AvatarFallback>{q.profiles?.full_name?.[0] || "U"}</AvatarFallback>
-                </Avatar>
-                <div className="flex-1">
-                  <p className="font-medium text-sm">{q.profiles?.full_name || "Anonymous"}</p>
-                  <p className="mt-1">{q.question}</p>
-                  <span className="text-xs text-muted-foreground">
-                    {format(new Date(q.created_at), "MMM d, yyyy 'at' HH:mm")}
-                  </span>
-                </div>
-                {user?.id === q.user_id && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => deleteMutation.mutate(q.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
+        {/* Questions List */}
+        {questions?.map((q: any) => (
+          <div key={q.id} className="bg-card border rounded-lg p-4 group">
+            <div className="flex items-start gap-3">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={q.profiles?.avatar_url} />
+                <AvatarFallback>{q.profiles?.full_name?.[0] || "U"}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="font-medium text-sm">{q.profiles?.full_name}</p>
+                <p className="mt-1">{q.question}</p>
+                <span className="text-xs text-muted-foreground mt-2 inline-block">
+                  {formatDistanceToNow(new Date(q.created_at))} ago
+                </span>
               </div>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <p className="text-center text-muted-foreground py-8">No questions yet. Be the first to ask!</p>
-      )}
+              {user?.id === q.user_id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => deleteMutation.mutate(q.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {!questions?.length && (
+          <p className="text-center text-muted-foreground py-12">No questions yet. Be the first to ask!</p>
+        )}
+      </div>
     </div>
   );
-};
+}
 
-/* ---------- Resources Tab ---------- */
-const ResourcesTab: React.FC<TabProps> = ({ communityId, isMember }) => {
+// Project Tab
+function ProjectTab({ communityId, isMember }: { communityId: string; isMember: boolean }) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [projectName, setProjectName] = useState("");
+  const [projectDesc, setProjectDesc] = useState("");
 
-  const { data: resources, isLoading } = useQuery({
+  const { data: projects } = useQuery({
+    queryKey: ["community-projects", communityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("community_projects")
+        .select("*, profiles!community_projects_created_by_fkey(full_name, avatar_url)")
+        .eq("community_id", communityId)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: isMember,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("community_projects").insert({
+        community_id: communityId,
+        created_by: user?.id,
+        name: projectName,
+        description: projectDesc,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setProjectName("");
+      setProjectDesc("");
+      queryClient.invalidateQueries({ queryKey: ["community-projects", communityId] });
+      toast({ title: "Project created" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (projectId: string) => {
+      const { error } = await supabase.from("community_projects").delete().eq("id", projectId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-projects", communityId] });
+      toast({ title: "Project deleted" });
+    },
+  });
+
+  if (!isMember) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">Join to view projects</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto space-y-4">
+        {/* Create Project */}
+        <div className="bg-card border rounded-lg p-4">
+          <h3 className="font-semibold mb-3">Create New Project</h3>
+          <input
+            type="text"
+            placeholder="Project name"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            className="w-full bg-background border rounded-lg px-4 py-2 mb-2 outline-none focus:ring-2 focus:ring-ring"
+          />
+          <textarea
+            placeholder="Project description"
+            value={projectDesc}
+            onChange={(e) => setProjectDesc(e.target.value)}
+            className="w-full bg-background border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-ring resize-none"
+            rows={3}
+          />
+          <Button onClick={() => createMutation.mutate()} className="mt-2 w-full" disabled={!projectName.trim()}>
+            Create Project
+          </Button>
+        </div>
+
+        {/* Projects List */}
+        {projects?.map((p: any) => (
+          <div key={p.id} className="bg-card border rounded-lg p-4 group">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg">{p.name}</h3>
+                <p className="text-sm text-muted-foreground mt-1">{p.description}</p>
+                <div className="flex items-center gap-2 mt-3">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={p.profiles?.avatar_url} />
+                    <AvatarFallback>{p.profiles?.full_name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground">
+                    Created by {p.profiles?.full_name} • {formatDistanceToNow(new Date(p.created_at))} ago
+                  </span>
+                </div>
+              </div>
+              {user?.id === p.created_by && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => deleteMutation.mutate(p.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {!projects?.length && (
+          <p className="text-center text-muted-foreground py-12">No projects yet. Start one!</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Resources Tab
+function ResourcesTab({ communityId, isMember }: { communityId: string; isMember: boolean }) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [title, setTitle] = useState("");
+  const [link, setLink] = useState("");
+  const [description, setDescription] = useState("");
+
+  const { data: resources } = useQuery({
     queryKey: ["community-resources", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -387,407 +663,256 @@ const ResourcesTab: React.FC<TabProps> = ({ communityId, isMember }) => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId && isMember,
+    enabled: isMember,
+  });
+
+  const shareMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("community_resources").insert({
+        community_id: communityId,
+        user_id: user?.id,
+        title,
+        link,
+        description,
+      });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      setTitle("");
+      setLink("");
+      setDescription("");
+      queryClient.invalidateQueries({ queryKey: ["community-resources", communityId] });
+      queryClient.invalidateQueries({ queryKey: ["communityStats", communityId] });
+      toast({ title: "Resource shared" });
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (resourceId: string) => {
-      const { error } = await supabase
-        .from("community_resources")
-        .delete()
-        .eq("id", resourceId);
+      const { error } = await supabase.from("community_resources").delete().eq("id", resourceId);
       if (error) throw error;
     },
     onSuccess: () => {
-      toast({ title: "Resource deleted" });
       queryClient.invalidateQueries({ queryKey: ["community-resources", communityId] });
-    },
-    onError: (error: any) => {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      queryClient.invalidateQueries({ queryKey: ["communityStats", communityId] });
+      toast({ title: "Resource deleted" });
     },
   });
 
   if (!isMember) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Join the community to access resources
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">Join to access resources</p>
       </div>
     );
   }
 
-  if (isLoading) return <div className="text-center py-8">Loading resources...</div>;
-
   return (
-    <div className="space-y-4">
-      {isMember && (
-        <Card>
-          <CardContent className="p-4">
-            <Link to={`/communities/${communityId}/resources/new`}>
-              <Button className="w-full">Share a Resource</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto space-y-4">
+        {/* Share Resource */}
+        <div className="bg-card border rounded-lg p-4">
+          <h3 className="font-semibold mb-3">Share a Resource</h3>
+          <input
+            type="text"
+            placeholder="Resource title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full bg-background border rounded-lg px-4 py-2 mb-2 outline-none focus:ring-2 focus:ring-ring"
+          />
+          <input
+            type="url"
+            placeholder="Resource link (URL)"
+            value={link}
+            onChange={(e) => setLink(e.target.value)}
+            className="w-full bg-background border rounded-lg px-4 py-2 mb-2 outline-none focus:ring-2 focus:ring-ring"
+          />
+          <textarea
+            placeholder="Description (optional)"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full bg-background border rounded-lg px-4 py-2 outline-none focus:ring-2 focus:ring-ring resize-none"
+            rows={2}
+          />
+          <Button onClick={() => shareMutation.mutate()} className="mt-2 w-full" disabled={!title.trim() || !link.trim()}>
+            Share Resource
+          </Button>
+        </div>
 
-      {resources && resources.length > 0 ? (
-        resources.map((r: any) => (
-          <Card key={r.id} className="hover:shadow-md transition-shadow group">
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <a
-                    href={r.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline font-medium break-words"
-                  >
-                    {r.title}
-                  </a>
-                  {r.description && <p className="text-sm text-muted-foreground mt-1">{r.description}</p>}
-                  <div className="flex items-center gap-2 mt-2">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={r.profiles?.avatar_url || ""} />
-                      <AvatarFallback className="text-[10px]">{r.profiles?.full_name?.[0] || "U"}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-xs text-muted-foreground">
-                      Shared by {r.profiles?.full_name || "Unknown"} • {format(new Date(r.created_at), "MMM d, yyyy")}
-                    </span>
-                  </div>
+        {/* Resources List */}
+        {resources?.map((r: any) => (
+          <div key={r.id} className="bg-card border rounded-lg p-4 group hover:shadow-md transition-shadow">
+            <div className="flex items-start gap-3">
+              <BookOpen className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <a href={r.link} target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline break-words">
+                  {r.title}
+                </a>
+                {r.description && <p className="text-sm text-muted-foreground mt-1">{r.description}</p>}
+                <div className="flex items-center gap-2 mt-2">
+                  <Avatar className="h-5 w-5">
+                    <AvatarImage src={r.profiles?.avatar_url} />
+                    <AvatarFallback className="text-[10px]">{r.profiles?.full_name?.[0]}</AvatarFallback>
+                  </Avatar>
+                  <span className="text-xs text-muted-foreground">
+                    {r.profiles?.full_name} • {formatDistanceToNow(new Date(r.created_at))} ago
+                  </span>
                 </div>
-                {user?.id === r.user_id && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
-                    onClick={() => deleteMutation.mutate(r.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                )}
               </div>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <p className="text-center text-muted-foreground py-8">No resources shared yet.</p>
-      )}
+              {user?.id === r.user_id && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0"
+                  onClick={() => deleteMutation.mutate(r.id)}
+                >
+                  <Trash2 className="h-4 w-4 text-destructive" />
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+
+        {!resources?.length && (
+          <p className="text-center text-muted-foreground py-12">No resources shared yet.</p>
+        )}
+      </div>
     </div>
   );
-};
+}
 
-/* ---------- Members Tab ---------- */
-const MembersTab: React.FC<TabProps> = ({ communityId, isMember }) => {
-  const { data: members, isLoading } = useQuery({
-    queryKey: ["community-members-with-roles", communityId],
+// Members Tab
+function MembersTab({ communityId, isMember, isAdmin }: { communityId: string; isMember: boolean; isAdmin: boolean }) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: members } = useQuery({
+    queryKey: ["community-members-roles", communityId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("community_member_roles")
-        .select("user_id, role, assigned_at, profiles!community_member_roles_user_id_fkey(full_name, avatar_url)")
+        .select("user_id, role, profiles!community_member_roles_user_id_fkey(full_name, avatar_url)")
         .eq("community_id", communityId)
-        .order("role", { ascending: true })
-        .order("assigned_at", { ascending: false });
+        .order("role", { ascending: true });
       if (error) throw error;
       return data || [];
     },
-    enabled: !!communityId && isMember,
+    enabled: isMember,
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      await supabase.from("community_members").delete().eq("community_id", communityId).eq("user_id", userId);
+      await supabase.from("community_member_roles").delete().eq("community_id", communityId).eq("user_id", userId);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["community-members-roles", communityId] });
+      queryClient.invalidateQueries({ queryKey: ["communityStats", communityId] });
+      toast({ title: "Member removed" });
+    },
   });
 
   if (!isMember) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Join the community to see members
+      <div className="flex items-center justify-center h-full">
+        <p className="text-muted-foreground">Join to see members</p>
       </div>
     );
   }
 
-  if (isLoading) return <div className="text-center py-8">Loading members...</div>;
-
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case "admin": return <Crown className="h-4 w-4 text-yellow-500" />;
-      case "moderator": return <Shield className="h-4 w-4 text-blue-500" />;
-      default: return null;
-    }
-  };
-
   return (
-    <div className="space-y-2">
-      {members && members.length > 0 ? (
-        members.map((m: any) => (
-          <Card key={m.user_id}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div className="flex items-center gap-3">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={m.profiles?.avatar_url || ""} />
-                  <AvatarFallback>{m.profiles?.full_name?.[0]?.toUpperCase() || "U"}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-medium">{m.profiles?.full_name || "Unknown"}</p>
-                  <p className="text-xs text-muted-foreground">
-                    Joined {format(new Date(m.assigned_at), "MMM d, yyyy")}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {getRoleIcon(m.role)}
-                <Badge variant={m.role === "admin" ? "default" : m.role === "moderator" ? "secondary" : "outline"}>
+    <div className="h-full overflow-y-auto p-6">
+      <div className="max-w-4xl mx-auto space-y-3">
+        <h3 className="font-semibold text-lg mb-4">Members ({members?.length || 0})</h3>
+        {members?.map((m: any) => (
+          <div key={m.user_id} className="bg-card border rounded-lg p-4 flex items-center justify-between group">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={m.profiles?.avatar_url} />
+                <AvatarFallback>{m.profiles?.full_name?.[0] || "U"}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-medium">{m.profiles?.full_name || "Unknown"}</p>
+                <Badge variant={m.role === "admin" ? "default" : m.role === "moderator" ? "secondary" : "outline"} className="text-xs">
                   {m.role}
                 </Badge>
               </div>
-            </CardContent>
-          </Card>
-        ))
-      ) : (
-        <p className="text-center text-muted-foreground py-8">No members found</p>
+            </div>
+            {isAdmin && m.role !== "admin" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive"
+                onClick={() => removeMutation.mutate(m.user_id)}
+              >
+                Remove
+              </Button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Leaderboard Section
+function LeaderboardSection({ communityId }: { communityId: string }) {
+  const { data: leaderboard } = useQuery({
+    queryKey: ["community-leaderboard", communityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("community_leaderboard")
+        .select("user_id, points, profiles!community_leaderboard_user_id_fkey(full_name, avatar_url)")
+        .eq("community_id", communityId)
+        .order("points", { ascending: false })
+        .limit(10);
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h4 className="font-semibold mb-3">Top Contributors</h4>
+        <div className="space-y-3">
+          {leaderboard?.slice(0, 3).map((item: any, index) => (
+            <div key={item.user_id} className="flex items-center gap-3">
+              <div className="text-2xl font-bold text-muted-foreground w-6">#{index + 1}</div>
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={item.profiles?.avatar_url} />
+                <AvatarFallback>{item.profiles?.full_name?.[0]}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{item.profiles?.full_name}</p>
+                <p className="text-xs text-muted-foreground">{item.points} points</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <h4 className="font-semibold mb-3">Contributions:</h4>
+        <div className="space-y-2">
+          {leaderboard?.slice(3, 6).map((item: any) => (
+            <div key={item.user_id} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Avatar className="h-6 w-6">
+                  <AvatarImage src={item.profiles?.avatar_url} />
+                  <AvatarFallback className="text-xs">{item.profiles?.full_name?.[0]}</AvatarFallback>
+                </Avatar>
+                <span className="text-sm">{item.profiles?.full_name}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">{item.points}pts</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {(!leaderboard || leaderboard.length === 0) && (
+        <p className="text-sm text-muted-foreground text-center py-8">No activity yet</p>
       )}
     </div>
   );
-};
-
-/* ---------- Main Component ---------- */
-const CommunityFeed: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
-  const { user } = useAuth();
-  const { toast } = useToast();
-  const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("feed");
-
-  const { isMember, isLoadingMembershipStatus, toggleMembership } = useCommunityMembership(communityId || "");
-  const { data: userRole } = useCommunityRole(communityId);
-  const { data: stats } = useCommunityStats(communityId);
-
-  const isAdmin = userRole === "admin";
-  const isModerator = userRole === "moderator";
-
-  useEffect(() => {
-    document.title = "Community • Feed";
-  }, []);
-
-  const { data: community, isLoading: loadingCommunity, error: communityError } = useQuery<Community, Error>({
-    queryKey: ["community", communityId],
-    queryFn: async () => {
-      if (!communityId) throw new Error("Community ID is required");
-      const { data: c, error: cErr } = await supabase
-        .from("communities")
-        .select("*")
-        .eq("id", communityId)
-        .single();
-      if (cErr) throw cErr;
-      return c;
-    },
-    enabled: Boolean(communityId),
-  });
-
-  const handleLeaveCommunity = async () => {
-    if (!user || !communityId) return;
-    await toggleMembership();
-    toast({ title: "Left the community" });
-  };
-
-  if (loadingCommunity || isLoadingMembershipStatus) {
-    return (
-      <Layout>
-        <div className="container mx-auto p-4 text-center">Loading...</div>
-      </Layout>
-    );
-  }
-
-  if (communityError) {
-    return (
-      <Layout>
-        <div className="container mx-auto p-4 text-destructive">Failed to load community.</div>
-      </Layout>
-    );
-  }
-
-  if (!isMember && !loadingCommunity) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-12 max-w-2xl">
-          <Card className="text-center">
-            <CardHeader>
-              <div className="flex justify-center mb-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={community?.logo || community?.image || undefined} />
-                  <AvatarFallback className="text-2xl">{community?.name?.[0] || "C"}</AvatarFallback>
-                </Avatar>
-              </div>
-              <CardTitle className="text-2xl">{community?.name}</CardTitle>
-              <Badge variant="secondary" className="mt-2">{community?.category}</Badge>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground mb-6">{community?.description}</p>
-              <div className="flex items-center justify-center gap-6 mb-6 text-sm text-muted-foreground">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  {stats?.memberCount || 0} members
-                </div>
-                <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4" />
-                  {stats?.recentPosts || 0} posts/week
-                </div>
-              </div>
-              <Button onClick={toggleMembership} size="lg">Join Community</Button>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] xl:grid-cols-[320px_1fr_280px] gap-4">
-          {/* Left Sidebar */}
-          <div className="space-y-4">
-            <Card className="overflow-hidden">
-              {community?.banner && (
-                <div className="h-24 bg-cover bg-center" style={{ backgroundImage: `url(${community.banner})` }} />
-              )}
-              <CardContent className="pt-6">
-                <div className="text-center mb-4">
-                  <Avatar className="h-16 w-16 mx-auto mb-2 border-2 border-background">
-                    <AvatarImage src={community?.logo || community?.image || undefined} />
-                    <AvatarFallback className="text-lg">{community?.name?.[0] || "C"}</AvatarFallback>
-                  </Avatar>
-                  <h2 className="font-bold text-lg">{community?.name}</h2>
-                  <Badge variant="secondary" className="text-xs mt-1">{community?.category}</Badge>
-                </div>
-
-                <p className="text-xs text-muted-foreground text-center mb-4">{community?.description}</p>
-
-                <Separator className="my-4" />
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{stats?.memberCount || 0}</span>
-                    <span className="text-muted-foreground">members</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{stats?.recentPosts || 0}</span>
-                    <span className="text-muted-foreground">resources this week</span>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    created {format(new Date(community?.created_at || Date.now()), "MMMM d, yyyy")}
-                  </div>
-                </div>
-
-                <Separator className="my-4" />
-
-                <div className="space-y-2">
-                  {isMember ? (
-                    <Button variant="destructive" className="w-full" onClick={handleLeaveCommunity} size="sm">
-                      <LogOut className="h-4 w-4 mr-2" />
-                      LEAVE
-                    </Button>
-                  ) : (
-                    <Button className="w-full" onClick={toggleMembership} size="sm">
-                      Join Community
-                    </Button>
-                  )}
-                  {(isAdmin || isModerator) && (
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => navigate(`/communities/${communityId}/settings`)}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Settings
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Main Content */}
-          <div className="min-w-0">
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <TabsList className="grid w-full grid-cols-4 mb-4">
-                <TabsTrigger value="feed" className="text-xs sm:text-sm">Feed</TabsTrigger>
-                <TabsTrigger value="questions" className="text-xs sm:text-sm">Q&A</TabsTrigger>
-                <TabsTrigger value="resources" className="text-xs sm:text-sm">Resources</TabsTrigger>
-                <TabsTrigger value="members" className="text-xs sm:text-sm">Members</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="feed" className="mt-0">
-                <FeedTab communityId={communityId || ""} isMember={isMember} toggleMembership={toggleMembership} isAdmin={isAdmin} />
-              </TabsContent>
-
-              <TabsContent value="questions" className="mt-0">
-                <QuestionsTab communityId={communityId || ""} isMember={isMember} isAdmin={isAdmin} />
-              </TabsContent>
-
-              <TabsContent value="resources" className="mt-0">
-                <ResourcesTab communityId={communityId || ""} isMember={isMember} isAdmin={isAdmin} />
-              </TabsContent>
-
-              <TabsContent value="members" className="mt-0">
-                <MembersTab communityId={communityId || ""} isMember={isMember} isAdmin={isAdmin} />
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* Right Sidebar - Leaderboard */}
-          <div className="hidden xl:block space-y-4">
-            <Card>
-              <CardContent className="pt-6">
-                <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <Award className="h-5 w-5 text-yellow-500" />
-                  Leader Board
-                </h3>
-
-                {stats?.topContributors && stats.topContributors.length > 0 ? (
-                  <div className="space-y-3">
-                    {stats.topContributors.map((contributor: any, idx: number) => (
-                      <div key={contributor.userId} className="flex items-center gap-2">
-                        <span className={`text-sm font-bold w-6 ${idx === 0 ? "text-yellow-500" : idx === 1 ? "text-gray-400" : idx === 2 ? "text-amber-700" : "text-muted-foreground"}`}>
-                          #{idx + 1}
-                        </span>
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={contributor.avatar || undefined} />
-                          <AvatarFallback className="text-xs">{contributor.name?.[0] || "U"}</AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium truncate">{contributor.name}</p>
-                          <p className="text-xs text-muted-foreground">{contributor.postCount} contributions</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground text-center py-4">No activity yet</p>
-                )}
-
-                <Separator className="my-4" />
-
-                <div>
-                  <h4 className="font-semibold text-sm mb-3">Contributions:</h4>
-                  <div className="space-y-2">
-                    {[...Array(3)].map((_, i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <div className="h-2 flex-1 bg-muted rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary rounded-full"
-                            style={{ width: `${100 - (i * 30)}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    </Layout>
-  );
-};
-
-export default CommunityFeed;
+}
