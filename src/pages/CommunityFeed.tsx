@@ -261,7 +261,28 @@ function FeedTab({ communityId, isMember }: { communityId: string; isMember: boo
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState("");
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionSearch, setMentionSearch] = useState("");
+  const [mentionPosition, setMentionPosition] = useState({ top: 0, left: 0 });
   const messagesRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Get community members for mentions
+  const { data: members } = useQuery({
+    queryKey: ["community-members-for-mentions", communityId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("community_member_roles")
+        .select("user_id, profiles!community_member_roles_user_id_fkey(full_name)")
+        .eq("community_id", communityId);
+      if (error) throw error;
+      return data?.map((m: any) => ({
+        id: m.user_id,
+        name: m.profiles?.full_name || "Unknown",
+      })) || [];
+    },
+    enabled: isMember,
+  });
 
   const { data: messages } = useQuery({
     queryKey: ["community-messages", communityId],
@@ -303,13 +324,52 @@ function FeedTab({ communityId, isMember }: { communityId: string; isMember: boo
 
   const sendMutation = useMutation({
     mutationFn: async (content: string) => {
-      const { error } = await supabase
+      // Validate message length
+      if (content.length > 2000) {
+        throw new Error("Message too long (max 2000 characters)");
+      }
+
+      // Insert message
+      const { data: newMessage, error } = await supabase
         .from("community_messages")
-        .insert({ community_id: communityId, user_id: user?.id, content });
+        .insert({ community_id: communityId, user_id: user?.id, content })
+        .select()
+        .single();
+      
       if (error) throw error;
+
+      // Extract mentions from message
+      const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+      const mentions: string[] = [];
+      let match;
+      
+      while ((match = mentionRegex.exec(content)) !== null) {
+        const userId = match[2];
+        if (userId && userId !== user?.id) {
+          mentions.push(userId);
+        }
+      }
+
+      // Send notifications to mentioned users
+      if (mentions.length > 0) {
+        const notifications = mentions.map((mentionedUserId) => ({
+          user_id: mentionedUserId,
+          title: "You were mentioned",
+          body: `${user?.user_metadata?.full_name || "Someone"} mentioned you in ${communityId}`,
+          type: "mention",
+        }));
+
+        await supabase.from("notifications").insert(notifications);
+      }
     },
-    onSuccess: () => setMessage(""),
-    onError: () => toast({ title: "Failed to send message", variant: "destructive" }),
+    onSuccess: () => {
+      setMessage("");
+      setShowMentions(false);
+      setMentionSearch("");
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to send message", description: error.message, variant: "destructive" });
+    },
   });
 
   const deleteMutation = useMutation({
@@ -319,6 +379,101 @@ function FeedTab({ communityId, isMember }: { communityId: string; isMember: boo
     },
     onSuccess: () => toast({ title: "Message deleted" }),
   });
+
+  // Handle message input changes for @mentions
+  const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setMessage(value);
+
+    // Check for @ symbol to trigger mentions
+    const cursorPos = e.target.selectionStart || 0;
+    const textBeforeCursor = value.substring(0, cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const textAfterAt = textBeforeCursor.substring(lastAtIndex + 1);
+      
+      // Only show mentions if there's no space after @
+      if (!textAfterAt.includes(" ") && textAfterAt.length >= 0) {
+        setMentionSearch(textAfterAt.toLowerCase());
+        setShowMentions(true);
+        
+        // Calculate position for mention dropdown
+        if (inputRef.current) {
+          const rect = inputRef.current.getBoundingClientRect();
+          setMentionPosition({ top: rect.top - 200, left: rect.left });
+        }
+      } else {
+        setShowMentions(false);
+      }
+    } else {
+      setShowMentions(false);
+    }
+  };
+
+  // Insert mention into message
+  const insertMention = (member: { id: string; name: string }) => {
+    const cursorPos = inputRef.current?.selectionStart || 0;
+    const textBeforeCursor = message.substring(0, cursorPos);
+    const textAfterCursor = message.substring(cursorPos);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      const beforeAt = message.substring(0, lastAtIndex);
+      const mention = `@[${member.name}](${member.id})`;
+      const newMessage = beforeAt + mention + " " + textAfterCursor;
+      
+      setMessage(newMessage);
+      setShowMentions(false);
+      setMentionSearch("");
+      
+      // Focus back on input
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
+    }
+  };
+
+  // Filter members based on search
+  const filteredMembers = members?.filter((m) =>
+    m.name.toLowerCase().includes(mentionSearch) && m.id !== user?.id
+  ).slice(0, 5) || [];
+
+  // Render message with highlighted mentions
+  const renderMessageContent = (content: string) => {
+    const mentionRegex = /@\[([^\]]+)\]\(([^)]+)\)/g;
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+
+    while ((match = mentionRegex.exec(content)) !== null) {
+      // Add text before mention
+      if (match.index > lastIndex) {
+        parts.push(content.substring(lastIndex, match.index));
+      }
+
+      // Add highlighted mention
+      const mentionName = match[1];
+      const mentionId = match[2];
+      parts.push(
+        <span
+          key={match.index}
+          className="bg-primary/20 text-primary font-medium px-1 rounded"
+        >
+          @{mentionName}
+        </span>
+      );
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    // Add remaining text
+    if (lastIndex < content.length) {
+      parts.push(content.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : content;
+  };
 
   if (!isMember) {
     return (
@@ -354,13 +509,13 @@ function FeedTab({ communityId, isMember }: { communityId: string; isMember: boo
                 <div className={`flex flex-col ${isMe ? "items-end" : "items-start"} max-w-[70%]`}>
                   <div className="group relative">
                     <div
-                      className={`px-4 py-2.5 rounded-2xl ${
+                      className={`px-4 py-2.5 rounded-2xl break-words ${
                         isMe
                           ? "bg-primary text-primary-foreground rounded-br-sm"
                           : "bg-muted text-foreground rounded-bl-sm border"
                       }`}
                     >
-                      {msg.content}
+                      {renderMessageContent(msg.content)}
                     </div>
                     {isMe && (
                       <button
@@ -382,24 +537,57 @@ function FeedTab({ communityId, isMember }: { communityId: string; isMember: boo
       </div>
 
       {/* Input Area */}
-      <div className="p-4 border-t bg-background">
+      <div className="p-4 border-t bg-background relative">
+        {/* Mention Suggestions Dropdown */}
+        {showMentions && filteredMembers.length > 0 && (
+          <div
+            className="absolute bottom-full mb-2 left-4 right-4 bg-card border rounded-lg shadow-lg max-h-48 overflow-y-auto z-50"
+            style={{ maxWidth: "calc(100% - 2rem)" }}
+          >
+            <div className="p-2">
+              <div className="text-xs text-muted-foreground px-2 py-1">Mention someone</div>
+              {filteredMembers.map((member) => (
+                <button
+                  key={member.id}
+                  onClick={() => insertMention(member)}
+                  className="w-full text-left px-3 py-2 rounded hover:bg-muted transition-colors flex items-center gap-2"
+                >
+                  <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
+                    {member.name[0]}
+                  </div>
+                  <span className="text-sm">{member.name}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 bg-muted rounded-full px-4 py-2">
           <Button variant="ghost" size="icon" className="flex-shrink-0 rounded-full">
             <Paperclip className="h-5 w-5" />
           </Button>
           <input
+            ref={inputRef}
             type="text"
-            placeholder="Type a message..."
+            placeholder="Type a message... (use @ to mention)"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && message.trim() && sendMutation.mutate(message.trim())}
+            onChange={handleMessageChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !showMentions && message.trim()) {
+                sendMutation.mutate(message.trim());
+              }
+              if (e.key === "Escape") {
+                setShowMentions(false);
+              }
+            }}
+            maxLength={2000}
             className="flex-1 bg-transparent outline-none"
           />
           <Button
             size="icon"
             className="flex-shrink-0 rounded-full"
             onClick={() => message.trim() && sendMutation.mutate(message.trim())}
-            disabled={!message.trim()}
+            disabled={!message.trim() || sendMutation.isPending}
           >
             <Send className="h-4 w-4" />
           </Button>
