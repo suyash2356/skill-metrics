@@ -13,11 +13,11 @@ export function useCommunityStats(communityId: string | undefined) {
         .select("*", { count: "exact", head: true })
         .eq("community_id", communityId);
 
-      // Get post count (last 7 days)
+      // Get resource count (last 7 days)
       const weekAgo = new Date();
       weekAgo.setDate(weekAgo.getDate() - 7);
       const { count: recentPosts } = await supabase
-        .from("posts")
+        .from("community_resources")
         .select("*", { count: "exact", head: true })
         .eq("community_id", communityId)
         .gte("created_at", weekAgo.toISOString());
