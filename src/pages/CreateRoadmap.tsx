@@ -127,66 +127,58 @@ const CreateRoadmap = () => {
       toast({ title: 'Please log in', description: 'You must be logged in to generate a roadmap.', variant: 'destructive' });
       return;
     }
+    
+    if (!formData.title || !formData.skillLevel || !formData.timeCommitment) {
+      toast({ 
+        title: 'Missing Information', 
+        description: 'Please fill in at least the title, skill level, and time commitment.', 
+        variant: 'destructive' 
+      });
+      return;
+    }
+
     setIsGenerating(true);
     try {
-      // 1. Construct a comprehensive prompt for the AI
-      const aiPrompt = generateAIPrompt({
-        title: formData.title,
-        description: formData.description,
-        skillLevel: skillLevels.find(level => level.value === formData.skillLevel)?.label || 'Not specified',
-        timeCommitment: timeCommitments.find(time => time.value === formData.timeCommitment)?.label || 'Not specified',
-        targetRole: formData.targetRole,
-        preferredLearningStyle: learningStyles.find(style => style.value === formData.preferredLearningStyle)?.label || 'Not specified',
-        focusAreas: formData.focusAreas,
-        deadline: formData.deadline,
-        recommendedResources: recommendedResources,
-        useRecommendedResources: useRecommendedResources,
+      console.log("Calling AI to generate roadmap...");
+
+      // Call the edge function with form data
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-roadmap', {
+        body: {
+          title: formData.title,
+          description: formData.description || `Learning path for ${formData.title}`,
+          skillLevel: skillLevels.find(level => level.value === formData.skillLevel)?.label || formData.skillLevel,
+          timeCommitment: timeCommitments.find(time => time.value === formData.timeCommitment)?.label || formData.timeCommitment,
+          learningStyle: learningStyles.find(style => style.value === formData.preferredLearningStyle)?.label || 'Mixed approach',
+          focusAreas: formData.focusAreas.length > 0 ? formData.focusAreas : [formData.title],
+        }
       });
 
-      console.log("AI Prompt:", aiPrompt);
-
-      // 2. Call Supabase Edge Function (if available) to generate structured plan
-      let roadmapDataFromAI: any = null;
-      try {
-        const functions = new FunctionsClient(window.location.origin, {
-          // Supabase functions-js doesn't need keys in browser when proxied through Supabase
-        } as any);
-        const res = await functions.invoke('generate-roadmap', {
-          method: 'POST',
-          body: JSON.stringify({
-            title: formData.title,
-            targetRole: formData.targetRole,
-            skillLevel: formData.skillLevel,
-            timeCommitment: formData.timeCommitment,
-            description: formData.description,
-            focusAreas: formData.focusAreas,
-          })
-        });
-  const text = await (res as any).text();
-  let json: any = null;
-  try { json = JSON.parse(text); } catch { json = text; }
-  if (json && json.plan) roadmapDataFromAI = json.plan;
-  else roadmapDataFromAI = json;
-      } catch (err) {
-        console.warn('Edge function call failed, falling back to direct generator', err);
-        const aiResponse = await callAIGenerator(aiPrompt);
-        roadmapDataFromAI = aiResponse;
+      if (aiError) {
+        console.error('AI generation error:', aiError);
+        throw new Error('Failed to generate roadmap with AI. Please try again.');
       }
 
-  // 4. Insert the main roadmap entry (same as before)
+      if (!aiResponse?.steps || !Array.isArray(aiResponse.steps)) {
+        console.error('Invalid AI response:', aiResponse);
+        throw new Error('Invalid response from AI. Please try again.');
+      }
+
+      console.log(`AI generated ${aiResponse.steps.length} steps`);
+
+      // Insert the main roadmap entry
       const insertedRoadmapData: TablesInsert<'roadmaps'> = {
         user_id: user.id,
-        title: roadmapDataFromAI.title || formData.title || 'Custom Roadmap',
-        description: roadmapDataFromAI.description || formData.description || null,
+        title: formData.title,
+        description: formData.description || `Learning path for ${formData.title}`,
         category: formData.targetRole || null,
         difficulty: formData.skillLevel || null,
-        estimated_time: roadmapDataFromAI.estimatedDuration || formData.timeCommitment || null,
+        estimated_time: formData.timeCommitment || null,
         technologies: formData.focusAreas,
         status: 'not-started',
         progress: 0,
-        is_public: isPublic, // Include the isPublic flag
+        is_public: isPublic,
       };
-      console.log("Inserting Roadmap Data:", insertedRoadmapData);
+
       const { data: insertedRoadmap, error: roadmapError } = await getTypedTable('roadmaps')
         .insert(insertedRoadmapData)
         .select('id') as { data: IdResult | null, error: any };
@@ -195,43 +187,45 @@ const CreateRoadmap = () => {
         console.error("Roadmap insertion error:", roadmapError);
         throw roadmapError || new Error('Failed to create roadmap');
       }
-      const roadmapId = insertedRoadmap[0].id;
-      console.log("Roadmap inserted with ID:", roadmapId);
 
-      // 4. Insert roadmap steps and resources from the simulated AI response
-      let currentOrderIndex = 0;
-      for (const phase of roadmapDataFromAI.phases) {
+      const roadmapId = insertedRoadmap[0].id;
+      console.log("Roadmap created with ID:", roadmapId);
+
+      // Insert roadmap steps from AI response
+      for (let i = 0; i < aiResponse.steps.length; i++) {
+        const step = aiResponse.steps[i];
+        
         const stepData: TablesInsert<'roadmap_steps'> = {
           roadmap_id: roadmapId,
-          title: phase.name,
-          description: phase.description,
-          order_index: currentOrderIndex,
-          duration: phase.duration,
+          title: step.title,
+          description: step.description || null,
+          order_index: i,
+          duration: step.duration || null,
           completed: false,
-          topics: phase.topics || null,
-          task: phase.task || null,
+          topics: step.topics || null,
+          task: step.task || null,
         };
-        console.log("Inserting Step Data:", stepData);
+
         const { data: insertedStep, error: stepError } = await getTypedTable('roadmap_steps')
           .insert(stepData)
           .select('id') as { data: IdResult | null, error: any };
 
         if (stepError || !insertedStep || insertedStep.length === 0) {
-          console.error("Roadmap step insertion error:", stepError);
+          console.error("Step insertion error:", stepError);
           continue;
         }
-        const stepId = insertedStep[0].id;
-        console.log("Roadmap Step inserted with ID:", stepId);
-        currentOrderIndex++;
 
-        if (phase.resources && phase.resources.length > 0) {
-          const resourcePayload: TablesInsert<'roadmap_step_resources'>[] = phase.resources.map((resource: any) => ({
+        const stepId = insertedStep[0].id;
+
+        // Insert resources for this step
+        if (step.resources && Array.isArray(step.resources) && step.resources.length > 0) {
+          const resourcePayload: TablesInsert<'roadmap_step_resources'>[] = step.resources.map((resource: any) => ({
             step_id: stepId,
-            title: resource.title,
+            title: resource.title || 'Resource',
             url: resource.url || null,
-            type: resource.type || null,
+            type: resource.type || 'article',
           }));
-          console.log("Inserting Resources Data:", resourcePayload);
+
           const { error: resourcesError } = await getTypedTable('roadmap_step_resources').insert(resourcePayload);
           if (resourcesError) {
             console.error("Resources insertion error:", resourcesError);
@@ -240,13 +234,18 @@ const CreateRoadmap = () => {
       }
 
       toast({
-        title: 'Roadmap Generated!',
-        description: 'Your personalized learning roadmap has been created successfully.',
+        title: '🎉 Roadmap Generated!',
+        description: 'Your AI-powered learning roadmap is ready.',
       });
+      
       window.location.href = `/roadmaps/${roadmapId}`;
     } catch (e: any) {
       console.error('generateRoadmap error', e);
-      toast({ title: 'Failed to generate roadmap', description: e?.message || '', variant: 'destructive' });
+      toast({ 
+        title: 'Failed to generate roadmap', 
+        description: e?.message || 'An unexpected error occurred', 
+        variant: 'destructive' 
+      });
     } finally {
       setIsGenerating(false);
     }
