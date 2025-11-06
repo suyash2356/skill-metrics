@@ -56,7 +56,10 @@ const CreateRoadmap = () => {
     targetRole: "",
     preferredLearningStyle: "",
     focusAreas: [] as string[],
-    deadline: ""
+    deadline: "",
+    category: "", // Tech, Non-Tech, Exam Prep
+    learningDuration: "", // Duration in months/years
+    durationType: "months" // months or years
   });
 
   useEffect(() => {
@@ -102,12 +105,37 @@ const CreateRoadmap = () => {
     { value: "mixed", label: "Mixed approach" }
   ];
 
-  const availableFocusAreas = [
-    "Frontend Development", "Backend Development", "Mobile Development",
-    "Data Science", "Machine Learning", "DevOps", "Cloud Computing",
-    "Cybersecurity", "UI/UX Design", "Product Management", "System Design",
-    "Database Management", "API Development", "Testing", "Web3/Blockchain"
+  const categories = [
+    { value: "tech", label: "Tech" },
+    { value: "non-tech", label: "Non-Tech" },
+    { value: "exam-prep", label: "Exam Prep" }
   ];
+
+  const focusAreasByCategory = {
+    tech: [
+      "Frontend Development", "Backend Development", "Mobile Development",
+      "Data Science", "Machine Learning", "DevOps", "Cloud Computing",
+      "Cybersecurity", "UI/UX Design", "System Design", "Database Management",
+      "API Development", "Testing", "Web3/Blockchain", "Game Development",
+      "AI/ML Engineering", "Embedded Systems", "IoT Development"
+    ],
+    "non-tech": [
+      "Digital Marketing", "Content Writing", "Graphic Design",
+      "Video Editing", "Photography", "Business Analytics", 
+      "Project Management", "Product Management", "HR Management",
+      "Sales & Marketing", "Financial Analysis", "Entrepreneurship",
+      "Leadership & Management", "Communication Skills", "Public Speaking"
+    ],
+    "exam-prep": [
+      "UPSC", "SSC", "Banking Exams", "Railway Exams",
+      "GATE", "JEE", "NEET", "CAT", "GRE", "GMAT", "TOEFL", "IELTS",
+      "CLAT", "NDA", "CDS", "State PSC", "NET/JRF", "CTET"
+    ]
+  };
+
+  const availableFocusAreas = formData.category 
+    ? focusAreasByCategory[formData.category as keyof typeof focusAreasByCategory] || []
+    : [];
 
   const handleFocusAreaToggle = (area: string) => {
     setFormData(prev => ({
@@ -150,6 +178,8 @@ const CreateRoadmap = () => {
           timeCommitment: timeCommitments.find(time => time.value === formData.timeCommitment)?.label || formData.timeCommitment,
           learningStyle: learningStyles.find(style => style.value === formData.preferredLearningStyle)?.label || 'Mixed approach',
           focusAreas: formData.focusAreas.length > 0 ? formData.focusAreas : [formData.title],
+          category: categories.find(cat => cat.value === formData.category)?.label || 'General',
+          learningDuration: formData.learningDuration ? `${formData.learningDuration} ${formData.durationType}` : null,
         }
       });
 
@@ -426,6 +456,35 @@ const CreateRoadmap = () => {
                 </div>
 
                 <div className="space-y-2">
+                  <Label>Learning Duration</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Duration"
+                      min="1"
+                      value={formData.learningDuration}
+                      onChange={(e) => handleInputChange("learningDuration", e.target.value)}
+                      className="flex-1"
+                    />
+                    <Select 
+                      value={formData.durationType}
+                      onValueChange={(value) => handleInputChange("durationType", value)}
+                    >
+                      <SelectTrigger className="w-32">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="months">Months</SelectItem>
+                        <SelectItem value="years">Years</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    How long do you want to spend learning this?
+                  </p>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="deadline">Target Completion Date (Optional)</Label>
                   <Input
                     id="deadline"
@@ -446,38 +505,71 @@ const CreateRoadmap = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Select the areas you want to focus on in your learning journey
-                  </p>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {availableFocusAreas.map((area) => (
-                      <div key={area} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={area}
-                          checked={formData.focusAreas.includes(area)}
-                          onCheckedChange={() => handleFocusAreaToggle(area)}
-                        />
-                        <Label
-                          htmlFor={area}
-                          className="text-sm cursor-pointer"
-                        >
-                          {area}
-                        </Label>
-                      </div>
-                    ))}
+                  <div className="space-y-2">
+                    <Label>Select Category</Label>
+                    <Select 
+                      value={formData.category}
+                      onValueChange={(value) => {
+                        handleInputChange("category", value);
+                        // Clear focus areas when category changes
+                        setFormData(prev => ({ ...prev, focusAreas: [] }));
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choose Tech / Non-Tech / Exam Prep" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
-                  {formData.focusAreas.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mt-4">
-                      {formData.focusAreas.map((area) => (
-                        <Badge key={area} variant="secondary" className="flex items-center space-x-1">
-                          <span>{area}</span>
-                          <X
-                            className="h-3 w-3 cursor-pointer"
-                            onClick={() => handleFocusAreaToggle(area)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
+
+                  {formData.category && (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Select the areas you want to focus on in your learning journey
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {availableFocusAreas.map((area) => (
+                          <div key={area} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={area}
+                              checked={formData.focusAreas.includes(area)}
+                              onCheckedChange={() => handleFocusAreaToggle(area)}
+                            />
+                            <Label
+                              htmlFor={area}
+                              className="text-sm cursor-pointer"
+                            >
+                              {area}
+                            </Label>
+                          </div>
+                        ))}
+                      </div>
+                      {formData.focusAreas.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          {formData.focusAreas.map((area) => (
+                            <Badge key={area} variant="secondary" className="flex items-center space-x-1">
+                              <span>{area}</span>
+                              <X
+                                className="h-3 w-3 cursor-pointer"
+                                onClick={() => handleFocusAreaToggle(area)}
+                              />
+                            </Badge>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {!formData.category && (
+                    <p className="text-sm text-muted-foreground italic">
+                      Please select a category first to see available focus areas
+                    </p>
                   )}
                 </div>
               </CardContent>

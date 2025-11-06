@@ -12,6 +12,8 @@ interface RoadmapRequest {
   timeCommitment: string;
   learningStyle: string;
   focusAreas: string[];
+  category?: string;
+  learningDuration?: string;
 }
 
 serve(async (req) => {
@@ -20,7 +22,7 @@ serve(async (req) => {
   }
 
   try {
-    const { title, description, skillLevel, timeCommitment, learningStyle, focusAreas }: RoadmapRequest = await req.json();
+    const { title, description, skillLevel, timeCommitment, learningStyle, focusAreas, category, learningDuration }: RoadmapRequest = await req.json();
     
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     if (!GEMINI_API_KEY) {
@@ -32,12 +34,18 @@ serve(async (req) => {
 
 Title: ${title}
 Description: ${description}
+Category: ${category || 'General'}
 Skill Level: ${skillLevel}
 Time Commitment: ${timeCommitment}
+Total Learning Duration: ${learningDuration || 'Flexible'}
 Learning Style: ${learningStyle}
 Focus Areas: ${focusAreas.join(', ')}
 
-Create a comprehensive learning roadmap with 6-10 progressive steps. Each step should build upon the previous one.
+Create a comprehensive learning roadmap with 6-10 progressive steps that fits within the ${learningDuration || 'flexible'} timeframe. Each step should build upon the previous one.
+
+${category === 'Exam Prep' ? 'IMPORTANT: This is for exam preparation. Focus on exam-specific study strategies, syllabus coverage, mock tests, previous year questions, time management techniques, and revision schedules.' : ''}
+${category === 'Non-Tech' ? 'IMPORTANT: This is a non-technical skill. Focus on practical applications, real-world scenarios, portfolio building, and soft skills development.' : ''}
+${category === 'Tech' ? 'IMPORTANT: This is a technical skill. Focus on hands-on coding projects, documentation reading, debugging skills, and building a technical portfolio.' : ''}
 
 Return your response as a valid JSON object with this EXACT structure:
 {
@@ -45,7 +53,7 @@ Return your response as a valid JSON object with this EXACT structure:
     {
       "title": "Step title (concise, clear)",
       "description": "Detailed description of what will be learned (2-3 sentences)",
-      "duration": "Time estimate (e.g., '2 weeks', '1 month')",
+      "duration": "Time estimate (e.g., '2 weeks', '1 month') - ensure total adds up to approximately ${learningDuration || 'flexible timeline'}",
       "topics": ["Topic 1", "Topic 2", "Topic 3"],
       "task": "A practical hands-on task or project to complete for this step",
       "resources": [
@@ -63,12 +71,13 @@ Guidelines:
 1. Make the roadmap progressive - start with fundamentals and build up
 2. Include 4-6 topics per step that are specific and actionable
 3. Each task should be practical and help reinforce the learning
-4. Provide 3-5 high-quality, real resources per step (real URLs from popular platforms like MDN, freeCodeCamp, Coursera, YouTube, official docs, etc.)
+4. Provide 3-5 high-quality, real resources per step (real URLs from popular platforms like MDN, freeCodeCamp, Coursera, YouTube, official docs, Khan Academy, edX, etc.)
 5. Adjust complexity based on the skill level (${skillLevel})
-6. Consider the time commitment (${timeCommitment}) when estimating durations
+6. Consider the time commitment (${timeCommitment}) and total duration (${learningDuration || 'flexible'}) when estimating durations
 7. Tailor the content to the learning style (${learningStyle})
 8. Focus heavily on: ${focusAreas.join(', ')}
 9. Make it engaging and motivating
+10. Ensure all step durations combined align with the total learning duration of ${learningDuration || 'flexible timeline'}
 
 Return ONLY the JSON object, no additional text or markdown formatting.`;
 
