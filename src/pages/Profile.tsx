@@ -517,36 +517,39 @@ const Profile = () => {
                 )}
                 {/* User posts section */}
 <div className="mt-6">
-  <h3 className="text-lg font-semibold mb-3">Posts by this user</h3>
+  <h3 className="text-lg font-semibold mb-3">Posts</h3>
   {isLoadingUserPosts ? (
     <p>Loading posts...</p>
   ) : (userPosts || []).length === 0 ? (
     <p className="text-sm text-muted-foreground">No posts yet.</p>
   ) : (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1">
       {(userPosts || []).map((p: any) => {
-        const thumb =
-          (p.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/)?.[1] || null;
+        // Extract thumbnail from markdown images or video tags
+        const imgMatch = (p.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/);
+        const videoMatch = (p.content || "").match(/<video[^>]+src="([^"]+)"/);
+        const thumb = imgMatch?.[1] || videoMatch?.[1] || null;
+        
         return (
           <div
             key={p.id}
-            className="rounded overflow-hidden shadow-card hover:shadow-elevated transition-all group relative cursor-pointer"
-            onMouseEnter={() => setPreviewPost(p)}
-            onMouseLeave={() => setPreviewPost(null)}
+            className="aspect-square rounded overflow-hidden shadow-sm hover:shadow-md transition-all group relative cursor-pointer bg-muted"
+            onClick={() => setPreviewPost(p)}
           >
             {thumb ? (
-              <div className="w-full h-28 bg-black/5 overflow-hidden">
+              <div className="w-full h-full overflow-hidden">
                 <img
                   src={thumb}
-                  alt={p.title || "Post image"}
+                  alt={p.title || "Post"}
                   className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                 />
               </div>
             ) : (
-              <div className="w-full h-28 bg-muted flex items-center justify-center text-sm text-muted-foreground">
-                No image
+              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground p-2 text-center">
+                <span className="line-clamp-3">{p.title}</span>
               </div>
             )}
+            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
           </div>
         );
       })}
@@ -561,59 +564,85 @@ const Profile = () => {
     </Tabs>
   </div>
 
-        {/* Hover preview overlay */}
+        {/* Post preview modal */}
 {previewPost && (
   <motion.div
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-    onMouseLeave={() => setPreviewPost(null)}
+    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
     onClick={() => setPreviewPost(null)}
   >
     <motion.div
-      initial={{ scale: 0.9, opacity: 0 }}
+      initial={{ scale: 0.95, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.9, opacity: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
-      className="max-w-3xl w-full max-h-[90vh] overflow-auto"
+      exit={{ scale: 0.95, opacity: 0 }}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className="max-w-4xl w-full max-h-[90vh] overflow-auto"
       onClick={(e) => e.stopPropagation()}
     >
-      <Card>
-        <div className="flex justify-end p-2">
+      <Card className="border-none shadow-xl">
+        <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex justify-between items-center p-4 border-b">
+          <h3 className="text-lg font-semibold">{previewPost.title}</h3>
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setPreviewPost(null)}
           >
-            <X className="h-4 w-4" />
+            <X className="h-5 w-5" />
           </Button>
         </div>
-        <CardContent>
-          <h3 className="text-xl font-semibold mb-3">{previewPost.title}</h3>
+        <CardContent className="p-6">
           {(() => {
-            const thumb =
-              (previewPost.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/)?.[1] ||
-              null;
-            if (thumb) {
+            // Extract images
+            const imgMatches = Array.from((previewPost.content || "").matchAll(/!\[[^\]]*\]\(([^)]+)\)/g));
+            const videoMatches = Array.from((previewPost.content || "").matchAll(/<video[^>]+src="([^"]+)"/g));
+            
+            // Show media if present
+            if (imgMatches.length > 0 || videoMatches.length > 0) {
               return (
-                <div className="w-full h-80 bg-black/5 mb-4 overflow-hidden rounded-lg">
-                  <img
-                    src={thumb}
-                    alt={previewPost.title || "Post image"}
-                    className="w-full h-full object-contain"
-                  />
+                <div className="mb-6 space-y-4">
+                  {imgMatches.map((match, idx) => (
+                    <div key={`img-${idx}`} className="w-full max-h-96 overflow-hidden rounded-lg bg-muted">
+                      <img
+                        src={match[1]}
+                        alt={`Post image ${idx + 1}`}
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  ))}
+                  {videoMatches.map((match, idx) => (
+                    <div key={`video-${idx}`} className="w-full rounded-lg overflow-hidden bg-black">
+                      <video
+                        src={match[1]}
+                        controls
+                        className="w-full h-auto"
+                      />
+                    </div>
+                  ))}
                 </div>
               );
             }
             return null;
           })()}
-          <div
-            className="prose max-w-none break-words text-sm sm:text-base"
-            dangerouslySetInnerHTML={{
-              __html: (previewPost.content || "").replace(/\n/g, "<br/>"),
-            }}
-          />
+          
+          <div className="prose prose-sm max-w-none break-words">
+            {(previewPost.content || "")
+              .split('\n')
+              .filter(line => !line.match(/!\[[^\]]*\]\([^)]+\)/) && !line.match(/<video[^>]*>/))
+              .map((line, idx) => (
+                <p key={idx} className="mb-2">{line}</p>
+              ))
+            }
+          </div>
+          
+          <div className="mt-6 pt-4 border-t text-sm text-muted-foreground">
+            <p>Posted on {new Date(previewPost.created_at).toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}</p>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

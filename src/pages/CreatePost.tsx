@@ -105,18 +105,18 @@ const CreatePost = () => {
         return;
       }
 
-      // Upload to Supabase storage (bucket: 'uploads')
+      // Upload to Supabase storage (bucket: 'post-media')
       try {
         const fileExt = file.name.split('.').pop();
         const fileName = `${user?.id || 'anon'}_${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
         const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('uploads')
+          .from('post-media')
           .upload(fileName, file, { cacheControl: '3600', upsert: false });
 
         if (uploadError) throw uploadError;
 
         // Get public URL
-        const { data: publicData } = supabase.storage.from('uploads').getPublicUrl(uploadData.path);
+        const { data: publicData } = supabase.storage.from('post-media').getPublicUrl(uploadData.path);
         const publicUrl = publicData.publicUrl;
 
         // Append to content appropriately
