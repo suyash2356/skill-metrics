@@ -1,19 +1,18 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
-import { Edit3, Trash2, Tag, Calendar, FileText } from "lucide-react";
+import { Trash2, Loader2, Image as ImageIcon, Video, FileText, Newspaper, Edit3 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { usePostCollections } from "@/hooks/usePostCollections";
 import { Database } from "@/integrations/supabase/types";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 
 type Post = Database['public']['Tables']['posts']['Row'];
 
@@ -21,39 +20,43 @@ const MyPosts = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedPost, setSelectedPost] = useState<Post | null>(null);
+  const [editingPost, setEditingPost] = useState<Post | null>(null);
+  const [editForm, setEditForm] = useState({ title: "", content: "", category: "", tags: [] as string[] });
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editedPosts, setEditedPosts] = useState<Record<string, Partial<Post>>>({});
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>("All");
-  const [newCollection, setNewCollection] = useState("");
-
-  const { data: posts, isLoading: isLoadingPosts } = useQuery({
+  const { data: posts = [], isLoading } = useQuery({
     queryKey: ['myPosts', user?.id],
     queryFn: async () => {
       if (!user) return [];
-      const { data, error } = await supabase.from('posts').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data as Post[];
     },
     enabled: !!user,
   });
 
-  const { collections, addCollection, deleteCollection, assignPostToCollection } = usePostCollections();
-
   const updatePostMutation = useMutation({
-    mutationFn: async (post: Post) => {
-      const { error } = await supabase.from('posts').update(editedPosts[post.id]!).eq('id', post.id);
+    mutationFn: async (post: { id: string; title: string; content: string; category: string; tags: string[] }) => {
+      const { error } = await supabase
+        .from('posts')
+        .update({
+          title: post.title,
+          content: post.content,
+          category: post.category,
+          tags: post.tags,
+        })
+        .eq('id', post.id);
       if (error) throw error;
     },
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myPosts', user?.id] });
       toast({ title: 'Post updated' });
-      setEditingId(null);
-      setEditedPosts(prev => {
-        const next = { ...prev };
-        delete next[variables.id];
-        return next;
-      });
+      setEditingPost(null);
     },
     onError: () => {
       toast({ title: 'Failed to update post', variant: 'destructive' });
@@ -68,166 +71,335 @@ const MyPosts = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['myPosts', user?.id] });
       toast({ title: 'Post deleted' });
+      setSelectedPost(null);
     },
     onError: () => {
       toast({ title: 'Failed to delete post', variant: 'destructive' });
     }
   });
 
-  const handleEditChange = (postId: string, field: keyof Post, value: any) => {
-    setEditedPosts(prev => ({
-      ...prev,
-      [postId]: {
-        ...prev[postId],
-        [field]: value,
-      }
-    }));
+  const getMediaInfo = (content: string | null) => {
+    if (!content) return { type: 'text', url: null };
+    
+    // Check for video
+    const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
+    const videoMatch = content.match(videoRegex);
+    if (videoMatch) return { type: 'video', url: videoMatch[0] };
+    
+    // Check for base64 image
+    const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/;
+    const base64Match = content.match(base64Regex);
+    if (base64Match) return { type: 'image', url: base64Match[1] };
+    
+    // Check for image URL
+    const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/;
+    const imgMatch = content.match(imgRegex);
+    if (imgMatch) return { type: 'image', url: imgMatch[1] };
+    
+    // Check if starts with data:image
+    if (content.startsWith('data:image')) return { type: 'image', url: content };
+    
+    return { type: 'text', url: null };
   };
 
-  const handleAddCollection = () => {
-    const name = newCollection.trim();
-    if (!name || name === 'All' || collections?.some(c => c.name === name)) return;
-    addCollection(name);
-    setNewCollection("");
+  const categorizePost = (post: Post) => {
+    const media = getMediaInfo(post.content);
+    const category = post.category?.toLowerCase() || '';
+    
+    if (media.type === 'image') return 'image';
+    if (media.type === 'video') return 'video';
+    if (category.includes('news') || category.includes('article')) return 'news';
+    if (category.includes('resource') || category.includes('tutorial') || category.includes('guide')) return 'resources';
+    
+    return 'text';
   };
 
-  const handleDeleteCollection = () => {
-    if (selectedCollectionId === 'All') return;
-    if (!confirm(`Delete collection? This will not delete the posts.`)) return;
-    deleteCollection(selectedCollectionId);
-    setSelectedCollectionId('All');
+  const filteredPosts = useMemo(() => {
+    if (selectedCategory === 'all') return posts;
+    return posts.filter(post => categorizePost(post) === selectedCategory);
+  }, [posts, selectedCategory]);
+
+  const parseMedia = (content: string | null) => {
+    if (!content) return { text: "", media: [] };
+
+    const media: Array<{ type: "image" | "video"; url: string }> = [];
+    let text = content;
+
+    // Extract base64 images
+    const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
+    const base64Matches = content.matchAll(base64Regex);
+    for (const match of base64Matches) {
+      media.push({ type: "image", url: match[1] });
+      text = text.replace(match[0], "");
+    }
+
+    // Extract regular image URLs
+    const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/g;
+    const imgMatches = content.matchAll(imgRegex);
+    for (const match of imgMatches) {
+      media.push({ type: "image", url: match[1] });
+      text = text.replace(match[0], "");
+    }
+
+    // Extract video URLs
+    const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
+    const videoMatches = content.matchAll(videoRegex);
+    for (const match of videoMatches) {
+      media.push({ type: "video", url: match[0] });
+      text = text.replace(match[0], "");
+    }
+
+    return { text: text.trim(), media };
   };
 
-  const handleAssignCollection = (postId: string, collectionId: string) => {
-    assignPostToCollection({ postId, collectionId: collectionId === 'None' ? null : collectionId });
+  const handleEdit = (post: Post) => {
+    setEditingPost(post);
+    setEditForm({
+      title: post.title,
+      content: post.content || "",
+      category: post.category || "",
+      tags: post.tags || [],
+    });
   };
 
-  const renderContent = (raw: string | null) => {
-    if (!raw) return null;
-    const blocks = raw.split(/\n\n+/).slice(0, 6);
+  const handleSaveEdit = () => {
+    if (!editingPost) return;
+    updatePostMutation.mutate({
+      id: editingPost.id,
+      ...editForm,
+    });
+  };
+
+  if (isLoading) {
     return (
-      <div className="space-y-3">
-        {blocks.map((block, idx) => {
-          const imgMatch = block.match(/!\[[^\]]*\]\(([^)]+)\)/);
-          if (imgMatch) {
-            const url = imgMatch[1];
-            if (url.startsWith('data:image') || url.startsWith('http')) {
-              return (
-                <div key={idx} className="rounded-lg overflow-hidden border">
-                  <img src={url} alt="post" className="w-full h-auto object-contain" />
-                </div>
-              );
-            }
-          }
-          if (block.startsWith('data:image')) {
-            return (
-              <div key={idx} className="rounded-lg overflow-hidden border">
-                <img src={block} alt="post" className="w-full h-auto object-contain" />
-              </div>
-            );
-          }
-          const urlMatch = block.match(/https?:\/\/\S+/);
-          if (urlMatch) {
-            const url = urlMatch[0];
-            return (
-              <a key={idx} href={url} target="_blank" rel="noreferrer" className="flex items-center gap-2 text-blue-600 hover:underline text-sm break-all">
-                <FileText className="h-4 w-4" />
-                <span className="break-all">{url}</span>
-              </a>
-            );
-          }
-          return <p key={idx} className="text-muted-foreground text-sm leading-relaxed whitespace-pre-wrap break-words">{block.length > 600 ? block.slice(0, 600) + '…' : block}</p>;
-        })}
-      </div>
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </Layout>
     );
-  };
-
-  const visiblePosts = posts; // Simplified: showing all posts
+  }
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6 max-w-5xl">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6">
-          <h1 className="text-3xl font-bold">My Posts</h1>
-          <div className="flex items-center gap-2">
-            <Select value={selectedCollectionId} onValueChange={setSelectedCollectionId}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Collection" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All</SelectItem>
-                {collections?.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedCollectionId !== 'All' && (
-              <Button variant="destructive" size="sm" onClick={handleDeleteCollection}>Delete</Button>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <Input placeholder="New collection" value={newCollection} onChange={(e) => setNewCollection(e.target.value)} className="h-9 w-44" />
-            <Button size="sm" onClick={handleAddCollection}>Add</Button>
-          </div>
-          <Link to="/create-post"><Button>Create Post</Button></Link>
+      <div className="container mx-auto px-4 py-6 max-w-6xl">
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-2xl font-bold">My Posts</h1>
+          <Link to="/create-post">
+            <Button>Create Post</Button>
+          </Link>
         </div>
-        {isLoadingPosts ? (
-          <div className="text-muted-foreground">Loading...</div>
-        ) : posts?.length === 0 ? (
-          <div className="text-muted-foreground">You haven't created any posts yet.</div>
-        ) : (
-          <div className="grid md:grid-cols-2 gap-6">
-            {visiblePosts?.map((post) => {
-              const currentPost = { ...post, ...editedPosts[post.id] };
-              return (
-              <Card key={post.id} className="shadow-card hover:shadow-elevated transition-all">
-                <CardHeader>
-                  <CardTitle className="flex items-start justify-between gap-2">
-                    {editingId === post.id ? (
-                      <Input value={currentPost.title} onChange={(e) => handleEditChange(post.id, 'title', e.target.value)} />
-                    ) : (
-                      <span className="break-words">{post.title}</span>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <Badge variant="secondary">{post.category || 'General'}</Badge>
+
+        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+          <TabsList className="grid w-full grid-cols-5 mb-6">
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="image">
+              <ImageIcon className="h-4 w-4 mr-2" />
+              Images
+            </TabsTrigger>
+            <TabsTrigger value="video">
+              <Video className="h-4 w-4 mr-2" />
+              Videos
+            </TabsTrigger>
+            <TabsTrigger value="resources">
+              <FileText className="h-4 w-4 mr-2" />
+              Resources
+            </TabsTrigger>
+            <TabsTrigger value="news">
+              <Newspaper className="h-4 w-4 mr-2" />
+              News
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={selectedCategory} className="mt-0">
+            {filteredPosts.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <h3 className="text-lg font-semibold">No posts yet</h3>
+                <p>Start creating posts to see them here.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-1">
+                {filteredPosts.map((post) => {
+                  const media = getMediaInfo(post.content);
+                  return (
+                    <div
+                      key={post.id}
+                      className="relative group cursor-pointer aspect-square overflow-hidden bg-muted"
+                      onClick={() => setSelectedPost(post)}
+                    >
+                      {media.url ? (
+                        media.type === 'image' ? (
+                          <img
+                            src={media.url}
+                            alt={post.title}
+                            className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                          />
+                        ) : (
+                          <div className="relative w-full h-full">
+                            <video
+                              src={media.url}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <Video className="h-12 w-12 text-white" />
+                            </div>
+                          </div>
+                        )
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 p-4">
+                          <p className="text-sm font-medium text-center line-clamp-4">
+                            {post.title}
+                          </p>
+                        </div>
+                      )}
+                      
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                      
+                      <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="secondary"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(post);
+                          }}
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm('Are you sure you want to delete this post?')) {
+                              deletePostMutation.mutate(post.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="h-3 w-3" /> {new Date(post.created_at).toLocaleString()}</div>
-                  {/* Collection assignment temporarily disabled */}
-                  {editingId === post.id ? (
-                    <Textarea rows={5} value={currentPost.content || ''} onChange={(e) => handleEditChange(post.id, 'content', e.target.value)} />
-                  ) : (
-                    <div className="overflow-hidden">{renderContent(post.content || '')}</div>
-                  )}
-                  <div className="flex flex-wrap gap-2">
-                    {(post.tags || []).map((t: string, i: number) => (
-                      <Badge key={`${post.id}-tag-${i}`} variant="outline" className="text-xs"><Tag className="h-3 w-3 mr-1" />{t}</Badge>
-                    ))}
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    {editingId === post.id ? (
-                      <>
-                        <Button variant="outline" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
-                        <Button size="sm" onClick={() => updatePostMutation.mutate(post)} disabled={updatePostMutation.isPending}>
-                          {updatePostMutation.isPending ? 'Saving...' : 'Save'}
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button variant="outline" size="sm" onClick={() => setEditingId(post.id)}><Edit3 className="h-4 w-4 mr-1" /> Edit</Button>
-                        <Button variant="destructive" size="sm" onClick={() => deletePostMutation.mutate(post.id)} disabled={deletePostMutation.isPending}>
-                          <Trash2 className="h-4 w-4 mr-1" /> Delete
-                        </Button>
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )})}
-          </div>
-        )}
+                  );
+                })}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+
+        {/* View Post Dialog */}
+        <Dialog open={!!selectedPost} onOpenChange={(open) => !open && setSelectedPost(null)}>
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            {selectedPost && (
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold">{selectedPost.title}</h2>
+                
+                {(() => {
+                  const { media, text } = parseMedia(selectedPost.content);
+                  return (
+                    <>
+                      {media.length > 0 && (
+                        <div className="space-y-4">
+                          {media.map((item, idx) => (
+                            <div key={idx} className="rounded-lg overflow-hidden bg-black">
+                              {item.type === 'image' ? (
+                                <img
+                                  src={item.url}
+                                  alt={`Media ${idx + 1}`}
+                                  className="w-full h-auto object-contain"
+                                />
+                              ) : (
+                                <video
+                                  src={item.url}
+                                  controls
+                                  className="w-full h-auto"
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {text && (
+                        <div className="prose max-w-none">
+                          <p className="whitespace-pre-wrap">{text}</p>
+                        </div>
+                      )}
+                      
+                      {selectedPost.tags && selectedPost.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                          {selectedPost.tags.map((tag, idx) => (
+                            <span key={idx} className="text-sm text-primary">
+                              #{tag}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Post Dialog */}
+        <Dialog open={!!editingPost} onOpenChange={(open) => !open && setEditingPost(null)}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Post</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium mb-2 block">Title</label>
+                <Input
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  placeholder="Post title"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Category</label>
+                <Input
+                  value={editForm.category}
+                  onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                  placeholder="e.g., Tutorial, News, Resource"
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Content</label>
+                <Textarea
+                  value={editForm.content}
+                  onChange={(e) => setEditForm({ ...editForm, content: e.target.value })}
+                  placeholder="Post content"
+                  rows={10}
+                />
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium mb-2 block">Tags (comma separated)</label>
+                <Input
+                  value={editForm.tags.join(', ')}
+                  onChange={(e) => setEditForm({ ...editForm, tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean) })}
+                  placeholder="e.g., javascript, react, tutorial"
+                />
+              </div>
+              
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={() => setEditingPost(null)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSaveEdit} disabled={updatePostMutation.isPending}>
+                  {updatePostMutation.isPending ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );
