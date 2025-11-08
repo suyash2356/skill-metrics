@@ -1304,6 +1304,10 @@ export type Database = {
         Args: never
         Returns: undefined
       }
+      delete_user_account: {
+        Args: { user_id_to_delete: string }
+        Returns: undefined
+      }
       has_community_role: {
         Args: {
           _community_id: string

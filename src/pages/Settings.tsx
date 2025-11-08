@@ -81,22 +81,53 @@ const Settings = () => {
       if (account.email && account.email !== user?.email) updates.email = account.email;
       const { error } = await supabase.auth.updateUser(updates);
       if (error) throw error;
+      
+      // Also update user preferences with display name and website
+      updatePreferences({
+        display_name: account.displayName,
+        website: account.website,
+      });
+      
       toast({ title: 'Account settings saved' });
     } catch (e: any) {
       toast({ title: 'Account save failed', description: e?.message || '', variant: 'destructive' });
     }
   };
 
-  const savePreferences = async () => {
+  const saveNotificationPreferences = async () => {
     try {
-      await updatePreferences({
-  email_notifications: !!preferences.email_notifications,
-  // Removed invalid property 'privacy_settings'
-  // Removed invalid property 'interface_settings'
+      updatePreferences({
+        email_notifications: notifications.product_updates || notifications.roadmap_activity || notifications.weekly_digest,
+        push_notifications: notifications.push_enabled,
+        marketing_emails: notifications.marketing_emails,
       });
-      toast({ title: 'Preferences saved successfully' });
+      toast({ title: 'Notification preferences saved' });
     } catch (error: any) {
       toast({ title: 'Failed to save preferences', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const savePrivacyPreferences = async () => {
+    try {
+      updatePreferences({
+        profile_visibility: privacy.profile_visibility,
+        show_online_status: privacy.show_activity,
+      });
+      toast({ title: 'Privacy settings saved' });
+    } catch (error: any) {
+      toast({ title: 'Failed to save privacy settings', description: error.message, variant: 'destructive' });
+    }
+  };
+
+  const saveSecurityPreferences = async () => {
+    try {
+      updatePreferences({
+        two_factor_enabled: security.two_factor_enabled,
+        login_notifications: security.login_alerts,
+      });
+      toast({ title: 'Security settings saved' });
+    } catch (error: any) {
+      toast({ title: 'Failed to save security settings', description: error.message, variant: 'destructive' });
     }
   };
 
@@ -130,21 +161,37 @@ const Settings = () => {
   };
 
   const deleteAccount = async () => {
-    if (!user) { toast({ title: 'Not logged in', variant: 'destructive' }); return; }
+    if (!user) { 
+      toast({ title: 'Not logged in', variant: 'destructive' }); 
+      return; 
+    }
+    
     if (!confirm('Are you sure you want to permanently delete your account and all data? This cannot be undone.')) return;
-    const second = prompt('Type DELETE to confirm');
-    if ((second || '').trim().toUpperCase() !== 'DELETE') return;
+    
+    const confirmation = prompt('Type DELETE to confirm');
+    if ((confirmation || '').trim().toUpperCase() !== 'DELETE') {
+      toast({ title: 'Account deletion cancelled', variant: 'default' });
+      return;
+    }
+    
     try {
-      // This should be handled by a backend function for security and completeness
-  // 'delete_user_account' is not a valid RPC function, replaced with a valid one or commented out
-  // const { error } = await supabase.rpc('create_default_preferences_for_existing_users');
-  // Removed error reference since RPC call is commented out
+      // Call the database function to delete all user data
+      const { error: deleteError } = await supabase.rpc('delete_user_account', {
+        user_id_to_delete: user.id
+      });
       
+      if (deleteError) throw deleteError;
+      
+      // Sign out after successful deletion
       await supabase.auth.signOut();
-      toast({ title: 'Account deleted successfully' });
+      toast({ title: 'Account deleted successfully', description: 'All your data has been removed.' });
       window.location.href = '/';
     } catch (e: any) {
-      toast({ title: 'Failed to delete account', description: e?.message || 'An error occurred.', variant: 'destructive' });
+      toast({ 
+        title: 'Failed to delete account', 
+        description: e?.message || 'An error occurred.', 
+        variant: 'destructive' 
+      });
     }
   };
 
@@ -236,7 +283,7 @@ const Settings = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={savePreferences}>Save</Button>
+                  <Button onClick={saveNotificationPreferences}>Save Notifications</Button>
                 </div>
               </CardContent>
             </Card>
@@ -271,7 +318,7 @@ const Settings = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={savePreferences}>Save</Button>
+                  <Button onClick={savePrivacyPreferences}>Save Privacy Settings</Button>
                 </div>
               </CardContent>
             </Card>
@@ -289,7 +336,7 @@ const Settings = () => {
                   <Checkbox id="login-alerts" checked={security.login_alerts} onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, login_alerts: v }))} />
                   <Label htmlFor="login-alerts">Email me on new logins</Label>
                 </div>
-                 <Button onClick={savePreferences}>Save Security Settings</Button>
+                 <Button onClick={saveSecurityPreferences}>Save Security Settings</Button>
                 <div className="grid md:grid-cols-2 gap-4 pt-4 border-t mt-4">
                   <div>
                     <Label>Change Password</Label>
