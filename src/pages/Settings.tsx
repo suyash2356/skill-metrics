@@ -58,15 +58,14 @@ const Settings = () => {
       setNotifications({
         marketing_emails: !!preferences.marketing_emails,
         push_enabled: !!preferences.push_notifications,
-        // Provide default values for removed properties to satisfy type
-        product_updates: false,
-        roadmap_activity: false,
+        product_updates: !!preferences.email_notifications,
+        roadmap_activity: !!preferences.email_notifications,
         weekly_digest: false,
       });
       setPrivacy({
         profile_visibility: preferences.profile_visibility || 'public',
-        show_follower_counts: true,
-        show_activity: true,
+        show_follower_counts: !!preferences.show_online_status,
+        show_activity: !!preferences.show_online_status,
       });
       setSecurity({
         two_factor_enabled: !!preferences.two_factor_enabled,
@@ -77,13 +76,22 @@ const Settings = () => {
 
   const saveAccount = async () => {
     try {
-      const updates: any = { data: { displayName: account.displayName, website: account.website } };
-      if (account.email && account.email !== user?.email) updates.email = account.email;
+      const updates: any = { 
+        data: { 
+          displayName: account.displayName, 
+          website: account.website 
+        } 
+      };
+      
+      if (account.email && account.email !== user?.email) {
+        updates.email = account.email;
+      }
+      
       const { error } = await supabase.auth.updateUser(updates);
       if (error) throw error;
       
-      // Also update user preferences with display name and website
-      updatePreferences({
+      // Also update display_name in preferences
+      await updatePreferences({
         display_name: account.displayName,
         website: account.website,
       });
@@ -94,24 +102,25 @@ const Settings = () => {
     }
   };
 
-  const saveNotificationPreferences = async () => {
+  const saveNotifications = async () => {
     try {
-      updatePreferences({
+      await updatePreferences({
         email_notifications: notifications.product_updates || notifications.roadmap_activity || notifications.weekly_digest,
         push_notifications: notifications.push_enabled,
         marketing_emails: notifications.marketing_emails,
       });
       toast({ title: 'Notification preferences saved' });
     } catch (error: any) {
-      toast({ title: 'Failed to save preferences', description: error.message, variant: 'destructive' });
+      toast({ title: 'Failed to save notifications', description: error.message, variant: 'destructive' });
     }
   };
 
-  const savePrivacyPreferences = async () => {
+  const savePrivacy = async () => {
     try {
-      updatePreferences({
+      await updatePreferences({
         profile_visibility: privacy.profile_visibility,
         show_online_status: privacy.show_activity,
+        allow_follow_requests: true,
       });
       toast({ title: 'Privacy settings saved' });
     } catch (error: any) {
@@ -119,9 +128,9 @@ const Settings = () => {
     }
   };
 
-  const saveSecurityPreferences = async () => {
+  const saveSecurity = async () => {
     try {
-      updatePreferences({
+      await updatePreferences({
         two_factor_enabled: security.two_factor_enabled,
         login_notifications: security.login_alerts,
       });
@@ -152,9 +161,10 @@ const Settings = () => {
     }
     try {
       const { error } = await supabase.auth.updateUser({ password: newPassword });
-  // Removed error reference since RPC call is commented out
+      if (error) throw error;
+      
       setNewPassword("");
-      toast({ title: 'Password updated' });
+      toast({ title: 'Password updated successfully' });
     } catch (e: any) {
       toast({ title: 'Password update failed', description: e?.message || '', variant: 'destructive' });
     }
@@ -168,30 +178,26 @@ const Settings = () => {
     
     if (!confirm('Are you sure you want to permanently delete your account and all data? This cannot be undone.')) return;
     
-    const confirmation = prompt('Type DELETE to confirm');
-    if ((confirmation || '').trim().toUpperCase() !== 'DELETE') {
-      toast({ title: 'Account deletion cancelled', variant: 'default' });
+    const second = prompt('Type DELETE to confirm');
+    if ((second || '').trim().toUpperCase() !== 'DELETE') {
+      toast({ title: 'Account deletion cancelled' });
       return;
     }
     
     try {
       // Call the database function to delete all user data
-      const { error: deleteError } = await supabase.rpc('delete_user_account', {
+      const { error } = await supabase.rpc('delete_user_account', {
         user_id_to_delete: user.id
       });
       
-      if (deleteError) throw deleteError;
+      if (error) throw error;
       
-      // Sign out after successful deletion
+      // Sign out after deletion
       await supabase.auth.signOut();
-      toast({ title: 'Account deleted successfully', description: 'All your data has been removed.' });
+      toast({ title: 'Account deleted successfully' });
       window.location.href = '/';
     } catch (e: any) {
-      toast({ 
-        title: 'Failed to delete account', 
-        description: e?.message || 'An error occurred.', 
-        variant: 'destructive' 
-      });
+      toast({ title: 'Failed to delete account', description: e?.message || 'An error occurred.', variant: 'destructive' });
     }
   };
 
@@ -213,7 +219,7 @@ const Settings = () => {
   };
 
   if (isLoadingPreferences) {
-    return <Layout><div>Loading settings...</div></Layout>;
+    return <Layout><div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground">Loading settings...</p></div></Layout>;
   }
 
   return (
@@ -222,7 +228,7 @@ const Settings = () => {
         <h1 className="text-2xl md:text-3xl font-bold mb-6">Settings</h1>
         <Tabs defaultValue="account" className="space-y-6">
           <div className="w-full overflow-x-auto">
-            <TabsList className="flex w-max md:w-full md:grid md:grid-cols-6 gap-2 md:gap-0">
+            <TabsList className="flex w-max md:w-full md:grid md:grid-cols-5 gap-2 md:gap-0">
               <TabsTrigger value="account" className="whitespace-nowrap">Account</TabsTrigger>
               <TabsTrigger value="notifications" className="whitespace-nowrap">Notifications</TabsTrigger>
               <TabsTrigger value="privacy" className="whitespace-nowrap">Privacy</TabsTrigger>
@@ -233,24 +239,40 @@ const Settings = () => {
 
           <TabsContent value="account">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="text-lg md:text-xl">Account</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg md:text-xl">Account Settings</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <Label>Display Name</Label>
-                    <Input value={account.displayName} onChange={(e) => setAccount(a => ({ ...a, displayName: e.target.value }))} placeholder="Your name" />
+                    <Label htmlFor="display-name">Display Name</Label>
+                    <Input 
+                      id="display-name"
+                      value={account.displayName} 
+                      onChange={(e) => setAccount(a => ({ ...a, displayName: e.target.value }))} 
+                      placeholder="Your name" 
+                    />
                   </div>
                   <div>
-                    <Label>Email</Label>
-                    <Input type="email" value={account.email} onChange={(e) => setAccount(a => ({ ...a, email: e.target.value }))} placeholder="you@example.com" />
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                      id="email"
+                      type="email" 
+                      value={account.email} 
+                      onChange={(e) => setAccount(a => ({ ...a, email: e.target.value }))} 
+                      placeholder="you@example.com" 
+                    />
                   </div>
                   <div className="md:col-span-2">
-                    <Label>Website</Label>
-                    <Input value={account.website} onChange={(e) => setAccount(a => ({ ...a, website: e.target.value }))} placeholder="https://" />
+                    <Label htmlFor="website">Website</Label>
+                    <Input 
+                      id="website"
+                      value={account.website} 
+                      onChange={(e) => setAccount(a => ({ ...a, website: e.target.value }))} 
+                      placeholder="https://yourwebsite.com" 
+                    />
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={saveAccount}>Save</Button>
+                  <Button onClick={saveAccount}>Save Account Settings</Button>
                 </div>
               </CardContent>
             </Card>
@@ -258,32 +280,52 @@ const Settings = () => {
 
           <TabsContent value="notifications">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="text-lg md:text-xl">Notifications</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg md:text-xl">Notification Preferences</CardTitle></CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <Checkbox id="product-updates" checked={notifications.product_updates} onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, product_updates: v }))} />
-                    <Label htmlFor="product-updates">Product updates</Label>
+                    <Checkbox 
+                      id="product-updates" 
+                      checked={notifications.product_updates} 
+                      onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, product_updates: v }))} 
+                    />
+                    <Label htmlFor="product-updates" className="cursor-pointer">Product updates and announcements</Label>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Checkbox id="roadmap-activity" checked={notifications.roadmap_activity} onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, roadmap_activity: v }))} />
-                    <Label htmlFor="roadmap-activity">Roadmap activity (comments, mentions)</Label>
+                    <Checkbox 
+                      id="roadmap-activity" 
+                      checked={notifications.roadmap_activity} 
+                      onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, roadmap_activity: v }))} 
+                    />
+                    <Label htmlFor="roadmap-activity" className="cursor-pointer">Roadmap activity (comments, mentions)</Label>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Checkbox id="weekly-digest" checked={notifications.weekly_digest} onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, weekly_digest: v }))} />
-                    <Label htmlFor="weekly-digest">Weekly email digest</Label>
+                    <Checkbox 
+                      id="weekly-digest" 
+                      checked={notifications.weekly_digest} 
+                      onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, weekly_digest: v }))} 
+                    />
+                    <Label htmlFor="weekly-digest" className="cursor-pointer">Weekly email digest</Label>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Checkbox id="marketing-emails" checked={notifications.marketing_emails} onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, marketing_emails: v }))} />
-                    <Label htmlFor="marketing-emails">Marketing emails</Label>
+                    <Checkbox 
+                      id="marketing-emails" 
+                      checked={notifications.marketing_emails} 
+                      onCheckedChange={(v: boolean) => setNotifications(n => ({ ...n, marketing_emails: v }))} 
+                    />
+                    <Label htmlFor="marketing-emails" className="cursor-pointer">Marketing emails and newsletters</Label>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Checkbox id="push-enabled" checked={notifications.push_enabled} onCheckedChange={(v: boolean) => handlePushToggle(v)} />
-                    <Label htmlFor="push-enabled">Enable push notifications</Label>
+                    <Checkbox 
+                      id="push-enabled" 
+                      checked={notifications.push_enabled} 
+                      onCheckedChange={(v: boolean) => handlePushToggle(v)} 
+                    />
+                    <Label htmlFor="push-enabled" className="cursor-pointer">Enable push notifications</Label>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={saveNotificationPreferences}>Save Notifications</Button>
+                  <Button onClick={saveNotifications}>Save Notifications</Button>
                 </div>
               </CardContent>
             </Card>
@@ -291,34 +333,60 @@ const Settings = () => {
 
           <TabsContent value="privacy">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="text-lg md:text-xl">Privacy</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg md:text-xl">Privacy Settings</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div>
-                    <Label>Profile Visibility</Label>
+                    <Label className="text-base font-semibold">Profile Visibility</Label>
                     <div className="flex items-center gap-4 mt-2 text-sm">
-                      <label className="flex items-center gap-2"><input type="radio" name="visibility" checked={privacy.profile_visibility==='public'} onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'public' }))} /> Public</label>
-                      <label className="flex items-center gap-2"><input type="radio" name="visibility" checked={privacy.profile_visibility==='friends'} onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'friends' }))} /> Friends</label>
-                      <label className="flex items-center gap-2"><input type="radio" name="visibility" checked={privacy.profile_visibility==='private'} onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'private' }))} /> Private</label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          name="visibility" 
+                          checked={privacy.profile_visibility==='public'} 
+                          onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'public' }))} 
+                        /> 
+                        Public
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          name="visibility" 
+                          checked={privacy.profile_visibility==='friends'} 
+                          onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'friends' }))} 
+                        /> 
+                        Friends
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input 
+                          type="radio" 
+                          name="visibility" 
+                          checked={privacy.profile_visibility==='private'} 
+                          onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'private' }))} 
+                        /> 
+                        Private
+                      </label>
                     </div>
                   </div>
-                  <div>
-                    <Label>Show Follower Counts</Label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Checkbox id="show-followers" checked={privacy.show_follower_counts} onCheckedChange={(v: boolean) => setPrivacy(p => ({ ...p, show_follower_counts: v }))} />
-                      <Label htmlFor="show-followers">Display follower/following numbers</Label>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="show-followers" 
+                      checked={privacy.show_follower_counts} 
+                      onCheckedChange={(v: boolean) => setPrivacy(p => ({ ...p, show_follower_counts: v }))} 
+                    />
+                    <Label htmlFor="show-followers" className="cursor-pointer">Display follower/following numbers on profile</Label>
                   </div>
-                  <div className="md:col-span-2">
-                    <Label>Show Activity</Label>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Checkbox id="show-activity" checked={privacy.show_activity} onCheckedChange={(v: boolean) => setPrivacy(p => ({ ...p, show_activity: v }))} />
-                      <Label htmlFor="show-activity">Allow others to see my recent activity</Label>
-                    </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="show-activity" 
+                      checked={privacy.show_activity} 
+                      onCheckedChange={(v: boolean) => setPrivacy(p => ({ ...p, show_activity: v }))} 
+                    />
+                    <Label htmlFor="show-activity" className="cursor-pointer">Allow others to see my recent activity</Label>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={savePrivacyPreferences}>Save Privacy Settings</Button>
+                  <Button onClick={savePrivacy}>Save Privacy Settings</Button>
                 </div>
               </CardContent>
             </Card>
@@ -326,24 +394,40 @@ const Settings = () => {
 
           <TabsContent value="security">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="text-lg md:text-xl">Security</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg md:text-xl">Security Settings</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <Checkbox id="two-factor" checked={security.two_factor_enabled} onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, two_factor_enabled: v }))} />
-                  <Label htmlFor="two-factor">Enable Two-Factor Authentication (via email)</Label>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="two-factor" 
+                      checked={security.two_factor_enabled} 
+                      onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, two_factor_enabled: v }))} 
+                    />
+                    <Label htmlFor="two-factor" className="cursor-pointer">Enable Two-Factor Authentication (via email)</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox 
+                      id="login-alerts" 
+                      checked={security.login_alerts} 
+                      onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, login_alerts: v }))} 
+                    />
+                    <Label htmlFor="login-alerts" className="cursor-pointer">Send email alerts for new logins</Label>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox id="login-alerts" checked={security.login_alerts} onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, login_alerts: v }))} />
-                  <Label htmlFor="login-alerts">Email me on new logins</Label>
-                </div>
-                 <Button onClick={saveSecurityPreferences}>Save Security Settings</Button>
+                <Button onClick={saveSecurity}>Save Security Settings</Button>
+                
                 <div className="grid md:grid-cols-2 gap-4 pt-4 border-t mt-4">
                   <div>
-                    <Label>Change Password</Label>
-                    <Input type="password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                    <Label htmlFor="new-password">Change Password</Label>
+                    <Input 
+                      id="new-password"
+                      type="password" 
+                      placeholder="New password (min 6 characters)" 
+                      value={newPassword} 
+                      onChange={(e) => setNewPassword(e.target.value)} 
+                    />
                   </div>
-                  <div>
-                    <Label>&nbsp;</Label>
+                  <div className="flex items-end">
                     <Button className="w-full" onClick={updatePassword}>Update Password</Button>
                   </div>
                 </div>
@@ -353,30 +437,48 @@ const Settings = () => {
 
           <TabsContent value="danger">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="text-lg md:text-xl">Danger Zone</CardTitle></CardHeader>
+              <CardHeader><CardTitle className="text-lg md:text-xl text-destructive">Danger Zone</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <div className="p-4 border rounded-md">
+                <div className="p-4 border border-border rounded-md">
                   <h3 className="font-semibold mb-2">Report a Problem</h3>
+                  <p className="text-sm text-muted-foreground mb-3">Found a bug or issue? Let us know and we'll look into it.</p>
                   <div className="space-y-3">
                     <div>
-                      <Label>Subject</Label>
-                      <Input value={reportSubject} onChange={(e) => setReportSubject(e.target.value)} placeholder="Brief summary" />
+                      <Label htmlFor="report-subject">Subject</Label>
+                      <Input 
+                        id="report-subject"
+                        value={reportSubject} 
+                        onChange={(e) => setReportSubject(e.target.value)} 
+                        placeholder="Brief summary of the issue" 
+                      />
                     </div>
                     <div>
-                      <Label>Details</Label>
-                      <textarea className="w-full border rounded-md p-2 bg-background" rows={4} value={reportDetails} onChange={(e) => setReportDetails(e.target.value)} placeholder="Describe the issue, steps to reproduce, screenshots links, etc." />
+                      <Label htmlFor="report-details">Details</Label>
+                      <textarea 
+                        id="report-details"
+                        className="w-full border border-input rounded-md p-2 bg-background text-foreground" 
+                        rows={4} 
+                        value={reportDetails} 
+                        onChange={(e) => setReportDetails(e.target.value)} 
+                        placeholder="Describe the issue, steps to reproduce, screenshots links, etc." 
+                      />
                     </div>
                     <Button onClick={sendReport}>Send Report</Button>
                   </div>
                 </div>
-                <div className="p-4 border rounded-md">
-                  <h3 className="font-semibold mb-2">Delete Account</h3>
-                  <p className="text-sm text-muted-foreground mb-3">This will permanently delete your account and remove all your data. This action cannot be undone.</p>
-                  <Button variant="destructive" onClick={deleteAccount}>Delete Account</Button>
+                
+                <div className="p-4 border border-destructive rounded-md bg-destructive/5">
+                  <h3 className="font-semibold mb-2 text-destructive">Delete Account</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    This will permanently delete your account and remove all your data including posts, roadmaps, 
+                    comments, likes, bookmarks, and all other content. This action cannot be undone.
+                  </p>
+                  <Button variant="destructive" onClick={deleteAccount}>Delete Account Permanently</Button>
                 </div>
-                <div className="p-4 border rounded-md">
+                
+                <div className="p-4 border border-border rounded-md">
                   <h3 className="font-semibold mb-2">Sign Out</h3>
-                  <p className="text-sm text-muted-foreground mb-3">You can sign back in anytime.</p>
+                  <p className="text-sm text-muted-foreground mb-3">Sign out of your account. You can sign back in anytime.</p>
                   <Button variant="outline" onClick={signOut}>Sign Out</Button>
                 </div>
               </CardContent>
