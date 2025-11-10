@@ -455,7 +455,7 @@ const Home = () => {
         <CommentDialog
           isOpen={commentDialogOpen.open}
           onClose={() => setCommentDialogOpen({ open: false, postId: null })}
-          roadmapId={commentDialogOpen.postId}
+          postId={commentDialogOpen.postId}
           comments={commentsData?.map(c => ({
             id: c.id,
             author: (c.profile as any)?.full_name || 'Anonymous',

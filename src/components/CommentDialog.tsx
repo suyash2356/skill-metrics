@@ -26,11 +26,12 @@ export interface Comment {
 interface CommentDialogProps {
   isOpen: boolean;
   onClose: () => void;
-  roadmapId: string;
+  roadmapId?: string;
+  postId?: string;
   comments: Comment[];
 }
 
-export const CommentDialog = ({ isOpen, onClose, roadmapId, comments: initialComments }: CommentDialogProps) => {
+export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: initialComments }: CommentDialogProps) => {
   const [newComment, setNewComment] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
@@ -39,21 +40,37 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, comments: initialCom
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!user) throw new Error("User not authenticated");
+      
+      // Determine which ID to use and set the appropriate field
+      const commentData: any = {
+        user_id: user.id,
+        content,
+      };
+      
+      if (postId) {
+        commentData.post_id = postId;
+        commentData.roadmap_id = null;
+      } else if (roadmapId) {
+        commentData.roadmap_id = roadmapId;
+        commentData.post_id = null;
+      } else {
+        throw new Error("Either postId or roadmapId must be provided");
+      }
+      
       const { data, error } = await supabase
         .from("comments")
-        .insert({
-          user_id: user.id,
-          content,
-          roadmap_id: roadmapId,
-          post_id: null,
-        })
+        .insert(commentData)
         .select()
         .single();
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['roadmapComments', roadmapId] });
+      if (postId) {
+        queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
+      } else if (roadmapId) {
+        queryClient.invalidateQueries({ queryKey: ['roadmapComments', roadmapId] });
+      }
       setNewComment("");
       toast({ title: "Comment added!" });
     },
