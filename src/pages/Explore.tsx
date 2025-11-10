@@ -547,6 +547,346 @@ function Explore() {
           about: "Studio‑intensive design education with a Foundation year followed by deep specialization.",
           sources: ["NID B.Des official page"],
         }, // [web:279]
+        {
+title: "BA in Computer Science",
+university: "University of Oxford",
+mode: "offline",
+fees: "As per Oxford tuition (home/international)",
+rating: "N/A",
+duration: "3 years",
+link: "https://www.ox.ac.uk/admissions/undergraduate/courses/computer-science",
+exam: "MAT (Mathematics Admissions Test) via UCAS application",
+timeline: [
+{ label: "Year 1", items: ["Foundations in CS and mathematics", "Core programming and discrete math"] },
+{ label: "Year 2", items: ["Core systems, theory, and selected options", "Practical labs"] },
+{ label: "Year 3", items: ["Advanced options", "Individual project/dissertation"] },
+],
+about: "Highly selective, theory-led CS degree with strong mathematical foundations and a required MAT entrance test.",
+sources: ["Oxford Computer Science undergraduate page", "Oxford MAT official page"],
+}, //​
+
+{
+title: "B.Tech + MS by Research (Dual Degree), CSE",
+university: "IIIT Hyderabad",
+mode: "offline",
+fees: "As per IIIT Hyderabad fee notification",
+rating: "N/A",
+duration: "5 years",
+link: "https://ugadmissions.iiit.ac.in/ugee/",
+exam: "UGEE (written test + interviews)",
+timeline: [
+{ label: "Year 1", items: ["Math & programming foundations", "Intro CS labs"] },
+{ label: "Year 2", items: ["Core CS (DSA, systems, theory)", "Project-based labs"] },
+{ label: "Year 3", items: ["Advanced electives", "Research preparation"] },
+{ label: "Year 4", items: ["Graduate-level coursework", "Research/thesis work begins"] },
+{ label: "Year 5", items: ["MS by Research thesis", "Publications/defense"] },
+],
+about: "Integrated dual-degree focused on strong CS fundamentals and early, sustained research exposure.",
+sources: ["IIIT Hyderabad UGEE official page", "IIIT Hyderabad UG admissions overview"],
+}, //​
+
+{
+title: "B.A., LL.B. (Hons.)",
+university: "National Law School of India University (NLSIU)",
+mode: "offline",
+fees: "As per NLSIU fee schedule",
+rating: "N/A",
+duration: "5 years",
+link: "https://www.nls.ac.in/programmes/ba-llb-hons/",
+exam: "CLAT (Common Law Admission Test)",
+timeline: [
+{ label: "Year 1", items: ["Social science foundations", "Introductory law courses"] },
+{ label: "Year 2", items: ["Core law (contracts, criminal, constitutional)", "Legal methods"] },
+{ label: "Year 3", items: ["Advanced core and electives", "Moots and clinics"] },
+{ label: "Year 4", items: ["Specialization pathways", "Internships/fieldwork"] },
+{ label: "Year 5", items: ["Seminars and dissertation", "Professional readiness"] },
+],
+about: "Flagship five-year integrated law program with admissions strictly through CLAT.",
+sources: ["NLSIU BA LL.B (Hons.) page", "NLSIU Admissions page"],
+}, //​
+
+{
+title: "MBA (Master of Business Administration)",
+university: "INSEAD (France/Singapore)",
+mode: "offline",
+fees: "As per INSEAD tuition and fees",
+rating: "N/A",
+duration: "10 months",
+link: "https://www.insead.edu/master-programmes/mba",
+exam: "GMAT or GRE",
+timeline: [
+{ label: "Period 1–2", items: ["Core business fundamentals (finance, strategy, operations)", "Career development"] },
+{ label: "Period 3–4", items: ["Electives across 10+ areas", "Global experiences/exchanges (optional)"] },
+{ label: "Period 5", items: ["Advanced electives", "Capstone simulation/project"] },
+],
+about: "Accelerated global MBA with five periods, rigorous core, wide electives, and a capstone project.",
+sources: ["INSEAD MBA programme page", "INSEAD MBA admission requirements"],
+}, //​
+
+{
+title: "BSc in International Hospitality Management",
+university: "EHL Hospitality Business School (Switzerland/Singapore)",
+mode: "offline",
+fees: "As per EHL tuition and fees",
+rating: "N/A",
+duration: "4 years",
+link: "https://www.ehl.edu/en/study/bachelor",
+exam: "EHL admissions assessment and interview",
+timeline: [
+{ label: "Year 1", items: ["Preparatory/practical arts and operations", "Front/back-of-house immersion"] },
+{ label: "Year 2", items: ["Management fundamentals", "First internship (~6 months)"] },
+{ label: "Year 3", items: ["Advanced management & analytics", "Second internship (~6 months)"] },
+{ label: "Year 4", items: ["Specialization tracks", "Final business/capstone project"] },
+],
+about: "World-leading hospitality business degree combining practical arts, management science, and two internships.",
+sources: ["EHL Bachelor programme page", "EHL Bachelor admissions requirements"],
+}, //​
+
+{
+title: "B.Arch (Bachelor of Architecture)",
+university: "IIT Kharagpur",
+mode: "offline",
+fees: "As per IIT Kharagpur fee schedule",
+rating: "N/A",
+duration: "5 years",
+link: "https://www.iitkgp.ac.in/academics/undergraduate",
+exam: "JEE Advanced + AAT (Architecture Aptitude Test)",
+timeline: [
+{ label: "Year 1", items: ["Design fundamentals", "Basic structures and graphics", "Studios"] },
+{ label: "Year 2", items: ["Building construction & materials", "Environmental design", "Studios"] },
+{ label: "Year 3", items: ["Structures, services, and planning", "Urban context", "Studios"] },
+{ label: "Year 4", items: ["Advanced studios", "Electives and practical training"] },
+{ label: "Year 5", items: ["Thesis project", "Professional practice"] },
+],
+about: "NAAC-accredited five-year professional architecture programme; IIT B.Arch admissions require AAT after JEE Advanced.",
+sources: ["IIT Kharagpur Undergraduate programmes page", "AAT requirement overview"],
+}, //​
+
+{
+title: "B.Sc. (Research)",
+university: "Indian Institute of Science (IISc), Bengaluru",
+mode: "offline",
+fees: "As per IISc UG fee schedule",
+rating: "N/A",
+duration: "4 years",
+link: "https://bs-ug.iisc.ac.in/",
+exam: "IAT/JEE Main/JEE Advanced/NEET (as specified for the year)",
+timeline: [
+{ label: "Year 1", items: ["Common science foundation", "Maths and lab immersion"] },
+{ label: "Year 2", items: ["Choose major", "Core courses and labs"] },
+{ label: "Year 3", items: ["Advanced electives", "Undergraduate research"] },
+{ label: "Year 4", items: ["Research project/thesis", "Advanced seminars"] },
+],
+about: "Research-driven science programme with flexible majors and multiple national test pathways for entry.",
+sources: ["IISc UG (B.Sc Research) official page", "IISc admissions note on eligible national tests"],
+}, //
+{
+title: "JEE/NEET Classroom & Online Programs",
+university: "ALLEN Career Institute",
+mode: "offline, online",
+fees: "As per ALLEN fee schedule",
+rating: "N/A",
+duration: "Varies by course (1–2 year, crash options)",
+link: "https://www.allen.ac.in",
+exam: "JEE Main + Advanced, NEET‑UG, Olympiads",
+timeline: [
+{ label: "Phase 1", items: ["Diagnostic test, foundation bridging"] },
+{ label: "Phase 2", items: ["Core concept-building (PCM/Biology)"] },
+{ label: "Phase 3", items: ["Advanced problem solving, topic tests"] },
+{ label: "Phase 4", items: ["Full-length mocks, revision bootcamps"] }
+],
+about: "Offers structured coaching for NEET‑UG and IIT‑JEE with nationwide centers and comprehensive online options via ALLEN Online.",
+sources: ["ALLEN official site", "ALLEN Online courses"],
+}, //​
+
+{
+title: "NEET/JEE Classroom & Digital",
+university: "Aakash Institute",
+mode: "offline, online",
+fees: "As per Aakash fee schedule",
+rating: "N/A",
+duration: "Varies by course (foundation, 1–2 year, crash)",
+link: "https://www.aakash.ac.in",
+exam: "NEET‑UG, JEE Main + Advanced, Olympiads",
+timeline: [
+{ label: "Phase 1", items: ["Orientation and baseline assessment"] },
+{ label: "Phase 2", items: ["Syllabus coverage with periodic tests"] },
+{ label: "Phase 3", items: ["Advanced problem sets, doubt clearing"] },
+{ label: "Phase 4", items: ["Grand mocks and analysis, revision"] }
+],
+about: "Provides NEET‑UG and JEE preparation across 400+ centers along with Aakash Digital live and recorded online courses.",
+sources: ["Aakash official site", "Aakash Digital"],
+}, //​
+
+{
+title: "JEE Main & Advanced Programs",
+university: "FIITJEE",
+mode: "offline, online",
+fees: "As per FIITJEE fee schedule",
+rating: "N/A",
+duration: "Varies by program (integrated school, classroom, eSchool)",
+link: "https://www.fiitjee.com",
+exam: "JEE Main + Advanced, Olympiads, KVPY (as applicable)",
+timeline: [
+{ label: "Phase 1", items: ["Foundation and bridge modules"] },
+{ label: "Phase 2", items: ["Core JEE syllabus build-up"] },
+{ label: "Phase 3", items: ["Advanced practice, All‑India tests"] },
+{ label: "Phase 4", items: ["Mock tests, rank‑improvement plan"] }
+],
+about: "Runs classroom and integrated school programs for IIT‑JEE and offers FIITJEE eSchool for live online classes.",
+sources: ["FIITJEE official site", "FIITJEE eSchool"],
+}, //​
+
+{
+title: "CAT/MBA + GRE/GMAT Coaching",
+university: "T.I.M.E. (Triumphant Institute of Management Education)",
+mode: "offline, online",
+fees: "As per T.I.M.E. fee schedule",
+rating: "N/A",
+duration: "Crash (3–6 months), comprehensive (9–12+ months)",
+link: "https://www.time4education.com",
+exam: "CAT, XAT, CMAT, MAT, GRE, GMAT, Bank/SSC",
+timeline: [
+{ label: "Phase 1", items: ["Basics in QA, VARC, DILR; diagnostic testing"] },
+{ label: "Phase 2", items: ["Sectional drills, workshops, doubt sessions"] },
+{ label: "Phase 3", items: ["Sectional and full‑length mocks with analytics"] },
+{ label: "Phase 4", items: ["GD‑PI/WAT prep (for MBA entrants)"] }
+],
+about: "National test‑prep institute offering classroom and online programs for CAT and other management and study‑abroad exams.",
+sources: ["T.I.M.E. official site"],
+}, //​
+
+{
+title: "CAT/GMAT/GRE + CLAT/IPM",
+university: "IMS Learning Resources",
+mode: "offline, online",
+fees: "As per IMS fee schedule",
+rating: "N/A",
+duration: "Crash and long‑term variants",
+link: "https://www.imsindia.com",
+exam: "CAT, GMAT, GRE, CLAT, IPMAT, BBA",
+timeline: [
+{ label: "Phase 1", items: ["Diagnostic + mentor mapping, fundamentals"] },
+{ label: "Phase 2", items: ["Concept modules, practice sets, doubt clearing"] },
+{ label: "Phase 3", items: ["Adaptive mocks, performance analytics"] },
+{ label: "Phase 4", items: ["Interview & SOP guidance (where relevant)"] }
+],
+about: "Provides mentor‑driven classroom and online coaching for CAT plus GMAT/GRE and law/undergrad entrances, with mock tests and analytics.",
+sources: ["IMS official site", "IMS CAT Online"],
+}, //​
+
+{
+title: "UPSC CSE Foundation & Test Series",
+university: "Vision IAS",
+mode: "offline, online",
+fees: "As per Vision IAS fee schedule",
+rating: "N/A",
+duration: "GS Foundation (typically 9–12 months); test series cycles",
+link: "https://www.visionias.in",
+exam: "UPSC Civil Services (CSE) Prelims + Mains + Interview",
+timeline: [
+{ label: "Phase 1", items: ["GS Foundation classes, current affairs integration"] },
+{ label: "Phase 2", items: ["Prelims objective practice and micro tests"] },
+{ label: "Phase 3", items: ["Mains answer‑writing, sectional tests, mentoring"] },
+{ label: "Phase 4", items: ["Full‑length test series and interview guidance"] }
+],
+about: "Premier UPSC coaching institute offering offline/online GS Foundation, test series, and interview guidance.",
+sources: ["Vision IAS official site"],
+}, //​
+
+{
+title: "SAT/ACT + GRE/GMAT/LSAT/MCAT",
+university: "Kaplan Test Prep",
+mode: "offline (select centers), online",
+fees: "As per Kaplan course page",
+rating: "N/A",
+duration: "Bootcamps to multi‑month courses",
+link: "https://www.kaptest.com",
+exam: "SAT, ACT, GRE, GMAT, LSAT, MCAT, USMLE",
+timeline: [
+{ label: "Phase 1", items: ["Assessment and personalized study plan"] },
+{ label: "Phase 2", items: ["Core strategy lessons and practice sets"] },
+{ label: "Phase 3", items: ["Realistic full‑length practice tests"] },
+{ label: "Phase 4", items: ["Review analytics, fine‑tuning, test‑day strategies"] }
+],
+about: "Global provider of courses, practice tests, and tutoring across 90+ exams, including SAT/ACT, GRE/GMAT/LSAT/MCAT and USMLE.",
+sources: ["Kaplan Test Prep (global)", "Kaplan USMLE"],
+}, //​
+
+{
+title: "SAT/ACT + Grad Exams",
+university: "The Princeton Review",
+mode: "offline (select locations), online",
+fees: "As per Princeton Review course page",
+rating: "N/A",
+duration: "Bootcamps, short‑term, and comprehensive programs",
+link: "https://www.princetonreview.com",
+exam: "SAT, ACT, GRE, GMAT, LSAT, MCAT",
+timeline: [
+{ label: "Phase 1", items: ["Diagnostic test and goal setting"] },
+{ label: "Phase 2", items: ["Strategy lessons and drills by section"] },
+{ label: "Phase 3", items: ["Practice tests with detailed score reports"] },
+{ label: "Phase 4", items: ["Targeted review and final test simulations"] }
+],
+about: "Offers online and in‑person test prep for SAT/ACT and major graduate admissions exams with practice tests and tutoring options.",
+sources: ["The Princeton Review official site"],
+}, //​
+
+{
+title: "IELTS Preparation Courses",
+university: "British Council",
+mode: "offline (where available), online",
+fees: "As per British Council course plan",
+rating: "N/A",
+duration: "Express to intensive options",
+link: "https://takeielts.britishcouncil.org/prepare",
+exam: "IELTS Academic & General Training",
+timeline: [
+{ label: "Phase 1", items: ["Needs analysis and level placement"] },
+{ label: "Phase 2", items: ["Skills modules: Listening, Reading, Writing, Speaking"] },
+{ label: "Phase 3", items: ["Live webinars, practice tasks with feedback"] },
+{ label: "Phase 4", items: ["Full practice tests and exam strategies"] }
+],
+about: "Provides free and paid IELTS preparation resources, including online courses, live webinars, and practice materials.",
+sources: ["British Council – Prepare for IELTS", "British Council – LearnEnglish IELTS prep"],
+}, //​
+
+{
+title: "CAT/MBA + Study‑Abroad Test Prep",
+university: "IMS Learning Resources",
+mode: "offline, online",
+fees: "As per IMS fee schedule",
+rating: "N/A",
+duration: "Program‑dependent (crash/comprehensive)",
+link: "https://www.imsindia.com",
+exam: "CAT, XAT, NMAT, SNAP, GMAT, GRE, SAT, CLAT",
+timeline: [
+{ label: "Phase 1", items: ["Foundation diagnostics, concept primers"] },
+{ label: "Phase 2", items: ["Instructor‑led modules, drills, doubt solving"] },
+{ label: "Phase 3", items: ["Mock tests with AI‑powered analytics"] },
+{ label: "Phase 4", items: ["Applications and interview prep (where relevant)"] }
+],
+about: "Runs multi‑exam prep across MBA entrances and study‑abroad tests, with classroom/online delivery and extensive mock testing.",
+sources: ["IMS official site"],
+}, //
+{
+title: "JEE/NEET/UPSC/GATE Coaching Programs",
+university: "Physics Wallah (PW)",
+mode: "offline, online, hybrid",
+fees: "As per PW fee schedule",
+rating: "N/A",
+duration: "Varies by program (long‑term, repeater/dropper, crash)",
+link: "https://www.pw.live",
+exam: "JEE Main + Advanced, NEET‑UG, UPSC CSE, GATE, SSC and more",
+timeline: [
+{ label: "Phase 1", items: ["Onboarding and diagnostic, bridge modules"] },
+{ label: "Phase 2", items: ["Live classes/centers for core syllabus coverage with notes and PYQs"] },
+{ label: "Phase 3", items: ["Doubt‑solving, practice sheets, sectional tests, mentorship"] },
+{ label: "Phase 4", items: ["Full‑length mock test series, analysis, revision bootcamps"] }
+],
+about: "PW offers online courses via the PW app and offline/hybrid learning through PW Vidyapeeth and Pathshala centers, with dedicated programs for JEE, NEET, and UPSC; scholarships are offered via PWNSAT.",
+sources: ["PW official site", "PW Vidyapeeth & Pathshala page", "PW NEET programs", "PW OnlyIAS (UPSC) pages", "PW app on Google Play"],
+}, //
       ].map((deg, i) => (
         <motion.div
           key={`deg-${i}`}
