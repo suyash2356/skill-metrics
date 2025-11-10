@@ -53,20 +53,6 @@ const Home = () => {
     enabled: !!user,
   });
 
-  const { data: commentsData } = useQuery({
-    queryKey: ['postComments', commentDialogOpen.postId],
-    queryFn: async () => {
-        if (!commentDialogOpen.postId) return [];
-    const { data, error } = await supabase
-      .from('comments')
-      .select('*, profile:profiles!user_id(full_name, avatar_url)')
-      .eq('post_id', commentDialogOpen.postId)
-      .order('created_at', { ascending: true });
-        if (error) throw error;
-        return data;
-    },
-    enabled: !!commentDialogOpen.postId,
-  });
 
   const pageSize = 10;
 
@@ -456,15 +442,6 @@ const Home = () => {
           isOpen={commentDialogOpen.open}
           onClose={() => setCommentDialogOpen({ open: false, postId: null })}
           postId={commentDialogOpen.postId}
-          comments={commentsData?.map(c => ({
-            id: c.id,
-            author: (c.profile as any)?.full_name || 'Anonymous',
-            avatar: (c.profile as any)?.avatar_url,
-            content: c.content,
-            timestamp: new Date(c.created_at).toISOString(),
-            likes: 0,
-            user_id: c.user_id,
-          })) || []}
         />
       )}
       {shareDialogOpen.open && shareDialogOpen.post && (

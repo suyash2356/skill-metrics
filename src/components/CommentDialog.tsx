@@ -8,11 +8,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Heart, Pencil, Trash2 } from "lucide-react";
+import { Send, Heart, Pencil, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 
 export interface Comment {
   id: string;
@@ -29,16 +29,49 @@ interface CommentDialogProps {
   onClose: () => void;
   roadmapId?: string;
   postId?: string;
-  comments: Comment[];
 }
 
-export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: initialComments }: CommentDialogProps) => {
+export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDialogProps) => {
   const [newComment, setNewComment] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // Fetch comments directly in the dialog
+  const { data: commentsData, isLoading } = useQuery({
+    queryKey: postId ? ['postComments', postId] : ['roadmapComments', roadmapId],
+    queryFn: async () => {
+      if (!postId && !roadmapId) return [];
+      
+      const query = supabase
+        .from('comments')
+        .select('*, profile:profiles!user_id(full_name, avatar_url)')
+        .order('created_at', { ascending: false });
+      
+      if (postId) {
+        query.eq('post_id', postId);
+      } else if (roadmapId) {
+        query.eq('roadmap_id', roadmapId);
+      }
+      
+      const { data, error } = await query;
+      if (error) throw error;
+      return data;
+    },
+    enabled: isOpen && (!!postId || !!roadmapId),
+  });
+
+  const comments: Comment[] = commentsData?.map(c => ({
+    id: c.id,
+    author: (c.profile as any)?.full_name || 'Anonymous',
+    avatar: (c.profile as any)?.avatar_url,
+    content: c.content,
+    timestamp: new Date(c.created_at).toISOString(),
+    likes: 0,
+    user_id: c.user_id,
+  })) || [];
 
   const addCommentMutation = useMutation({
     mutationFn: async (content: string) => {
@@ -158,10 +191,15 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: in
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-left">Comments</DialogTitle>
+          <DialogTitle className="text-left">Comments ({comments.length})</DialogTitle>
         </DialogHeader>
         
         <div className="flex-1 overflow-y-auto space-y-4 py-4">
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : null}
           <div className="flex space-x-3">
             <Avatar className="h-8 w-8">
               <AvatarImage src={user?.user_metadata?.avatar_url} />
@@ -183,8 +221,15 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: in
             </div>
           </div>
 
-          <div className="space-y-4">
-            {initialComments.map((comment) => (
+          {!isLoading && comments.length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              <p>No comments yet. Be the first to comment!</p>
+            </div>
+          )}
+
+          {!isLoading && comments.length > 0 && (
+            <div className="space-y-4">
+              {comments.map((comment) => (
               <div key={comment.id} className="flex space-x-3">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={comment.avatar} />
@@ -248,8 +293,9 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: in
                   )}
                 </div>
               </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

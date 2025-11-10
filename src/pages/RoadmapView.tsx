@@ -125,41 +125,6 @@ const RoadmapView = () => {
     enabled: !!steps && steps.length > 0,
   });
 
-  const { data: comments, isLoading: isLoadingComments } = useQuery<CommentWithProfile[]>({
-    queryKey: ['roadmapComments', id],
-    queryFn: async () => {
-      if (!id) return [];
-      const { data: commentsData, error } = await supabase
-        .from('comments')
-        .select('*')
-        .eq('roadmap_id', id)
-        .order('created_at', { ascending: false});
-      if (error) throw error;
-      
-      // Fetch profiles for all comments
-      if (commentsData && commentsData.length > 0) {
-        const userIds = [...new Set(commentsData.map(c => c.user_id))];
-        const { data: profiles } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url')
-          .in('user_id', userIds);
-        
-        const profileMap = (profiles || []).reduce((acc: any, p: any) => {
-          acc[p.user_id] = p;
-          return acc;
-        }, {});
-        
-        return commentsData.map(c => ({
-          ...c,
-          profile: profileMap[c.user_id] || null
-        }));
-      }
-      
-      return commentsData.map(c => ({...c, profile: null}));
-    },
-    enabled: !!id,
-  });
-
   const { data: roadmapSkills, isLoading: isLoadingSkills } = useQuery({
     queryKey: ['roadmapSkills', id],
     queryFn: async () => {
@@ -395,7 +360,6 @@ const isLoading =
   isLoadingRoadmap ||
   isLoadingSteps ||
   isLoadingResources ||
-  isLoadingComments ||
   isLoadingTemplate ||
   isLoadingSkills;
 
@@ -919,14 +883,6 @@ if (!roadmap) {
         isOpen={commentDialogOpen}
         onClose={() => setCommentDialogOpen(false)}
         roadmapId={id!}
-        comments={comments?.map(c => ({
-          id: c.id,
-          author: (c.profile as any)?.full_name || 'Anonymous',
-          avatar: (c.profile as any)?.avatar_url,
-          content: c.content,
-          timestamp: new Date(c.created_at).toISOString(),
-          likes: 0, // You might need to fetch likes separately if needed
-        })) || []}
       />
       <ShareLinkDialog
         roadmapId={roadmap?.id}
