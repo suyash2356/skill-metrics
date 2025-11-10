@@ -8,7 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Send, Heart } from "lucide-react";
+import { Send, Heart, Pencil, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -21,6 +21,7 @@ export interface Comment {
   content: string;
   timestamp: string;
   likes: number;
+  user_id?: string;
 }
 
 interface CommentDialogProps {
@@ -33,6 +34,8 @@ interface CommentDialogProps {
 
 export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: initialComments }: CommentDialogProps) => {
   const [newComment, setNewComment] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState("");
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -79,9 +82,75 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: in
     },
   });
 
+  const editCommentMutation = useMutation({
+    mutationFn: async ({ commentId, content }: { commentId: string; content: string }) => {
+      const { error } = await supabase
+        .from("comments")
+        .update({ content, updated_at: new Date().toISOString() })
+        .eq("id", commentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      if (postId) {
+        queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
+      } else if (roadmapId) {
+        queryClient.invalidateQueries({ queryKey: ['roadmapComments', roadmapId] });
+      }
+      setEditingCommentId(null);
+      setEditContent("");
+      toast({ title: "Comment updated!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to update comment", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const deleteCommentMutation = useMutation({
+    mutationFn: async (commentId: string) => {
+      const { error } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", commentId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      if (postId) {
+        queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
+      } else if (roadmapId) {
+        queryClient.invalidateQueries({ queryKey: ['roadmapComments', roadmapId] });
+      }
+      toast({ title: "Comment deleted!" });
+    },
+    onError: (error: any) => {
+      toast({ title: "Failed to delete comment", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleAddComment = () => {
     if (newComment.trim()) {
       addCommentMutation.mutate(newComment.trim());
+    }
+  };
+
+  const handleEditComment = (comment: Comment) => {
+    setEditingCommentId(comment.id);
+    setEditContent(comment.content);
+  };
+
+  const handleSaveEdit = () => {
+    if (editContent.trim() && editingCommentId) {
+      editCommentMutation.mutate({ commentId: editingCommentId, content: editContent.trim() });
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCommentId(null);
+    setEditContent("");
+  };
+
+  const handleDeleteComment = (commentId: string) => {
+    if (confirm("Are you sure you want to delete this comment?")) {
+      deleteCommentMutation.mutate(commentId);
     }
   };
 
@@ -122,22 +191,61 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId, comments: in
                   <AvatarFallback>{comment.author[0]}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
-                  <div className="bg-muted rounded-lg p-3">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <span className="font-semibold text-sm">{comment.author}</span>
-                      <span className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</span>
+                  {editingCommentId === comment.id ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        className="min-h-[80px] resize-none"
+                      />
+                      <div className="flex justify-end space-x-2">
+                        <Button onClick={handleCancelEdit} size="sm" variant="outline">
+                          Cancel
+                        </Button>
+                        <Button onClick={handleSaveEdit} size="sm" disabled={editCommentMutation.isPending}>
+                          {editCommentMutation.isPending ? "Saving..." : "Save"}
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm">{comment.content}</p>
-                  </div>
-                  <div className="flex items-center space-x-4 mt-2">
-                    <Button variant="ghost" size="sm" className="h-auto p-0 text-muted-foreground">
-                      <Heart className="h-4 w-4 mr-1" />
-                      {comment.likes}
-                    </Button>
-                    <Button variant="ghost" size="sm" className="h-auto p-0 text-muted-foreground">
-                      Reply
-                    </Button>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="bg-muted rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-semibold text-sm">{comment.author}</span>
+                            <span className="text-xs text-muted-foreground">{new Date(comment.timestamp).toLocaleString()}</span>
+                          </div>
+                          {user?.id === comment.user_id && (
+                            <div className="flex items-center space-x-1">
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-auto p-1 text-muted-foreground hover:text-foreground"
+                                onClick={() => handleEditComment(comment)}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-auto p-1 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteComment(comment.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                        <p className="text-sm">{comment.content}</p>
+                      </div>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <Button variant="ghost" size="sm" className="h-auto p-0 text-muted-foreground">
+                          <Heart className="h-4 w-4 mr-1" />
+                          {comment.likes}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

@@ -463,6 +463,7 @@ const Home = () => {
             content: c.content,
             timestamp: new Date(c.created_at).toISOString(),
             likes: 0,
+            user_id: c.user_id,
           })) || []}
         />
       )}
