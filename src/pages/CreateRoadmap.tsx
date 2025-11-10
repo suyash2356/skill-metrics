@@ -170,6 +170,7 @@ const CreateRoadmap = () => {
       console.log("Calling AI to generate roadmap...");
 
       // Call the edge function with form data
+      console.log('Invoking generate-roadmap edge function...');
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-roadmap', {
         body: {
           title: formData.title,
@@ -183,14 +184,26 @@ const CreateRoadmap = () => {
         }
       });
 
+      console.log('Edge function response:', { aiResponse, aiError });
+
       if (aiError) {
         console.error('AI generation error:', aiError);
-        throw new Error('Failed to generate roadmap with AI. Please try again.');
+        throw new Error(aiError.message || 'Failed to generate roadmap with AI. Please try again.');
       }
 
-      if (!aiResponse?.steps || !Array.isArray(aiResponse.steps)) {
-        console.error('Invalid AI response:', aiResponse);
-        throw new Error('Invalid response from AI. Please try again.');
+      if (!aiResponse) {
+        console.error('No response from AI');
+        throw new Error('No response from AI service. Please try again.');
+      }
+
+      if (aiResponse.error) {
+        console.error('AI returned error:', aiResponse.error);
+        throw new Error(aiResponse.error || 'AI service returned an error. Please try again.');
+      }
+
+      if (!aiResponse.steps || !Array.isArray(aiResponse.steps)) {
+        console.error('Invalid AI response structure:', aiResponse);
+        throw new Error('Invalid response structure from AI. Please try again.');
       }
 
       console.log(`AI generated ${aiResponse.steps.length} steps`);
