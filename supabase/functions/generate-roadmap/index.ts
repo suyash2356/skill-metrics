@@ -82,8 +82,17 @@ Guidelines:
 Return ONLY the JSON object, no additional text or markdown formatting.`;
 
     console.log('Calling Gemini API...');
+    console.log('Request payload:', JSON.stringify({
+      title,
+      skillLevel,
+      timeCommitment,
+      learningStyle,
+      focusAreas,
+      category,
+      learningDuration
+    }));
     
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_API_KEY}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -106,7 +115,8 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('Full error response:', errorText);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
