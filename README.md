@@ -19,6 +19,19 @@
 
 ---
 
+## 🎥 Demo Video
+
+<p align="center">
+  <!-- Replace VIDEO_ID with your YouTube video ID -->
+  <a href="https://www.youtube.com/watch?v=VIDEO_ID" target="_blank">
+    <img src="https://img.youtube.com/vi/VIDEO_ID/0.jpg" alt="Skill-Metric Demo Video" width="700">
+  </a>
+  <br>
+  <em>🎬 Click the image above to watch the Skill-Metric demo on YouTube</em>
+</p>
+
+---
+
 ## 🎯 The Problem It Solves
 
 In today’s world, learners are overwhelmed by the sheer number of available resources — courses, tutorials, and tools.  
@@ -64,13 +77,11 @@ Skill-Metric offers an integrated suite of tools for personalized and collaborat
 * **🔐 Secure Authentication:**  
   Sign in easily and securely using modern authentication methods (email, OAuth, etc.).
 
-*[Note: This project is build using all free versions, so it can have limits related to storage or uploading]  
+> **Note:** This project uses free-tier tools (Supabase, Vercel, etc.), so some features may have storage or upload limits.
 
 ---
 
 ## 🛠️ Tech Stack & Architecture
-
-Skill-Metric is built with a modern, performant, and scalable technology stack:
 
 * **Framework:** [Vite](https://vitejs.dev/) + [React](https://react.dev/)
 * **Language:** [TypeScript](https://www.typescriptlang.org/)
@@ -78,86 +89,20 @@ Skill-Metric is built with a modern, performant, and scalable technology stack:
 * **Styling:** [Tailwind CSS](https://tailwindcss.com/)
 * **State Management:** React Hooks & Context API
 * **AI Integration:** Custom AI models for resource recommendation and roadmap generation
-* **Backend and Database:** Supabase for real-time data and storage
+* **Backend & Database:** [Supabase](https://supabase.com/) for real-time data and storage
 * **Community & Chat:** WebSocket (planned)
 
 ---
 
-## ⚙️ Getting Started: Local Setup
-
-Follow these instructions to run Skill-Metric locally for development and testing.
+## ⚙️ Getting Started (Local Setup)
 
 ### Prerequisites
-
-* [Node.js](https://nodejs.org/en/) (v18.x or newer)
+* [Node.js](https://nodejs.org/en/) (v18+)
 * npm, yarn, or pnpm
-* (Optional) Access to an AI API or backend instance for recommendations
+* (Optional) AI API access or backend instance
 
----
-
-### Installation Steps
-
-1. **Clone the Repository**
-    ```bash
-    git clone https://github.com/your-username/skill-metric.git
-    cd skill-metric
-    ```
-
-2. **Install Dependencies**
-    ```bash
-    npm install
-    # or
-    yarn install
-    ```
-
-3. **Set Up Environment Variables**
-    Create a `.env` file in the root directory and configure the required environment variables (API keys, DB URLs, etc.).
-
-4. **Run the Development Server**
-    ```bash
-    npm run dev
-    ```
-
-5. Open [http://localhost:5173](http://localhost:5173) in your browser to view Skill-Metric locally.
-
----
-
-## ☁️ Deployment
-
-Skill-Metric can be deployed via:
-* Deploy manually on:
-  * [Vercel](https://vercel.com/)
-  * [Netlify](https://www.netlify.com/)
-  * [Firebase Hosting](https://firebase.google.com/products/hosting)
-
----
-
----
-
-## 🤖 Built with AI Assistance
-
-Skill-Metric was developed with the help of modern **AI-assisted tools and frameworks**.  
-While AI contributed to parts of the implementation, every feature — from the **concept, design, and technology decisions** to the **user experience and functionality** — was **carefully planned, directed, and refined manually**.  
-
-This project demonstrates how **AI can enhance human creativity**, empowering builders to transform ideas into reality through learning, experimentation, and innovation.
-
----
-
-## 💡 Vision
-
-Skill-Metric was conceptualized, designed, and implemented with a strong focus on innovation and user-centric learning experiences.  
-It’s more than just a recommendation platform — it’s your **AI learning companion**, designed to help you **grow smarter, faster, and together**.
- 
----
-
-## 🎓 About the Project & Future Goals
-
-This project was developed as part of a **college initiative**, understanding foundation of development in **Web App** and **Machine Learning**.  
-Currently, the recommendation system utilizes **Hugging Face models** for intelligent resource suggestions.  
-
-My long-term goal is to become a **dedicated AI/ML Engineer** — and as I continue learning machine learning, I plan to build and integrate **custom ML models** specifically optimized for Skill-Metric’s recommendation engine.  
-Future versions of this platform will be **fully developed and trained by me**, combining hands-on engineering with the creative power of AI.
-
-Your feedback will be highly usefull for me.
-Mail - suyashbabad09@gmail.com
----
+### Installation
+```bash
+git clone https://github.com/your-username/skill-metric.git
+cd skill-metric
+npm install
