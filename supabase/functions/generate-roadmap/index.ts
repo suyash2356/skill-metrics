@@ -93,7 +93,7 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
     }));
     
     // Using Mistral-7B-Instruct for high-quality instruction following
-    const response = await fetch('https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2', {
+    const response = await fetch('https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${HF_TOKEN}`,
