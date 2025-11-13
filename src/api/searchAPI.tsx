@@ -140,7 +140,7 @@ export async function fetchPeopleCommunitySuggestions(query: string, limit = 10)
 export async function fetchExploreSuggestions(query: string, limit = 10): Promise<Suggestion[]> {
   const q = query.trim();
   if (!q) return [];
-  if (suggestionCache[`explore:${q}`]) return suggestionCache[`explore:${q}`];
+  // Cache removed to always show current data from code
 
   const perKind = Math.max(3, Math.floor(limit / 3));
 
@@ -224,7 +224,7 @@ export async function fetchExploreSuggestions(query: string, limit = 10): Promis
   ];
 
   const all: Suggestion[] = [...skills, ...exploreItems].slice(0, limit);
-  suggestionCache[`explore:${q}`] = all;
+  // Cache removed to always return fresh data
   return all;
 }
 
