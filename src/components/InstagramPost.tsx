@@ -208,9 +208,9 @@ export const InstagramPost = ({
       )}
 
       {/* Actions */}
-      <div className="p-3 space-y-2">
+      <div className="px-3 pt-2 pb-3 space-y-1.5">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <Button
               variant="ghost"
               size="icon"
@@ -218,7 +218,7 @@ export const InstagramPost = ({
               onClick={onLike}
             >
               <Heart
-                className={`h-6 w-6 ${
+                className={`h-5 w-5 ${
                   isLiked ? "fill-red-500 text-red-500" : ""
                 }`}
               />
@@ -229,7 +229,7 @@ export const InstagramPost = ({
               className="h-8 w-8"
               onClick={onComment}
             >
-              <MessageCircle className="h-6 w-6" />
+              <MessageCircle className="h-5 w-5" />
             </Button>
             <Button
               variant="ghost"
@@ -237,7 +237,7 @@ export const InstagramPost = ({
               className="h-8 w-8"
               onClick={onShare}
             >
-              <Share2 className="h-6 w-6" />
+              <Share2 className="h-5 w-5" />
             </Button>
           </div>
           <Button
@@ -247,60 +247,43 @@ export const InstagramPost = ({
             onClick={onBookmark}
           >
             <Bookmark
-              className={`h-6 w-6 ${isBookmarked ? "fill-current" : ""}`}
+              className={`h-5 w-5 ${isBookmarked ? "fill-current" : ""}`}
             />
           </Button>
         </div>
 
-        {/* Likes */}
-        <div className="font-semibold text-sm">
-          {post.likes_count > 0 &&
-            `${post.likes_count.toLocaleString()} likes`}
+        {/* Likes and Comments Count */}
+        <div className="space-y-0.5">
+          {post.likes_count > 0 && (
+            <div className="font-semibold text-sm">
+              {post.likes_count.toLocaleString()} {post.likes_count === 1 ? 'like' : 'likes'}
+            </div>
+          )}
+          {post.comments_count > 0 && (
+            <button 
+              onClick={onComment}
+              className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              View all {post.comments_count} comment{post.comments_count !== 1 ? 's' : ''}
+            </button>
+          )}
         </div>
 
-        {/* Comments Count */}
-        {post.comments_count > 0 && (
-          <button 
-            onClick={onComment}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            View all {post.comments_count} comment{post.comments_count !== 1 ? 's' : ''}
-          </button>
-        )}
-
         {/* Caption */}
-        <div className="text-sm space-y-1">
-          <p>
-            <Link
-              to={`/profile/${post.user_id}`}
-              className="font-semibold mr-2"
-            >
-              {displayName}
-            </Link>
+        <div className="text-sm">
+          <p className="line-clamp-2">
             <span className="font-semibold">{post.title}</span>
+            {text && <span className="text-muted-foreground ml-1">{text}</span>}
           </p>
-          {text && (
-            <p className="text-muted-foreground whitespace-pre-wrap">{text}</p>
-          )}
           {post.tags && post.tags.length > 0 && (
-            <p className="text-primary">
+            <p className="text-primary text-xs mt-1">
               {post.tags.map((tag) => `#${tag}`).join(" ")}
             </p>
           )}
         </div>
 
-        {/* Comments */}
-        {post.comments_count > 0 && (
-          <button
-            onClick={onComment}
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            View all {post.comments_count} comments
-          </button>
-        )}
-
         {/* Timestamp */}
-        <p className="text-xs text-muted-foreground uppercase">
+        <p className="text-xs text-muted-foreground">
           {formatDistanceToNow(new Date(post.created_at), { addSuffix: true })}
         </p>
       </div>
