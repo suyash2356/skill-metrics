@@ -9,7 +9,7 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, TrendingUp, Users, Play } from "lucide-react";
+import { Plus, TrendingUp, Users, Play, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -278,19 +278,11 @@ const Home = () => {
     },
   });
 
-  // New videos (right sidebar)
-  const { data: newVideos = [], isLoading: isLoadingNewVideos } = useQuery({
-    queryKey: ['newVideos'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('videos')
-        .select('id, title, thumbnail, channel, channel_avatar, views, upload_time')
-        .order('upload_time', { ascending: false })
-        .limit(3);
-      if (error) throw error;
-      return data || [];
-    },
-  });
+  // New videos (right sidebar) - Top 4 by views from NewVideos page
+  const topVideos = useMemo(() => {
+    const { getTopVideosByViews } = require('@/lib/videosData');
+    return getTopVideosByViews(4);
+  }, []);
 
 
   return (
@@ -408,13 +400,11 @@ const Home = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">New Videos</h3>
                 <div className="space-y-4">
-                  {isLoadingNewVideos ? (
-                    <div className="text-sm text-muted-foreground">Loading...</div>
-                  ) : newVideos.length === 0 ? (
+                  {topVideos.length === 0 ? (
                     <div className="text-sm text-muted-foreground">No videos found</div>
                   ) : (
-                    newVideos.map((video: any) => (
-                      <Link key={video.id} to={`/videos/${video.id}`} className="flex items-start gap-3 group">
+                    topVideos.map((video: any) => (
+                      <a key={video.id} href={`https://youtube.com/watch?v=${video.youtubeId}`} target="_blank" rel="noopener noreferrer" className="flex items-start gap-3 group">
                         <div className="relative flex-shrink-0">
                           <img src={video.thumbnail || '/placeholder.svg'} alt={video.title} className="w-24 h-14 rounded-md object-cover" />
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center rounded-md">
@@ -424,8 +414,9 @@ const Home = () => {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm leading-snug group-hover:text-primary line-clamp-2">{video.title}</p>
                           <p className="text-xs text-muted-foreground mt-1">{video.channel || 'Channel'}</p>
+                          <p className="text-xs text-muted-foreground"><Eye className="h-3 w-3 inline mr-1" />{video.views}</p>
                         </div>
-                      </Link>
+                      </a>
                     ))
                   )}
                 </div>
