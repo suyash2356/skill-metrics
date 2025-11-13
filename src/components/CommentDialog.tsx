@@ -45,28 +45,50 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDia
     queryFn: async () => {
       if (!postId && !roadmapId) return [];
       
-      const query = supabase
+      let commentsQuery = supabase
         .from('comments')
-        .select('*, profile:profiles!user_id(full_name, avatar_url)')
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (postId) {
-        query.eq('post_id', postId);
+        commentsQuery = commentsQuery.eq('post_id', postId);
       } else if (roadmapId) {
-        query.eq('roadmap_id', roadmapId);
+        commentsQuery = commentsQuery.eq('roadmap_id', roadmapId);
       }
       
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
+      const { data: comments, error: commentsError } = await commentsQuery;
+      if (commentsError) {
+        console.error('Error fetching comments:', commentsError);
+        throw commentsError;
+      }
+
+      if (!comments || comments.length === 0) {
+        return [];
+      }
+
+      // Fetch profiles for all comment authors
+      const userIds = [...new Set(comments.map(c => c.user_id))];
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', userIds);
+
+      // Map profiles by user_id
+      const profileMap = new Map(profiles?.map(p => [p.user_id, p]) || []);
+
+      // Merge comments with profile data
+      return comments.map(comment => ({
+        ...comment,
+        profile: profileMap.get(comment.user_id) || null,
+      }));
     },
     enabled: isOpen && (!!postId || !!roadmapId),
   });
 
   const comments: Comment[] = commentsData?.map(c => ({
     id: c.id,
-    author: (c.profile as any)?.full_name || 'Anonymous',
-    avatar: (c.profile as any)?.avatar_url,
+    author: c.profile?.full_name || 'Anonymous',
+    avatar: c.profile?.avatar_url,
     content: c.content,
     timestamp: new Date(c.created_at).toISOString(),
     likes: 0,
