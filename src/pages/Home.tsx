@@ -13,6 +13,7 @@ import { Plus, TrendingUp, Users, Play, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import { getTopVideosByViews } from "@/lib/videosData";
 
 import type { Database } from '@/integrations/supabase/types';
 type Post = Database['public']['Tables']['posts']['Row'];
@@ -279,10 +280,7 @@ const Home = () => {
   });
 
   // New videos (right sidebar) - Top 4 by views from NewVideos page
-  const topVideos = useMemo(() => {
-    const { getTopVideosByViews } = require('@/lib/videosData');
-    return getTopVideosByViews(4);
-  }, []);
+  const topVideos = useMemo(() => getTopVideosByViews(4), []);
 
 
   return (
