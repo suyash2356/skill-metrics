@@ -258,6 +258,16 @@ export const InstagramPost = ({
             `${post.likes_count.toLocaleString()} likes`}
         </div>
 
+        {/* Comments Count */}
+        {post.comments_count > 0 && (
+          <button 
+            onClick={onComment}
+            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+          >
+            View all {post.comments_count} comment{post.comments_count !== 1 ? 's' : ''}
+          </button>
+        )}
+
         {/* Caption */}
         <div className="text-sm space-y-1">
           <p>
