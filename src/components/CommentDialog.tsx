@@ -126,6 +126,7 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDia
     onSuccess: () => {
       if (postId) {
         queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
+        queryClient.invalidateQueries({ queryKey: ['feedPosts'] });
       } else if (roadmapId) {
         queryClient.invalidateQueries({ queryKey: ['roadmapComments', roadmapId] });
       }
@@ -148,6 +149,7 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDia
     onSuccess: () => {
       if (postId) {
         queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
+        queryClient.invalidateQueries({ queryKey: ['feedPosts'] });
       } else if (roadmapId) {
         queryClient.invalidateQueries({ queryKey: ['roadmapComments', roadmapId] });
       }
@@ -171,6 +173,7 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDia
     onSuccess: () => {
       if (postId) {
         queryClient.invalidateQueries({ queryKey: ['postComments', postId] });
+        queryClient.invalidateQueries({ queryKey: ['feedPosts'] });
       } else if (roadmapId) {
         queryClient.invalidateQueries({ queryKey: ['roadmapComments', roadmapId] });
       }
