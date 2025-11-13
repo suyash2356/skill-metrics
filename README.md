@@ -10,7 +10,7 @@
 ## 📸 Preview
 
 <p align="center">
-  <img src="https://your-preview-image-or-gif-link-here" alt="Skill-Metric Preview" width="800">
+  <img src="https://github.com/suyash2356/skill-metrics/blob/main/Screen%20Recording%202025-11-13%20224524.gif" alt="Skill-Metric Preview" width="800">
 </p>
 
 <p align="center">
