@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -26,8 +26,9 @@ const skillDescriptions: Record<string, string> = {
 };
 
 export default function SkillRecommendations() {
+  const { skill } = useParams<{ skill: string }>();
   const query = useQuery();
-  const q = (query.get("q") || query.get("skill") || "").trim();
+  const q = (skill || query.get("q") || query.get("skill") || "").trim();
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [error, setError] = useState<string | null>(null);
