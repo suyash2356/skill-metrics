@@ -15,14 +15,23 @@ const skillDescriptions: Record<string, string> = {
   "ai": "Artificial Intelligence (AI) is the field of building systems that can perform tasks that normally require human intelligence — including perception, reasoning, learning and natural language understanding.",
   "machine learning": "Machine Learning focuses on algorithms that learn patterns from data to make predictions or decisions without being explicitly programmed for each task.",
   "data science": "Data Science combines statistics, data analysis, and domain knowledge to extract insights and drive decisions from data.",
+  "data analyst": "Data Analytics involves inspecting, cleansing, transforming, and modeling data with the goal of discovering useful information, informing conclusions, and supporting decision-making.",
   "cyber security": "Cybersecurity covers protecting networks, systems, and programs from digital attacks and unauthorized access.",
   "cloud computing": "Cloud Computing provides on-demand compute, storage, and services over the internet to build scalable applications.",
   "blockchain": "Blockchain is a distributed ledger technology for decentralized and tamper-resistant record keeping, used in cryptocurrencies and beyond.",
   "software development": "Software Development is the process of designing, building, testing, and maintaining software applications and systems.",
+  "full stack development": "Full Stack Development involves working on both the front-end (client-side) and back-end (server-side) of web applications.",
+  "devops": "DevOps is a set of practices that combines software development (Dev) and IT operations (Ops) to shorten the systems development life cycle.",
+  "iot": "The Internet of Things (IoT) describes physical objects with sensors, processing ability, software, and other technologies that connect and exchange data with other devices and systems.",
+  "ar/vr": "Augmented Reality (AR) and Virtual Reality (VR) are immersive technologies that blend the physical and digital worlds or create entirely new simulated environments.",
+  "communication": "Communication skills are essential for conveying information effectively and efficiently, including verbal, non-verbal, and written communication.",
+  "project management": "Project Management is the application of processes, methods, skills, knowledge, and experience to achieve specific project objectives.",
   "design": "Design covers UX, UI, and product design practices to create user-centered, accessible, and delightful experiences.",
   "digital marketing": "Digital Marketing focuses on online channels to reach customers via search, social, email, and content strategies.",
   "finance": "Finance degrees focus on financial analysis, markets, corporate finance, and investment strategies.",
+  "financial management": "Financial Management refers to the strategic planning, organizing, directing, and controlling of financial undertakings in an organization.",
   "education": "Education covers pedagogy, curriculum design and instructional strategies for effective learning experiences.",
+  "emotional intelligence": "Emotional Intelligence (EQ) is the ability to understand, use, and manage your own emotions in positive ways to relieve stress, communicate effectively, empathize with others, overcome challenges and defuse conflict.",
 };
 
 export default function SkillRecommendations() {
