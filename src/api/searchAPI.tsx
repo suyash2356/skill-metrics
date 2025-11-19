@@ -1,6 +1,7 @@
 // api/searchAPI.ts
 import axios from "axios";
 import { supabase } from "@/integrations/supabase/client";
+import { resourceData } from "@/data/resourceData";
 
 // ------------------------------
 // 🔹 Types
@@ -23,13 +24,21 @@ export const allowedTopics = [
   "ai",
   "machine learning",
   "data science",
+  "data analyst",
   "cyber security",
   "cloud computing",
   "blockchain",
   "software development",
-  "design",
+  "full stack development",
+  "devops",
+  "iot",
+  "ar/vr",
+  "communication",
+  "project management",
   "digital marketing",
-  "finance",
+  "financial management",
+  "emotional intelligence",
+  "design",
   "education",
 ];
 
@@ -248,7 +257,9 @@ export async function fetchRecommendations(query: string): Promise<Recommendatio
   let recommendations: Recommendation[] = [];
 
   // Add local resources first (e.g., AI)
-  if (localResources[lowerQuery]) {
+  if (resourceData[lowerQuery]) {
+    recommendations = [...recommendations, ...resourceData[lowerQuery]];
+  } else if (localResources[lowerQuery]) {
     recommendations = [...recommendations, ...localResources[lowerQuery]];
   }
 
