@@ -104,11 +104,11 @@ const Profile = () => {
         .select('id, title, description, progress, status, created_at, is_public')
         .eq('user_id', targetUserId)
         .order('created_at', { ascending: false });
-      
+
       if (!isOwnProfile) {
         query = query.eq('is_public', true);
       }
-      
+
       const { data, error } = await query;
       if (error) throw error;
       return data;
@@ -148,6 +148,20 @@ const Profile = () => {
     enabled: !!targetUserId,
   });
 
+  const { data: postCount } = useQuery({
+    queryKey: ['postCount', targetUserId],
+    queryFn: async () => {
+      if (!targetUserId) return 0;
+      const { count, error } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', targetUserId);
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!targetUserId,
+  });
+
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !targetUserId) return;
@@ -155,7 +169,7 @@ const Profile = () => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${targetUserId}/${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true });
@@ -246,7 +260,7 @@ const Profile = () => {
                   <AvatarFallback className="text-3xl sm:text-4xl">{initials}</AvatarFallback>
                 </Avatar>
                 {currentUser?.id === targetUserId && editMode && (
-                   <label htmlFor="avatar-upload" className="absolute -bottom-1 -right-1 cursor-pointer">
+                  <label htmlFor="avatar-upload" className="absolute -bottom-1 -right-1 cursor-pointer">
                     <div className="p-2 bg-primary rounded-full text-primary-foreground">
                       <Upload className="h-4 w-4" />
                     </div>
@@ -261,8 +275,8 @@ const Profile = () => {
                     <div className="space-y-2">
                       <Input placeholder="Your Name" className="text-2xl font-bold" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
                       <Input placeholder="Job Title" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} />
-                       <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /><Input placeholder="Location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} /></div>
-                       <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><Input placeholder="Joined date, e.g. 2023" value={formData.joinDate} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} /></div>
+                      <div className="flex items-center gap-2"><MapPin className="h-4 w-4 text-muted-foreground" /><Input placeholder="Location" value={formData.location} onChange={(e) => setFormData({ ...formData, location: e.target.value })} /></div>
+                      <div className="flex items-center gap-2"><Calendar className="h-4 w-4 text-muted-foreground" /><Input placeholder="Joined date, e.g. 2023" value={formData.joinDate} onChange={(e) => setFormData({ ...formData, joinDate: e.target.value })} /></div>
                     </div>
                   ) : (
                     <>
@@ -281,7 +295,7 @@ const Profile = () => {
                 ) : (
                   <p className="text-foreground max-w-2xl mx-auto sm:mx-0">{profileDetails?.bio || 'No bio provided.'}</p>
                 )}
-                
+
                 {editMode ? (
                   <div className="space-y-3">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -325,44 +339,44 @@ const Profile = () => {
               </div>
 
               <div className="w-full sm:w-auto flex flex-col sm:items-end gap-2">
-                 {currentUser?.id === targetUserId ? (
-                    editMode ? (
-                      <div className="flex gap-2 w-full">
-                        <Button className="flex-1" onClick={handleSave} disabled={isUpdating}>{isUpdating ? 'Saving...' : <><Save className="h-4 w-4 mr-2" />Save</>}</Button>
-                        <Button variant="outline" className="flex-1" onClick={() => setEditMode(false)}>Cancel</Button>
-                      </div>
-                    ) : (
-                      <Button className="w-full" onClick={() => setEditMode(true)}><Edit className="h-4 w-4 mr-2" />Edit Profile</Button>
-                    )
-                  ) : (
-                     <div className="flex gap-2 w-full">
-                      <Button onClick={toggleFollow} disabled={isLoadingFollowStatus} className="flex-1">
-                         {isFollowing ? 'Following' : 'Follow'}
-                      </Button>
-                      <Button variant="outline" className="flex-1">
-                        <MessageCircle className="h-4 w-4 mr-2" /> Message
-                      </Button>
+                {currentUser?.id === targetUserId ? (
+                  editMode ? (
+                    <div className="flex gap-2 w-full">
+                      <Button className="flex-1" onClick={handleSave} disabled={isUpdating}>{isUpdating ? 'Saving...' : <><Save className="h-4 w-4 mr-2" />Save</>}</Button>
+                      <Button variant="outline" className="flex-1" onClick={() => setEditMode(false)}>Cancel</Button>
                     </div>
-                  )}
-                   <Button variant="outline" className="w-full" asChild>
-                      {profileDetails?.portfolio_url ? 
-                        <a href={profileDetails.portfolio_url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4 mr-2" />Portfolio</a> : 
-                        <span><ExternalLink className="h-4 w-4 mr-2" />Portfolio</span>}
+                  ) : (
+                    <Button className="w-full" onClick={() => setEditMode(true)}><Edit className="h-4 w-4 mr-2" />Edit Profile</Button>
+                  )
+                ) : (
+                  <div className="flex gap-2 w-full">
+                    <Button onClick={toggleFollow} disabled={isLoadingFollowStatus} className="flex-1">
+                      {isFollowing ? 'Following' : 'Follow'}
                     </Button>
+                    <Button variant="outline" className="flex-1">
+                      <MessageCircle className="h-4 w-4 mr-2" /> Message
+                    </Button>
+                  </div>
+                )}
+                <Button variant="outline" className="w-full" asChild>
+                  {profileDetails?.portfolio_url ?
+                    <a href={profileDetails.portfolio_url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4 mr-2" />Portfolio</a> :
+                    <span><ExternalLink className="h-4 w-4 mr-2" />Portfolio</span>}
+                </Button>
               </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-6 pt-6 border-t">
-                <div><div className="text-xl sm:text-2xl font-bold text-primary">{followerCount}</div><div className="text-xs text-muted-foreground">Followers</div></div>
-                <div><div className="text-xl sm:text-2xl font-bold text-primary">{followingCount}</div><div className="text-xs text-muted-foreground">Following</div></div>
-                <div><div className="text-xl sm:text-2xl font-bold text-primary">{profileDetails?.total_posts || 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
-                <div><div className="text-xl sm:text-2xl font-bold text-primary">{userRoadmaps?.length || 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{followerCount}</div><div className="text-xs text-muted-foreground">Followers</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{followingCount}</div><div className="text-xs text-muted-foreground">Following</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{postCount || 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{userRoadmaps?.length || 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
             </div>
           </CardContent>
         </Card>
 
         <Tabs defaultValue="roadmaps" className="space-y-6">
-           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
             <TabsTrigger value="roadmaps">Roadmaps</TabsTrigger>
             <TabsTrigger value="skills">Skills</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>
@@ -396,7 +410,7 @@ const Profile = () => {
           </TabsContent>
 
           <TabsContent value="skills">
-             <Card>
+            <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>Skills</CardTitle>
@@ -406,23 +420,23 @@ const Profile = () => {
               <CardContent>
                 {editMode ? (
                   <div className="space-y-4">
-                     {(formData.skills || []).map((skill: Skill, index: number) => (
+                    {(formData.skills || []).map((skill: Skill, index: number) => (
                       <div key={index} className="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
                         <div className="flex-1 space-y-2">
-                           <Input placeholder="Skill name (e.g., React)" value={skill.name} onChange={(e) => {
-                              const newSkills = [...formData.skills]; newSkills[index].name = e.target.value; setFormData({ ...formData, skills: newSkills });
-                            }} />
-                           <Input placeholder="Category (e.g., Frontend)" value={skill.category} onChange={(e) => {
-                              const newSkills = [...formData.skills]; newSkills[index].category = e.target.value; setFormData({ ...formData, skills: newSkills });
-                            }} />
+                          <Input placeholder="Skill name (e.g., React)" value={skill.name} onChange={(e) => {
+                            const newSkills = [...formData.skills]; newSkills[index].name = e.target.value; setFormData({ ...formData, skills: newSkills });
+                          }} />
+                          <Input placeholder="Category (e.g., Frontend)" value={skill.category} onChange={(e) => {
+                            const newSkills = [...formData.skills]; newSkills[index].category = e.target.value; setFormData({ ...formData, skills: newSkills });
+                          }} />
                           <div className="flex items-center gap-2"><Label className="text-sm">Level:</Label><Input type="range" min="0" max="100" value={skill.level} onChange={(e) => {
-                                const newSkills = [...formData.skills]; newSkills[index].level = parseInt(e.target.value) || 0; setFormData({ ...formData, skills: newSkills });
-                              }} className="w-full" /><span className="text-sm font-medium">{skill.level}%</span></div>
+                            const newSkills = [...formData.skills]; newSkills[index].level = parseInt(e.target.value) || 0; setFormData({ ...formData, skills: newSkills });
+                          }} className="w-full" /><span className="text-sm font-medium">{skill.level}%</span></div>
                         </div>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setFormData({ ...formData, skills: formData.skills.filter((_: any, i: number) => i !== index) })}><X className="h-4 w-4" /></Button>
                       </div>
                     ))}
-                     {(formData.skills || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No skills added yet.</p>}
+                    {(formData.skills || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No skills added yet.</p>}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -444,11 +458,11 @@ const Profile = () => {
             </Card>
           </TabsContent>
 
-           <TabsContent value="achievements">
-             <Card>
+          <TabsContent value="achievements">
+            <Card>
               <CardHeader>
                 <div className="flex items-center justify-between"><CardTitle>Achievements</CardTitle>
-                {editMode && <Button size="sm" onClick={() => setFormData({ ...formData, achievements: [...(formData.achievements || []), { name: '', description: '', icon: '🏆', date: new Date().toISOString().split('T')[0] }] })}><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                  {editMode && <Button size="sm" onClick={() => setFormData({ ...formData, achievements: [...(formData.achievements || []), { name: '', description: '', icon: '🏆', date: new Date().toISOString().split('T')[0] }] })}><Plus className="h-4 w-4 mr-1" /> Add</Button>}
                 </div>
               </CardHeader>
               <CardContent>
@@ -458,24 +472,24 @@ const Profile = () => {
                       <div key={index} className="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
                         <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2">
-                            <Input placeholder="Icon" value={achievement.icon} onChange={(e) => { const newA = [...formData.achievements]; newA[index].icon = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="w-20"/>
-                            <Input placeholder="Achievement name" value={achievement.name} onChange={(e) => { const newA = [...formData.achievements]; newA[index].name = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="flex-1"/>
+                            <Input placeholder="Icon" value={achievement.icon} onChange={(e) => { const newA = [...formData.achievements]; newA[index].icon = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="w-20" />
+                            <Input placeholder="Achievement name" value={achievement.name} onChange={(e) => { const newA = [...formData.achievements]; newA[index].name = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="flex-1" />
                           </div>
                           <Textarea placeholder="Description" value={achievement.description} onChange={(e) => { const newA = [...formData.achievements]; newA[index].description = e.target.value; setFormData({ ...formData, achievements: newA }); }} rows={2} />
-                          <Input type="date" value={achievement.date} onChange={(e) => { const newA = [...formData.achievements]; newA[index].date = e.target.value; setFormData({ ...formData, achievements: newA }); }}/>
+                          <Input type="date" value={achievement.date} onChange={(e) => { const newA = [...formData.achievements]; newA[index].date = e.target.value; setFormData({ ...formData, achievements: newA }); }} />
                         </div>
-                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setFormData({ ...formData, achievements: formData.achievements.filter((_: any, i: number) => i !== index) })}><X className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setFormData({ ...formData, achievements: formData.achievements.filter((_: any, i: number) => i !== index) })}><X className="h-4 w-4" /></Button>
                       </div>
                     ))}
-                     {(formData.achievements || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No achievements added yet.</p>}
+                    {(formData.achievements || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No achievements added yet.</p>}
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     {(profileDetails?.achievements || []).map((achievement: Achievement, index: number) => (
+                    {(profileDetails?.achievements || []).map((achievement: Achievement, index: number) => (
                       <Card key={index}>
                         <CardContent className="p-4 flex items-start space-x-4">
-                           <div className="text-2xl mt-1">{achievement.icon}</div>
-                           <div>
+                          <div className="text-2xl mt-1">{achievement.icon}</div>
+                          <div>
                             <h4 className="font-semibold">{achievement.name}</h4>
                             <p className="text-sm text-muted-foreground">{achievement.description}</p>
                             <p className="text-xs text-muted-foreground mt-2"><Calendar className="h-3 w-3 inline mr-1" />{new Date(achievement.date).toLocaleDateString()}</p>
@@ -483,7 +497,7 @@ const Profile = () => {
                         </CardContent>
                       </Card>
                     ))}
-                     {(profileDetails?.achievements || []).length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center py-8">No achievements to show.</p>}
+                    {(profileDetails?.achievements || []).length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center py-8">No achievements to show.</p>}
                   </div>
                 )}
               </CardContent>
@@ -494,7 +508,7 @@ const Profile = () => {
             <Card>
               <CardHeader><CardTitle>Learning Activity</CardTitle></CardHeader>
               <CardContent>
-                {isLoadingActivity ? <p>Loading activity...</p> : (userActivity || []).length === 0 ? <p className="text-sm text-muted-foreground text-center py-8">No activity yet.</p> : (
+                {isLoadingActivity ? <p>Loading activity...</p> : (userActivity || []).length === 0 ? null : (
                   <div className="space-y-3">
                     {(userActivity || []).map((activity: any) => (
                       <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50">
@@ -507,147 +521,147 @@ const Profile = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm"><span className="font-medium">{activity.activity_type.replace(/_/g, ' ')}</span>
-                           {activity.metadata?.title && <span className="text-muted-foreground">: {activity.metadata.title}</span>}
+                            {activity.metadata?.title && <span className="text-muted-foreground">: {activity.metadata.title}</span>}
                           </p>
-                           <p className="text-xs text-muted-foreground mt-1">{new Date(activity.created_at).toLocaleString()}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{new Date(activity.created_at).toLocaleString()}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
                 {/* User posts section */}
-<div className="mt-6">
-  <h3 className="text-lg font-semibold mb-3">Posts</h3>
-  {isLoadingUserPosts ? (
-    <p>Loading posts...</p>
-  ) : (userPosts || []).length === 0 ? (
-    <p className="text-sm text-muted-foreground">No posts yet.</p>
-  ) : (
-    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1">
-      {(userPosts || []).map((p: any) => {
-        // Extract thumbnail from markdown images or video tags
-        const imgMatch = (p.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/);
-        const videoMatch = (p.content || "").match(/<video[^>]+src="([^"]+)"/);
-        const thumb = imgMatch?.[1] || videoMatch?.[1] || null;
-        
-        return (
-          <div
-            key={p.id}
-            className="aspect-square rounded overflow-hidden shadow-sm hover:shadow-md transition-all group relative cursor-pointer bg-muted"
-            onClick={() => setPreviewPost(p)}
-          >
-            {thumb ? (
-              <div className="w-full h-full overflow-hidden">
-                <img
-                  src={thumb}
-                  alt={p.title || "Post"}
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                />
-              </div>
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground p-2 text-center">
-                <span className="line-clamp-3">{p.title}</span>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-          </div>
-        );
-      })}
-    </div>
-  )}
-</div>
+                <div className="mt-6">
+                  <h3 className="text-lg font-semibold mb-3">Posts</h3>
+                  {isLoadingUserPosts ? (
+                    <p>Loading posts...</p>
+                  ) : (userPosts || []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No posts yet.</p>
+                  ) : (
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1">
+                      {(userPosts || []).map((p: any) => {
+                        // Extract thumbnail from markdown images or video tags
+                        const imgMatch = (p.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/);
+                        const videoMatch = (p.content || "").match(/<video[^>]+src="([^"]+)"/);
+                        const thumb = imgMatch?.[1] || videoMatch?.[1] || null;
 
-          </CardContent>
-        </Card>
-      </TabsContent>
-
-    </Tabs>
-  </div>
-
-        {/* Post preview modal */}
-{previewPost && (
-  <motion.div
-    initial={{ opacity: 0 }}
-    animate={{ opacity: 1 }}
-    exit={{ opacity: 0 }}
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
-    onClick={() => setPreviewPost(null)}
-  >
-    <motion.div
-      initial={{ scale: 0.95, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.95, opacity: 0 }}
-      transition={{ duration: 0.2, ease: "easeOut" }}
-      className="max-w-4xl w-full max-h-[90vh] overflow-auto"
-      onClick={(e) => e.stopPropagation()}
-    >
-      <Card className="border-none shadow-xl">
-        <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex justify-between items-center p-4 border-b">
-          <h3 className="text-lg font-semibold">{previewPost.title}</h3>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setPreviewPost(null)}
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-        <CardContent className="p-6">
-          {(() => {
-            // Extract images
-            const imgMatches = Array.from((previewPost.content || "").matchAll(/!\[[^\]]*\]\(([^)]+)\)/g));
-            const videoMatches = Array.from((previewPost.content || "").matchAll(/<video[^>]+src="([^"]+)"/g));
-            
-            // Show media if present
-            if (imgMatches.length > 0 || videoMatches.length > 0) {
-              return (
-                <div className="mb-6 space-y-4">
-                  {imgMatches.map((match, idx) => (
-                    <div key={`img-${idx}`} className="w-full max-h-96 overflow-hidden rounded-lg bg-muted">
-                      <img
-                        src={match[1]}
-                        alt={`Post image ${idx + 1}`}
-                        className="w-full h-full object-contain"
-                      />
+                        return (
+                          <div
+                            key={p.id}
+                            className="aspect-square rounded overflow-hidden shadow-sm hover:shadow-md transition-all group relative cursor-pointer bg-muted"
+                            onClick={() => setPreviewPost(p)}
+                          >
+                            {thumb ? (
+                              <div className="w-full h-full overflow-hidden">
+                                <img
+                                  src={thumb}
+                                  alt={p.title || "Post"}
+                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                />
+                              </div>
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground p-2 text-center">
+                                <span className="line-clamp-3">{p.title}</span>
+                              </div>
+                            )}
+                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                  {videoMatches.map((match, idx) => (
-                    <div key={`video-${idx}`} className="w-full rounded-lg overflow-hidden bg-black">
-                      <video
-                        src={match[1]}
-                        controls
-                        className="w-full h-auto"
-                      />
-                    </div>
-                  ))}
+                  )}
                 </div>
-              );
-            }
-            return null;
-          })()}
-          
-          <div className="prose prose-sm max-w-none break-words">
-            {(previewPost.content || "")
-              .split('\n')
-              .filter(line => !line.match(/!\[[^\]]*\]\([^)]+\)/) && !line.match(/<video[^>]*>/))
-              .map((line, idx) => (
-                <p key={idx} className="mb-2">{line}</p>
-              ))
-            }
-          </div>
-          
-          <div className="mt-6 pt-4 border-t text-sm text-muted-foreground">
-            <p>Posted on {new Date(previewPost.created_at).toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            })}</p>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  </motion.div>
-)}
+
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+        </Tabs>
+      </div>
+
+      {/* Post preview modal */}
+      {previewPost && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4"
+          onClick={() => setPreviewPost(null)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="max-w-4xl w-full max-h-[90vh] overflow-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Card className="border-none shadow-xl">
+              <div className="sticky top-0 bg-background/95 backdrop-blur-sm z-10 flex justify-between items-center p-4 border-b">
+                <h3 className="text-lg font-semibold">{previewPost.title}</h3>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setPreviewPost(null)}
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
+              <CardContent className="p-6">
+                {(() => {
+                  // Extract images
+                  const imgMatches = Array.from((previewPost.content || "").matchAll(/!\[[^\]]*\]\(([^)]+)\)/g));
+                  const videoMatches = Array.from((previewPost.content || "").matchAll(/<video[^>]+src="([^"]+)"/g));
+
+                  // Show media if present
+                  if (imgMatches.length > 0 || videoMatches.length > 0) {
+                    return (
+                      <div className="mb-6 space-y-4">
+                        {imgMatches.map((match, idx) => (
+                          <div key={`img-${idx}`} className="w-full max-h-96 overflow-hidden rounded-lg bg-muted">
+                            <img
+                              src={match[1]}
+                              alt={`Post image ${idx + 1}`}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ))}
+                        {videoMatches.map((match, idx) => (
+                          <div key={`video-${idx}`} className="w-full rounded-lg overflow-hidden bg-black">
+                            <video
+                              src={match[1]}
+                              controls
+                              className="w-full h-auto"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }
+                  return null;
+                })()}
+
+                <div className="prose prose-sm max-w-none break-words">
+                  {(previewPost.content || "")
+                    .split('\n')
+                    .filter(line => !line.match(/!\[[^\]]*\]\([^)]+\)/) && !line.match(/<video[^>]*>/))
+                    .map((line, idx) => (
+                      <p key={idx} className="mb-2">{line}</p>
+                    ))
+                  }
+                </div>
+
+                <div className="mt-6 pt-4 border-t text-sm text-muted-foreground">
+                  <p>Posted on {new Date(previewPost.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                  })}</p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </motion.div>
+      )}
 
     </Layout>
   );
