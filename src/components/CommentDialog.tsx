@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { usePostInteractions } from "@/hooks/usePostInteractions";
 
 export interface Comment {
   id: string;
@@ -38,6 +39,7 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDia
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { sendCommentNotification } = usePostInteractions();
 
   // Fetch comments directly in the dialog
   const { data: commentsData, isLoading } = useQuery({
@@ -108,6 +110,17 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDia
       if (postId) {
         commentData.post_id = postId;
         commentData.roadmap_id = null;
+        
+        // Fetch post details to send notification
+        const { data: post } = await supabase
+          .from('posts')
+          .select('user_id, title')
+          .eq('id', postId)
+          .single();
+        
+        if (post) {
+          await sendCommentNotification(postId, post.user_id, post.title, content);
+        }
       } else if (roadmapId) {
         commentData.roadmap_id = roadmapId;
         commentData.post_id = null;
