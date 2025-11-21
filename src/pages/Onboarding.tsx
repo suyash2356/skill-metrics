@@ -52,6 +52,32 @@ const Onboarding = () => {
   };
 
   const handleNext = () => {
+    // Basic validation
+    if (currentStep === 1 && !formData.displayName.trim()) {
+      toast({
+        title: "Name required",
+        description: "Please enter your name to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (currentStep === 2 && (!formData.background || !formData.education)) {
+      toast({
+        title: "Selection required",
+        description: "Please complete all fields to continue",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (currentStep === 4 && (!formData.experienceLevel || formData.skills.length === 0)) {
+      toast({
+        title: "Skills required",
+        description: "Please select your experience level and add at least one skill",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(currentStep + 1);
     }
@@ -162,11 +188,21 @@ const Onboarding = () => {
 
         <div className="bg-card border border-border rounded-2xl shadow-xl p-8 backdrop-blur-sm">
           <div className="mb-8">
-            <div className="flex justify-between text-sm text-muted-foreground mb-2">
-              <span>Step {currentStep} of {TOTAL_STEPS}</span>
-              <span>{Math.round(progress)}%</span>
+            <div className="flex justify-between items-center text-sm mb-3">
+              <span className="text-muted-foreground">Step {currentStep} of {TOTAL_STEPS}</span>
+              <span className="text-primary font-semibold">{Math.round(progress)}% Complete</span>
             </div>
-            <Progress value={progress} className="h-2" />
+            <Progress value={progress} className="h-3" />
+            <div className="flex justify-between mt-2">
+              {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+                <div
+                  key={i}
+                  className={`h-1 flex-1 mx-0.5 rounded-full transition-all ${
+                    i < currentStep ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
+            </div>
           </div>
 
           <AnimatePresence mode="wait">
