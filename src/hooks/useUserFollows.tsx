@@ -11,6 +11,7 @@ export function useUserFollows(targetUserId?: string) {
   const queryClient = useQueryClient();
   const currentUserId = user?.id;
 
+  // Check if currently following
   const { data: isFollowing, isLoading: isLoadingFollowStatus } = useQuery({
     queryKey: ['isFollowing', currentUserId, targetUserId],
     queryFn: async () => {
@@ -25,63 +26,79 @@ export function useUserFollows(targetUserId?: string) {
       return (count || 0) > 0;
     },
     enabled: !!currentUserId && !!targetUserId && currentUserId !== targetUserId,
-    staleTime: 1 * 60 * 1000, // 1 minute
+    staleTime: 1 * 60 * 1000,
+  });
+
+  // Check if there's a pending follow request
+  const { data: followRequestStatus } = useQuery({
+    queryKey: ['followRequestStatus', currentUserId, targetUserId],
+    queryFn: async () => {
+      if (!currentUserId || !targetUserId || currentUserId === targetUserId) return null;
+      const { data, error } = await supabase
+        .from('follow_requests')
+        .select('id, status')
+        .eq('requester_id', currentUserId)
+        .eq('requested_id', targetUserId)
+        .eq('status', 'pending')
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!currentUserId && !!targetUserId && currentUserId !== targetUserId,
+    staleTime: 1 * 60 * 1000,
   });
 
   const toggleFollow = useCallback(async () => {
     if (!currentUserId || !targetUserId || currentUserId === targetUserId) {
-      toast({ title: "Cannot follow yourself or unauthenticated", variant: "destructive" });
+      toast({ title: "Cannot follow yourself", variant: "destructive" });
       return;
     }
 
-    // Optimistic update
-    queryClient.setQueryData(['isFollowing', currentUserId, targetUserId], (old: boolean | undefined) => !old);
-
     try {
       if (isFollowing) {
-        // Unfollow
+        // Unfollow - remove from followers
         const { error } = await supabase
           .from('followers')
           .delete()
           .eq('follower_id', currentUserId)
           .eq('following_id', targetUserId);
-        if (error) throw new Error(error.message);
-        toast({ title: "Unfollowed user" });
-      } else {
-        // Follow
+        
+        if (error) throw error;
+        toast({ title: "Unfollowed successfully" });
+        
+        queryClient.invalidateQueries({ queryKey: ['isFollowing', currentUserId, targetUserId] });
+        queryClient.invalidateQueries({ queryKey: ['followerCount', targetUserId] });
+      } else if (followRequestStatus) {
+        // Cancel pending request
         const { error } = await supabase
-          .from('followers')
-          .insert({ follower_id: currentUserId, following_id: targetUserId });
-        if (error) throw new Error(error.message);
-        toast({ title: "Following user" });
-
-        // Send notification to the followed user
-        // You'd typically fetch the follower's name from their profile table
-        // For simplicity, we'll use a generic message or try to get a full name
-        const { data: followerProfile } = await supabase
-          .from('profiles')
-          .select('full_name')
-          .eq('user_id', currentUserId)
-          .single();
-
-        await supabase.from('notifications').insert({
-          user_id: targetUserId,
-          type: 'follow',
-          title: `${followerProfile?.full_name || 'Someone'} started following you!`,
-          body: `You now have a new follower: ${followerProfile?.full_name || 'Someone'}`,
-        });
-
+          .from('follow_requests')
+          .delete()
+          .eq('id', followRequestStatus.id);
+        
+        if (error) throw error;
+        toast({ title: "Follow request cancelled" });
+        
+        queryClient.invalidateQueries({ queryKey: ['followRequestStatus', currentUserId, targetUserId] });
+      } else {
+        // Send follow request
+        const { error } = await supabase
+          .from('follow_requests')
+          .insert({ 
+            requester_id: currentUserId, 
+            requested_id: targetUserId,
+            status: 'pending'
+          });
+        
+        if (error) throw error;
+        toast({ title: "Follow request sent!" });
+        
+        queryClient.invalidateQueries({ queryKey: ['followRequestStatus', currentUserId, targetUserId] });
       }
     } catch (e: any) {
-      // Revert optimistic update on error
-      queryClient.setQueryData(['isFollowing', currentUserId, targetUserId], (old: boolean | undefined) => !old);
-      toast({ title: `Failed to toggle follow: ${e.message}`, variant: "destructive" });
-    } finally {
-      // Always refetch to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['isFollowing', currentUserId, targetUserId] });
-      // Also invalidate queries that depend on follow counts if you implement them
+      toast({ title: `Failed: ${e.message}`, variant: "destructive" });
     }
-  }, [currentUserId, targetUserId, isFollowing, toast, queryClient]);
+  }, [currentUserId, targetUserId, isFollowing, followRequestStatus, toast, queryClient]);
 
   // Optionally fetch followers/following counts for a profile
   const { data: followerCount, isLoading: isLoadingFollowerCount } = useQuery({
@@ -114,6 +131,13 @@ export function useUserFollows(targetUserId?: string) {
     staleTime: 1 * 60 * 1000,
   });
 
+  // Get button state
+  const getFollowButtonState = () => {
+    if (isFollowing) return { text: 'Following', variant: 'secondary' as const };
+    if (followRequestStatus) return { text: 'Requested', variant: 'outline' as const };
+    return { text: 'Follow', variant: 'default' as const };
+  };
+
   return {
     isFollowing: isFollowing || false,
     isLoadingFollowStatus,
@@ -122,5 +146,7 @@ export function useUserFollows(targetUserId?: string) {
     isLoadingFollowerCount,
     followingCount: followingCount || 0,
     isLoadingFollowingCount,
+    followRequestStatus,
+    getFollowButtonState,
   };
 }

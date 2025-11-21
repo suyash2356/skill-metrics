@@ -4,13 +4,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNotifications } from "@/hooks/useNotifications";
-import { Heart, MessageCircle, UserPlus, BookOpen, Trash2, CheckCheck } from "lucide-react";
+import { useFollowRequests } from "@/hooks/useFollowRequests";
+import { Heart, MessageCircle, UserPlus, BookOpen, Trash2, CheckCheck, UserCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { motion, AnimatePresence } from "framer-motion";
 
 const Notifications = () => {
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const { acceptRequest, rejectRequest } = useFollowRequests();
 
   const unreadNotifications = notifications.filter(n => !n.read_at);
   const readNotifications = notifications.filter(n => n.read_at);
@@ -19,6 +21,10 @@ const Notifications = () => {
     switch (type) {
       case 'follow':
         return <UserPlus className="h-5 w-5 text-primary" />;
+      case 'follow_request':
+        return <UserPlus className="h-5 w-5 text-purple-500" />;
+      case 'follow_accepted':
+        return <UserCheck className="h-5 w-5 text-green-500" />;
       case 'like':
         return <Heart className="h-5 w-5 text-red-500 fill-red-500" />;
       case 'comment':
@@ -77,6 +83,17 @@ const Notifications = () => {
                     <p className="text-xs text-muted-foreground mt-2">
                       {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
                     </p>
+                    
+                    {/* Show action buttons for follow requests */}
+                    {notification.type === 'follow_request' && !notification.read_at && (
+                      <div className="flex gap-2 mt-2">
+                        <Link to="/follow-requests">
+                          <Button size="sm" variant="default">
+                            View Requests
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center gap-1 flex-shrink-0">
