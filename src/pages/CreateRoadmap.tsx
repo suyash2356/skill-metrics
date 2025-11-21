@@ -247,6 +247,14 @@ const CreateRoadmap = () => {
           completed: false,
           topics: step.topics || null,
           task: step.task || null,
+          estimated_hours: step.estimatedHours || null,
+          learning_objectives: step.learningObjectives || [],
+          prerequisites: step.prerequisites || [],
+          milestones: step.milestones || [],
+          tasks: step.tasks || [],
+          common_pitfalls: step.commonPitfalls || [],
+          assessment_criteria: step.assessmentCriteria || [],
+          real_world_examples: step.realWorldExamples || [],
         };
 
         const { data: insertedStep, error: stepError } = await getTypedTable('roadmap_steps')
@@ -267,6 +275,8 @@ const CreateRoadmap = () => {
             title: resource.title || 'Resource',
             url: resource.url || null,
             type: resource.type || 'article',
+            duration: resource.duration || null,
+            difficulty: resource.difficulty || null,
           }));
 
           const { error: resourcesError } = await getTypedTable('roadmap_step_resources').insert(resourcePayload);
