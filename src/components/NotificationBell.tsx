@@ -1,13 +1,17 @@
-import { Bell, CheckCheck, Loader2, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Loader2, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/useNotifications";
+import { useFollowRequests } from "@/hooks/useFollowRequests";
 import { Link, useNavigate } from "react-router-dom";
 
 const NotificationBell = () => {
   const { notifications, unreadCount, isLoading, markAllAsRead, markAsRead, deleteNotification, createTestNotification } = useNotifications();
+  const { pendingRequests } = useFollowRequests();
   const navigate = useNavigate();
+  
+  const totalUnread = unreadCount + pendingRequests.length;
 
   const getNotificationLink = (notification: any) => {
     if (notification.data?.roadmap_id) {
@@ -28,8 +32,8 @@ const NotificationBell = () => {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="sm" className="relative">
           <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 px-1 py-0 h-4 min-w-[16px] text-[10px] leading-4" variant="destructive">{unreadCount}</Badge>
+          {totalUnread > 0 && (
+            <Badge className="absolute -top-1 -right-1 px-1 py-0 h-4 min-w-[16px] text-[10px] leading-4" variant="destructive">{totalUnread}</Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
@@ -43,6 +47,25 @@ const NotificationBell = () => {
           </div>
         </div>
         <div className="max-h-96 overflow-auto">
+          {/* Follow Requests Section */}
+          {pendingRequests.length > 0 && (
+            <>
+              <DropdownMenuItem asChild className="border-b bg-accent/50">
+                <Link to="/follow-requests" className="flex items-center gap-2 w-full">
+                  <UserPlus className="h-4 w-4 text-purple-500" />
+                  <div className="flex-1">
+                    <div className="font-medium text-sm">Follow Requests</div>
+                    <div className="text-xs text-muted-foreground">
+                      {pendingRequests.length} pending request{pendingRequests.length > 1 ? 's' : ''}
+                    </div>
+                  </div>
+                  <Badge variant="secondary">{pendingRequests.length}</Badge>
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          
           {isLoading ? (
             <div className="flex items-center justify-center py-8 text-muted-foreground gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Loading
