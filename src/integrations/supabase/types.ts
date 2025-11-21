@@ -1319,6 +1319,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_view_profile: {
+        Args: { _profile_user_id: string; _viewer_id: string }
+        Returns: boolean
+      }
       cleanup_old_activity: { Args: never; Returns: undefined }
       create_default_collections_for_existing_users: {
         Args: never

@@ -333,38 +333,45 @@ const Settings = () => {
 
           <TabsContent value="privacy">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="text-lg md:text-xl">Privacy Settings</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
+              <CardHeader>
+                <CardTitle className="text-lg md:text-xl">Privacy Settings</CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Control who can see your profile, posts, and activity
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div>
-                    <Label className="text-base font-semibold">Profile Visibility</Label>
-                    <div className="flex items-center gap-4 mt-2 text-sm">
-                      <label className="flex items-center gap-2 cursor-pointer">
+                    <Label className="text-base font-semibold">Account Privacy</Label>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      When your account is private, only people who follow you can see your profile, posts, and roadmaps.
+                    </p>
+                    <div className="space-y-3">
+                      <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-accent/50 transition-colors">
                         <input 
                           type="radio" 
                           name="visibility" 
                           checked={privacy.profile_visibility==='public'} 
                           onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'public' }))} 
+                          className="mt-1"
                         /> 
-                        Public
+                        <div>
+                          <div className="font-medium">Public</div>
+                          <div className="text-sm text-muted-foreground">Anyone can see your profile, posts, and roadmaps</div>
+                        </div>
                       </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input 
-                          type="radio" 
-                          name="visibility" 
-                          checked={privacy.profile_visibility==='friends'} 
-                          onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'friends' }))} 
-                        /> 
-                        Friends
-                      </label>
-                      <label className="flex items-center gap-2 cursor-pointer">
+                      <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-accent/50 transition-colors">
                         <input 
                           type="radio" 
                           name="visibility" 
                           checked={privacy.profile_visibility==='private'} 
                           onChange={() => setPrivacy(p => ({ ...p, profile_visibility: 'private' }))} 
+                          className="mt-1"
                         /> 
-                        Private
+                        <div>
+                          <div className="font-medium">Private</div>
+                          <div className="text-sm text-muted-foreground">Only your followers can see your profile and content</div>
+                        </div>
                       </label>
                     </div>
                   </div>
