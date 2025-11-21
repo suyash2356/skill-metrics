@@ -44,7 +44,7 @@ const Profile = () => {
   const targetUserId = userId || currentUser?.id;
   const { toast } = useToast();
 
-  const { isFollowing, toggleFollow, followerCount, followingCount, isLoadingFollowStatus } = useUserFollows(targetUserId);
+  const { isFollowing, toggleFollow, followerCount, followingCount, isLoadingFollowStatus, getFollowButtonState } = useUserFollows(targetUserId);
   const { profileDetails, isLoading: isLoadingProfile, updateProfileDetails, isUpdating } = useUserProfileDetails(targetUserId);
 
   const [editMode, setEditMode] = useState(false);
@@ -400,8 +400,13 @@ const Profile = () => {
                   )
                 ) : (
                   <div className="flex gap-2 w-full">
-                    <Button onClick={toggleFollow} disabled={isLoadingFollowStatus} className="flex-1">
-                      {isFollowing ? 'Following' : 'Follow'}
+                    <Button 
+                      onClick={toggleFollow} 
+                      disabled={isLoadingFollowStatus} 
+                      variant={getFollowButtonState().variant}
+                      className="flex-1"
+                    >
+                      {getFollowButtonState().text}
                     </Button>
                     <Button variant="outline" className="flex-1">
                       <MessageCircle className="h-4 w-4 mr-2" /> Message

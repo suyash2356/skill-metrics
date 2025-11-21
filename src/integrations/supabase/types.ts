@@ -473,24 +473,54 @@ export type Database = {
           },
         ]
       }
+      follow_requests: {
+        Row: {
+          created_at: string
+          id: string
+          requested_id: string
+          requester_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          requested_id: string
+          requester_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          requested_id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       followers: {
         Row: {
           created_at: string
           follower_id: string
           following_id: string
           id: string
+          status: string | null
         }
         Insert: {
           created_at?: string
           follower_id: string
           following_id: string
           id?: string
+          status?: string | null
         }
         Update: {
           created_at?: string
           follower_id?: string
           following_id?: string
           id?: string
+          status?: string | null
         }
         Relationships: []
       }
