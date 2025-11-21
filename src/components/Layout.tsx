@@ -176,21 +176,21 @@ export const Layout = ({ children }: LayoutProps) => {
               />
 
                 {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-2 bg-card border rounded-md shadow z-50 overflow-hidden">
+                  <div className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-elevated z-50 overflow-hidden backdrop-blur-sm">
                     {/* If user clicked a skill and is viewing inline skill results, show cards */}
                     {showSkillResults ? (
-                      <div className="p-3">
+                      <div className="p-4">
                         {isSkillLoading ? (
                           <div className="text-sm text-muted-foreground">Loading suggestions...</div>
                         ) : (
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {skillRecommendations.slice(0,6).map((item, i) => (
-                              <div key={i} className="border rounded-md p-3 bg-white">
+                              <div key={i} className="border border-border rounded-lg p-3 bg-card hover:border-primary/50 transition-all">
                                 <div className="flex items-center justify-between">
-                                  <div className="font-medium">{item.title}</div>
+                                  <div className="font-medium text-sm">{item.title}</div>
                                   <div className="text-xs text-muted-foreground">{item.provider || item.type}</div>
                                 </div>
-                                {item.description && <div className="text-sm text-muted-foreground mt-2">{item.description}</div>}
+                                {item.description && <div className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</div>}
                                 <div className="mt-3">
                                   <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Visit</a>
                                 </div>
@@ -203,33 +203,34 @@ export const Layout = ({ children }: LayoutProps) => {
                         </div>
                       </div>
                     ) : (
-                      suggestions.map((s, idx) => (
-                        <button
-                          key={`${s.kind}-${idx}`}
-                          className="w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-3"
-                          onMouseDown={(e) => { e.preventDefault();
-                            if (s.kind === 'user') {
-                              setShowSuggestions(false);
-                              navigate(`/profile/${s.id}`);
-                            } else if (s.kind === 'community') {
-                              setShowSuggestions(false);
-                              navigate(`/communities/${s.id}/feed`);
-                            } else {
-                              // By default the header only shows people/communities, but
-                              // keep a safe fallback if other kinds appear: navigate to people search
-                              setShowSuggestions(false);
-                              navigate(`/search?q=${encodeURIComponent(s.name)}&scope=people`);
-                            }
-                          }}
-                        >
-                          {s.kind === 'user' && <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full" />}
-                          {s.kind === 'community' && <img src={s.image} alt={s.name} className="w-8 h-8 rounded" />}
-                          <div className="flex-1">
-                            <div className="font-medium">{s.name}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5">{s.kind}</div>
-                          </div>
-                        </button>
-                      ))
+                      <div className="py-2">
+                        {/* people & community suggestions */}
+                        {suggestions.map((s, idx) => (
+                          <button
+                            key={`${s.kind}-${idx}`}
+                            className="w-full text-left px-4 py-2.5 hover:bg-accent transition-colors flex items-center gap-3"
+                            onMouseDown={(e) => { e.preventDefault();
+                              if (s.kind === 'user') {
+                                setShowSuggestions(false);
+                                navigate(`/profile/${s.id}`);
+                              } else if (s.kind === 'community') {
+                                setShowSuggestions(false);
+                                navigate(`/communities/${s.id}/feed`);
+                              } else {
+                                setShowSuggestions(false);
+                                navigate(`/search?q=${encodeURIComponent(s.name)}&scope=people`);
+                              }
+                            }}
+                          >
+                            {s.kind === 'user' && <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full object-cover" />}
+                            {s.kind === 'community' && <img src={s.image} alt={s.name} className="w-8 h-8 rounded object-cover" />}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm truncate">{s.name}</div>
+                              <div className="text-xs text-muted-foreground capitalize">{s.kind}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
                     )}
                   </div>
                 )}
@@ -247,33 +248,33 @@ export const Layout = ({ children }: LayoutProps) => {
                   <ChevronDown className="h-3 w-3" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuContent align="end" className="w-56 bg-popover backdrop-blur-sm z-50">
                 <DropdownMenuItem asChild>
-                  <Link to="/profile" className="flex items-center">
+                  <Link to="/profile" className="flex items-center cursor-pointer">
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/settings" className="flex items-center">
+                  <Link to="/settings" className="flex items-center cursor-pointer">
                     <Settings className="h-4 w-4 mr-2" />
                     Settings
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/my-posts" className="flex items-center">
+                  <Link to="/my-posts" className="flex items-center cursor-pointer">
                     <FileText className="h-4 w-4 mr-2" />
                     My Posts
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/saved-posts" className="flex items-center">
+                  <Link to="/saved-posts" className="flex items-center cursor-pointer">
                     <Bookmark className="h-4 w-4 mr-2" />
                     Saved Posts
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={toggleTheme} className="flex items-center">
+                <DropdownMenuItem onClick={toggleTheme} className="flex items-center cursor-pointer">
                   {isDarkMode ? (
                     <>
                       <Sun className="h-4 w-4 mr-2" />
@@ -287,13 +288,13 @@ export const Layout = ({ children }: LayoutProps) => {
                   )}
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/support" className="flex items-center">
+                  <Link to="/support" className="flex items-center cursor-pointer">
                     <HelpCircle className="h-4 w-4 mr-2" />
                     Support
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-destructive">
+                <DropdownMenuItem onClick={handleSignOut} className="flex items-center text-destructive focus:text-destructive cursor-pointer">
                   <LogOut className="h-4 w-4 mr-2" />
                   Sign Out
                 </DropdownMenuItem>

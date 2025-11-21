@@ -229,25 +229,25 @@ export const InstagramPost = ({
         </Link>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent">
               <MoreHorizontal className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 bg-background z-50">
-            <DropdownMenuItem onClick={onBookmark}>
+          <DropdownMenuContent align="end" className="w-56 bg-popover backdrop-blur-sm z-50">
+            <DropdownMenuItem onClick={onBookmark} className="cursor-pointer">
               <Bookmark className="mr-2 h-4 w-4" />
               <span>{isBookmarked ? "Unsave" : "Save Post"}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleInterested}>
+            <DropdownMenuItem onClick={handleInterested} className="cursor-pointer">
               <Eye className="mr-2 h-4 w-4" />
               <span>Interested</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={handleNotInterested}>
+            <DropdownMenuItem onClick={handleNotInterested} className="cursor-pointer">
               <EyeOff className="mr-2 h-4 w-4" />
               <span>Not Interested</span>
             </DropdownMenuItem>
             <DropdownMenuItem 
-              className="text-destructive focus:text-destructive"
+              className="text-destructive focus:text-destructive cursor-pointer"
               onClick={() => setReportDialogOpen(true)}
             >
               <Flag className="mr-2 h-4 w-4" />
@@ -294,40 +294,42 @@ export const InstagramPost = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors"
               onClick={onLike}
             >
               <Heart
-                className={`h-5 w-5 ${
-                  isLiked ? "fill-red-500 text-red-500" : ""
+                className={`h-5 w-5 transition-all ${
+                  isLiked ? "fill-red-500 text-red-500 scale-110" : "hover:scale-110"
                 }`}
               />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors"
               onClick={onComment}
             >
-              <MessageCircle className="h-5 w-5" />
+              <MessageCircle className="h-5 w-5 hover:scale-110 transition-transform" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-8 w-8 hover:bg-green-50 dark:hover:bg-green-950/20 transition-colors"
               onClick={onShare}
             >
-              <Share2 className="h-5 w-5" />
+              <Share2 className="h-5 w-5 hover:scale-110 transition-transform" />
             </Button>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8"
+            className="h-8 w-8 hover:bg-primary/10 transition-colors"
             onClick={onBookmark}
           >
             <Bookmark
-              className={`h-5 w-5 ${isBookmarked ? "fill-current" : ""}`}
+              className={`h-5 w-5 transition-all ${
+                isBookmarked ? "fill-current text-primary scale-110" : "hover:scale-110"
+              }`}
             />
           </Button>
         </div>
