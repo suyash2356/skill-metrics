@@ -20,6 +20,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { ReportPostDialog } from "./ReportPostDialog";
 
 interface InstagramPostProps {
   post: {
@@ -44,6 +47,7 @@ interface InstagramPostProps {
   onBookmark: () => void;
   onComment: () => void;
   onShare: () => void;
+  onHide?: () => void;
   connectedAbove?: boolean;
   connectedBelow?: boolean;
 }
@@ -56,10 +60,13 @@ export const InstagramPost = ({
   onBookmark,
   onComment,
   onShare,
+  onHide,
   connectedAbove = false,
   connectedBelow = false,
 }: InstagramPostProps) => {
   const [imageError, setImageError] = useState(false);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const { toast } = useToast();
 
   // Parse media from content
   const parseMedia = (content: string | null) => {
@@ -116,6 +123,76 @@ export const InstagramPost = ({
   const userTitle = post.profiles?.title || "";
   const avatarUrl = post.profiles?.avatar_url;
 
+  const handleInterested = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("post_preferences")
+        .upsert(
+          {
+            user_id: user.id,
+            post_id: post.id,
+            preference_type: "interested",
+          },
+          { onConflict: "user_id,post_id" }
+        );
+
+      if (error) throw error;
+
+      // Also save the post
+      await onBookmark();
+      
+      toast({
+        title: "Marked as interested",
+        description: "We'll show you more posts like this.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Failed to mark as interested",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleNotInterested = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from("post_preferences")
+        .upsert(
+          {
+            user_id: user.id,
+            post_id: post.id,
+            preference_type: "not_interested",
+          },
+          { onConflict: "user_id,post_id" }
+        );
+
+      if (error) throw error;
+
+      toast({
+        title: "Marked as not interested",
+        description: "We'll show you fewer posts like this.",
+      });
+
+      // Hide the post from feed
+      if (onHide) {
+        setTimeout(() => onHide(), 500);
+      }
+    } catch (error: any) {
+      toast({
+        title: "Failed to mark as not interested",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="relative">
       {/* Connector visuals */}
@@ -156,20 +233,23 @@ export const InstagramPost = ({
               <MoreHorizontal className="h-5 w-5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>
+          <DropdownMenuContent align="end" className="w-56 bg-background z-50">
+            <DropdownMenuItem onClick={onBookmark}>
               <Bookmark className="mr-2 h-4 w-4" />
-              <span>Save</span>
+              <span>{isBookmarked ? "Unsave" : "Save Post"}</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleInterested}>
               <Eye className="mr-2 h-4 w-4" />
               <span>Interested</span>
             </DropdownMenuItem>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={handleNotInterested}>
               <EyeOff className="mr-2 h-4 w-4" />
               <span>Not Interested</span>
             </DropdownMenuItem>
-            <DropdownMenuItem className="text-red-500">
+            <DropdownMenuItem 
+              className="text-destructive focus:text-destructive"
+              onClick={() => setReportDialogOpen(true)}
+            >
               <Flag className="mr-2 h-4 w-4" />
               <span>Report</span>
             </DropdownMenuItem>
@@ -288,6 +368,11 @@ export const InstagramPost = ({
         </p>
       </div>
     </Card>
+    <ReportPostDialog 
+      open={reportDialogOpen}
+      onOpenChange={setReportDialogOpen}
+      postId={post.id}
+    />
     </div>
   );
 };
