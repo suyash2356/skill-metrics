@@ -66,6 +66,26 @@ const Profile = () => {
     enabled: !!targetUserId,
   });
 
+  // Check if profile is private and if viewer has access
+  const { data: privacySettings } = useQuery({
+    queryKey: ['userPrivacy', targetUserId],
+    queryFn: async () => {
+      if (!targetUserId) return null;
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('profile_visibility')
+        .eq('user_id', targetUserId)
+        .single();
+      if (error && error.code !== 'PGRST116') return { profile_visibility: 'public' };
+      return data || { profile_visibility: 'public' };
+    },
+    enabled: !!targetUserId,
+  });
+
+  const isOwnProfile = currentUser?.id === targetUserId;
+  const isPrivateAccount = privacySettings?.profile_visibility === 'private';
+  const canViewProfile = isOwnProfile || !isPrivateAccount || isFollowing;
+
   useEffect(() => {
     if (profileDetails && publicUserData) {
       setFormData({
@@ -245,7 +265,37 @@ const Profile = () => {
   const initials = (publicUserData?.full_name || 'U').split(' ').map(n => n[0]).join('');
 
   if (isLoadingProfile || isLoadingPublicUser) {
-    return <Layout><div>Loading profile...</div></Layout>;
+    return <Layout><div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground">Loading profile...</p></div></Layout>;
+  }
+
+  // Show private account message if viewer doesn't have access
+  if (!canViewProfile && isPrivateAccount) {
+    return (
+      <Layout>
+        <div className="container mx-auto px-4 py-6 max-w-2xl">
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="flex flex-col items-center gap-4">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={publicUserData?.avatar_url || ''} />
+                  <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-2xl font-bold mb-2">{publicUserData?.full_name || 'User'}</h2>
+                  <p className="text-muted-foreground mb-4">This account is private</p>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Follow this account to see their posts, roadmaps, and activity.
+                  </p>
+                  <Button onClick={toggleFollow} disabled={isLoadingFollowStatus}>
+                    {isFollowing ? 'Following' : 'Follow'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
   }
 
   return (
