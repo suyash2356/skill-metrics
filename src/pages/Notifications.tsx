@@ -56,8 +56,8 @@ const Notifications = () => {
         onClick={() => isUnread && markAsRead(notification.id)}
         className="block"
       >
-        <Card className={`mb-3 border-l-4 transition-all hover:shadow-md ${
-          isUnread ? 'border-l-primary bg-accent/20' : 'border-l-transparent'
+        <Card className={`mb-3 border-l-4 transition-all hover:shadow-md hover:border-l-primary ${
+          isUnread ? 'border-l-primary bg-primary/5 shadow-sm' : 'border-l-transparent'
         }`}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">

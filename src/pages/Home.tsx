@@ -384,25 +384,44 @@ const Home = () => {
           <main className="w-full lg:col-span-6 px-0">
             {/* AI Personalization Banner */}
             {personalizedData && personalizedData.posts.length > 0 && (
-              <Alert className="mb-4 border-primary/20 bg-primary/5">
-                <Sparkles className="h-4 w-4 text-primary" />
-                <AlertDescription className="text-sm">
-                  <span className="font-semibold text-primary">AI-Personalized Feed</span> - Content tailored to your skills ({personalizedData.userProfile.skills.slice(0, 3).map((s: any) => s.name || s).join(", ")}) and experience level
-                </AlertDescription>
+              <Alert className="mb-6 border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded-full">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                  </div>
+                  <AlertDescription className="text-sm">
+                    <span className="font-semibold text-primary block mb-1">✨ AI-Personalized Feed</span>
+                    <span className="text-muted-foreground">
+                      Content tailored for: <span className="text-foreground font-medium">{personalizedData.userProfile.skills.slice(0, 3).map((s: any) => s.name || s).join(", ")}</span> • <span className="text-foreground font-medium">{personalizedData.userProfile.experienceLevel}</span>
+                    </span>
+                  </AlertDescription>
+                </div>
               </Alert>
             )}
 
             {isLoadingPosts || isLoadingPersonalized ? (
-              <div className="text-center text-muted-foreground py-8">
-                {isLoadingPersonalized ? "Personalizing your feed with AI..." : "Loading feed..."}
+              <div className="flex flex-col items-center justify-center py-16">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
+                <p className="text-muted-foreground">
+                  {isLoadingPersonalized ? "🤖 Personalizing your feed with AI..." : "Loading feed..."}
+                </p>
               </div>
             ) : displayFeed.length === 0 ? (
-              <div className="text-center py-12 px-4">
-                <p className="text-muted-foreground mb-4">No posts yet. Be the first to share!</p>
-                <Link to="/create-post">
-                  <Button>Create Your First Post</Button>
-                </Link>
-              </div>
+              <Card className="py-16 px-4 text-center border-dashed">
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                    <Plus className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-semibold">No posts yet</h3>
+                  <p className="text-muted-foreground">Be the first to share your knowledge and inspire others!</p>
+                  <Link to="/create-post">
+                    <Button size="lg" className="mt-4">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Create Your First Post
+                    </Button>
+                  </Link>
+                </div>
+              </Card>
             ) : (
               <>
                 {displayFeed.map((post: any) => (
