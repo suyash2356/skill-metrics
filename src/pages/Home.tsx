@@ -16,6 +16,7 @@ import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tansta
 import { getTopVideosByViews } from "@/lib/videosData";
 import { usePersonalizedFeed } from "@/hooks/usePersonalizedFeed";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { usePostInteractions } from "@/hooks/usePostInteractions";
 
 import type { Database } from '@/integrations/supabase/types';
 type Post = Database['public']['Tables']['posts']['Row'];
@@ -34,6 +35,7 @@ const Home = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { sendLikeNotification } = usePostInteractions();
 
   // AI-powered personalized recommendations
   const { 
@@ -176,12 +178,14 @@ const Home = () => {
   }, [data, notInterestedPosts, hiddenPosts]);
 
   const likeMutation = useMutation({
-    mutationFn: async ({ postId, hasLiked }: { postId: string, hasLiked: boolean }) => {
+    mutationFn: async ({ postId, hasLiked, postOwnerId, postTitle }: { postId: string, hasLiked: boolean, postOwnerId: string, postTitle: string }) => {
       if (!user) throw new Error("User not authenticated");
       if (hasLiked) {
         await supabase.from('likes').delete().match({ post_id: postId, user_id: user.id });
       } else {
         await supabase.from('likes').insert({ post_id: postId, user_id: user.id });
+        // Send notification to post owner
+        await sendLikeNotification(postId, postOwnerId, postTitle);
       }
       return { postId, hasLiked };
     },
@@ -413,7 +417,7 @@ const Home = () => {
                       post={post}
                       isLiked={likedPosts.has(post.id)}
                       isBookmarked={bookmarkedPosts.has(post.id)}
-                      onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id) })}
+                      onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id), postOwnerId: post.user_id, postTitle: post.title })}
                       onBookmark={() => bookmarkMutation.mutate(post.id)}
                       onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
                       onShare={() => setShareDialogOpen({ open: true, post })}
