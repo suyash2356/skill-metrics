@@ -9,11 +9,13 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, TrendingUp, Users, Play, Eye } from "lucide-react";
+import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { getTopVideosByViews } from "@/lib/videosData";
+import { usePersonalizedFeed } from "@/hooks/usePersonalizedFeed";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import type { Database } from '@/integrations/supabase/types';
 type Post = Database['public']['Tables']['posts']['Row'];
@@ -32,6 +34,13 @@ const Home = () => {
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+
+  // AI-powered personalized recommendations
+  const { 
+    data: personalizedData, 
+    isLoading: isLoadingPersonalized,
+    error: personalizedError 
+  } = usePersonalizedFeed();
 
   const { data: likedPosts = new Set<string>(), } = useQuery({
     queryKey: ['userLikes', user?.id],
@@ -306,6 +315,14 @@ const Home = () => {
   // New videos (right sidebar) - Top 4 by views from NewVideos page
   const topVideos = useMemo(() => getTopVideosByViews(4), []);
 
+  // Show personalized feed if available, otherwise show default feed
+  const displayFeed = useMemo(() => {
+    if (personalizedData && personalizedData.posts.length > 0) {
+      return personalizedData.posts;
+    }
+    return feed;
+  }, [personalizedData, feed]);
+
 
   return (
     <Layout>
@@ -361,9 +378,21 @@ const Home = () => {
 
           {/* Main Feed - Full width on mobile, centered on desktop */}
           <main className="w-full lg:col-span-6 px-0">
-            {isLoadingPosts ? (
-              <div className="text-center text-muted-foreground py-8">Loading feed...</div>
-            ) : feed.length === 0 ? (
+            {/* AI Personalization Banner */}
+            {personalizedData && personalizedData.posts.length > 0 && (
+              <Alert className="mb-4 border-primary/20 bg-primary/5">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <AlertDescription className="text-sm">
+                  <span className="font-semibold text-primary">AI-Personalized Feed</span> - Content tailored to your skills ({personalizedData.userProfile.skills.slice(0, 3).map((s: any) => s.name || s).join(", ")}) and experience level
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {isLoadingPosts || isLoadingPersonalized ? (
+              <div className="text-center text-muted-foreground py-8">
+                {isLoadingPersonalized ? "Personalizing your feed with AI..." : "Loading feed..."}
+              </div>
+            ) : displayFeed.length === 0 ? (
               <div className="text-center py-12 px-4">
                 <p className="text-muted-foreground mb-4">No posts yet. Be the first to share!</p>
                 <Link to="/create-post">
@@ -372,18 +401,30 @@ const Home = () => {
               </div>
             ) : (
               <>
-                {feed.map((post) => (
-                  <InstagramPost
-                    key={post.id}
-                    post={post}
-                    isLiked={likedPosts.has(post.id)}
-                    isBookmarked={bookmarkedPosts.has(post.id)}
-                    onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id) })}
-                    onBookmark={() => bookmarkMutation.mutate(post.id)}
-                    onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
-                    onShare={() => setShareDialogOpen({ open: true, post })}
-                    onHide={() => setHiddenPosts(prev => new Set(prev).add(post.id))}
-                  />
+                {displayFeed.map((post: any) => (
+                  <div key={post.id} className="relative">
+                    {post.score && post.score > 70 && (
+                      <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-primary/90 text-primary-foreground px-2 py-1 rounded-full text-xs font-medium">
+                        <Zap className="h-3 w-3" />
+                        Recommended
+                      </div>
+                    )}
+                    <InstagramPost
+                      post={post}
+                      isLiked={likedPosts.has(post.id)}
+                      isBookmarked={bookmarkedPosts.has(post.id)}
+                      onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id) })}
+                      onBookmark={() => bookmarkMutation.mutate(post.id)}
+                      onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
+                      onShare={() => setShareDialogOpen({ open: true, post })}
+                      onHide={() => setHiddenPosts(prev => new Set(prev).add(post.id))}
+                    />
+                    {post.recommendation_reason && post.score > 60 && (
+                      <div className="px-4 pb-3 text-xs text-muted-foreground italic">
+                        💡 {post.recommendation_reason}
+                      </div>
+                    )}
+                  </div>
                 ))}
                 {hasNextPage && (
                   <div className="flex justify-center py-6 px-4">
@@ -403,6 +444,40 @@ const Home = () => {
 
           {/* Right Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
+            {/* Recommended Roadmaps */}
+            {personalizedData && personalizedData.roadmaps.length > 0 && (
+              <Card className="border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <h3 className="font-semibold">Recommended for You</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {personalizedData.roadmaps.slice(0, 3).map((roadmap) => (
+                      <Link
+                        key={roadmap.id}
+                        to={`/roadmaps/${roadmap.id}`}
+                        className="block p-3 rounded-lg hover:bg-accent/50 transition-colors border border-border"
+                      >
+                        <div className="flex items-start justify-between mb-1">
+                          <h4 className="font-medium text-sm line-clamp-1">{roadmap.title}</h4>
+                          <Badge variant="secondary" className="text-xs">{roadmap.score}%</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                          {roadmap.description}
+                        </p>
+                        {roadmap.recommendation_reason && (
+                          <p className="text-xs text-primary italic">
+                            💡 {roadmap.recommendation_reason}
+                          </p>
+                        )}
+                      </Link>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">Trending Topics</h3>
