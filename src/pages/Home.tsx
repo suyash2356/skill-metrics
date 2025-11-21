@@ -27,6 +27,7 @@ type PostWithProfile = Post & {
 const Home = () => {
   const [commentDialogOpen, setCommentDialogOpen] = useState<{ open: boolean; postId: string | null }>({ open: false, postId: null });
   const [shareDialogOpen, setShareDialogOpen] = useState<{ open: boolean; post: PostWithProfile | null }>({ open: false, post: null });
+  const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -48,6 +49,22 @@ const Home = () => {
     queryFn: async () => {
       if (!user?.id) return new Set<string>();
       const { data, error } = await supabase.from('bookmarks').select('post_id').eq('user_id', user.id);
+      if (error) throw error;
+      return new Set((data || []).map((r) => r.post_id));
+    },
+    enabled: !!user,
+  });
+
+  // Fetch posts marked as "not interested"
+  const { data: notInterestedPosts = new Set<string>() } = useQuery({
+    queryKey: ['notInterestedPosts', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return new Set<string>();
+      const { data, error } = await supabase
+        .from('post_preferences')
+        .select('post_id')
+        .eq('user_id', user.id)
+        .eq('preference_type', 'not_interested');
       if (error) throw error;
       return new Set((data || []).map((r) => r.post_id));
     },
@@ -140,7 +157,14 @@ const Home = () => {
     staleTime: 60 * 1000, // 1 minute
   });
 
-  const feed = useMemo(() => data?.pages.flatMap(page => page.posts) || [], [data]);
+  const feed = useMemo(() => {
+    const allPosts = data?.pages.flatMap(page => page.posts) || [];
+    // Filter out not interested and hidden posts
+    return allPosts.filter(post => 
+      !notInterestedPosts.has(post.id) && 
+      !hiddenPosts.has(post.id)
+    );
+  }, [data, notInterestedPosts, hiddenPosts]);
 
   const likeMutation = useMutation({
     mutationFn: async ({ postId, hasLiked }: { postId: string, hasLiked: boolean }) => {
@@ -358,6 +382,7 @@ const Home = () => {
                     onBookmark={() => bookmarkMutation.mutate(post.id)}
                     onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
                     onShare={() => setShareDialogOpen({ open: true, post })}
+                    onHide={() => setHiddenPosts(prev => new Set(prev).add(post.id))}
                   />
                 ))}
                 {hasNextPage && (
