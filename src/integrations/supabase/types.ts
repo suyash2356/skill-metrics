@@ -320,6 +320,30 @@ export type Database = {
           },
         ]
       }
+      community_messages_summary: {
+        Row: {
+          community_id: string
+          created_at: string
+          excerpt: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          community_id: string
+          created_at: string
+          excerpt?: string | null
+          id: string
+          user_id: string
+        }
+        Update: {
+          community_id?: string
+          created_at?: string
+          excerpt?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       community_projects: {
         Row: {
           community_id: string | null
