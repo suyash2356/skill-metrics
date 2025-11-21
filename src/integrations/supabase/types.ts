@@ -816,6 +816,8 @@ export type Database = {
       roadmap_step_resources: {
         Row: {
           created_at: string
+          difficulty: string | null
+          duration: string | null
           id: string
           step_id: string
           title: string
@@ -824,6 +826,8 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          difficulty?: string | null
+          duration?: string | null
           id?: string
           step_id: string
           title: string
@@ -832,6 +836,8 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          difficulty?: string | null
+          duration?: string | null
           id?: string
           step_id?: string
           title?: string
@@ -850,46 +856,70 @@ export type Database = {
       }
       roadmap_steps: {
         Row: {
+          assessment_criteria: Json | null
+          common_pitfalls: Json | null
           completed: boolean
           created_at: string
           description: string | null
           due_date: string | null
           duration: string | null
+          estimated_hours: number | null
           id: string
+          learning_objectives: Json | null
+          milestones: Json | null
           notes: string | null
           order_index: number
+          prerequisites: Json | null
+          real_world_examples: Json | null
           roadmap_id: string
           task: string | null
+          tasks: Json | null
           title: string
           topics: string[] | null
           updated_at: string
         }
         Insert: {
+          assessment_criteria?: Json | null
+          common_pitfalls?: Json | null
           completed?: boolean
           created_at?: string
           description?: string | null
           due_date?: string | null
           duration?: string | null
+          estimated_hours?: number | null
           id?: string
+          learning_objectives?: Json | null
+          milestones?: Json | null
           notes?: string | null
           order_index: number
+          prerequisites?: Json | null
+          real_world_examples?: Json | null
           roadmap_id: string
           task?: string | null
+          tasks?: Json | null
           title: string
           topics?: string[] | null
           updated_at?: string
         }
         Update: {
+          assessment_criteria?: Json | null
+          common_pitfalls?: Json | null
           completed?: boolean
           created_at?: string
           description?: string | null
           due_date?: string | null
           duration?: string | null
+          estimated_hours?: number | null
           id?: string
+          learning_objectives?: Json | null
+          milestones?: Json | null
           notes?: string | null
           order_index?: number
+          prerequisites?: Json | null
+          real_world_examples?: Json | null
           roadmap_id?: string
           task?: string | null
+          tasks?: Json | null
           title?: string
           topics?: string[] | null
           updated_at?: string
