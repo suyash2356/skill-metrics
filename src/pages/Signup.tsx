@@ -70,9 +70,9 @@ const Signup = () => {
       } else {
         toast({
           title: "Account Created!",
-          description: "Please check your email to verify your account, then sign in.",
+          description: "Let's set up your profile",
         });
-        navigate('/login');
+        navigate('/onboarding');
       }
     } catch (error) {
       toast({
