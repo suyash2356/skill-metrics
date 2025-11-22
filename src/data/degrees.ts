@@ -1,0 +1,138 @@
+export interface Degree {
+  name: string;
+  field: string;
+  level: 'bachelors' | 'masters' | 'phd';
+  description: string;
+  duration: string;
+  topUniversities: string[];
+  careerOptions: string[];
+  avgSalary: string;
+  difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  relevantBackgrounds: ('student' | 'professional' | 'self-learner')[];
+  educationLevels: ('high-school' | 'bachelors' | 'masters' | 'phd')[];
+  relatedSkills: string[];
+  prerequisites: string[];
+}
+
+export const degrees: Degree[] = [
+  {
+    name: "Computer Science",
+    field: "Technology",
+    level: "bachelors",
+    description: "Study algorithms, programming, software engineering, and computational theory.",
+    duration: "4 years",
+    topUniversities: ["MIT", "Stanford", "CMU", "UC Berkeley", "Oxford"],
+    careerOptions: ["Software Engineer", "Data Scientist", "AI Researcher", "DevOps Engineer"],
+    avgSalary: "$90,000 - $150,000",
+    difficulty: "intermediate",
+    relevantBackgrounds: ["student"],
+    educationLevels: ["high-school"],
+    relatedSkills: ["Programming", "Algorithms", "Data Structures", "Mathematics"],
+    prerequisites: ["High school math", "Basic programming (helpful)"],
+  },
+  {
+    name: "Data Science",
+    field: "Technology",
+    level: "masters",
+    description: "Advanced training in statistics, machine learning, and big data analytics.",
+    duration: "1.5-2 years",
+    topUniversities: ["Stanford", "UC Berkeley", "Harvard", "MIT", "Columbia"],
+    careerOptions: ["Data Scientist", "ML Engineer", "Data Analyst", "Research Scientist"],
+    avgSalary: "$110,000 - $180,000",
+    difficulty: "advanced",
+    relevantBackgrounds: ["student", "professional"],
+    educationLevels: ["bachelors"],
+    relatedSkills: ["Python", "Statistics", "Machine Learning", "SQL"],
+    prerequisites: ["Bachelor's degree", "Programming experience", "Math background"],
+  },
+  {
+    name: "Cybersecurity",
+    field: "Technology",
+    level: "masters",
+    description: "Specialize in network security, cryptography, and ethical hacking.",
+    duration: "1.5-2 years",
+    topUniversities: ["Carnegie Mellon", "Purdue", "Georgia Tech", "NYU", "USC"],
+    careerOptions: ["Security Analyst", "Penetration Tester", "Security Architect", "CISO"],
+    avgSalary: "$100,000 - $170,000",
+    difficulty: "advanced",
+    relevantBackgrounds: ["student", "professional"],
+    educationLevels: ["bachelors"],
+    relatedSkills: ["Network Security", "Ethical Hacking", "Cryptography", "Linux"],
+    prerequisites: ["Bachelor's in CS or related", "Networking knowledge"],
+  },
+  {
+    name: "Artificial Intelligence",
+    field: "Technology",
+    level: "masters",
+    description: "Deep dive into machine learning, neural networks, and AI systems.",
+    duration: "1.5-2 years",
+    topUniversities: ["Stanford", "MIT", "CMU", "Oxford", "ETH Zurich"],
+    careerOptions: ["AI Researcher", "ML Engineer", "NLP Engineer", "Computer Vision Engineer"],
+    avgSalary: "$120,000 - $200,000",
+    difficulty: "expert",
+    relevantBackgrounds: ["student", "professional"],
+    educationLevels: ["bachelors", "masters"],
+    relatedSkills: ["Python", "Deep Learning", "Mathematics", "Research"],
+    prerequisites: ["Strong math", "Programming", "ML fundamentals"],
+  },
+  {
+    name: "Software Engineering",
+    field: "Technology",
+    level: "bachelors",
+    description: "Focus on software design, development methodologies, and system architecture.",
+    duration: "4 years",
+    topUniversities: ["MIT", "Stanford", "UC Berkeley", "Waterloo", "UIUC"],
+    careerOptions: ["Software Engineer", "Full-Stack Developer", "System Architect", "Tech Lead"],
+    avgSalary: "$85,000 - $145,000",
+    difficulty: "intermediate",
+    relevantBackgrounds: ["student"],
+    educationLevels: ["high-school"],
+    relatedSkills: ["Programming", "Software Design", "Testing", "Agile"],
+    prerequisites: ["High school math", "Problem-solving skills"],
+  },
+  {
+    name: "Business Administration (MBA)",
+    field: "Business",
+    level: "masters",
+    description: "Comprehensive business education covering finance, strategy, and leadership.",
+    duration: "2 years",
+    topUniversities: ["Harvard", "Stanford", "Wharton", "INSEAD", "London Business School"],
+    careerOptions: ["Product Manager", "Consultant", "Executive", "Entrepreneur"],
+    avgSalary: "$100,000 - $180,000",
+    difficulty: "advanced",
+    relevantBackgrounds: ["professional"],
+    educationLevels: ["bachelors"],
+    relatedSkills: ["Leadership", "Strategy", "Finance", "Communication"],
+    prerequisites: ["Bachelor's degree", "Work experience (2-5 years)"],
+  },
+  {
+    name: "Product Design",
+    field: "Design",
+    level: "bachelors",
+    description: "Learn user-centered design, prototyping, and product development.",
+    duration: "4 years",
+    topUniversities: ["RISD", "Parsons", "Stanford d.school", "Royal College of Art"],
+    careerOptions: ["Product Designer", "UX Designer", "Design Lead", "Design Researcher"],
+    avgSalary: "$70,000 - $130,000",
+    difficulty: "intermediate",
+    relevantBackgrounds: ["student"],
+    educationLevels: ["high-school"],
+    relatedSkills: ["Design Thinking", "Prototyping", "User Research", "Figma"],
+    prerequisites: ["Portfolio", "Creativity", "Basic design skills"],
+  },
+  {
+    name: "Cloud Computing",
+    field: "Technology",
+    level: "masters",
+    description: "Master cloud architecture, distributed systems, and infrastructure management.",
+    duration: "1.5-2 years",
+    topUniversities: ["Georgia Tech", "UC Berkeley", "MIT", "Stanford", "CMU"],
+    careerOptions: ["Cloud Architect", "DevOps Engineer", "Site Reliability Engineer", "Solutions Architect"],
+    avgSalary: "$105,000 - $175,000",
+    difficulty: "advanced",
+    relevantBackgrounds: ["professional", "student"],
+    educationLevels: ["bachelors"],
+    relatedSkills: ["AWS", "Azure", "GCP", "Kubernetes", "Terraform"],
+    prerequisites: ["Bachelor's in CS", "Programming", "Networking"],
+  },
+];
