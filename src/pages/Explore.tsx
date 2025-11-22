@@ -33,12 +33,16 @@ import "swiper/css/autoplay";
 import { motion } from "framer-motion";
 import { fetchExploreSuggestions } from "@/api/searchAPI";
 import { debounce } from "lodash";
+import { usePersonalizedExplore } from "@/hooks/usePersonalizedExplore";
 
 function Explore() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  
+  // Get personalized content based on user profile
+  const personalizedData = usePersonalizedExplore();
 
   const fetchSuggestions = debounce(async (q: string) => {
     if (!q) return setSuggestions([]);
@@ -186,98 +190,50 @@ function Explore() {
       }}
       className="pb-8"
     >
-      {[
-        {
-          title: "Artificial Intelligence",
-          icon: Brain,
-          color: "from-indigo-500 to-purple-500",
-          description: "Learn modern AI tools, ML algorithms, and neural networks.",
-          link: "https://www.cs.toronto.edu/~hinton/absps/NatureDeepReview.pdf", // Deep Learning (Nature review)
-        },
-        {
-          title: "Data Science",
-          icon: Database,
-          color: "from-blue-500 to-cyan-500",
-          description: "Analyze data, visualize insights, and build predictive models.",
-          link: "https://courses.csail.mit.edu/18.337/2015/docs/50YearsDataScience.pdf", // Donoho: 50 Years of Data Science
-        },
-        {
-          title: "Cloud Computing",
-          icon: Cloud,
-          color: "from-sky-500 to-indigo-500",
-          description: "Master AWS, Azure, and Google Cloud to scale systems globally.",
-          link: "https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-145.pdf", // NIST SP 800-145
-        },
-        {
-          title: "Cybersecurity",
-          icon: Shield,
-          color: "from-rose-500 to-red-500",
-          description: "Protect data and networks using ethical hacking and security tools.",
-          link: "https://www.cl.cam.ac.uk/teaching/1011/R01/75-protection.pdf", // Saltzer & Schroeder principles
-        },
-        {
-          title: "Blockchain",
-          icon: Layers,
-          color: "from-amber-500 to-orange-500",
-          description: "Dive into Web3, smart contracts, and decentralized finance.",
-          link: "https://bitcoin.org/bitcoin.pdf", // Bitcoin whitepaper
-        },
-        {
-          title: "DevOps",
-          icon: Zap,
-          color: "from-green-500 to-emerald-500",
-          description: "Automate deployments, CI/CD pipelines, and Kubernetes clusters.",
-          link: "https://services.google.com/fh/files/misc/2024_final_dora_report.pdf", // DORA 2024 (PDF)
-        },
-        {
-          title: "Software Development",
-          icon: Laptop,
-          color: "from-purple-600 to-pink-500",
-          description: "Build modern apps with React, Node.js, and full-stack tools.",
-          link: "https://www.cs.unc.edu/techreports/86-020.pdf", // Brooks: No Silver Bullet
-        },
-        {
-          title: "Product Management",
-          icon: Rocket,
-          color: "from-indigo-600 to-sky-500",
-          description: "Learn agile strategy, user research, and product execution.",
-          link: "https://theengineer.markallengroup.com/production/content/uploads/2015/11/Idea-to-Launch-Stage-Gate-Model.pdf", // Stage‑Gate overview
-        },
-      ].map((category, idx) => (
-        <SwiperSlide key={idx}>
-          <Card
-            onClick={() => {
-              if ((category as any).link) window.open((category as any).link, '_blank');
-              else handleCategoryClick(category.title);
-            }}
-            className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
-          >
-            <CardHeader className="flex items-center gap-3">
-              <div
-                className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}
-              >
-                <category.icon className="h-6 w-6" />
-              </div>
-              <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">{category.description}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if ((category as any).link) window.open((category as any).link, '_blank');
-                  else handleCategoryClick(category.title);
-                }}
-              >
-                Explore
-              </Button>
-            </CardContent>
-          </Card>
-        </SwiperSlide>
-      ))}
+      {personalizedData.techCategories.map((scoredCategory, idx) => {
+        const category = scoredCategory.item;
+        const iconMap: any = { Brain, Database, Cloud, Shield, Layers, Zap, Laptop, Rocket };
+        const IconComponent = iconMap[category.icon] || Brain;
+        
+        return (
+          <SwiperSlide key={idx}>
+            <Card
+              onClick={() => {
+                if (category.link) window.open(category.link, '_blank');
+                else handleCategoryClick(category.title);
+              }}
+              className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+            >
+              <CardHeader className="flex items-center gap-3">
+                <div
+                  className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}
+                >
+                  <IconComponent className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
+                {scoredCategory.reasons[0] && (
+                  <Badge variant="secondary" className="text-xs">{scoredCategory.reasons[0]}</Badge>
+                )}
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">{category.description}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (category.link) window.open(category.link, '_blank');
+                    else handleCategoryClick(category.title);
+                  }}
+                >
+                  Explore
+                </Button>
+              </CardContent>
+            </Card>
+          </SwiperSlide>
+        );
+      })}
     </Swiper>
 
     {/* Popular Non-Tech Fields: moving opposite direction */}
@@ -300,71 +256,44 @@ function Explore() {
         }}
         className="pb-6"
       >
-        {[
-          {
-            title: 'Design',
-            icon: PenTool,
-            color: 'from-pink-500 to-rose-500',
-            description: 'UI/UX, visual design and product aesthetics.',
-            link: 'https://dl.acm.org/doi/pdf/10.1145/97243.97281', // Nielsen & Molich 1990
-          },
-          {
-            title: 'Business & Management',
-            icon: Map,
-            color: 'from-indigo-500 to-sky-500',
-            description: 'Strategy, operations, and leadership skills.',
-            link: 'https://www.sfu.ca/~wainwrig/Econ400/jensen-meckling.pdf', // Jensen & Meckling 1976
-          },
-          {
-            title: 'Creative Writing',
-            icon: BookOpen,
-            color: 'from-amber-500 to-orange-500',
-            description: 'Storytelling, content creation and editing.',
-            link: 'https://jonahberger.com/wp-content/uploads/2013/02/ViralityB.pdf', // Writing for virality insights
-          },
-          {
-            title: 'Marketing',
-            icon: TrendingUp,
-            color: 'from-green-500 to-emerald-500',
-            description: 'Digital marketing, branding and growth tactics.',
-            link: 'https://jonahberger.com/wp-content/uploads/2013/02/ViralityB.pdf', // Berger & Milkman 2012
-          },
-          {
-            title: 'Photography',
-            icon: Globe,
-            color: 'from-violet-500 to-purple-500',
-            description: 'Capture, edit and present compelling images.',
-            link: 'https://arxiv.org/abs/1610.00838', // Image Aesthetic Assessment survey
-          },
-        ].map((category, idx) => (
-          <SwiperSlide key={`nontech-${idx}`}>
-            <Card
-              onClick={() => {
-                if (category.link) window.open(category.link, '_blank');
-                else handleCategoryClick(category.title);
-              }}
-              className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
-            >
-              <CardHeader className="flex items-center gap-3">
-                <div className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}>
-                  <category.icon className="h-6 w-6" />
-                </div>
-                <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">{category.description}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
-                  onClick={(e) => { e.stopPropagation(); if (category.link) window.open(category.link, '_blank'); else handleCategoryClick(category.title); }}
-                >
-                  Explore
-                </Button>
-              </CardContent>
-            </Card>
-          </SwiperSlide>
-        ))}
+        {personalizedData.nonTechCategories.map((scoredCategory, idx) => {
+          const category = scoredCategory.item;
+          const iconMap: any = { PenTool, Map, BookOpen, TrendingUp, Globe };
+          const IconComponent = iconMap[category.icon] || BookOpen;
+          
+          return (
+            <SwiperSlide key={`nontech-${idx}`}>
+              <Card
+                onClick={() => {
+                  if (category.link) window.open(category.link, '_blank');
+                  else handleCategoryClick(category.title);
+                }}
+                className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+              >
+                <CardHeader className="flex items-center gap-3">
+                  <div className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}>
+                    <IconComponent className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
+                  {scoredCategory.reasons[0] && (
+                    <Badge variant="secondary" className="text-xs">{scoredCategory.reasons[0]}</Badge>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">{category.description}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                    onClick={(e) => { e.stopPropagation(); if (category.link) window.open(category.link, '_blank'); else handleCategoryClick(category.title); }}
+                  >
+                    Explore
+                  </Button>
+                </CardContent>
+              </Card>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </div>
 
@@ -388,38 +317,39 @@ function Explore() {
         }}
         className="pb-6"
       >
-        {[
-          { title: 'GRE', icon: GraduationCap, color: 'from-indigo-500 to-blue-500', description: 'Graduate record examinations prep.', link: 'https://www.in.ets.org/gre/test-takers/general-test/about.html' },
-          { title: 'GMAT', icon: GraduationCap, color: 'from-green-500 to-emerald-500', description: 'Business school entrance test prep.', link: 'https://www.mba.com/exams/gmat-exam' },
-          { title: 'CAT', icon: GraduationCap, color: 'from-rose-500 to-red-500', description: 'Management entrance exam prep.', link: 'https://iimcat.ac.in' },
-          { title: 'JEE', icon: GraduationCap, color: 'from-yellow-500 to-amber-500', description: 'Engineering entrance exam prep.', link: 'https://jeemain.nta.nic.in' },
-          { title: 'NEET', icon: GraduationCap, color: 'from-pink-500 to-purple-500', description: 'Medical entrance exam prep.', link: 'https://neet.nta.nic.in' },
-        ].map((exam, idx) => (
-          <SwiperSlide key={`exam-${idx}`}>
-            <Card
-              onClick={() => { if (exam.link) window.open(exam.link, '_blank'); else handleCategoryClick(exam.title); }}
-              className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
-            >
-              <CardHeader className="flex items-center gap-3">
-                <div className={`p-3 rounded-full bg-gradient-to-r ${exam.color} text-white shadow-lg`}>
-                  <exam.icon className="h-6 w-6" />
-                </div>
-                <CardTitle className="text-lg font-bold">{exam.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground text-sm">{exam.description}</p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
-                  onClick={(e) => { e.stopPropagation(); if (exam.link) window.open(exam.link, '_blank'); else handleCategoryClick(exam.title); }}
-                >
-                  Explore
-                </Button>
-              </CardContent>
-            </Card>
-          </SwiperSlide>
-        ))}
+        {personalizedData.exams.map((scoredExam, idx) => {
+          const exam = scoredExam.item;
+          
+          return (
+            <SwiperSlide key={`exam-${idx}`}>
+              <Card
+                onClick={() => { if (exam.link) window.open(exam.link, '_blank'); else handleCategoryClick(exam.title); }}
+                className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+              >
+                <CardHeader className="flex items-center gap-3">
+                  <div className={`p-3 rounded-full bg-gradient-to-r ${exam.color} text-white shadow-lg`}>
+                    <GraduationCap className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-lg font-bold">{exam.title}</CardTitle>
+                  {scoredExam.reasons[0] && (
+                    <Badge variant="secondary" className="text-xs">{scoredExam.reasons[0]}</Badge>
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground text-sm">{exam.description}</p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                    onClick={(e) => { e.stopPropagation(); if (exam.link) window.open(exam.link, '_blank'); else handleCategoryClick(exam.title); }}
+                  >
+                    Explore
+                  </Button>
+                </CardContent>
+              </Card>
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </div>
   </section>
@@ -1096,133 +1026,57 @@ sources: ["PW official site", "PW Vidyapeeth & Pathshala page", "PW NEET program
     </h2>
 
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {[
-        {
-          title: "Become a Data Scientist",
-          steps: 7,
-          duration: "6 months",
-          icon: Database,
-          color: "from-blue-500 to-cyan-500",
-          roadmap: [
-            { label: "Month 1", items: ["Python foundations (NumPy, Pandas, plotting)", "Statistics basics: distributions, inference, hypothesis tests", "Linear algebra essentials (vectors, matrices)"] },
-            { label: "Month 2", items: ["Machine Learning Crash Course topics: regression, classification, overfitting, regularization", "Model validation: train/val/test, cross‑validation, metrics (RMSE, AUC)", "Feature engineering and preprocessing"] },
-            { label: "Month 3", items: ["Supervised ML toolbox: tree‑based methods, ensembles, gradient boosting", "Unsupervised: clustering, dimensionality reduction", "Experiment tracking and reproducibility"] },
-            { label: "Month 4", items: ["Deep learning basics: MLPs, CNN/RNN overview, modern optimizers", "Intro to LLMs and embeddings concepts", "Data pipelines: cleaning at scale, scheduling basics"] },
-            { label: "Month 5", items: ["End‑to‑end project: EDA → model → evaluation → report", "Model monitoring concepts: drift, data quality checks", "Communication: notebooks to executive summaries"] },
-            { label: "Month 6", items: ["Portfolio polishing: 2–3 strong case studies", "Interview prep: SQL, ML theory, statistics questions", "Capstone presentation"] },
-          ],
-          summary: "A 6‑month plan from core Python and statistics to ML, deep learning basics, and a capstone portfolio."
-        },
-        {
-          title: "AI Engineer Roadmap",
-          steps: 9,
-          duration: "8 months",
-          icon: Brain,
-          color: "from-purple-500 to-indigo-500",
-          roadmap: [
-            { label: "Month 1", items: ["Python/NumPy proficiency, vectorization", "ML foundations refresh: linear/logistic regression, regularization", "Data handling and evaluation metrics"] },
-            { label: "Month 2", items: ["Neural nets from scratch: forward/backprop, activations, loss functions", "Training essentials: initializations, batch norm, dropout", "Experiment logging"] },
-            { label: "Month 3", items: ["Computer vision intro: CNNs, augmentations", "NLP classical: bag‑of‑words, TF‑IDF, word embeddings", "Sequence modeling basics"] },
-            { label: "Month 4", items: ["Modern NLP: transformer intuition, tokenization, embeddings use", "Prompting strategies and evaluation", "Responsible AI basics"] },
-            { label: "Month 5", items: ["MLOps basics: packaging, environments, model registry", "Serving: batch vs. online inference, latency/SLOs", "Monitoring: performance + data drift"] },
-            { label: "Month 6", items: ["Retrieval‑augmented generation (RAG) basics", "Vector databases fundamentals", "Guardrails and evaluations"] },
-            { label: "Month 7", items: ["Applied project: build an AI app (RAG or CV/NLP) end‑to‑end", "Write technical design + postmortem", "Iterate with user feedback"] },
-            { label: "Month 8", items: ["Scale and cost tuning", "Security and privacy considerations", "Final polish and demo"] },
-          ],
-          summary: "An 8‑month path from ML and deep learning fundamentals to transformers, RAG, and MLOps practices."
-        },
-        {
-          title: "Full-Stack Developer",
-          steps: 10,
-          duration: "9 months",
-          icon: Laptop,
-          color: "from-pink-500 to-rose-500",
-          roadmap: [
-            { label: "Month 1", items: ["Web basics: HTML semantics, CSS layout (Flexbox/Grid)", "Core JavaScript (ES6+): scope, async/await, fetch API"] },
-            { label: "Month 2", items: ["Frontend workflow: bundlers, linting, formatting", "React fundamentals: components, props/state, hooks"] },
-            { label: "Month 3", items: ["React routing and forms", "TypeScript basics in React", "UI patterns and accessibility"] },
-            { label: "Month 4", items: ["Backend with Node.js + Express", "REST design, auth (sessions/JWT), validation", "Databases: SQL or NoSQL and ORM/ODM"] },
-            { label: "Month 5", items: ["Testing: unit/integration/e2e", "API testing strategies and tools", "Logging and error handling"] },
-            { label: "Month 6", items: ["Full‑stack project 1: MVP with CRUD, auth, deployment", "Environment config and secrets"] },
-            { label: "Month 7", items: ["Advanced frontend patterns: state management, performance", "Advanced backend: caching, queues, WebSockets"] },
-            { label: "Month 8", items: ["DevOps basics for apps: CI, containerization, cloud deploy", "Observability essentials"] },
-            { label: "Month 9", items: ["Full‑stack project 2: production‑grade app", "Docs, DX polish, portfolio + interview prep"] },
-          ],
-          summary: "A 9‑month, project‑heavy sequence from web fundamentals to React + Node/DB, testing, and production deployment."
-        },
-        {
-          title: "Cybersecurity Expert",
-          steps: 8,
-          duration: "7 months",
-          icon: Shield,
-          color: "from-red-500 to-orange-500",
-          roadmap: [
-            { label: "Month 1", items: ["Networking & OS basics (Linux/Windows)", "Security principles: CIA triad, least privilege"] },
-            { label: "Month 2", items: ["Threats & vulns: OWASP Top 10 intro", "Secure coding basics and code review"] },
-            { label: "Month 3", items: ["Blue team: SIEM basics, logs, incident response runbooks", "Identity & access: MFA, RBAC, SSO"] },
-            { label: "Month 4", items: ["Red team intro: recon, basic exploitation in labs", "Vuln management: scanning and prioritization"] },
-            { label: "Month 5", items: ["Cloud security foundations (IAM, network segmentation)", "KMS, secrets, backup & recovery drills"] },
-            { label: "Month 6", items: ["Governance, risk, and compliance basics", "Security monitoring and tabletop exercises"] },
-            { label: "Month 7", items: ["Capstone: secure a small environment end‑to‑end", "Posture report and improvement plan"] },
-          ],
-          summary: "A 7‑month track aligned to workforce roles and KSAs with blue/red/cloud security touchpoints."
-        },
-        {
-          title: "Cloud & DevOps Engineer",
-          steps: 6,
-          duration: "5 months",
-          icon: Cloud,
-          color: "from-sky-500 to-indigo-500",
-          roadmap: [
-            { label: "Month 1", items: ["Cloud fundamentals: compute, storage, networking", "CLI + IaC basics (e.g., Terraform workflow)"] },
-            { label: "Month 2", items: ["Containers + images, Dockerfiles", "Kubernetes basics: pods, services, deployments"] },
-            { label: "Month 3", items: ["CI/CD pipelines and artifact management", "Config management and policy as code overview"] },
-            { label: "Month 4", items: ["Observability: logging, metrics, tracing; SLOs/SLIs", "Reliability practices: rollback, chaos drills"] },
-            { label: "Month 5", items: ["Cost & performance tuning", "Security baselines and incident playbooks; capstone deploy"] },
-          ],
-          summary: "A 5‑month sequence emphasizing CI/CD, containers/K8s, observability, and reliability practices."
-        },
-        {
-          title: "Product Manager",
-          steps: 5,
-          duration: "4 months",
-          icon: Rocket,
-          color: "from-indigo-600 to-purple-600",
-          roadmap: [
-            { label: "Month 1", items: ["User research & problem discovery", "Opportunity sizing and success metrics (north star)"] },
-            { label: "Month 2", items: ["Prioritization frameworks (e.g., RICE/ICE)", "MVP scoping and hypothesis statements"] },
-            { label: "Month 3", items: ["Delivery: agile rituals, roadmap comms, stakeholder mgmt", "Design collaboration and heuristics awareness"] },
-            { label: "Month 4", items: ["Experimentation and analytics", "Post‑launch retros, iteration, and storytelling"] },
-          ],
-          summary: "A 4‑month PM arc from discovery and prioritization to delivery, measurement, and iteration."
-        },
-      ].map((path, idx) => (
-        <motion.div key={idx} whileHover={{ scale: 1.04 }} transition={{ type: "spring", stiffness: 250 }}>
-          {/* MINI CARD: small footprint, minimal info */}
-          <Card
-            onClick={() => setSelectedPath(path)}
-            className="bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer"
-          >
-            <CardHeader className="flex items-center gap-3 p-4">
-              <div className={`p-3 rounded-full bg-gradient-to-r ${path.color} text-white shadow-lg`}>
-                <path.icon className="h-6 w-6" />
-              </div>
-              <CardTitle className="text-base font-bold">{path.title}</CardTitle>
-            </CardHeader>
-            <CardContent className="pt-0 pb-4 px-4">
-              <p className="text-xs text-muted-foreground">{path.steps} Steps • {path.duration}</p>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-3 w-full hover:bg-green-600 hover:text-white transition-colors"
-                onClick={(e) => { e.stopPropagation(); setSelectedPath(path); }}
-              >
-                Start Path
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      ))}
+      {personalizedData.learningPaths.map((scoredPath, idx) => {
+        const path = scoredPath.item;
+        const iconMap: any = { Brain, Database, Laptop, Shield, Cloud, Rocket };
+        const IconComponent = iconMap[path.roadmap[0]?.phase?.includes('AI') ? 'Brain' : 
+                              path.title.includes('Data') ? 'Database' :
+                              path.title.includes('Developer') || path.title.includes('Full') ? 'Laptop' :
+                              path.title.includes('Cyber') || path.title.includes('Security') ? 'Shield' :
+                              path.title.includes('Cloud') || path.title.includes('DevOps') ? 'Cloud' :
+                              'Rocket'] || Rocket;
+        
+        const colorMap: any = {
+          'Data Scientist': 'from-blue-500 to-cyan-500',
+          'AI/ML Engineer': 'from-purple-500 to-indigo-500',
+          'Full-Stack Web Developer': 'from-pink-500 to-rose-500',
+          'Cybersecurity Analyst': 'from-red-500 to-orange-500',
+          'Cloud DevOps Engineer': 'from-sky-500 to-indigo-500',
+          'UI/UX Designer': 'from-indigo-600 to-purple-600'
+        };
+        const pathColor = colorMap[path.title] || 'from-green-500 to-emerald-500';
+        
+        return (
+          <motion.div key={idx} whileHover={{ scale: 1.04 }} transition={{ type: "spring", stiffness: 250 }}>
+            <Card
+              onClick={() => setSelectedPath(path)}
+              className="bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer"
+            >
+              <CardHeader className="flex items-center gap-3 p-4">
+                <div className={`p-3 rounded-full bg-gradient-to-r ${pathColor} text-white shadow-lg`}>
+                  <IconComponent className="h-6 w-6" />
+                </div>
+                <CardTitle className="text-base font-bold">{path.title}</CardTitle>
+                {scoredPath.reasons[0] && (
+                  <Badge variant="secondary" className="text-xs">{scoredPath.reasons[0]}</Badge>
+                )}
+              </CardHeader>
+              <CardContent className="pt-0 pb-4 px-4">
+                <p className="text-xs text-muted-foreground">{path.roadmap.length} Steps • {path.duration}</p>
+                <p className="text-xs text-muted-foreground mt-1">{path.difficulty} level</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mt-3 w-full hover:bg-green-600 hover:text-white transition-colors"
+                  onClick={(e) => { e.stopPropagation(); setSelectedPath(path); }}
+                >
+                  Start Path
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        );
+      })}
     </div>
 
     {/* Big Card Modal: month-by-month interactive roadmap */}
@@ -1240,16 +1094,22 @@ sources: ["PW official site", "PW Vidyapeeth & Pathshala page", "PW NEET program
               <div>
                 <CardTitle className="text-2xl">{selectedPath.title}</CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {selectedPath.steps} Steps • {selectedPath.duration}
+                  {selectedPath.roadmap?.length || 0} Steps • {selectedPath.duration}
                 </p>
               </div>
             </div>
           </CardHeader>
 
           <CardContent className="space-y-4">
-            {selectedPath.summary && (
+            {selectedPath.description && (
               <div className="rounded-md border p-3 text-sm">
-                {selectedPath.summary}
+                {selectedPath.description}
+              </div>
+            )}
+            
+            {selectedPath.targetRole && (
+              <div className="text-sm">
+                <span className="font-semibold">Target Role:</span> {selectedPath.targetRole}
               </div>
             )}
 
