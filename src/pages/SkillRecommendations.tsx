@@ -4,8 +4,11 @@ import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { fetchRecommendations, Recommendation } from "@/api/searchAPI";
 import { Book, Layers, Youtube, Globe, Brain, Star } from "lucide-react";
+import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
+import { getPersonalizedResources } from "@/lib/resourceMatcher";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -41,6 +44,7 @@ export default function SkillRecommendations() {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const { profileDetails } = useUserProfileDetails();
 
   const skillKey = q.toLowerCase();
 
@@ -66,11 +70,25 @@ export default function SkillRecommendations() {
     return () => { mounted = false; };
   }, [q]);
 
+  // Personalize recommendations based on user profile
+  const personalizedRecommendations = useMemo(() => {
+    if (!profileDetails || recommendations.length === 0) return recommendations;
+    
+    const userProfile = {
+      experienceLevel: profileDetails.experience_level || 'beginner',
+      skills: (profileDetails.skills || []).map((s: any) => s.name),
+      learningGoals: profileDetails.bio?.toLowerCase().split(/\s+/) || [],
+      prefersFree: !profileDetails.company,
+    };
+
+    return getPersonalizedResources(recommendations, userProfile);
+  }, [recommendations, profileDetails]);
+
   const counts = useMemo(() => {
     const map: Record<string, number> = {};
-    recommendations.forEach((r) => { map[r.type] = (map[r.type] || 0) + 1; });
+    personalizedRecommendations.forEach((r) => { map[r.type] = (map[r.type] || 0) + 1; });
     return map;
-  }, [recommendations]);
+  }, [personalizedRecommendations]);
 
   const tabs = [
     { key: "all", label: "All" },
@@ -78,7 +96,7 @@ export default function SkillRecommendations() {
     { key: "book", label: `Books (${counts.book || 0})` },
     { key: "course", label: `Courses (${counts.course || 0})` },
     { key: "website", label: `Websites (${counts.website || 0})` },
-    { key: "other", label: `Other (${recommendations.length - (counts.youtube || 0) - (counts.book || 0) - (counts.course || 0) - (counts.website || 0)})` },
+    { key: "other", label: `Other (${personalizedRecommendations.length - (counts.youtube || 0) - (counts.book || 0) - (counts.course || 0) - (counts.website || 0)})` },
   ];
 
   function typeIcon(t: Recommendation["type"]) {
@@ -98,6 +116,11 @@ export default function SkillRecommendations() {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h1 className="text-3xl md:text-4xl font-extrabold">{q ? q : "Skill"} Recommendations</h1>
+              {profileDetails && (
+                <Badge variant="secondary" className="mt-2">
+                  Personalized for {profileDetails.experience_level || 'your'} level
+                </Badge>
+              )}
               <p className="text-muted-foreground mt-2 max-w-2xl">
                 {skillDescriptions[skillKey] || `Curated resources, courses, books and videos to help you learn ${q || 'this skill'} effectively.`}
               </p>
