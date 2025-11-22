@@ -50,7 +50,7 @@ serve(async (req) => {
         category,
         tags,
         created_at,
-        profiles!inner(full_name)
+        user_id
       `)
       .order("created_at", { ascending: false })
       .limit(50);
