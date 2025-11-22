@@ -14,21 +14,32 @@ export function useFollowRequests() {
     queryKey: ['pendingFollowRequests', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
+      
+      // Fetch follow requests
+      const { data: requests, error: requestsError } = await supabase
         .from('follow_requests')
-        .select(`
-          id,
-          requester_id,
-          status,
-          created_at,
-          requester:profiles!follow_requests_requester_id_fkey(user_id, full_name, avatar_url)
-        `)
+        .select('id, requester_id, status, created_at')
         .eq('requested_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data || [];
+      if (requestsError) throw requestsError;
+      if (!requests || requests.length === 0) return [];
+
+      // Fetch profiles for all requesters
+      const requesterIds = requests.map(r => r.requester_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', requesterIds);
+      
+      if (profilesError) throw profilesError;
+
+      // Combine data
+      return requests.map(request => ({
+        ...request,
+        requester: profiles?.find(p => p.user_id === request.requester_id) || null
+      }));
     },
     enabled: !!user?.id,
   });
@@ -38,21 +49,32 @@ export function useFollowRequests() {
     queryKey: ['sentFollowRequests', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      const { data, error } = await supabase
+      
+      // Fetch follow requests
+      const { data: requests, error: requestsError } = await supabase
         .from('follow_requests')
-        .select(`
-          id,
-          requested_id,
-          status,
-          created_at,
-          requested:profiles!follow_requests_requested_id_fkey(user_id, full_name, avatar_url)
-        `)
+        .select('id, requested_id, status, created_at')
         .eq('requester_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data || [];
+      if (requestsError) throw requestsError;
+      if (!requests || requests.length === 0) return [];
+
+      // Fetch profiles for all requested users
+      const requestedIds = requests.map(r => r.requested_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', requestedIds);
+      
+      if (profilesError) throw profilesError;
+
+      // Combine data
+      return requests.map(request => ({
+        ...request,
+        requested: profiles?.find(p => p.user_id === request.requested_id) || null
+      }));
     },
     enabled: !!user?.id,
   });
