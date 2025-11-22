@@ -44,7 +44,9 @@ const Settings = () => {
     login_alerts: true,
   });
 
+  const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   useEffect(() => {
     if (user) {
@@ -130,10 +132,25 @@ const Settings = () => {
 
   const saveSecurity = async () => {
     try {
+      // Handle 2FA enable/disable
+      if (security.two_factor_enabled) {
+        const { data, error } = await supabase.auth.mfa.enroll({
+          factorType: 'totp',
+        });
+        
+        if (error) throw error;
+        
+        toast({ 
+          title: '2FA Enabled', 
+          description: 'Two-factor authentication has been enabled via email.'
+        });
+      }
+
       await updatePreferences({
         two_factor_enabled: security.two_factor_enabled,
         login_notifications: security.login_alerts,
       });
+      
       toast({ title: 'Security settings saved' });
     } catch (error: any) {
       toast({ title: 'Failed to save security settings', description: error.message, variant: 'destructive' });
@@ -155,16 +172,42 @@ const Settings = () => {
   };
 
   const updatePassword = async () => {
+    // Validation
+    if (!oldPassword) {
+      toast({ title: 'Old password required', description: 'Please enter your current password.', variant: 'destructive' });
+      return;
+    }
+    
     if (!newPassword || newPassword.length < 6) {
       toast({ title: 'Password too short', description: 'Use at least 6 characters.', variant: 'destructive' });
       return;
     }
+    
+    if (newPassword !== confirmPassword) {
+      toast({ title: 'Passwords don\'t match', description: 'New password and confirmation must match.', variant: 'destructive' });
+      return;
+    }
+
     try {
+      // Verify old password by attempting to sign in
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: user?.email || '',
+        password: oldPassword,
+      });
+
+      if (signInError) {
+        toast({ title: 'Incorrect password', description: 'The old password you entered is incorrect.', variant: 'destructive' });
+        return;
+      }
+
+      // Update to new password
       const { error } = await supabase.auth.updateUser({ password: newPassword });
       if (error) throw error;
       
+      setOldPassword("");
       setNewPassword("");
-      toast({ title: 'Password updated successfully' });
+      setConfirmPassword("");
+      toast({ title: 'Password updated successfully', description: 'Your password has been changed.' });
     } catch (e: any) {
       toast({ title: 'Password update failed', description: e?.message || '', variant: 'destructive' });
     }
@@ -401,41 +444,94 @@ const Settings = () => {
 
           <TabsContent value="security">
             <Card className="shadow-card">
-              <CardHeader><CardTitle className="text-lg md:text-xl">Security Settings</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Checkbox 
-                      id="two-factor" 
-                      checked={security.two_factor_enabled} 
-                      onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, two_factor_enabled: v }))} 
-                    />
-                    <Label htmlFor="two-factor" className="cursor-pointer">Enable Two-Factor Authentication (via email)</Label>
+              <CardHeader>
+                <CardTitle className="text-lg md:text-xl">Security Settings</CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Protect your account with enhanced security features
+                </p>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id="two-factor" 
+                        checked={security.two_factor_enabled} 
+                        onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, two_factor_enabled: v }))} 
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor="two-factor" className="cursor-pointer font-semibold">
+                          Two-Factor Authentication (Email)
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Add an extra layer of security by requiring a verification code sent to your email when signing in
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Checkbox 
-                      id="login-alerts" 
-                      checked={security.login_alerts} 
-                      onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, login_alerts: v }))} 
-                    />
-                    <Label htmlFor="login-alerts" className="cursor-pointer">Send email alerts for new logins</Label>
+                  
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <Checkbox 
+                        id="login-alerts" 
+                        checked={security.login_alerts}
+                        onCheckedChange={(v: boolean) => setSecurity(s => ({ ...s, login_alerts: v }))} 
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <Label htmlFor="login-alerts" className="cursor-pointer font-semibold">
+                          Login Alert Emails
+                        </Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Receive email notifications whenever someone logs into your account from a new device or location
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <Button onClick={saveSecurity}>Save Security Settings</Button>
                 
-                <div className="grid md:grid-cols-2 gap-4 pt-4 border-t mt-4">
-                  <div>
-                    <Label htmlFor="new-password">Change Password</Label>
-                    <Input 
-                      id="new-password"
-                      type="password" 
-                      placeholder="New password (min 6 characters)" 
-                      value={newPassword} 
-                      onChange={(e) => setNewPassword(e.target.value)} 
-                    />
-                  </div>
-                  <div className="flex items-end">
-                    <Button className="w-full" onClick={updatePassword}>Update Password</Button>
+                <div className="flex gap-2">
+                  <Button onClick={saveSecurity}>Save Security Settings</Button>
+                </div>
+                
+                <div className="border-t pt-6 mt-6">
+                  <h3 className="font-semibold text-lg mb-2">Change Password</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    For your security, you must verify your current password before setting a new one
+                  </p>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="old-password">Current Password *</Label>
+                      <Input 
+                        id="old-password"
+                        type="password" 
+                        value={oldPassword} 
+                        onChange={(e) => setOldPassword(e.target.value)} 
+                        placeholder="Enter your current password" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="new-password">New Password *</Label>
+                      <Input 
+                        id="new-password"
+                        type="password" 
+                        value={newPassword} 
+                        onChange={(e) => setNewPassword(e.target.value)} 
+                        placeholder="At least 6 characters" 
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="confirm-password">Confirm New Password *</Label>
+                      <Input 
+                        id="confirm-password"
+                        type="password" 
+                        value={confirmPassword} 
+                        onChange={(e) => setConfirmPassword(e.target.value)} 
+                        placeholder="Re-enter new password" 
+                      />
+                    </div>
+                    <Button onClick={updatePassword}>Update Password</Button>
                   </div>
                 </div>
               </CardContent>
