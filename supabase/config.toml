@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.recommend-content]
 verify_jwt = true
+
+[functions.send-login-alert]
+verify_jwt = false

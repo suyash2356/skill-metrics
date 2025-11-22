@@ -54,10 +54,42 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+    
+    // Send login alert if enabled
+    if (!error && data.user) {
+      try {
+        // Check if user has login alerts enabled
+        const { data: prefs } = await supabase
+          .from('user_preferences')
+          .select('login_notifications')
+          .eq('user_id', data.user.id)
+          .single();
+        
+        if (prefs?.login_notifications) {
+          // Get device and location info
+          const deviceInfo = navigator.userAgent;
+          const timestamp = new Date().toLocaleString();
+          
+          // Call login alert edge function
+          await supabase.functions.invoke('send-login-alert', {
+            body: {
+              email: data.user.email,
+              deviceInfo,
+              location: 'Unknown Location', // You could integrate IP geolocation API here
+              timestamp,
+            },
+          });
+        }
+      } catch (alertError) {
+        console.error('Failed to send login alert:', alertError);
+        // Don't block login if alert fails
+      }
+    }
+    
     return { error };
   };
 
