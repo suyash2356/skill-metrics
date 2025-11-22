@@ -7,11 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { 
-  ImageIcon, 
-  Video, 
-  Link, 
-  FileText, 
+import {
+  ImageIcon,
+  Video,
+  Link,
+  FileText,
   BookOpen,
   Plus,
   X,
@@ -53,8 +53,8 @@ const CreatePost = () => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const categories = [
-    "Programming", "Design", "Data Science", "AI/ML", "DevOps", 
-    "Cybersecurity", "Mobile Development", "Web Development", 
+    "Programming", "Design", "Data Science", "AI/ML", "DevOps",
+    "Cybersecurity", "Mobile Development", "Web Development",
     "Cloud Computing", "Blockchain", "UI/UX", "Product Management"
   ];
 
@@ -125,7 +125,8 @@ const CreatePost = () => {
         } else if (file.type.startsWith('video/')) {
           setContent(prev => `${prev}\n\n<video controls src="${publicUrl}" />`);
         } else {
-          setContent(prev => `${prev}\n\n[File](${publicUrl})`);
+          // Use a specific prefix for attachments that we can parse in InstagramPost
+          setContent(prev => `${prev}\n\n[Attachment: ${file.name}](${publicUrl})`);
         }
       } catch (err: any) {
         toast({ title: 'Upload failed', description: err?.message || 'Unknown error', variant: 'destructive' });
@@ -134,14 +135,6 @@ const CreatePost = () => {
 
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
-  const postSchema = z.object({
-    title: z.string().min(1, "Title is required").max(200, "Title must be 200 characters or less"),
-    description: z.string().min(1, "Description is required").max(1000, "Description must be 1000 characters or less"),
-    content: z.string().max(1000000, "Content must be 1,000,000 characters or less"),
-    category: z.string().min(1, "Please select a category"),
-    tags: z.array(z.string().max(50)).max(10, "Maximum 10 tags allowed"),
-  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,19 +195,7 @@ const CreatePost = () => {
           .filter(memberId => memberId !== user.id); // Exclude the post author
 
         for (const recipientId of notificationRecipients) {
-          // The useNotifications hook does not export a createNotification function.
-          // This needs to be implemented or sourced from elsewhere.
-          // For now, we will log the intent to create a notification.
           console.log(`Intending to create notification for user ${recipientId}`);
-          
-          // Example of what the call might look like if available:
-          // await createNotification({
-          //   user_id: recipientId,
-          //   type: 'community_post',
-          //   title: `New post in your community: "${title}"`,
-          //   body: `Check out the latest post by ${user.user_metadata.full_name || 'a member'}.`,
-          //   data: { post_id: newPost.id, community_id: communityId, post_title: newPost.title },
-          // });
         }
       }
     }
@@ -245,11 +226,10 @@ const CreatePost = () => {
                   return (
                     <div
                       key={type.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        postType === type.id
+                      className={`p-4 border rounded-lg cursor-pointer transition-all ${postType === type.id
                           ? "border-primary bg-primary/5"
                           : "border-border hover:border-primary/50"
-                      }`}
+                        }`}
                       onClick={() => setPostType(type.id)}
                     >
                       <Icon className="h-6 w-6 mb-2 mx-auto" />
@@ -374,7 +354,7 @@ const CreatePost = () => {
                 <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,video/*,.pdf"
+                  accept="image/*,video/*,.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt"
                   multiple
                   className="hidden"
                   onChange={onFilesSelected}
@@ -382,11 +362,11 @@ const CreatePost = () => {
                 <div className="flex flex-wrap gap-2">
                   <Button type="button" variant="outline" onClick={handleUploadClick}>
                     <Upload className="h-4 w-4 mr-2" />
-                    Upload Images/Videos
+                    Upload Files
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Supports: Images (JPEG, PNG, GIF), Videos (MP4, WebM), PDFs (max 100MB)
+                  Supports: Images, Videos, PDFs, Docs, Slides, Sheets (max 100MB)
                 </p>
               </div>
             </CardContent>

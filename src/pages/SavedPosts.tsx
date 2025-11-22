@@ -1,7 +1,7 @@
 import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BookmarkX, Loader2, Image as ImageIcon, Video, FileText, Newspaper } from "lucide-react";
+import { BookmarkX, Loader2, Image as ImageIcon, Video, FileText, Newspaper, Download } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -37,7 +37,7 @@ const SavedPosts = () => {
     queryKey: ['bookmarkedPosts', user?.id],
     queryFn: async (): Promise<BookmarkedPost[]> => {
       if (!user?.id) return [];
-      
+
       const { data, error } = await supabase
         .from('bookmarks')
         .select(`
@@ -56,7 +56,7 @@ const SavedPosts = () => {
   const removeMutation = useMutation({
     mutationFn: async (postId: string) => {
       if (!user?.id) throw new Error('User not authenticated');
-      
+
       const { error } = await supabase
         .from('bookmarks')
         .delete()
@@ -77,37 +77,37 @@ const SavedPosts = () => {
 
   const getMediaInfo = (content: string | null) => {
     if (!content) return { type: 'text', url: null };
-    
+
     // Check for video
     const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
     const videoMatch = content.match(videoRegex);
     if (videoMatch) return { type: 'video', url: videoMatch[0] };
-    
+
     // Check for base64 image
     const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/;
     const base64Match = content.match(base64Regex);
     if (base64Match) return { type: 'image', url: base64Match[1] };
-    
+
     // Check for image URL
     const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/;
     const imgMatch = content.match(imgRegex);
     if (imgMatch) return { type: 'image', url: imgMatch[1] };
-    
+
     // Check if starts with data:image
     if (content.startsWith('data:image')) return { type: 'image', url: content };
-    
+
     return { type: 'text', url: null };
   };
 
   const categorizePost = (post: BookmarkedPost) => {
     const media = getMediaInfo(post.posts?.content || null);
     const category = post.posts?.category?.toLowerCase() || '';
-    
+
     if (media.type === 'image') return 'image';
     if (media.type === 'video') return 'video';
     if (category.includes('news') || category.includes('article')) return 'news';
     if (category.includes('resource') || category.includes('tutorial') || category.includes('guide')) return 'resources';
-    
+
     return 'text';
   };
 
@@ -117,9 +117,10 @@ const SavedPosts = () => {
   }, [bookmarkedPosts, selectedCategory]);
 
   const parseMedia = (content: string | null) => {
-    if (!content) return { text: "", media: [] };
+    if (!content) return { text: "", media: [], attachments: [] };
 
     const media: Array<{ type: "image" | "video"; url: string }> = [];
+    const attachments: Array<{ name: string; url: string; type: string }> = [];
     let text = content;
 
     // Extract base64 images
@@ -146,7 +147,18 @@ const SavedPosts = () => {
       text = text.replace(match[0], "");
     }
 
-    return { text: text.trim(), media };
+    // Extract file attachments
+    const attachmentRegex = /\[Attachment: (.*?)\]\((.*?)\)/g;
+    const attachmentMatches = content.matchAll(attachmentRegex);
+    for (const match of attachmentMatches) {
+      const name = match[1];
+      const url = match[2];
+      const ext = name.split('.').pop()?.toUpperCase() || 'FILE';
+      attachments.push({ name, url, type: ext });
+      text = text.replace(match[0], "");
+    }
+
+    return { text: text.trim(), media, attachments };
   };
 
   if (isLoading) {
@@ -226,9 +238,9 @@ const SavedPosts = () => {
                           </p>
                         </div>
                       )}
-                      
+
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                      
+
                       <Button
                         variant="destructive"
                         size="icon"
@@ -253,9 +265,9 @@ const SavedPosts = () => {
             {selectedPost?.posts && (
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold">{selectedPost.posts.title}</h2>
-                
+
                 {(() => {
-                  const { media, text } = parseMedia(selectedPost.posts.content);
+                  const { media, text, attachments } = parseMedia(selectedPost.posts.content);
                   return (
                     <>
                       {media.length > 0 && (
@@ -279,13 +291,40 @@ const SavedPosts = () => {
                           ))}
                         </div>
                       )}
-                      
+
+                      {attachments.length > 0 && (
+                        <div className="space-y-2">
+                          {attachments.map((file, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border hover:bg-muted transition-colors cursor-pointer group"
+                              onClick={() => window.open(file.url, '_blank')}
+                            >
+                              <div className="h-10 w-10 rounded bg-background flex items-center justify-center shadow-sm border">
+                                <FileText className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                                  {file.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {file.type} • Click to view
+                                </p>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {text && (
                         <div className="prose max-w-none">
                           <p className="whitespace-pre-wrap">{text}</p>
                         </div>
                       )}
-                      
+
                       {selectedPost.posts.tags && selectedPost.posts.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {selectedPost.posts.tags.map((tag, idx) => (
