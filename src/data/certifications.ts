@@ -1,21 +1,24 @@
 export interface Certification {
   name: string;
   provider: string;
-  description: string;
+  description?: string;
   link: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced' | 'expert';
   relevantBackgrounds: ('student' | 'professional' | 'self-learner')[];
   educationLevels: ('high-school' | 'bachelors' | 'masters' | 'phd')[];
   relatedSkills: string[];
   domain: string;
-  estimatedTime: string;
-  cost: 'free' | 'paid';
+  estimatedTime?: string;
+  cost?: 'free' | 'paid';
+  // UI fields
+  icon: string;
+  color: string;
 }
 
 export const certifications: Certification[] = [
   {
     name: "AWS Certified Solutions Architect",
-    provider: "Amazon",
+    provider: "Amazon Web Services",
     description: "Design distributed systems on AWS with high availability and scalability.",
     link: "https://aws.amazon.com/certification/certified-solutions-architect-associate/",
     difficulty: "intermediate",
@@ -25,45 +28,23 @@ export const certifications: Certification[] = [
     domain: "Cloud Computing",
     estimatedTime: "3-6 months",
     cost: "paid",
+    icon: "Cloud",
+    color: "from-sky-500 to-blue-600"
   },
   {
-    name: "Google Cloud Professional",
-    provider: "Google",
-    description: "Demonstrate expertise in designing and managing Google Cloud solutions.",
-    link: "https://cloud.google.com/certification",
-    difficulty: "advanced",
-    relevantBackgrounds: ["professional"],
-    educationLevels: ["bachelors", "masters"],
-    relatedSkills: ["GCP", "Cloud Computing", "Kubernetes", "DevOps"],
-    domain: "Cloud Computing",
-    estimatedTime: "3-6 months",
-    cost: "paid",
-  },
-  {
-    name: "Certified Kubernetes Administrator (CKA)",
-    provider: "CNCF",
-    description: "Validate your skills in Kubernetes cluster administration.",
-    link: "https://www.cncf.io/certification/cka/",
-    difficulty: "advanced",
-    relevantBackgrounds: ["professional"],
-    educationLevels: ["bachelors", "masters"],
-    relatedSkills: ["Kubernetes", "Docker", "DevOps", "Linux"],
-    domain: "DevOps",
-    estimatedTime: "2-4 months",
-    cost: "paid",
-  },
-  {
-    name: "CompTIA Security+",
-    provider: "CompTIA",
-    description: "Foundational cybersecurity certification covering security concepts and practices.",
-    link: "https://www.comptia.org/certifications/security",
+    name: "Google Data Analytics",
+    provider: "Coursera",
+    description: "Entry-level data analytics skills including spreadsheets, SQL, Tableau, and R.",
+    link: "https://www.coursera.org/professional-certificates/google-data-analytics",
     difficulty: "beginner",
     relevantBackgrounds: ["student", "professional", "self-learner"],
     educationLevels: ["high-school", "bachelors"],
-    relatedSkills: ["Cybersecurity", "Network Security", "Risk Management"],
-    domain: "Cybersecurity",
-    estimatedTime: "2-3 months",
+    relatedSkills: ["Data Analysis", "SQL", "Tableau", "R"],
+    domain: "Data Science",
+    estimatedTime: "3-6 months",
     cost: "paid",
+    icon: "Database",
+    color: "from-green-500 to-emerald-500"
   },
   {
     name: "Certified Ethical Hacker (CEH)",
@@ -77,32 +58,8 @@ export const certifications: Certification[] = [
     domain: "Cybersecurity",
     estimatedTime: "3-4 months",
     cost: "paid",
-  },
-  {
-    name: "Google Data Analytics Certificate",
-    provider: "Google",
-    description: "Entry-level data analytics skills including spreadsheets, SQL, Tableau, and R.",
-    link: "https://www.coursera.org/professional-certificates/google-data-analytics",
-    difficulty: "beginner",
-    relevantBackgrounds: ["student", "professional", "self-learner"],
-    educationLevels: ["high-school", "bachelors"],
-    relatedSkills: ["Data Analysis", "SQL", "Tableau", "R"],
-    domain: "Data Science",
-    estimatedTime: "3-6 months",
-    cost: "paid",
-  },
-  {
-    name: "IBM Data Science Professional",
-    provider: "IBM",
-    description: "Comprehensive data science training covering Python, ML, and data visualization.",
-    link: "https://www.coursera.org/professional-certificates/ibm-data-science",
-    difficulty: "intermediate",
-    relevantBackgrounds: ["student", "professional"],
-    educationLevels: ["bachelors", "masters"],
-    relatedSkills: ["Python", "Machine Learning", "Data Science", "SQL"],
-    domain: "Data Science",
-    estimatedTime: "4-6 months",
-    cost: "paid",
+    icon: "Shield",
+    color: "from-red-500 to-rose-600"
   },
   {
     name: "TensorFlow Developer Certificate",
@@ -116,6 +73,84 @@ export const certifications: Certification[] = [
     domain: "AI & Machine Learning",
     estimatedTime: "2-3 months",
     cost: "paid",
+    icon: "Brain",
+    color: "from-purple-500 to-pink-500"
+  },
+  {
+    name: "PMI Project Management Professional",
+    provider: "PMI",
+    description: "Globally recognized project management certification for professionals.",
+    link: "https://www.pmi.org/certifications/project-management-pmp",
+    difficulty: "advanced",
+    relevantBackgrounds: ["professional"],
+    educationLevels: ["bachelors", "masters"],
+    relatedSkills: ["Project Management", "Leadership", "Agile", "Risk Management"],
+    domain: "Management",
+    estimatedTime: "3-6 months",
+    cost: "paid",
+    icon: "Rocket",
+    color: "from-indigo-500 to-violet-500"
+  },
+  {
+    name: "Microsoft Azure Fundamentals",
+    provider: "Microsoft",
+    description: "Foundational knowledge of cloud services and how those services are provided with Microsoft Azure.",
+    link: "https://learn.microsoft.com/en-us/certifications/azure-fundamentals/",
+    difficulty: "beginner",
+    relevantBackgrounds: ["student", "professional"],
+    educationLevels: ["high-school", "bachelors"],
+    relatedSkills: ["Azure", "Cloud Computing"],
+    domain: "Cloud Computing",
+    estimatedTime: "1-2 months",
+    cost: "paid",
+    icon: "Cloud",
+    color: "from-blue-600 to-cyan-600"
+  },
+  // Keeping other existing certifications with default icon/color
+  {
+    name: "Google Cloud Professional",
+    provider: "Google",
+    description: "Demonstrate expertise in designing and managing Google Cloud solutions.",
+    link: "https://cloud.google.com/certification",
+    difficulty: "advanced",
+    relevantBackgrounds: ["professional"],
+    educationLevels: ["bachelors", "masters"],
+    relatedSkills: ["GCP", "Cloud Computing", "Kubernetes", "DevOps"],
+    domain: "Cloud Computing",
+    estimatedTime: "3-6 months",
+    cost: "paid",
+    icon: "Cloud",
+    color: "from-blue-500 to-indigo-500"
+  },
+  {
+    name: "Certified Kubernetes Administrator (CKA)",
+    provider: "CNCF",
+    description: "Validate your skills in Kubernetes cluster administration.",
+    link: "https://www.cncf.io/certification/cka/",
+    difficulty: "advanced",
+    relevantBackgrounds: ["professional"],
+    educationLevels: ["bachelors", "masters"],
+    relatedSkills: ["Kubernetes", "Docker", "DevOps", "Linux"],
+    domain: "DevOps",
+    estimatedTime: "2-4 months",
+    cost: "paid",
+    icon: "Cloud",
+    color: "from-blue-400 to-cyan-500"
+  },
+  {
+    name: "CompTIA Security+",
+    provider: "CompTIA",
+    description: "Foundational cybersecurity certification covering security concepts and practices.",
+    link: "https://www.comptia.org/certifications/security",
+    difficulty: "beginner",
+    relevantBackgrounds: ["student", "professional", "self-learner"],
+    educationLevels: ["high-school", "bachelors"],
+    relatedSkills: ["Cybersecurity", "Network Security", "Risk Management"],
+    domain: "Cybersecurity",
+    estimatedTime: "2-3 months",
+    cost: "paid",
+    icon: "Shield",
+    color: "from-red-400 to-orange-500"
   },
   {
     name: "Meta Front-End Developer",
@@ -129,19 +164,8 @@ export const certifications: Certification[] = [
     domain: "Web Development",
     estimatedTime: "3-5 months",
     cost: "paid",
-  },
-  {
-    name: "PMP - Project Management Professional",
-    provider: "PMI",
-    description: "Globally recognized project management certification for professionals.",
-    link: "https://www.pmi.org/certifications/project-management-pmp",
-    difficulty: "advanced",
-    relevantBackgrounds: ["professional"],
-    educationLevels: ["bachelors", "masters"],
-    relatedSkills: ["Project Management", "Leadership", "Agile", "Risk Management"],
-    domain: "Management",
-    estimatedTime: "3-6 months",
-    cost: "paid",
+    icon: "Laptop",
+    color: "from-blue-400 to-indigo-500"
   },
   {
     name: "Azure Solutions Architect Expert",
@@ -155,6 +179,8 @@ export const certifications: Certification[] = [
     domain: "Cloud Computing",
     estimatedTime: "3-5 months",
     cost: "paid",
+    icon: "Cloud",
+    color: "from-blue-600 to-cyan-600"
   },
   {
     name: "Certified Information Systems Security Professional (CISSP)",
@@ -168,6 +194,8 @@ export const certifications: Certification[] = [
     domain: "Cybersecurity",
     estimatedTime: "6-12 months",
     cost: "paid",
+    icon: "Shield",
+    color: "from-red-600 to-rose-700"
   },
   {
     name: "Certified ScrumMaster (CSM)",
@@ -181,19 +209,8 @@ export const certifications: Certification[] = [
     domain: "Management",
     estimatedTime: "1-2 months",
     cost: "paid",
-  },
-  {
-    name: "Deep Learning Specialization",
-    provider: "DeepLearning.AI",
-    description: "Master deep learning fundamentals from Andrew Ng.",
-    link: "https://www.coursera.org/specializations/deep-learning",
-    difficulty: "intermediate",
-    relevantBackgrounds: ["student", "professional"],
-    educationLevels: ["bachelors", "masters"],
-    relatedSkills: ["Python", "TensorFlow", "Neural Networks", "Deep Learning"],
-    domain: "AI & Machine Learning",
-    estimatedTime: "3-4 months",
-    cost: "paid",
+    icon: "Rocket",
+    color: "from-orange-400 to-yellow-500"
   },
   {
     name: "Oracle Certified Professional Java SE",
@@ -207,6 +224,8 @@ export const certifications: Certification[] = [
     domain: "Software Development",
     estimatedTime: "2-4 months",
     cost: "paid",
+    icon: "Laptop",
+    color: "from-red-500 to-orange-500"
   },
   {
     name: "Tableau Desktop Specialist",
@@ -220,6 +239,8 @@ export const certifications: Certification[] = [
     domain: "Data Analytics",
     estimatedTime: "1-2 months",
     cost: "paid",
+    icon: "Database",
+    color: "from-blue-400 to-indigo-500"
   },
   {
     name: "Salesforce Certified Administrator",
@@ -233,6 +254,8 @@ export const certifications: Certification[] = [
     domain: "Business Technology",
     estimatedTime: "2-3 months",
     cost: "paid",
+    icon: "Cloud",
+    color: "from-blue-500 to-sky-500"
   },
   {
     name: "HubSpot Inbound Marketing",
@@ -246,6 +269,8 @@ export const certifications: Certification[] = [
     domain: "Marketing",
     estimatedTime: "1 month",
     cost: "free",
+    icon: "Rocket",
+    color: "from-orange-500 to-amber-500"
   },
   {
     name: "Google UX Design Certificate",
@@ -259,6 +284,8 @@ export const certifications: Certification[] = [
     domain: "Design",
     estimatedTime: "3-6 months",
     cost: "paid",
+    icon: "PenTool",
+    color: "from-purple-500 to-pink-500"
   },
   {
     name: "Linux Professional Institute Certification (LPIC-1)",
@@ -272,6 +299,8 @@ export const certifications: Certification[] = [
     domain: "DevOps",
     estimatedTime: "2-4 months",
     cost: "paid",
+    icon: "Laptop",
+    color: "from-yellow-500 to-orange-500"
   },
   {
     name: "Cisco Certified Network Associate (CCNA)",
@@ -285,5 +314,7 @@ export const certifications: Certification[] = [
     domain: "Networking",
     estimatedTime: "3-6 months",
     cost: "paid",
-  },
+    icon: "Cloud",
+    color: "from-blue-600 to-indigo-600"
+  }
 ];

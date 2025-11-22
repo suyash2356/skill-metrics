@@ -7,6 +7,18 @@ import { exams, Exam } from '@/data/exams';
 import { certifications, Certification } from '@/data/certifications';
 import { learningPaths, LearningPath } from '@/data/learningPaths';
 import { degrees, Degree } from '@/data/degrees';
+import { trendingResources } from '@/data/resourceData';
+
+export interface TrendingResource {
+  title: string;
+  description: string;
+  link: string;
+  icon: string;
+  color: string;
+  difficulty: string;
+  relevantBackgrounds: string[];
+  relatedSkills: string[];
+}
 
 export interface PersonalizedExploreData {
   techCategories: ScoredItem<Category>[];
@@ -15,6 +27,7 @@ export interface PersonalizedExploreData {
   certifications: ScoredItem<Certification>[];
   learningPaths: ScoredItem<LearningPath>[];
   degrees: ScoredItem<Degree>[];
+  trendingResources: ScoredItem<TrendingResource>[];
   isLoading: boolean;
 }
 
@@ -34,7 +47,8 @@ export function usePersonalizedExplore(): PersonalizedExploreData {
       exams: engine.scoreAndSort(exams).slice(0, 5),
       certifications: engine.scoreAndSort(certifications).slice(0, 10),
       learningPaths: engine.scoreAndSort(learningPaths).slice(0, 6),
-      degrees: engine.scoreAndSort(degrees).slice(0, 8),
+      degrees: engine.scoreAndSort(degrees).slice(0, 20),
+      trendingResources: engine.scoreAndSort(trendingResources as any as TrendingResource[]).slice(0, 6),
     };
   }, [profileDetails, preferences]);
 

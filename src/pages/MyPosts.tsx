@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "react-router-dom";
-import { Trash2, Loader2, Image as ImageIcon, Video, FileText, Newspaper, Edit3 } from "lucide-react";
+import { Trash2, Loader2, Image as ImageIcon, Video, FileText, Newspaper, Edit3, Download } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Database } from "@/integrations/supabase/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -80,37 +80,37 @@ const MyPosts = () => {
 
   const getMediaInfo = (content: string | null) => {
     if (!content) return { type: 'text', url: null };
-    
+
     // Check for video
     const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
     const videoMatch = content.match(videoRegex);
     if (videoMatch) return { type: 'video', url: videoMatch[0] };
-    
+
     // Check for base64 image
     const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/;
     const base64Match = content.match(base64Regex);
     if (base64Match) return { type: 'image', url: base64Match[1] };
-    
+
     // Check for image URL
     const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/;
     const imgMatch = content.match(imgRegex);
     if (imgMatch) return { type: 'image', url: imgMatch[1] };
-    
+
     // Check if starts with data:image
     if (content.startsWith('data:image')) return { type: 'image', url: content };
-    
+
     return { type: 'text', url: null };
   };
 
   const categorizePost = (post: Post) => {
     const media = getMediaInfo(post.content);
     const category = post.category?.toLowerCase() || '';
-    
+
     if (media.type === 'image') return 'image';
     if (media.type === 'video') return 'video';
     if (category.includes('news') || category.includes('article')) return 'news';
     if (category.includes('resource') || category.includes('tutorial') || category.includes('guide')) return 'resources';
-    
+
     return 'text';
   };
 
@@ -120,9 +120,10 @@ const MyPosts = () => {
   }, [posts, selectedCategory]);
 
   const parseMedia = (content: string | null) => {
-    if (!content) return { text: "", media: [] };
+    if (!content) return { text: "", media: [], attachments: [] };
 
     const media: Array<{ type: "image" | "video"; url: string }> = [];
+    const attachments: Array<{ name: string; url: string; type: string }> = [];
     let text = content;
 
     // Extract base64 images
@@ -149,7 +150,18 @@ const MyPosts = () => {
       text = text.replace(match[0], "");
     }
 
-    return { text: text.trim(), media };
+    // Extract file attachments
+    const attachmentRegex = /\[Attachment: (.*?)\]\((.*?)\)/g;
+    const attachmentMatches = content.matchAll(attachmentRegex);
+    for (const match of attachmentMatches) {
+      const name = match[1];
+      const url = match[2];
+      const ext = name.split('.').pop()?.toUpperCase() || 'FILE';
+      attachments.push({ name, url, type: ext });
+      text = text.replace(match[0], "");
+    }
+
+    return { text: text.trim(), media, attachments };
   };
 
   const handleEdit = (post: Post) => {
@@ -252,9 +264,9 @@ const MyPosts = () => {
                           </p>
                         </div>
                       )}
-                      
+
                       <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                      
+
                       <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button
                           variant="secondary"
@@ -295,9 +307,9 @@ const MyPosts = () => {
             {selectedPost && (
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold">{selectedPost.title}</h2>
-                
+
                 {(() => {
-                  const { media, text } = parseMedia(selectedPost.content);
+                  const { media, text, attachments } = parseMedia(selectedPost.content);
                   return (
                     <>
                       {media.length > 0 && (
@@ -321,13 +333,40 @@ const MyPosts = () => {
                           ))}
                         </div>
                       )}
-                      
+
+                      {attachments.length > 0 && (
+                        <div className="space-y-2">
+                          {attachments.map((file, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border hover:bg-muted transition-colors cursor-pointer group"
+                              onClick={() => window.open(file.url, '_blank')}
+                            >
+                              <div className="h-10 w-10 rounded bg-background flex items-center justify-center shadow-sm border">
+                                <FileText className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                                  {file.name}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {file.type} • Click to view
+                                </p>
+                              </div>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
                       {text && (
                         <div className="prose max-w-none">
                           <p className="whitespace-pre-wrap">{text}</p>
                         </div>
                       )}
-                      
+
                       {selectedPost.tags && selectedPost.tags.length > 0 && (
                         <div className="flex flex-wrap gap-2">
                           {selectedPost.tags.map((tag, idx) => (
@@ -360,7 +399,7 @@ const MyPosts = () => {
                   placeholder="Post title"
                 />
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium mb-2 block">Category</label>
                 <Input
@@ -369,7 +408,7 @@ const MyPosts = () => {
                   placeholder="e.g., Tutorial, News, Resource"
                 />
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium mb-2 block">Content</label>
                 <Textarea
@@ -379,7 +418,7 @@ const MyPosts = () => {
                   rows={10}
                 />
               </div>
-              
+
               <div>
                 <label className="text-sm font-medium mb-2 block">Tags (comma separated)</label>
                 <Input
@@ -388,7 +427,7 @@ const MyPosts = () => {
                   placeholder="e.g., javascript, react, tutorial"
                 />
               </div>
-              
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" onClick={() => setEditingPost(null)}>
                   Cancel

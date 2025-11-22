@@ -1623,3 +1623,67 @@ export const resourceData: Record<string, Recommendation[]> = {
         }
     ]
 };
+
+export const trendingResources = [
+    {
+        title: "Deep Learning Specialization — Coursera",
+        description: "Andrew Ng's legendary deep learning course series.",
+        link: "https://www.coursera.org/specializations/deep-learning",
+        icon: "GraduationCap",
+        color: "from-indigo-500 to-blue-600",
+        difficulty: "intermediate",
+        relevantBackgrounds: ["student", "professional"],
+        relatedSkills: ["Deep Learning", "AI"]
+    },
+    {
+        title: "The Data Science Handbook",
+        description: "Insights from top data scientists around the world.",
+        link: "https://www.thedatasciencehandbook.com/",
+        icon: "BookOpen",
+        color: "from-green-500 to-emerald-600",
+        difficulty: "beginner",
+        relevantBackgrounds: ["student", "self-learner"],
+        relatedSkills: ["Data Science"]
+    },
+    {
+        title: "FreeCodeCamp — Machine Learning",
+        description: "Hands-on tutorials for ML, Python, and TensorFlow.",
+        link: "https://www.freecodecamp.org/learn/",
+        icon: "Code",
+        color: "from-cyan-500 to-sky-500",
+        difficulty: "beginner",
+        relevantBackgrounds: ["student", "self-learner"],
+        relatedSkills: ["Machine Learning", "Python"]
+    },
+    {
+        title: "r/learnprogramming (Reddit)",
+        description: "Join 4M+ learners discussing tips and resources.",
+        link: "https://www.reddit.com/r/learnprogramming/",
+        icon: "MessageSquare",
+        color: "from-orange-500 to-red-500",
+        difficulty: "beginner",
+        relevantBackgrounds: ["student", "self-learner", "professional"],
+        relatedSkills: ["Programming"]
+    },
+    {
+        title: "Medium — Towards Data Science",
+        description: "The most-read blog for AI and ML learners.",
+        link: "https://towardsdatascience.com/",
+        icon: "PenTool",
+        color: "from-yellow-500 to-amber-500",
+        difficulty: "intermediate",
+        relevantBackgrounds: ["professional", "student"],
+        relatedSkills: ["Data Science", "AI"]
+    },
+    {
+        title: "MIT OpenCourseWare",
+        description: "Free online courses from MIT covering all domains.",
+        link: "https://ocw.mit.edu/",
+        icon: "Globe",
+        color: "from-blue-500 to-violet-500",
+        difficulty: "advanced",
+        relevantBackgrounds: ["student", "self-learner"],
+        relatedSkills: ["Computer Science", "Engineering"]
+    }
+];
+
