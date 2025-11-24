@@ -1,4 +1,5 @@
-# Skill-Metric: Your Personalized Learning Companion
+# Skill-Metric: Your Personalized Learning Companion.
+# (Build using AI, guided and shaped by a me).
 
 <p align="center">
   <strong>Your Personalized AI-Powered Learning Recommendation Platform.</strong><br/>
