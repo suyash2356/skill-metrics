@@ -1,5 +1,5 @@
 # Skill-Metric: Your Personalized Learning Companion.
-(Build using AI, guided and shaped by a me).
+
 
 <p align="center">
   <strong>Your Personalized AI-Powered Learning Recommendation Platform.</strong><br/>
@@ -9,7 +9,7 @@
 ---
 
 ## 📸 Preview
-
+* **(Build using AI, guided and shaped by a me).**
 <p align="center">
   <img src="https://github.com/suyash2356/skill-metrics/blob/main/Screen%20Recording%202025-11-13%20224524.gif" alt="Skill-Metric Preview" width="800">
 </p>
