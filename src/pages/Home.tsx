@@ -10,7 +10,7 @@ import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 import { getTopVideosByViews } from "@/lib/videosData";
@@ -34,6 +34,7 @@ const Home = () => {
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { sendLikeNotification } = usePostInteractions();
 
@@ -256,19 +257,19 @@ const Home = () => {
     enabled: !!user,
   });
 
-  // My Communities (left sidebar)
-  const { data: myCommunities = [], isLoading: isLoadingMyCommunities } = useQuery({
-    queryKey: ['myCommunities', user?.id],
+  // My External Community Links (left sidebar)
+  const { data: myCommunityLinks = [], isLoading: isLoadingMyCommunityLinks } = useQuery({
+    queryKey: ['externalCommunityLinks', user?.id],
     queryFn: async () => {
       if (!user) return [];
       const { data, error } = await supabase
-        .from('community_members')
-        .select('communities(id, name, image)')
+        .from('external_community_links')
+        .select('*')
         .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
         .limit(5);
       if (error) throw error;
-      // Be defensive: some selects return { communities: { ... } }, others may return the joined row directly
-      return (data || []).map((m: any) => m.communities || m.community || m);
+      return data || [];
     },
     enabled: !!user,
   });
@@ -360,22 +361,20 @@ const Home = () => {
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">My Communities</h3>
                 <div className="space-y-2">
-                  {isLoadingMyCommunities ? (
+                  {isLoadingMyCommunityLinks ? (
                     <div className="text-sm text-muted-foreground">Loading...</div>
-                  ) : myCommunities.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">Not a member of any communities yet</div>
+                  ) : myCommunityLinks.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No community links added yet</div>
                   ) : (
-                    myCommunities.map((c: any) => (
-                      <Link key={c.id} to={`/communities/${c.id}/feed`} className="flex items-center gap-3 text-sm hover:text-primary">
-                        <Avatar className="h-8 w-8"><AvatarImage src={c.image || c.avatar_url || '/placeholder.svg'} /><AvatarFallback>{(c.name || 'C')[0]}</AvatarFallback></Avatar>
-                        <span>{c.name}</span>
-                      </Link>
+                    myCommunityLinks.map((c: any) => (
+                      <a key={c.id} href={c.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm hover:text-primary">
+                        <Avatar className="h-8 w-8"><AvatarFallback>{(c.name || 'C')[0]}</AvatarFallback></Avatar>
+                        <span className="truncate">{c.name}</span>
+                      </a>
                     ))
                   )}
                 </div>
-                <Link to="/communities">
-                  <Button variant="outline" className="w-full mt-4" size="sm"><Users className="h-4 w-4 mr-2" />Explore Communities</Button>
-                </Link>
+                <Button variant="outline" className="w-full mt-4" size="sm" onClick={() => navigate('/settings')}><Plus className="h-4 w-4 mr-2" />Add Community Link</Button>
               </CardContent>
             </Card>
           </aside>
