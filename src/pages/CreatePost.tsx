@@ -8,11 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import {
-  ImageIcon,
-  Video,
-  Link,
   FileText,
   BookOpen,
+  Video,
+  Link,
   Plus,
   X,
   Upload
@@ -21,8 +20,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useNotifications } from "@/hooks/useNotifications";
-import { useQuery } from "@tanstack/react-query";
 import { z } from "zod";
 
 // Validation schema
@@ -48,7 +45,6 @@ const CreatePost = () => {
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState("");
   const [category, setCategory] = useState("");
-  const [communityId, setCommunityId] = useState<string | null>(null); // New state for community selection
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -57,20 +53,6 @@ const CreatePost = () => {
     "Cybersecurity", "Mobile Development", "Web Development",
     "Cloud Computing", "Blockchain", "UI/UX", "Product Management"
   ];
-
-  const { data: communities } = useQuery({
-    queryKey: ['userCommunities', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const { data, error } = await supabase
-        .from('community_members')
-        .select('community_id, communities(*)')
-        .eq('user_id', user.id);
-      if (error) throw error;
-      return data.map(member => member.communities);
-    },
-    enabled: !!user?.id,
-  });
 
   const postTypes = [
     { id: "article", name: "Article", icon: FileText, description: "Share knowledge and insights" },
@@ -159,18 +141,15 @@ const CreatePost = () => {
     if (!user) return;
     setIsSubmitting(true);
 
-    const postPayload: any = {
+    const postPayload = {
       user_id: user.id,
       title,
       content: description + (content ? "\n\n" + content : ""),
       category,
       tags,
     };
-    if (communityId) {
-      postPayload.community_id = communityId;
-    }
 
-    const { data: newPost, error } = await supabase.from('posts').insert(postPayload).select('id, title').single();
+    const { error } = await supabase.from('posts').insert(postPayload).select('id, title').single();
 
     if (error) {
       toast({ title: 'Failed to publish post', variant: 'destructive' });
@@ -179,27 +158,6 @@ const CreatePost = () => {
     }
 
     toast({ title: 'Post published' });
-
-    // If post is in a community, notify all members
-    if (communityId && newPost) {
-      const { data: members, error: membersError } = await supabase
-        .from('community_members')
-        .select('user_id')
-        .eq('community_id', communityId);
-
-      if (membersError) {
-        console.error("Error fetching community members for notification:", membersError);
-      } else if (members) {
-        const notificationRecipients = members
-          .map(member => member.user_id)
-          .filter(memberId => memberId !== user.id); // Exclude the post author
-
-        for (const recipientId of notificationRecipients) {
-          console.log(`Intending to create notification for user ${recipientId}`);
-        }
-      }
-    }
-
     navigate('/home');
   };
 
@@ -282,23 +240,6 @@ const CreatePost = () => {
                   <SelectContent>
                     {categories.map((cat) => (
                       <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="community">Community (Optional)</Label>
-                <Select value={communityId || "none"} onValueChange={(value) => setCommunityId(value === "none" ? null : value)}>
-                  <SelectTrigger id="community" className="w-full">
-                    <SelectValue placeholder="Select a community" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No Community</SelectItem>
-                    {(communities || []).map((community: any) => (
-                      <SelectItem key={community.id} value={community.id}>
-                        {community.name}
-                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>

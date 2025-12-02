@@ -213,9 +213,6 @@ export const Layout = ({ children }: LayoutProps) => {
                               if (s.kind === 'user') {
                                 setShowSuggestions(false);
                                 navigate(`/profile/${s.id}`);
-                              } else if (s.kind === 'community') {
-                                setShowSuggestions(false);
-                                navigate(`/communities/${s.id}/feed`);
                               } else {
                                 setShowSuggestions(false);
                                 navigate(`/search?q=${encodeURIComponent(s.name)}&scope=people`);
@@ -223,7 +220,6 @@ export const Layout = ({ children }: LayoutProps) => {
                             }}
                           >
                             {s.kind === 'user' && <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full object-cover" />}
-                            {s.kind === 'community' && <img src={s.image} alt={s.name} className="w-8 h-8 rounded object-cover" />}
                             <div className="flex-1 min-w-0">
                               <div className="font-medium text-sm truncate">{s.name}</div>
                               <div className="text-xs text-muted-foreground capitalize">{s.kind}</div>
