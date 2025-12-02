@@ -88,7 +88,6 @@ const localResources: Record<string, Recommendation[]> = {
 // ------------------------------
 export type Suggestion =
   | { kind: "user"; id: string; name: string; avatar?: string }
-  | { kind: "community"; id: string; name: string; image?: string }
   | { kind: "skill"; name: string; description?: string; link?: string }
   | { kind: "explore"; name: string; subtype?: "certification" | "category" | "path" | "resource" | "degree"; description?: string; link?: string };
 
@@ -101,20 +100,12 @@ export async function fetchPeopleCommunitySuggestions(query: string, limit = 10)
 
   const prefix = `${q}%`;
   const contains = `%${q}%`;
-  const perKind = Math.max(2, Math.floor(limit / 2));
 
-  const [profilesRes, communitiesRes] = await Promise.all([
-    supabase
-      .from("profiles")
-      .select("user_id, full_name, avatar_url")
-      .or(`full_name.ilike.${prefix},full_name.ilike.${contains}`)
-      .limit(perKind),
-    supabase
-      .from("communities")
-      .select("id, name, image")
-      .or(`name.ilike.${prefix},name.ilike.${contains}`)
-      .limit(perKind),
-  ]);
+  const profilesRes = await supabase
+    .from("profiles")
+    .select("user_id, full_name, avatar_url")
+    .or(`full_name.ilike.${prefix},full_name.ilike.${contains}`)
+    .limit(limit);
 
   const suggestions: Suggestion[] = [];
 
@@ -129,17 +120,6 @@ export async function fetchPeopleCommunitySuggestions(query: string, limit = 10)
     });
   }
 
-  if (communitiesRes.data) {
-    communitiesRes.data.forEach((c) => {
-      suggestions.push({
-        kind: "community",
-        id: c.id,
-        name: c.name,
-        image: c.image,
-      });
-    });
-  }
-
   const all = suggestions.slice(0, limit);
   suggestionCache[`people:${q}`] = all;
   return all;
@@ -149,7 +129,6 @@ export async function fetchPeopleCommunitySuggestions(query: string, limit = 10)
 export async function fetchExploreSuggestions(query: string, limit = 10): Promise<Suggestion[]> {
   const q = query.trim();
   if (!q) return [];
-  // Cache removed to always show current data from code
 
   const perKind = Math.max(3, Math.floor(limit / 3));
 
@@ -233,13 +212,11 @@ export async function fetchExploreSuggestions(query: string, limit = 10): Promis
   ];
 
   const all: Suggestion[] = [...skills, ...exploreItems].slice(0, limit);
-  // Cache removed to always return fresh data
   return all;
 }
 
-// Backwards-compatible default: combined suggestions (profiles, communities, skills)
+// Backwards-compatible default: combined suggestions (profiles, skills)
 export async function fetchSearchSuggestions(query: string, limit = 10): Promise<Suggestion[]> {
-  // default to people + skills (legacy behavior)
   const people = await fetchPeopleCommunitySuggestions(query, Math.max(3, Math.floor(limit / 2)));
   const explore = await fetchExploreSuggestions(query, Math.max(3, Math.floor(limit / 2)));
   const combined = [...people, ...explore].slice(0, limit);

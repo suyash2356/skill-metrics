@@ -68,13 +68,9 @@ export default function SearchResults() {
       return;
     }
 
-    // user/community
+    // user
     if (s.kind === 'user') {
       navigate(`/profile/${s.id}`);
-      return;
-    }
-    if (s.kind === 'community') {
-      navigate(`/communities/${s.id}/feed`);
       return;
     }
   }
@@ -114,8 +110,8 @@ export default function SearchResults() {
   // ------------------------------
   function renderIcon(s: Suggestion) {
     if (s.kind === "user") return <Users className="w-4 h-4 text-blue-400" />;
-    if (s.kind === "community") return <Layers className="w-4 h-4 text-green-400" />;
-    return <Brain className="w-4 h-4 text-purple-400" />;
+    if (s.kind === "skill") return <Brain className="w-4 h-4 text-purple-400" />;
+    return <Layers className="w-4 h-4 text-green-400" />;
   }
 
   // ------------------------------
