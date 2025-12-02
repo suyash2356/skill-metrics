@@ -1,0 +1,10 @@
+DROP TABLE public.project_team_members;
+DROP TABLE public.community_projects;
+DROP TABLE public.progress_updates;
+DROP TABLE public.community_answers;
+DROP TABLE public.community_questions;
+DROP TABLE public.community_resources;
+DROP TABLE public.community_messages_summary;
+DROP TABLE public.community_messages;
+DROP TABLE public.community_leaderboard;
+DROP TABLE public.community_member_roles;

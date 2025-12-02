@@ -19,11 +19,6 @@ import SearchResults from "./pages/SearchResults";
 import CreatePost from "./pages/CreatePost";
 import MyRoadmaps from "./pages/MyRoadmaps";
 import RoadmapView from "./pages/RoadmapView";
-import Communities from "./pages/Communities";
-import MyCommunities from "./pages/MyCommunities"; // Import new component
-import CommunityFeed from "./pages/CommunityFeed";
-import CommunitySettings from "./pages/CommunitySettings";
-import CommunityResourceNew from "./pages/CommunityResourceNew";
 import NewVideos from "./pages/NewVideos";
 import SkillView from "./pages/SkillView";
 import SkillRecommendations from "./pages/SkillRecommendations";
@@ -40,8 +35,8 @@ const queryClient = new QueryClient({
       retry: 2,
       refetchOnWindowFocus: true,
       refetchOnReconnect: true,
-      staleTime: 60 * 1000, // Increase staleTime to 1 minute
-      retryDelay: attempt => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 30 * 1000), // Exponential backoff
+      staleTime: 60 * 1000,
+      retryDelay: attempt => Math.min(attempt > 1 ? 2 ** attempt * 1000 : 1000, 30 * 1000),
     },
     mutations: {
       retry: 1,
@@ -73,11 +68,6 @@ const App = () => (
           <Route path="/create-post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
           <Route path="/roadmaps" element={<ProtectedRoute><MyRoadmaps /></ProtectedRoute>} />
           <Route path="/roadmaps/:id" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
-          <Route path="/communities" element={<ProtectedRoute><Communities /></ProtectedRoute>} />
-          <Route path="/my-communities" element={<ProtectedRoute><MyCommunities /></ProtectedRoute>} /> {/* New route */}
-          <Route path="/communities/:communityId/feed" element={<ProtectedRoute><CommunityFeed /></ProtectedRoute>} />
-          <Route path="/communities/:communityId/settings" element={<ProtectedRoute><CommunitySettings /></ProtectedRoute>} />
-          <Route path="/communities/:communityId/resources/new" element={<ProtectedRoute><CommunityResourceNew /></ProtectedRoute>} />
           <Route path="/skills/:skill" element={<ProtectedRoute><SkillRecommendations /></ProtectedRoute>} />
           <Route path="/new-videos" element={<ProtectedRoute><NewVideos /></ProtectedRoute>} />
           <Route path="/my-posts" element={<ProtectedRoute><MyPosts /></ProtectedRoute>} />
