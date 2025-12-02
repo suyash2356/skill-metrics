@@ -656,7 +656,6 @@ export type Database = {
       posts: {
         Row: {
           category: string | null
-          community_id: string | null
           content: string | null
           created_at: string
           id: string
@@ -667,7 +666,6 @@ export type Database = {
         }
         Insert: {
           category?: string | null
-          community_id?: string | null
           content?: string | null
           created_at?: string
           id?: string
@@ -678,7 +676,6 @@ export type Database = {
         }
         Update: {
           category?: string | null
-          community_id?: string | null
           content?: string | null
           created_at?: string
           id?: string
@@ -687,15 +684,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "posts_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1161,7 +1150,6 @@ export type Database = {
       user_activity: {
         Row: {
           activity_type: string
-          community_id: string | null
           created_at: string
           device_type: string | null
           id: string
@@ -1175,7 +1163,6 @@ export type Database = {
         }
         Insert: {
           activity_type: string
-          community_id?: string | null
           created_at?: string
           device_type?: string | null
           id?: string
@@ -1189,7 +1176,6 @@ export type Database = {
         }
         Update: {
           activity_type?: string
-          community_id?: string | null
           created_at?: string
           device_type?: string | null
           id?: string
@@ -1202,13 +1188,6 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "user_activity_community_id_fkey"
-            columns: ["community_id"]
-            isOneToOne: false
-            referencedRelation: "communities"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "user_activity_post_id_fkey"
             columns: ["post_id"]
