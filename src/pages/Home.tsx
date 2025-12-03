@@ -9,8 +9,9 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap } from "lucide-react";
+import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap, X } from "lucide-react";
 import { AddCommunityLinkDialog } from "@/components/AddCommunityLinkDialog";
+import { useExternalCommunityLinks } from "@/hooks/useExternalCommunityLinks";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -259,21 +260,7 @@ const Home = () => {
   });
 
   // My External Community Links (left sidebar)
-  const { data: myCommunityLinks = [], isLoading: isLoadingMyCommunityLinks } = useQuery({
-    queryKey: ['externalCommunityLinks', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('external_community_links')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user,
-  });
+  const { links: myCommunityLinks, isLoading: isLoadingMyCommunityLinks, deleteLink } = useExternalCommunityLinks();
 
   // Trending topics (derive from recent posts' tags)
   const { data: trendingTopics = [], isLoading: isLoadingTrending } = useQuery({
@@ -367,11 +354,21 @@ const Home = () => {
                   ) : myCommunityLinks.length === 0 ? (
                     <div className="text-sm text-muted-foreground">No community links added yet</div>
                   ) : (
-                    myCommunityLinks.map((c: any) => (
-                      <a key={c.id} href={c.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm hover:text-primary">
-                        <Avatar className="h-8 w-8"><AvatarFallback>{(c.name || 'C')[0]}</AvatarFallback></Avatar>
-                        <span className="truncate">{c.name}</span>
-                      </a>
+                    myCommunityLinks.slice(0, 5).map((c: any) => (
+                      <div key={c.id} className="flex items-center gap-2 group">
+                        <a href={c.link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-sm hover:text-primary flex-1 min-w-0">
+                          <Avatar className="h-8 w-8 shrink-0"><AvatarFallback>{(c.name || 'C')[0]}</AvatarFallback></Avatar>
+                          <span className="truncate">{c.name}</span>
+                        </a>
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                          onClick={() => deleteLink.mutate(c.id)}
+                        >
+                          <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                        </Button>
+                      </div>
                     ))
                   )}
                 </div>
