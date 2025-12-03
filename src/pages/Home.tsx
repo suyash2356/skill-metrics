@@ -10,6 +10,7 @@ import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap } from "lucide-react";
+import { AddCommunityLinkDialog } from "@/components/AddCommunityLinkDialog";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useInfiniteQuery, useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
@@ -374,7 +375,9 @@ const Home = () => {
                     ))
                   )}
                 </div>
-                <Button variant="outline" className="w-full mt-4" size="sm" onClick={() => navigate('/settings')}><Plus className="h-4 w-4 mr-2" />Add Community Link</Button>
+                <div className="mt-4">
+                  <AddCommunityLinkDialog />
+                </div>
               </CardContent>
             </Card>
           </aside>
