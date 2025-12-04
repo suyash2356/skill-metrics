@@ -68,6 +68,7 @@ export const InstagramPost = ({
 }: InstagramPostProps) => {
   const [imageError, setImageError] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const { toast } = useToast();
 
   // Parse media from content
@@ -117,6 +118,8 @@ export const InstagramPost = ({
   };
 
   const { text, media, attachments } = parseMedia(post.content);
+  const isTextOnlyPost = media.length === 0 && attachments.length === 0;
+  const hasLongText = text.length > 200;
   // track media natural size to set aspect ratio
   const [mediaSize, setMediaSize] = useState<{ width: number; height: number } | null>(null);
 
@@ -215,7 +218,7 @@ export const InstagramPost = ({
           <div className="w-px bg-slate-200 h-full" />
         </div>
       )}
-      <Card className="w-full max-w-[470px] mx-auto border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg">
+      <Card className={`w-full max-w-[470px] mx-auto border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg ${isTextOnlyPost ? 'min-h-[280px]' : ''}`}>
         {/* small pointed square to visually connect to the line */}
         {(connectedAbove || connectedBelow) && (
           <div className="absolute left-2 top-3 w-3 h-3 bg-slate-200 rotate-45 transform" style={{ zIndex: 10 }} />
@@ -270,6 +273,43 @@ export const InstagramPost = ({
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
+        {/* Text-only post content area */}
+        {isTextOnlyPost && text && (
+          <div className="px-4 py-4 flex-1">
+            <h3 className="font-semibold text-base mb-2">{post.title}</h3>
+            <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+              {hasLongText && !isExpanded ? (
+                <>
+                  {text.slice(0, 200)}...
+                  <button
+                    onClick={() => setIsExpanded(true)}
+                    className="text-primary font-medium ml-1 hover:underline"
+                  >
+                    Read more
+                  </button>
+                </>
+              ) : (
+                <>
+                  {text}
+                  {hasLongText && isExpanded && (
+                    <button
+                      onClick={() => setIsExpanded(false)}
+                      className="text-primary font-medium ml-1 hover:underline block mt-2"
+                    >
+                      Show less
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+            {post.tags && post.tags.length > 0 && (
+              <p className="text-primary text-xs mt-3">
+                {post.tags.map((tag) => `#${tag}`).join(" ")}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Media */}
         {media.length > 0 && (
@@ -391,18 +431,36 @@ export const InstagramPost = ({
             )}
           </div>
 
-          {/* Caption */}
-          <div className="text-sm">
-            <p className="line-clamp-2">
-              <span className="font-semibold">{post.title}</span>
-              {text && <span className="text-muted-foreground ml-1">{text}</span>}
-            </p>
-            {post.tags && post.tags.length > 0 && (
-              <p className="text-primary text-xs mt-1">
-                {post.tags.map((tag) => `#${tag}`).join(" ")}
+          {/* Caption - only show for posts with media */}
+          {!isTextOnlyPost && (
+            <div className="text-sm">
+              <p className={hasLongText && !isExpanded ? "line-clamp-3" : ""}>
+                <span className="font-semibold">{post.title}</span>
+                {text && <span className="text-muted-foreground ml-1">{text}</span>}
               </p>
-            )}
-          </div>
+              {hasLongText && !isExpanded && (
+                <button
+                  onClick={() => setIsExpanded(true)}
+                  className="text-muted-foreground hover:text-foreground text-xs mt-1"
+                >
+                  more
+                </button>
+              )}
+              {hasLongText && isExpanded && (
+                <button
+                  onClick={() => setIsExpanded(false)}
+                  className="text-muted-foreground hover:text-foreground text-xs mt-1"
+                >
+                  less
+                </button>
+              )}
+              {post.tags && post.tags.length > 0 && (
+                <p className="text-primary text-xs mt-1">
+                  {post.tags.map((tag) => `#${tag}`).join(" ")}
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Timestamp */}
           <p className="text-xs text-muted-foreground">
