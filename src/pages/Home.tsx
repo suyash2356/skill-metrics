@@ -9,7 +9,7 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap, X } from "lucide-react";
+import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap, X, Star } from "lucide-react";
 import { AddCommunityLinkDialog } from "@/components/AddCommunityLinkDialog";
 import { useExternalCommunityLinks } from "@/hooks/useExternalCommunityLinks";
 import { Link, useNavigate } from "react-router-dom";
@@ -33,6 +33,11 @@ const Home = () => {
   const [commentDialogOpen, setCommentDialogOpen] = useState<{ open: boolean; postId: string | null }>({ open: false, postId: null });
   const [shareDialogOpen, setShareDialogOpen] = useState<{ open: boolean; post: PostWithProfile | null }>({ open: false, post: null });
   const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
+  const [showAiPopup, setShowAiPopup] = useState(() => {
+    // Show popup once per session
+    const shown = sessionStorage.getItem('aiPopupShown');
+    return !shown;
+  });
   
   const { toast } = useToast();
   const { user } = useAuth();
@@ -92,11 +97,10 @@ const Home = () => {
     const from = pageParam * pageSize;
     const to = from + pageSize - 1;
 
-    // First get posts (exclude community posts)
+    // Fetch posts
     const { data: postsData, error } = await supabase
       .from("posts")
       .select("*")
-      .is("community_id", null)
       .order("created_at", { ascending: false })
       .range(from, to);
 
@@ -381,21 +385,32 @@ const Home = () => {
 
           {/* Main Feed - Full width on mobile, centered on desktop */}
           <main className="w-full lg:col-span-6 px-0">
-            {/* AI Personalization Banner */}
-            {personalizedData && personalizedData.posts.length > 0 && (
-              <Alert className="mb-6 border-primary/30 bg-gradient-to-r from-primary/10 to-accent/10 backdrop-blur-sm">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-primary/20 rounded-full">
-                    <Sparkles className="h-5 w-5 text-primary" />
+            {/* AI Personalization Popup */}
+            {showAiPopup && personalizedData && personalizedData.posts.length > 0 && (
+              <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-md w-[90%] animate-in fade-in slide-in-from-top-2 duration-300">
+                <Alert className="border-primary/30 bg-card shadow-lg">
+                  <button 
+                    onClick={() => {
+                      setShowAiPopup(false);
+                      sessionStorage.setItem('aiPopupShown', 'true');
+                    }}
+                    className="absolute top-2 right-2 p-1 hover:bg-muted rounded-full"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <div className="flex items-center gap-3 pr-6">
+                    <div className="p-2 bg-primary/20 rounded-full">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                    </div>
+                    <AlertDescription className="text-sm">
+                      <span className="font-semibold text-primary block mb-1">AI-Personalized Feed Active</span>
+                      <span className="text-muted-foreground text-xs">
+                        Content tailored for your skills & goals
+                      </span>
+                    </AlertDescription>
                   </div>
-                  <AlertDescription className="text-sm">
-                    <span className="font-semibold text-primary block mb-1">✨ AI-Personalized Feed</span>
-                    <span className="text-muted-foreground">
-                      Content tailored for: <span className="text-foreground font-medium">{personalizedData.userProfile.skills.slice(0, 3).map((s: any) => s.name || s).join(", ")}</span> • <span className="text-foreground font-medium">{personalizedData.userProfile.experienceLevel}</span>
-                    </span>
-                  </AlertDescription>
-                </div>
-              </Alert>
+                </Alert>
+              </div>
             )}
 
             {isLoadingPosts || isLoadingPersonalized ? (
@@ -426,9 +441,8 @@ const Home = () => {
                 {displayFeed.map((post: any) => (
                   <div key={post.id} className="relative">
                     {post.score && post.score > 70 && (
-                      <div className="absolute top-4 right-4 z-10 flex items-center gap-1 bg-primary/90 text-primary-foreground px-2 py-1 rounded-full text-xs font-medium">
-                        <Zap className="h-3 w-3" />
-                        Recommended
+                      <div className="absolute top-4 right-4 z-10 bg-primary text-primary-foreground p-1.5 rounded-full shadow-md" title="AI Recommended">
+                        <Star className="h-3.5 w-3.5 fill-current" />
                       </div>
                     )}
                     <InstagramPost
