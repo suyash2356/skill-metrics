@@ -3,11 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useCallback } from "react";
+import { usePostInteractions } from "@/hooks/usePostInteractions";
 
 export function useFollowRequests() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { sendFollowAcceptedNotification } = usePostInteractions();
 
   // Get all pending requests received by current user
   const { data: pendingRequests, isLoading: isLoadingPending } = useQuery({
@@ -79,7 +81,7 @@ export function useFollowRequests() {
     enabled: !!user?.id,
   });
 
-  const acceptRequest = useCallback(async (requestId: string) => {
+  const acceptRequest = useCallback(async (requestId: string, requesterId?: string) => {
     if (!user?.id) return;
     
     try {
@@ -91,13 +93,18 @@ export function useFollowRequests() {
 
       if (error) throw error;
 
+      // Send notification to the requester
+      if (requesterId) {
+        await sendFollowAcceptedNotification(requesterId);
+      }
+
       toast({ title: "Follow request accepted!" });
       queryClient.invalidateQueries({ queryKey: ['pendingFollowRequests', user.id] });
       queryClient.invalidateQueries({ queryKey: ['followerCount'] });
     } catch (error: any) {
       toast({ title: "Failed to accept request", description: error.message, variant: "destructive" });
     }
-  }, [user?.id, toast, queryClient]);
+  }, [user?.id, toast, queryClient, sendFollowAcceptedNotification]);
 
   const rejectRequest = useCallback(async (requestId: string) => {
     if (!user?.id) return;
