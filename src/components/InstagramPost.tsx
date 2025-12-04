@@ -13,6 +13,7 @@ import {
   Flag,
   FileText,
   Download,
+  Star,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -45,6 +46,7 @@ interface InstagramPostProps {
   };
   isLiked: boolean;
   isBookmarked: boolean;
+  isRecommended?: boolean;
   onLike: () => void;
   onBookmark: () => void;
   onComment: () => void;
@@ -58,6 +60,7 @@ export const InstagramPost = ({
   post,
   isLiked,
   isBookmarked,
+  isRecommended = false,
   onLike,
   onBookmark,
   onComment,
@@ -244,34 +247,41 @@ export const InstagramPost = ({
               )}
             </div>
           </Link>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent">
-                <MoreHorizontal className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 bg-popover backdrop-blur-sm z-50">
-              <DropdownMenuItem onClick={onBookmark} className="cursor-pointer">
-                <Bookmark className="mr-2 h-4 w-4" />
-                <span>{isBookmarked ? "Unsave" : "Save Post"}</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleInterested} className="cursor-pointer">
-                <Eye className="mr-2 h-4 w-4" />
-                <span>Interested</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleNotInterested} className="cursor-pointer">
-                <EyeOff className="mr-2 h-4 w-4" />
-                <span>Not Interested</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive cursor-pointer"
-                onClick={() => setReportDialogOpen(true)}
-              >
-                <Flag className="mr-2 h-4 w-4" />
-                <span>Report</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-1">
+            {isRecommended && (
+              <div className="bg-primary text-primary-foreground p-1.5 rounded-full" title="AI Recommended">
+                <Star className="h-3.5 w-3.5 fill-current" />
+              </div>
+            )}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-accent">
+                  <MoreHorizontal className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 bg-popover backdrop-blur-sm z-50">
+                <DropdownMenuItem onClick={onBookmark} className="cursor-pointer">
+                  <Bookmark className="mr-2 h-4 w-4" />
+                  <span>{isBookmarked ? "Unsave" : "Save Post"}</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleInterested} className="cursor-pointer">
+                  <Eye className="mr-2 h-4 w-4" />
+                  <span>Interested</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleNotInterested} className="cursor-pointer">
+                  <EyeOff className="mr-2 h-4 w-4" />
+                  <span>Not Interested</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive focus:text-destructive cursor-pointer"
+                  onClick={() => setReportDialogOpen(true)}
+                >
+                  <Flag className="mr-2 h-4 w-4" />
+                  <span>Report</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
 
         {/* Text-only post content area */}

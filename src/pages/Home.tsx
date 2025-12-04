@@ -9,7 +9,7 @@ import { ShareDialog } from "@/components/ShareDialog";
 import { InstagramPost } from "@/components/InstagramPost";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, TrendingUp, Users, Play, Eye, Sparkles, Zap, X, Star } from "lucide-react";
+import { Plus, TrendingUp, Users, Play, Eye, Sparkles, X } from "lucide-react";
 import { AddCommunityLinkDialog } from "@/components/AddCommunityLinkDialog";
 import { useExternalCommunityLinks } from "@/hooks/useExternalCommunityLinks";
 import { Link, useNavigate } from "react-router-dom";
@@ -440,15 +440,11 @@ const Home = () => {
               <>
                 {displayFeed.map((post: any) => (
                   <div key={post.id} className="relative">
-                    {post.score && post.score > 70 && (
-                      <div className="absolute top-4 right-4 z-10 bg-primary text-primary-foreground p-1.5 rounded-full shadow-md" title="AI Recommended">
-                        <Star className="h-3.5 w-3.5 fill-current" />
-                      </div>
-                    )}
                     <InstagramPost
                       post={post}
                       isLiked={likedPosts.has(post.id)}
                       isBookmarked={bookmarkedPosts.has(post.id)}
+                      isRecommended={post.score && post.score > 70}
                       onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id), postOwnerId: post.user_id, postTitle: post.title })}
                       onBookmark={() => bookmarkMutation.mutate(post.id)}
                       onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}

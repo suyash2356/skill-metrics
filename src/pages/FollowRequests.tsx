@@ -74,7 +74,7 @@ export default function FollowRequests() {
                         <div className="flex gap-2">
                           <Button 
                             size="sm" 
-                            onClick={() => acceptRequest(request.id)}
+                            onClick={() => acceptRequest(request.id, request.requester_id)}
                             className="gap-1"
                           >
                             <Check className="h-4 w-4" />
