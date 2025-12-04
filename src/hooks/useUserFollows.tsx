@@ -3,12 +3,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useNotifications } from "@/hooks/useNotifications";
+import { usePostInteractions } from "@/hooks/usePostInteractions";
 
 export function useUserFollows(targetUserId?: string) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { sendFollowRequestNotification } = usePostInteractions();
   const currentUserId = user?.id;
 
   // Check if currently following
@@ -91,6 +92,10 @@ export function useUserFollows(targetUserId?: string) {
           });
         
         if (error) throw error;
+        
+        // Send notification to the user being followed
+        await sendFollowRequestNotification(targetUserId);
+        
         toast({ title: "Follow request sent!" });
         
         queryClient.invalidateQueries({ queryKey: ['followRequestStatus', currentUserId, targetUserId] });
@@ -98,7 +103,7 @@ export function useUserFollows(targetUserId?: string) {
     } catch (e: any) {
       toast({ title: `Failed: ${e.message}`, variant: "destructive" });
     }
-  }, [currentUserId, targetUserId, isFollowing, followRequestStatus, toast, queryClient]);
+  }, [currentUserId, targetUserId, isFollowing, followRequestStatus, toast, queryClient, sendFollowRequestNotification]);
 
   // Optionally fetch followers/following counts for a profile
   const { data: followerCount, isLoading: isLoadingFollowerCount } = useQuery({
