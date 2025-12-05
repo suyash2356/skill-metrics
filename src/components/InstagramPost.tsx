@@ -90,8 +90,8 @@ export const InstagramPost = ({
       text = text.replace(match[0], "");
     }
 
-    // Extract regular image URLs
-    const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/g;
+    // Extract image URLs (including relative paths and full URLs)
+    const imgRegex = /!\[.*?\]\(((?:https?:\/\/[^)]+|\/[^)]+\.(?:jpg|jpeg|png|gif|webp|svg)))\)/gi;
     const imgMatches = content.matchAll(imgRegex);
     for (const match of imgMatches) {
       media.push({ type: "image", url: match[1] });
