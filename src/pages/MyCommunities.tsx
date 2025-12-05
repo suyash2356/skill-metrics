@@ -12,7 +12,7 @@ const MyCommunities = () => {
     return (
         <Layout>
             <div className="container max-w-2xl mx-auto py-6 px-4">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                     <h1 className="text-2xl font-bold">My Communities</h1>
                     <AddCommunityLinkDialog />
                 </div>
@@ -56,9 +56,9 @@ const MyCommunities = () => {
                                                 </Avatar>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="font-medium truncate">{c.name}</div>
-                                                    <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
-                                                        {c.link}
-                                                        <ExternalLink className="h-3 w-3" />
+                                                    <div className="text-xs text-muted-foreground flex items-start gap-1 min-w-0">
+                                                        <span className="break-all flex-1 min-w-0">{c.link}</span>
+                                                        <ExternalLink className="h-3 w-3 shrink-0 mt-0.5" />
                                                     </div>
                                                 </div>
                                             </a>

@@ -343,7 +343,7 @@ const Profile = () => {
                 {editMode ? (
                   <Textarea placeholder="Short bio..." value={formData.bio} onChange={(e) => setFormData({ ...formData, bio: e.target.value })} rows={3} />
                 ) : (
-                  <p className="text-foreground max-w-2xl mx-auto sm:mx-0">{profileDetails?.bio || 'No bio provided.'}</p>
+                  <p className="text-foreground max-w-2xl mx-auto sm:mx-0 break-words">{profileDetails?.bio || 'No bio provided.'}</p>
                 )}
 
                 {editMode ? (
@@ -400,9 +400,9 @@ const Profile = () => {
                   )
                 ) : (
                   <div className="flex gap-2 w-full">
-                    <Button 
-                      onClick={toggleFollow} 
-                      disabled={isLoadingFollowStatus} 
+                    <Button
+                      onClick={toggleFollow}
+                      disabled={isLoadingFollowStatus}
                       variant={getFollowButtonState().variant}
                       className="flex-1"
                     >
@@ -431,7 +431,7 @@ const Profile = () => {
         </Card>
 
         <Tabs defaultValue="roadmaps" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
             <TabsTrigger value="roadmaps">Roadmaps</TabsTrigger>
             <TabsTrigger value="skills">Skills</TabsTrigger>
             <TabsTrigger value="achievements">Achievements</TabsTrigger>

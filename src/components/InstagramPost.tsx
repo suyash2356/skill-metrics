@@ -322,7 +322,7 @@ export const InstagramPost = ({
         {isTextOnlyPost && text && (
           <div className="px-4 py-4 flex-1">
             <h3 className="font-semibold text-base mb-2">{post.title}</h3>
-            <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">
+            <div className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap break-words">
               {hasLongText && !isExpanded ? (
                 <>
                   {text.slice(0, 200)}...
@@ -411,11 +411,10 @@ export const InstagramPost = ({
                 {media.map((_, idx) => (
                   <button
                     key={idx}
-                    className={`h-1.5 rounded-full transition-all ${
-                      idx === currentMediaIndex 
-                        ? 'w-4 bg-primary' 
+                    className={`h-1.5 rounded-full transition-all ${idx === currentMediaIndex
+                        ? 'w-4 bg-primary'
                         : 'w-1.5 bg-background/70 hover:bg-background'
-                    }`}
+                      }`}
                     onClick={() => setCurrentMediaIndex(idx)}
                   />
                 ))}
@@ -444,9 +443,9 @@ export const InstagramPost = ({
                     {file.type.toUpperCase()} Document • Click to open
                   </p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
+                <Button
+                  variant="ghost"
+                  size="icon"
                   className="h-9 w-9 text-muted-foreground hover:text-primary"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -527,7 +526,7 @@ export const InstagramPost = ({
             <div className="space-y-2">
               <h3 className="font-semibold text-sm">{post.title}</h3>
               {text && (
-                <div className="text-sm text-foreground/80 leading-relaxed">
+                <div className="text-sm text-foreground/80 leading-relaxed break-words">
                   {hasLongText && !isExpanded ? (
                     <>
                       <p className="whitespace-pre-wrap">{text.slice(0, 150)}...</p>
