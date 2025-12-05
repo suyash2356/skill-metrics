@@ -14,6 +14,12 @@ import {
   FileText,
   Download,
   Star,
+  ChevronLeft,
+  ChevronRight,
+  File,
+  FileImage,
+  FileSpreadsheet,
+  Presentation,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -72,6 +78,7 @@ export const InstagramPost = ({
   const [imageError, setImageError] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const { toast } = useToast();
 
   // Parse media from content
@@ -112,12 +119,39 @@ export const InstagramPost = ({
     for (const match of attachmentMatches) {
       const name = match[1];
       const url = match[2];
-      const ext = name.split('.').pop()?.toUpperCase() || 'FILE';
+      const ext = name.split('.').pop()?.toLowerCase() || 'file';
       attachments.push({ name, url, type: ext });
       text = text.replace(match[0], "");
     }
 
-    return { text: text.trim(), media, attachments };
+    // Clean up extra newlines and whitespace
+    text = text.replace(/\n{3,}/g, '\n\n').trim();
+
+    return { text, media, attachments };
+  };
+
+  // Get file icon based on extension
+  const getFileIcon = (type: string) => {
+    const ext = type.toLowerCase();
+    if (['pdf'].includes(ext)) return <FileText className="h-6 w-6 text-red-500" />;
+    if (['doc', 'docx'].includes(ext)) return <FileText className="h-6 w-6 text-blue-500" />;
+    if (['xls', 'xlsx'].includes(ext)) return <FileSpreadsheet className="h-6 w-6 text-green-500" />;
+    if (['ppt', 'pptx'].includes(ext)) return <Presentation className="h-6 w-6 text-orange-500" />;
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return <FileImage className="h-6 w-6 text-purple-500" />;
+    return <File className="h-6 w-6 text-muted-foreground" />;
+  };
+
+  // Navigate carousel
+  const nextMedia = () => {
+    if (media.length > 1) {
+      setCurrentMediaIndex((prev) => (prev + 1) % media.length);
+    }
+  };
+
+  const prevMedia = () => {
+    if (media.length > 1) {
+      setCurrentMediaIndex((prev) => (prev - 1 + media.length) % media.length);
+    }
   };
 
   const { text, media, attachments } = parseMedia(post.content);
@@ -321,57 +355,104 @@ export const InstagramPost = ({
           </div>
         )}
 
-        {/* Media */}
+        {/* Media Carousel - LinkedIn Style */}
         {media.length > 0 && (
-          <div
-            className="relative bg-black w-full overflow-hidden"
-            style={mediaSize ? { aspectRatio: `${mediaSize.width} / ${mediaSize.height}` } : {}}
-          >
-            {media[0].type === "image" ? (
+          <div className="relative bg-muted/30 w-full overflow-hidden" style={{ aspectRatio: '4/3', maxHeight: '400px' }}>
+            {/* Current Media */}
+            {media[currentMediaIndex].type === "image" ? (
               <img
-                src={media[0].url}
-                alt="Post content"
+                src={media[currentMediaIndex].url}
+                alt={`Post content ${currentMediaIndex + 1}`}
                 className="w-full h-full object-contain"
                 onError={() => setImageError(true)}
                 onLoad={onImageLoad}
               />
             ) : (
               <video
-                src={media[0].url}
+                src={media[currentMediaIndex].url}
                 controls
                 className="w-full h-full object-contain"
                 onLoadedMetadata={onVideoMeta}
               />
             )}
+
+            {/* Navigation Arrows - Only show if multiple media */}
             {media.length > 1 && (
-              <div className="absolute top-3 right-3 bg-background/80 backdrop-blur-sm px-2 py-1 rounded-full text-xs font-medium">
-                1/{media.length}
+              <>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background shadow-md"
+                  onClick={prevMedia}
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background shadow-md"
+                  onClick={nextMedia}
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </Button>
+              </>
+            )}
+
+            {/* Media Counter */}
+            {media.length > 1 && (
+              <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium shadow">
+                {currentMediaIndex + 1}/{media.length}
+              </div>
+            )}
+
+            {/* Dots Indicator */}
+            {media.length > 1 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+                {media.map((_, idx) => (
+                  <button
+                    key={idx}
+                    className={`h-1.5 rounded-full transition-all ${
+                      idx === currentMediaIndex 
+                        ? 'w-4 bg-primary' 
+                        : 'w-1.5 bg-background/70 hover:bg-background'
+                    }`}
+                    onClick={() => setCurrentMediaIndex(idx)}
+                  />
+                ))}
               </div>
             )}
           </div>
         )}
 
-        {/* Attachments */}
+        {/* Attachments - LinkedIn Style Document Cards */}
         {attachments.length > 0 && (
-          <div className="px-3 pb-2 space-y-2 mt-3">
+          <div className="px-3 py-3 space-y-2">
             {attachments.map((file, idx) => (
               <div
                 key={idx}
-                className="flex items-center gap-3 p-3 rounded-md bg-muted/50 border hover:bg-muted transition-colors cursor-pointer group"
+                className="flex items-center gap-3 p-3 rounded-lg bg-muted/30 border border-border/50 hover:bg-muted/50 hover:border-border transition-all cursor-pointer group"
                 onClick={() => window.open(file.url, '_blank')}
               >
-                <div className="h-10 w-10 rounded bg-background flex items-center justify-center shadow-sm border">
-                  <FileText className="h-5 w-5 text-primary" />
+                <div className="h-12 w-12 rounded-lg bg-background flex items-center justify-center shadow-sm border">
+                  {getFileIcon(file.type)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
                     {file.name}
                   </p>
-                  <p className="text-xs text-muted-foreground">
-                    {file.type} • Click to view
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {file.type.toUpperCase()} Document • Click to open
                   </p>
                 </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-9 w-9 text-muted-foreground hover:text-primary"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window.open(file.url, '_blank');
+                  }}
+                >
                   <Download className="h-4 w-4" />
                 </Button>
               </div>
@@ -441,31 +522,39 @@ export const InstagramPost = ({
             )}
           </div>
 
-          {/* Caption - only show for posts with media */}
+          {/* Caption - LinkedIn style for posts with media */}
           {!isTextOnlyPost && (
-            <div className="text-sm">
-              <p className={hasLongText && !isExpanded ? "line-clamp-3" : ""}>
-                <span className="font-semibold">{post.title}</span>
-                {text && <span className="text-muted-foreground ml-1">{text}</span>}
-              </p>
-              {hasLongText && !isExpanded && (
-                <button
-                  onClick={() => setIsExpanded(true)}
-                  className="text-muted-foreground hover:text-foreground text-xs mt-1"
-                >
-                  more
-                </button>
-              )}
-              {hasLongText && isExpanded && (
-                <button
-                  onClick={() => setIsExpanded(false)}
-                  className="text-muted-foreground hover:text-foreground text-xs mt-1"
-                >
-                  less
-                </button>
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm">{post.title}</h3>
+              {text && (
+                <div className="text-sm text-foreground/80 leading-relaxed">
+                  {hasLongText && !isExpanded ? (
+                    <>
+                      <p className="whitespace-pre-wrap">{text.slice(0, 150)}...</p>
+                      <button
+                        onClick={() => setIsExpanded(true)}
+                        className="text-primary font-medium hover:underline mt-1"
+                      >
+                        see more
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <p className="whitespace-pre-wrap">{text}</p>
+                      {hasLongText && (
+                        <button
+                          onClick={() => setIsExpanded(false)}
+                          className="text-primary font-medium hover:underline mt-1"
+                        >
+                          show less
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
               )}
               {post.tags && post.tags.length > 0 && (
-                <p className="text-primary text-xs mt-1">
+                <p className="text-primary text-xs">
                   {post.tags.map((tag) => `#${tag}`).join(" ")}
                 </p>
               )}
