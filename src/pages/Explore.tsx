@@ -161,12 +161,12 @@ function Explore() {
 
         {/* Tabs for Explore Sections */}
         <Tabs defaultValue="popular" onValueChange={(v) => setActiveTab(v)} className="space-y-8">
-          <TabsList className="flex justify-center bg-transparent gap-2">
-            <TabsTrigger value="popular">Popular</TabsTrigger>
-            <TabsTrigger value="categories">Degrees</TabsTrigger>
-            <TabsTrigger value="certifications">Certifications</TabsTrigger>
-            <TabsTrigger value="learning">Learning Paths</TabsTrigger>
-            <TabsTrigger value="resources">Resources</TabsTrigger>
+          <TabsList className="flex justify-start sm:justify-center overflow-x-auto bg-transparent gap-2 pb-2 w-full no-scrollbar">
+            <TabsTrigger value="popular" className="shrink-0">Popular</TabsTrigger>
+            <TabsTrigger value="categories" className="shrink-0">Degrees</TabsTrigger>
+            <TabsTrigger value="certifications" className="shrink-0">Certifications</TabsTrigger>
+            <TabsTrigger value="learning" className="shrink-0">Learning Paths</TabsTrigger>
+            <TabsTrigger value="resources" className="shrink-0">Resources</TabsTrigger>
           </TabsList>
 
           {/* === Popular Categories Section === */}
@@ -214,7 +214,7 @@ function Explore() {
                           >
                             <IconComponent className="h-6 w-6" />
                           </div>
-                          <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
+                          <CardTitle className="text-lg font-bold break-words">{category.title}</CardTitle>
                           {scoredCategory.reasons[0] && (
                             <Badge variant="secondary" className="text-xs">{scoredCategory.reasons[0]}</Badge>
                           )}
@@ -277,7 +277,7 @@ function Explore() {
                             <div className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}>
                               <IconComponent className="h-6 w-6" />
                             </div>
-                            <CardTitle className="text-lg font-bold">{category.title}</CardTitle>
+                            <CardTitle className="text-lg font-bold break-words">{category.title}</CardTitle>
                             {scoredCategory.reasons[0] && (
                               <Badge variant="secondary" className="text-xs">{scoredCategory.reasons[0]}</Badge>
                             )}
@@ -333,7 +333,7 @@ function Explore() {
                             <div className={`p-3 rounded-full bg-gradient-to-r ${exam.color} text-white shadow-lg`}>
                               <GraduationCap className="h-6 w-6" />
                             </div>
-                            <CardTitle className="text-lg font-bold">{exam.title}</CardTitle>
+                            <CardTitle className="text-lg font-bold break-words">{exam.title}</CardTitle>
                             {scoredExam.reasons[0] && (
                               <Badge variant="secondary" className="text-xs">{scoredExam.reasons[0]}</Badge>
                             )}
@@ -415,13 +415,13 @@ function Explore() {
                   onClick={() => setSelectedDegree(null)}
                 >
                   <Card
-                    className="w-full max-w-4xl max-h-[85vh] overflow-y-auto"
+                    className="w-full max-w-4xl max-h-[85vh] overflow-y-auto mx-4"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <CardHeader className="space-y-1">
                       <div className="flex items-center justify-between gap-4">
                         <div>
-                          <CardTitle className="text-2xl">{selectedDegree.title}</CardTitle>
+                          <CardTitle className="text-2xl break-words">{selectedDegree.title}</CardTitle>
                           <p className="text-sm text-muted-foreground">
                             {selectedDegree.university} • {selectedDegree.mode}
                           </p>
@@ -518,7 +518,7 @@ function Explore() {
                           <div className={`p-3 rounded-full bg-gradient-to-r ${cert.color} text-white shadow-lg`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
-                          <CardTitle className="text-lg font-semibold">{cert.name}</CardTitle>
+                          <CardTitle className="text-lg font-semibold break-words">{cert.name}</CardTitle>
                           {scoredCert.reasons[0] && (
                             <Badge variant="secondary" className="text-xs">{scoredCert.reasons[0]}</Badge>
                           )}
@@ -573,7 +573,7 @@ function Explore() {
                           <div className={`p-3 rounded-full bg-gradient-to-r ${pathColor} text-white shadow-lg`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
-                          <CardTitle className="text-base font-bold">{path.title}</CardTitle>
+                          <CardTitle className="text-base font-bold break-words">{path.title}</CardTitle>
                           {scoredPath.reasons[0] && (
                             <Badge variant="secondary" className="text-xs">{scoredPath.reasons[0]}</Badge>
                           )}
@@ -603,13 +603,13 @@ function Explore() {
                   onClick={() => setSelectedPath(null)}
                 >
                   <Card
-                    className="w-full max-w-4xl max-h-[85vh] overflow-y-auto"
+                    className="w-full max-w-4xl max-h-[85vh] overflow-y-auto mx-4"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <CardHeader className="space-y-1">
                       <div className="flex items-center justify-between gap-4">
                         <div>
-                          <CardTitle className="text-2xl">{selectedPath.title}</CardTitle>
+                          <CardTitle className="text-2xl break-words">{selectedPath.title}</CardTitle>
                           <p className="text-sm text-muted-foreground">
                             {selectedPath.roadmap?.length || 0} Steps • {selectedPath.duration}
                           </p>
@@ -684,7 +684,7 @@ function Explore() {
                           <div className={`p-3 rounded-full bg-gradient-to-r ${res.color} text-white shadow-lg`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
-                          <CardTitle className="text-lg font-semibold leading-snug">{res.title}</CardTitle>
+                          <CardTitle className="text-lg font-semibold leading-snug break-words">{res.title}</CardTitle>
                           {scoredRes.reasons[0] && (
                             <Badge variant="secondary" className="text-xs">{scoredRes.reasons[0]}</Badge>
                           )}

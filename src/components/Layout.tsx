@@ -6,12 +6,12 @@ import { Input } from "@/components/ui/input";
 import { fetchPeopleCommunitySuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
 import { debounce } from "lodash";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  Home, 
-  Search, 
-  User, 
-  Settings, 
-  Map, 
+import {
+  Home,
+  Search,
+  User,
+  Settings,
+  Map,
   Plus,
   ChevronDown,
   Moon,
@@ -137,7 +137,7 @@ export const Layout = ({ children }: LayoutProps) => {
           {/* Logo */}
           <Link to="/home" className="flex items-center space-x-2 flex-shrink-0">
             <img src={logoImg} alt="Skill Metrics" className="w-8 h-8 rounded-lg object-cover" />
-            <span className="font-bold text-xl bg-gradient-primary bg-clip-text text-transparent hidden sm:block">
+            <span className="font-bold text-xl bg-gradient-primary bg-clip-text text-transparent hidden lg:block">
               Skill-Metrics
             </span>
           </Link>
@@ -164,7 +164,7 @@ export const Layout = ({ children }: LayoutProps) => {
           </nav>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-4" ref={searchRef}>
+          <div className="flex-1 max-w-md mx-2 md:mx-4" ref={searchRef}>
             <form onSubmit={handleSearch} className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -175,61 +175,62 @@ export const Layout = ({ children }: LayoutProps) => {
                 onFocus={() => setShowSuggestions(true)}
               />
 
-                {showSuggestions && suggestions.length > 0 && (
-                  <div className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-elevated z-50 overflow-hidden backdrop-blur-sm">
-                    {/* If user clicked a skill and is viewing inline skill results, show cards */}
-                    {showSkillResults ? (
-                      <div className="p-4">
-                        {isSkillLoading ? (
-                          <div className="text-sm text-muted-foreground">Loading suggestions...</div>
-                        ) : (
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {skillRecommendations.slice(0,6).map((item, i) => (
-                              <div key={i} className="border border-border rounded-lg p-3 bg-card hover:border-primary/50 transition-all">
-                                <div className="flex items-center justify-between">
-                                  <div className="font-medium text-sm">{item.title}</div>
-                                  <div className="text-xs text-muted-foreground">{item.provider || item.type}</div>
-                                </div>
-                                {item.description && <div className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</div>}
-                                <div className="mt-3">
-                                  <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Visit</a>
-                                </div>
+              {showSuggestions && suggestions.length > 0 && (
+                <div className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-elevated z-50 overflow-hidden backdrop-blur-sm">
+                  {/* If user clicked a skill and is viewing inline skill results, show cards */}
+                  {showSkillResults ? (
+                    <div className="p-4">
+                      {isSkillLoading ? (
+                        <div className="text-sm text-muted-foreground">Loading suggestions...</div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {skillRecommendations.slice(0, 6).map((item, i) => (
+                            <div key={i} className="border border-border rounded-lg p-3 bg-card hover:border-primary/50 transition-all">
+                              <div className="flex items-center justify-between">
+                                <div className="font-medium text-sm">{item.title}</div>
+                                <div className="text-xs text-muted-foreground">{item.provider || item.type}</div>
                               </div>
-                            ))}
-                          </div>
-                        )}
-                        <div className="mt-3 text-right">
-                          <Button size="sm" variant="ghost" onMouseDown={(e) => { e.preventDefault(); setShowSkillResults(false); navigate(`/search?q=${encodeURIComponent(searchQuery)}`); }}>See all</Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="py-2">
-                        {/* people & community suggestions */}
-                        {suggestions.map((s, idx) => (
-                          <button
-                            key={`${s.kind}-${idx}`}
-                            className="w-full text-left px-4 py-2.5 hover:bg-accent transition-colors flex items-center gap-3"
-                            onMouseDown={(e) => { e.preventDefault();
-                              if (s.kind === 'user') {
-                                setShowSuggestions(false);
-                                navigate(`/profile/${s.id}`);
-                              } else {
-                                setShowSuggestions(false);
-                                navigate(`/search?q=${encodeURIComponent(s.name)}&scope=people`);
-                              }
-                            }}
-                          >
-                            {s.kind === 'user' && <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full object-cover" />}
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm truncate">{s.name}</div>
-                              <div className="text-xs text-muted-foreground capitalize">{s.kind}</div>
+                              {item.description && <div className="text-sm text-muted-foreground mt-2 line-clamp-2">{item.description}</div>}
+                              <div className="mt-3">
+                                <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">Visit</a>
+                              </div>
                             </div>
-                          </button>
-                        ))}
+                          ))}
+                        </div>
+                      )}
+                      <div className="mt-3 text-right">
+                        <Button size="sm" variant="ghost" onMouseDown={(e) => { e.preventDefault(); setShowSkillResults(false); navigate(`/search?q=${encodeURIComponent(searchQuery)}`); }}>See all</Button>
                       </div>
-                    )}
-                  </div>
-                )}
+                    </div>
+                  ) : (
+                    <div className="py-2">
+                      {/* people & community suggestions */}
+                      {suggestions.map((s, idx) => (
+                        <button
+                          key={`${s.kind}-${idx}`}
+                          className="w-full text-left px-4 py-2.5 hover:bg-accent transition-colors flex items-center gap-3"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            if (s.kind === 'user') {
+                              setShowSuggestions(false);
+                              navigate(`/profile/${s.id}`);
+                            } else {
+                              setShowSuggestions(false);
+                              navigate(`/search?q=${encodeURIComponent(s.name)}&scope=people`);
+                            }
+                          }}
+                        >
+                          {s.kind === 'user' && <img src={s.avatar} alt={s.name} className="w-8 h-8 rounded-full object-cover" />}
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{s.name}</div>
+                            <div className="text-xs text-muted-foreground capitalize">{s.kind}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </form>
           </div>
 
@@ -304,7 +305,7 @@ export const Layout = ({ children }: LayoutProps) => {
       <main className="pb-16 md:pb-0">
         {children}
       </main>
-      
+
       {/* Mobile Navigation */}
       <BottomNav />
     </div>
