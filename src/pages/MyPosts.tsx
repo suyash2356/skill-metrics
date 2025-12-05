@@ -91,8 +91,8 @@ const MyPosts = () => {
     const base64Match = content.match(base64Regex);
     if (base64Match) return { type: 'image', url: base64Match[1] };
 
-    // Check for image URL
-    const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/;
+    // Check for image URL (including relative paths)
+    const imgRegex = /!\[.*?\]\(((?:https?:\/\/[^)]+|\/[^)]+\.(?:jpg|jpeg|png|gif|webp|svg)))\)/i;
     const imgMatch = content.match(imgRegex);
     if (imgMatch) return { type: 'image', url: imgMatch[1] };
 
@@ -134,8 +134,8 @@ const MyPosts = () => {
       text = text.replace(match[0], "");
     }
 
-    // Extract regular image URLs
-    const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/g;
+    // Extract image URLs (including relative paths)
+    const imgRegex = /!\[.*?\]\(((?:https?:\/\/[^)]+|\/[^)]+\.(?:jpg|jpeg|png|gif|webp|svg)))\)/gi;
     const imgMatches = content.matchAll(imgRegex);
     for (const match of imgMatches) {
       media.push({ type: "image", url: match[1] });
