@@ -16,7 +16,7 @@ export function useFollowRequests() {
     queryKey: ['pendingFollowRequests', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
+
       // Fetch follow requests
       const { data: requests, error: requestsError } = await supabase
         .from('follow_requests')
@@ -24,7 +24,7 @@ export function useFollowRequests() {
         .eq('requested_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      
+
       if (requestsError) throw requestsError;
       if (!requests || requests.length === 0) return [];
 
@@ -34,7 +34,7 @@ export function useFollowRequests() {
         .from('profiles')
         .select('user_id, full_name, avatar_url')
         .in('user_id', requesterIds);
-      
+
       if (profilesError) throw profilesError;
 
       // Combine data
@@ -51,7 +51,7 @@ export function useFollowRequests() {
     queryKey: ['sentFollowRequests', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
-      
+
       // Fetch follow requests
       const { data: requests, error: requestsError } = await supabase
         .from('follow_requests')
@@ -59,7 +59,7 @@ export function useFollowRequests() {
         .eq('requester_id', user.id)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
-      
+
       if (requestsError) throw requestsError;
       if (!requests || requests.length === 0) return [];
 
@@ -69,7 +69,7 @@ export function useFollowRequests() {
         .from('profiles')
         .select('user_id, full_name, avatar_url')
         .in('user_id', requestedIds);
-      
+
       if (profilesError) throw profilesError;
 
       // Combine data
@@ -83,7 +83,7 @@ export function useFollowRequests() {
 
   const acceptRequest = useCallback(async (requestId: string, requesterId?: string) => {
     if (!user?.id) return;
-    
+
     try {
       const { error } = await supabase
         .from('follow_requests')
@@ -93,10 +93,7 @@ export function useFollowRequests() {
 
       if (error) throw error;
 
-      // Send notification to the requester
-      if (requesterId) {
-        await sendFollowAcceptedNotification(requesterId);
-      }
+
 
       toast({ title: "Follow request accepted!" });
       queryClient.invalidateQueries({ queryKey: ['pendingFollowRequests', user.id] });
@@ -108,7 +105,7 @@ export function useFollowRequests() {
 
   const rejectRequest = useCallback(async (requestId: string) => {
     if (!user?.id) return;
-    
+
     try {
       const { error } = await supabase
         .from('follow_requests')
@@ -127,7 +124,7 @@ export function useFollowRequests() {
 
   const cancelRequest = useCallback(async (requestId: string) => {
     if (!user?.id) return;
-    
+
     try {
       const { error } = await supabase
         .from('follow_requests')

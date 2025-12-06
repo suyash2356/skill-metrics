@@ -30,6 +30,17 @@ import {
   Lock,
   Globe
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useParams } from "react-router-dom";
@@ -411,14 +422,40 @@ const Profile = () => {
                   )
                 ) : (
                   <div className="flex gap-2 w-full">
-                    <Button
-                      onClick={toggleFollow}
-                      disabled={isLoadingFollowStatus}
-                      variant={getFollowButtonState().variant}
-                      className="flex-1"
-                    >
-                      {getFollowButtonState().text}
-                    </Button>
+                    {isFollowing ? (
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            disabled={isLoadingFollowStatus}
+                            variant={getFollowButtonState().variant}
+                            className="flex-1"
+                          >
+                            {getFollowButtonState().text}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Unfollow {publicUserData?.full_name || 'User'}?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Are you sure you want to unfollow this user? You will stop seeing their posts and updates in your feed.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={toggleFollow}>Unfollow</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    ) : (
+                      <Button
+                        onClick={toggleFollow}
+                        disabled={isLoadingFollowStatus}
+                        variant={getFollowButtonState().variant}
+                        className="flex-1"
+                      >
+                        {getFollowButtonState().text}
+                      </Button>
+                    )}
                     <Button variant="outline" className="flex-1">
                       <MessageCircle className="h-4 w-4 mr-2" /> Message
                     </Button>
