@@ -59,6 +59,18 @@ serve(async (req) => {
       console.error("Posts fetch error:", postsError);
     }
 
+    // Fetch profiles for posts
+    const postUserIds = [...new Set((posts || []).map(p => p.user_id))];
+    const { data: postProfiles } = await supabase
+      .from("profiles")
+      .select("user_id, full_name, avatar_url")
+      .in("user_id", postUserIds);
+
+    const profilesMap = (postProfiles || []).reduce((acc: any, p: any) => {
+      acc[p.user_id] = p;
+      return acc;
+    }, {});
+
     // Fetch public roadmaps
     const { data: roadmaps, error: roadmapsError } = await supabase
       .from("roadmaps")
@@ -178,8 +190,13 @@ ${roadmaps?.slice(0, 20).map(r => `- ID: ${r.id}, Title: ${r.title}, Category: $
     const scoredPosts = (posts || [])
       .map(post => {
         const rec = recommendations.posts?.find((r: any) => r.id === post.id);
+        const profile = profilesMap[post.user_id];
         return {
           ...post,
+          profiles: profile ? {
+            full_name: profile.full_name || 'Anonymous',
+            avatar_url: profile.avatar_url,
+          } : { full_name: 'Anonymous', avatar_url: null },
           score: rec?.score || 0,
           recommendation_reason: rec?.reason || "",
         };
