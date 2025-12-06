@@ -29,6 +29,7 @@ import Support from "./pages/Support";
 import SavedPosts from "./pages/SavedPosts";
 import MyCommunities from "./pages/MyCommunities";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { VideoMuteProvider } from "@/context/VideoMuteContext";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,34 +53,36 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
-          <ErrorBoundary>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/onboarding" element={<Onboarding />} />
-              <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-              <Route path="/follow-requests" element={<ProtectedRoute><FollowRequests /></ProtectedRoute>} />
-              <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-              <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-              <Route path="/create-roadmap" element={<ProtectedRoute><CreateRoadmap /></ProtectedRoute>} />
-              <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
-              <Route path="/create-post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
-              <Route path="/roadmaps" element={<ProtectedRoute><MyRoadmaps /></ProtectedRoute>} />
-              <Route path="/roadmaps/:id" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
-              <Route path="/skills/:skill" element={<ProtectedRoute><SkillRecommendations /></ProtectedRoute>} />
-              <Route path="/new-videos" element={<ProtectedRoute><NewVideos /></ProtectedRoute>} />
-              <Route path="/my-posts" element={<ProtectedRoute><MyPosts /></ProtectedRoute>} />
-              <Route path="/saved-posts" element={<ProtectedRoute><SavedPosts /></ProtectedRoute>} />
-              <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-              <Route path="/my-communities" element={<ProtectedRoute><MyCommunities /></ProtectedRoute>} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ErrorBoundary>
+          <VideoMuteProvider>
+            <ErrorBoundary>
+              <Routes>
+                <Route path="/" element={<Landing />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/onboarding" element={<Onboarding />} />
+                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+                <Route path="/follow-requests" element={<ProtectedRoute><FollowRequests /></ProtectedRoute>} />
+                <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
+                <Route path="/create-roadmap" element={<ProtectedRoute><CreateRoadmap /></ProtectedRoute>} />
+                <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
+                <Route path="/create-post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
+                <Route path="/roadmaps" element={<ProtectedRoute><MyRoadmaps /></ProtectedRoute>} />
+                <Route path="/roadmaps/:id" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
+                <Route path="/skills/:skill" element={<ProtectedRoute><SkillRecommendations /></ProtectedRoute>} />
+                <Route path="/new-videos" element={<ProtectedRoute><NewVideos /></ProtectedRoute>} />
+                <Route path="/my-posts" element={<ProtectedRoute><MyPosts /></ProtectedRoute>} />
+                <Route path="/saved-posts" element={<ProtectedRoute><SavedPosts /></ProtectedRoute>} />
+                <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+                <Route path="/my-communities" element={<ProtectedRoute><MyCommunities /></ProtectedRoute>} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ErrorBoundary>
+          </VideoMuteProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

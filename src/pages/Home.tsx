@@ -23,8 +23,8 @@ import { usePostInteractions } from "@/hooks/usePostInteractions";
 import type { Database } from '@/integrations/supabase/types';
 type Post = Database['public']['Tables']['posts']['Row'];
 type Profile = Database['public']['Tables']['profiles']['Row'];
-type PostWithProfile = Post & { 
-  profiles: Pick<Profile, 'full_name' | 'title' | 'avatar_url'> | null 
+type PostWithProfile = Post & {
+  profiles: Pick<Profile, 'full_name' | 'title' | 'avatar_url'> | null
   likes_count: number;
   comments_count: number;
 };
@@ -38,7 +38,7 @@ const Home = () => {
     const shown = sessionStorage.getItem('aiPopupShown');
     return !shown;
   });
-  
+
   const { toast } = useToast();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -46,10 +46,10 @@ const Home = () => {
   const { sendLikeNotification } = usePostInteractions();
 
   // AI-powered personalized recommendations
-  const { 
-    data: personalizedData, 
+  const {
+    data: personalizedData,
     isLoading: isLoadingPersonalized,
-    error: personalizedError 
+    error: personalizedError
   } = usePersonalizedFeed();
 
   const { data: likedPosts = new Set<string>(), } = useQuery({
@@ -111,7 +111,7 @@ const Home = () => {
 
     // Get unique user IDs
     const userIds = [...new Set(postsData.map(p => p.user_id))];
-    
+
     // Fetch profiles separately
     const { data: profilesData } = await supabase
       .from("profiles")
@@ -123,7 +123,7 @@ const Home = () => {
       acc[profile.user_id] = profile;
       return acc;
     }, {} as Record<string, any>);
-    
+
     const posts: PostWithProfile[] = postsData.map((post: any) => ({
       ...post,
       profiles: profilesMap[post.user_id] ? {
@@ -138,24 +138,24 @@ const Home = () => {
     const postIds = posts.map(p => p.id);
 
     const [{ data: likesData }, { data: commentsData }] = await Promise.all([
-        supabase.from('likes').select('post_id, user_id').in('post_id', postIds),
-        supabase.from('comments').select('post_id, user_id').in('post_id', postIds)
+      supabase.from('likes').select('post_id, user_id').in('post_id', postIds),
+      supabase.from('comments').select('post_id, user_id').in('post_id', postIds)
     ]);
 
     const likesByPost = (likesData || []).reduce((acc, like) => {
-        acc[like.post_id] = (acc[like.post_id] || 0) + 1;
-        return acc;
+      acc[like.post_id] = (acc[like.post_id] || 0) + 1;
+      return acc;
     }, {} as Record<string, number>);
 
     const commentsByPost = (commentsData || []).reduce((acc, comment) => {
-        acc[comment.post_id] = (acc[comment.post_id] || 0) + 1;
-        return acc;
+      acc[comment.post_id] = (acc[comment.post_id] || 0) + 1;
+      return acc;
     }, {} as Record<string, number>);
 
     const postsWithCounts = posts.map(p => ({
-        ...p,
-        likes_count: likesByPost[p.id] || 0,
-        comments_count: commentsByPost[p.id] || 0,
+      ...p,
+      likes_count: likesByPost[p.id] || 0,
+      comments_count: commentsByPost[p.id] || 0,
     }));
 
     return { posts: postsWithCounts, nextPage: posts.length === pageSize ? pageParam + 1 : undefined };
@@ -178,8 +178,8 @@ const Home = () => {
   const feed = useMemo(() => {
     const allPosts = data?.pages.flatMap(page => page.posts) || [];
     // Filter out not interested and hidden posts
-    return allPosts.filter(post => 
-      !notInterestedPosts.has(post.id) && 
+    return allPosts.filter(post =>
+      !notInterestedPosts.has(post.id) &&
       !hiddenPosts.has(post.id)
     );
   }, [data, notInterestedPosts, hiddenPosts]);
@@ -197,22 +197,22 @@ const Home = () => {
       return { postId, hasLiked };
     },
     onMutate: async ({ postId, hasLiked }) => {
-        await queryClient.cancelQueries({ queryKey: ['feedPosts'] });
-        const previousFeed = queryClient.getQueryData(['feedPosts']);
-        queryClient.setQueryData(['feedPosts'], (oldData: any) => {
-            const newData = { ...oldData };
-            newData.pages = newData.pages.map((page: any) => ({
-                ...page,
-                posts: page.posts.map((p: any) => {
-                    if (p.id === postId) {
-                        return { ...p, likes_count: p.likes_count + (hasLiked ? -1 : 1) };
-                    }
-                    return p;
-                })
-            }));
-            return newData;
-        });
-        return { previousFeed };
+      await queryClient.cancelQueries({ queryKey: ['feedPosts'] });
+      const previousFeed = queryClient.getQueryData(['feedPosts']);
+      queryClient.setQueryData(['feedPosts'], (oldData: any) => {
+        const newData = { ...oldData };
+        newData.pages = newData.pages.map((page: any) => ({
+          ...page,
+          posts: page.posts.map((p: any) => {
+            if (p.id === postId) {
+              return { ...p, likes_count: p.likes_count + (hasLiked ? -1 : 1) };
+            }
+            return p;
+          })
+        }));
+        return newData;
+      });
+      return { previousFeed };
     },
     onError: (err, variables, context) => {
       if (context?.previousFeed) {
@@ -310,7 +310,7 @@ const Home = () => {
   });
 
   // New videos (right sidebar) - Top 4 by views from NewVideos page
-  const topVideos = useMemo(() => getTopVideosByViews(4), []);
+  const topVideos = useMemo(() => getTopVideosByViews(3), []);
 
   // Show personalized feed if available, otherwise show default feed
   const displayFeed = useMemo(() => {
@@ -370,9 +370,9 @@ const Home = () => {
                           <Avatar className="h-8 w-8 shrink-0"><AvatarFallback>{(c.name || 'C')[0]}</AvatarFallback></Avatar>
                           <span className="truncate">{c.name}</span>
                         </a>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                           onClick={() => deleteLink.mutate(c.id)}
                         >
@@ -395,7 +395,7 @@ const Home = () => {
             {showAiPopup && personalizedData && personalizedData.posts.length > 0 && (
               <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-md w-[90%] animate-in fade-in slide-in-from-top-2 duration-300">
                 <Alert className="border-primary/30 bg-card shadow-lg">
-                  <button 
+                  <button
                     onClick={() => {
                       setShowAiPopup(false);
                       sessionStorage.setItem('aiPopupShown', 'true');
@@ -419,11 +419,18 @@ const Home = () => {
               </div>
             )}
 
-            {isLoadingPosts || isLoadingPersonalized ? (
+            {isLoadingPersonalized && !personalizedData && (
+              <div className="flex items-center justify-center p-2 mb-4 bg-muted/30 rounded-lg animate-pulse">
+                <Sparkles className="h-4 w-4 text-primary mr-2 animate-spin" />
+                <span className="text-xs text-muted-foreground">Personalizing your experience...</span>
+              </div>
+            )}
+
+            {isLoadingPosts && (!displayFeed || displayFeed.length === 0) ? (
               <div className="flex flex-col items-center justify-center py-16">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
                 <p className="text-muted-foreground">
-                  {isLoadingPersonalized ? "🤖 Personalizing your feed with AI..." : "Loading feed..."}
+                  Loading feed...
                 </p>
               </div>
             ) : displayFeed.length === 0 ? (
@@ -457,17 +464,13 @@ const Home = () => {
                       onShare={() => setShareDialogOpen({ open: true, post })}
                       onHide={() => setHiddenPosts(prev => new Set(prev).add(post.id))}
                     />
-                    {post.recommendation_reason && post.score > 60 && (
-                      <div className="px-4 pb-3 text-xs text-muted-foreground italic">
-                        💡 {post.recommendation_reason}
-                      </div>
-                    )}
+
                   </div>
                 ))}
                 {hasNextPage && (
                   <div className="flex justify-center py-6 px-4">
-                    <Button 
-                      onClick={() => fetchNextPage()} 
+                    <Button
+                      onClick={() => fetchNextPage()}
                       disabled={isFetchingNextPage}
                       variant="outline"
                       className="w-full max-w-md"
@@ -535,7 +538,7 @@ const Home = () => {
             <Card>
               <CardContent className="p-4">
                 <h3 className="font-semibold mb-4">New Videos</h3>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {topVideos.length === 0 ? (
                     <div className="text-sm text-muted-foreground">No videos found</div>
                   ) : (

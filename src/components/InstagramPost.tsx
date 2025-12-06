@@ -36,6 +36,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { ReportPostDialog } from "./ReportPostDialog";
+import { useVideoMute } from "@/context/VideoMuteContext";
 
 interface InstagramPostProps {
   post: {
@@ -84,7 +85,7 @@ export const InstagramPost = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
+  const { isMuted, setIsMuted } = useVideoMute();
   const [playCount, setPlayCount] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -167,7 +168,7 @@ export const InstagramPost = ({
   const isTextOnlyPost = media.length === 0 && attachments.length === 0;
   const hasLongText = text.length > 200;
   const MAX_REPLAYS = 2;
-  
+
   // track media natural size to set aspect ratio
   const [mediaSize, setMediaSize] = useState<{ width: number; height: number } | null>(null);
 
@@ -180,7 +181,7 @@ export const InstagramPost = ({
       const newCount = playCount + 1;
       setPlayCount(newCount);
       if (newCount < MAX_REPLAYS) {
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       } else {
         setIsVideoPlaying(false);
       }
@@ -199,7 +200,7 @@ export const InstagramPost = ({
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && playCount < MAX_REPLAYS) {
-            video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
+            video.play().then(() => setIsVideoPlaying(true)).catch(() => { });
           } else {
             video.pause();
             setIsVideoPlaying(false);
@@ -217,7 +218,7 @@ export const InstagramPost = ({
   const handleMouseEnter = () => {
     const video = videoRef.current;
     if (video && playCount < MAX_REPLAYS) {
-      video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
+      video.play().then(() => setIsVideoPlaying(true)).catch(() => { });
     }
   };
 
@@ -234,7 +235,7 @@ export const InstagramPost = ({
     if (!video) return;
     if (video.paused) {
       if (playCount >= MAX_REPLAYS) setPlayCount(0); // Reset count on manual play
-      video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
+      video.play().then(() => setIsVideoPlaying(true)).catch(() => { });
     } else {
       video.pause();
       setIsVideoPlaying(false);
@@ -242,11 +243,7 @@ export const InstagramPost = ({
   };
 
   const toggleMute = () => {
-    const video = videoRef.current;
-    if (video) {
-      video.muted = !video.muted;
-      setIsMuted(video.muted);
-    }
+    setIsMuted(!isMuted);
   };
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -446,10 +443,10 @@ export const InstagramPost = ({
 
         {/* Media Carousel - LinkedIn/Instagram Style */}
         {media.length > 0 && (
-          <div 
+          <div
             ref={containerRef}
-            className="relative bg-muted/30 w-full overflow-hidden" 
-            style={{ aspectRatio: '4/3', maxHeight: '400px' }}
+            className="relative bg-muted/30 w-full overflow-hidden"
+
             onMouseEnter={media[currentMediaIndex].type === "video" ? handleMouseEnter : undefined}
             onMouseLeave={media[currentMediaIndex].type === "video" ? handleMouseLeave : undefined}
           >
@@ -458,7 +455,7 @@ export const InstagramPost = ({
               <img
                 src={media[currentMediaIndex].url}
                 alt={`Post content ${currentMediaIndex + 1}`}
-                className="w-full h-full object-contain"
+                className="w-full h-auto block"
                 onError={() => setImageError(true)}
                 onLoad={onImageLoad}
               />
@@ -467,13 +464,13 @@ export const InstagramPost = ({
                 <video
                   ref={videoRef}
                   src={media[currentMediaIndex].url}
-                  className="w-full h-full object-contain"
+                  className="w-full h-auto block"
                   onLoadedMetadata={onVideoMeta}
                   muted={isMuted}
                   playsInline
                   loop={false}
                 />
-                
+
                 {/* Video Controls Overlay */}
                 <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all">
                   {/* Center Play/Pause Button */}
@@ -509,7 +506,7 @@ export const InstagramPost = ({
 
                 {/* Replay indicator when max plays reached */}
                 {playCount >= MAX_REPLAYS && !isVideoPlaying && (
-                  <div 
+                  <div
                     className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"
                     onClick={togglePlay}
                   >
@@ -558,8 +555,8 @@ export const InstagramPost = ({
                   <button
                     key={idx}
                     className={`h-1.5 rounded-full transition-all ${idx === currentMediaIndex
-                        ? 'w-4 bg-primary'
-                        : 'w-1.5 bg-background/70 hover:bg-background'
+                      ? 'w-4 bg-primary'
+                      : 'w-1.5 bg-background/70 hover:bg-background'
                       }`}
                     onClick={() => setCurrentMediaIndex(idx)}
                   />
