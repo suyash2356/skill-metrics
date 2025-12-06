@@ -334,15 +334,13 @@ const Profile = () => {
                     <>
                       <div className="flex items-center justify-center sm:justify-start gap-2">
                         <h1 className="text-2xl sm:text-3xl font-bold">{publicUserData?.full_name || 'Your Name'}</h1>
-                        {isOwnProfile && (
-                          <Badge variant={isPrivateAccount ? "secondary" : "outline"} className="flex items-center gap-1">
-                            {isPrivateAccount ? (
-                              <><Lock className="h-3 w-3" /> Private</>
-                            ) : (
-                              <><Globe className="h-3 w-3" /> Public</>
-                            )}
-                          </Badge>
-                        )}
+                        <Badge variant={isPrivateAccount ? "secondary" : "outline"} className="flex items-center gap-1">
+                          {isPrivateAccount ? (
+                            <><Lock className="h-3 w-3" /> Private</>
+                          ) : (
+                            <><Globe className="h-3 w-3" /> Public</>
+                          )}
+                        </Badge>
                       </div>
                       <p className="text-md sm:text-lg text-muted-foreground">{profileDetails?.job_title || 'Your Title'}</p>
                       <div className="flex flex-wrap justify-center sm:justify-start items-center gap-x-4 gap-y-2 mt-2 text-sm text-muted-foreground">
