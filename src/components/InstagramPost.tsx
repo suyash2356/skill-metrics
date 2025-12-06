@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,6 +20,10 @@ import {
   FileImage,
   FileSpreadsheet,
   Presentation,
+  Play,
+  Pause,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
@@ -79,6 +83,11 @@ export const InstagramPost = ({
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isVideoPlaying, setIsVideoPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
+  const [playCount, setPlayCount] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   // Parse media from content
@@ -157,8 +166,88 @@ export const InstagramPost = ({
   const { text, media, attachments } = parseMedia(post.content);
   const isTextOnlyPost = media.length === 0 && attachments.length === 0;
   const hasLongText = text.length > 200;
+  const MAX_REPLAYS = 2;
+  
   // track media natural size to set aspect ratio
   const [mediaSize, setMediaSize] = useState<{ width: number; height: number } | null>(null);
+
+  // Video autoplay with intersection observer - plays when visible, max 2 replays
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleEnded = () => {
+      const newCount = playCount + 1;
+      setPlayCount(newCount);
+      if (newCount < MAX_REPLAYS) {
+        video.play().catch(() => {});
+      } else {
+        setIsVideoPlaying(false);
+      }
+    };
+
+    video.addEventListener('ended', handleEnded);
+    return () => video.removeEventListener('ended', handleEnded);
+  }, [playCount]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const video = videoRef.current;
+    if (!container || !video) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && playCount < MAX_REPLAYS) {
+            video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
+          } else {
+            video.pause();
+            setIsVideoPlaying(false);
+          }
+        });
+      },
+      { threshold: 0.6 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, [currentMediaIndex, playCount]);
+
+  // Handle mouse hover for video play/pause
+  const handleMouseEnter = () => {
+    const video = videoRef.current;
+    if (video && playCount < MAX_REPLAYS) {
+      video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
+    }
+  };
+
+  const handleMouseLeave = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.pause();
+      setIsVideoPlaying(false);
+    }
+  };
+
+  const togglePlay = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (video.paused) {
+      if (playCount >= MAX_REPLAYS) setPlayCount(0); // Reset count on manual play
+      video.play().then(() => setIsVideoPlaying(true)).catch(() => {});
+    } else {
+      video.pause();
+      setIsVideoPlaying(false);
+    }
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (video) {
+      video.muted = !video.muted;
+      setIsMuted(video.muted);
+    }
+  };
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement, Event>) => {
     const img = e.currentTarget;
@@ -355,9 +444,15 @@ export const InstagramPost = ({
           </div>
         )}
 
-        {/* Media Carousel - LinkedIn Style */}
+        {/* Media Carousel - LinkedIn/Instagram Style */}
         {media.length > 0 && (
-          <div className="relative bg-muted/30 w-full overflow-hidden" style={{ aspectRatio: '4/3', maxHeight: '400px' }}>
+          <div 
+            ref={containerRef}
+            className="relative bg-muted/30 w-full overflow-hidden" 
+            style={{ aspectRatio: '4/3', maxHeight: '400px' }}
+            onMouseEnter={media[currentMediaIndex].type === "video" ? handleMouseEnter : undefined}
+            onMouseLeave={media[currentMediaIndex].type === "video" ? handleMouseLeave : undefined}
+          >
             {/* Current Media */}
             {media[currentMediaIndex].type === "image" ? (
               <img
@@ -368,12 +463,63 @@ export const InstagramPost = ({
                 onLoad={onImageLoad}
               />
             ) : (
-              <video
-                src={media[currentMediaIndex].url}
-                controls
-                className="w-full h-full object-contain"
-                onLoadedMetadata={onVideoMeta}
-              />
+              <div className="relative w-full h-full group">
+                <video
+                  ref={videoRef}
+                  src={media[currentMediaIndex].url}
+                  className="w-full h-full object-contain"
+                  onLoadedMetadata={onVideoMeta}
+                  muted={isMuted}
+                  playsInline
+                  loop={false}
+                />
+                
+                {/* Video Controls Overlay */}
+                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/10 transition-all">
+                  {/* Center Play/Pause Button */}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-14 w-14 rounded-full bg-background/80 hover:bg-background/90 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={togglePlay}
+                  >
+                    {isVideoPlaying ? (
+                      <Pause className="h-7 w-7" />
+                    ) : (
+                      <Play className="h-7 w-7 ml-1" />
+                    )}
+                  </Button>
+                </div>
+
+                {/* Bottom Controls */}
+                <div className="absolute bottom-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 rounded-full bg-background/90 hover:bg-background"
+                    onClick={toggleMute}
+                  >
+                    {isMuted ? (
+                      <VolumeX className="h-4 w-4" />
+                    ) : (
+                      <Volume2 className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+
+                {/* Replay indicator when max plays reached */}
+                {playCount >= MAX_REPLAYS && !isVideoPlaying && (
+                  <div 
+                    className="absolute inset-0 flex items-center justify-center bg-black/40 cursor-pointer"
+                    onClick={togglePlay}
+                  >
+                    <div className="text-center text-white">
+                      <Play className="h-12 w-12 mx-auto mb-2" />
+                      <p className="text-sm font-medium">Tap to replay</p>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Navigation Arrows - Only show if multiple media */}
@@ -382,7 +528,7 @@ export const InstagramPost = ({
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background shadow-md"
+                  className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background shadow-md z-10"
                   onClick={prevMedia}
                 >
                   <ChevronLeft className="h-5 w-5" />
@@ -390,7 +536,7 @@ export const InstagramPost = ({
                 <Button
                   variant="secondary"
                   size="icon"
-                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background shadow-md"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 rounded-full bg-background/90 hover:bg-background shadow-md z-10"
                   onClick={nextMedia}
                 >
                   <ChevronRight className="h-5 w-5" />
@@ -400,14 +546,14 @@ export const InstagramPost = ({
 
             {/* Media Counter */}
             {media.length > 1 && (
-              <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium shadow">
+              <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-medium shadow z-10">
                 {currentMediaIndex + 1}/{media.length}
               </div>
             )}
 
             {/* Dots Indicator */}
             {media.length > 1 && (
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                 {media.map((_, idx) => (
                   <button
                     key={idx}
