@@ -9,11 +9,15 @@ interface RecommendedPost {
   category: string | null;
   tags: string[] | null;
   created_at: string;
+  user_id: string;
   profiles: {
     full_name: string;
-  };
+    avatar_url: string | null;
+  } | null;
   score: number;
   recommendation_reason: string;
+  likes_count?: number;
+  comments_count?: number;
 }
 
 interface RecommendedRoadmap {

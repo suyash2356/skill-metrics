@@ -315,7 +315,13 @@ const Home = () => {
   // Show personalized feed if available, otherwise show default feed
   const displayFeed = useMemo(() => {
     if (personalizedData && personalizedData.posts.length > 0) {
-      return personalizedData.posts;
+      // Add default values for counts if not present
+      return personalizedData.posts.map(post => ({
+        ...post,
+        likes_count: post.likes_count || 0,
+        comments_count: post.comments_count || 0,
+        profiles: post.profiles || { full_name: 'Anonymous', avatar_url: null, title: null },
+      }));
     }
     return feed;
   }, [personalizedData, feed]);
