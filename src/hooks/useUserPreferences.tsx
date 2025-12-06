@@ -31,7 +31,7 @@ export const useUserPreferences = () => {
     queryKey: ['userPreferences', user?.id],
     queryFn: async (): Promise<UserPreferences | null> => {
       if (!user?.id) return null;
-      
+
       const { data, error } = await supabase
         .from('user_preferences')
         .select('*')
@@ -48,25 +48,46 @@ export const useUserPreferences = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
+  const DEFAULT_PREFERENCES: Partial<UserPreferences> = {
+    email_notifications: true,
+    push_notifications: true,
+    marketing_emails: false,
+    profile_visibility: 'public',
+    show_online_status: true,
+    allow_follow_requests: true,
+    two_factor_enabled: false,
+    login_notifications: true,
+    theme: 'system',
+    language: 'en',
+    timezone: 'UTC',
+  };
+
   // Update preferences mutation
   const updatePreferences = useMutation({
     mutationFn: async (updates: Partial<UserPreferences>) => {
       if (!user?.id) throw new Error('User not authenticated');
 
+      // Check current data to see if we need defaults
+      const currentData = queryClient.getQueryData<UserPreferences | null>(['userPreferences', user.id]);
+
+      const payload = {
+        user_id: user.id,
+        ...(currentData ? { id: currentData.id } : DEFAULT_PREFERENCES), // Use existing ID if available, else defaults
+        ...updates,
+        updated_at: new Date().toISOString(),
+      };
+
       const { data, error } = await supabase
         .from('user_preferences')
-        .upsert({
-          user_id: user.id,
-          ...updates,
-          updated_at: new Date().toISOString(),
-        })
+        .upsert(payload, { onConflict: 'user_id' })
         .select()
         .single();
 
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      queryClient.setQueryData(['userPreferences', user?.id], data);
       queryClient.invalidateQueries({ queryKey: ['userPreferences', user?.id] });
     },
   });
@@ -78,12 +99,12 @@ export const useUserPreferences = () => {
 
       const storageKey = `settings:${user.id}`;
       const saved = localStorage.getItem(storageKey);
-      
+
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           const { account, notifications, privacy, security } = parsed;
-          
+
           const preferencesData: Partial<UserPreferences> = {
             display_name: account?.displayName,
             website: account?.website,
@@ -101,7 +122,7 @@ export const useUserPreferences = () => {
           };
 
           await updatePreferences.mutateAsync(preferencesData);
-          
+
           // Remove from localStorage after successful migration
           localStorage.removeItem(storageKey);
         } catch (error) {

@@ -14,6 +14,17 @@ import {
   BookOpen, Brain, Rocket, FlaskConical, Trophy, GraduationCap, Hourglass, ListChecks,
   Book, MonitorPlay, Youtube, Globe, Codepen, Users, Mail, Award, FolderOpen, ClipboardCheck, PenLine, CalendarCheck, Lightbulb, MessageCircle, Share2, Trash2, Eye, EyeOff
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -72,7 +83,7 @@ const RoadmapView = () => {
         .eq('id', id)
         .single();
       if (error) throw error;
-      
+
       // Fetch user profile separately
       if (roadmapData && roadmapData.user_id) {
         const { data: profileData } = await supabase
@@ -80,10 +91,10 @@ const RoadmapView = () => {
           .select('id, full_name, avatar_url')
           .eq('user_id', roadmapData.user_id)
           .single();
-        
-        return { ...roadmapData, user: profileData ? {id: profileData.id, full_name: profileData.full_name, avatar_url: profileData.avatar_url} : null };
+
+        return { ...roadmapData, user: profileData ? { id: profileData.id, full_name: profileData.full_name, avatar_url: profileData.avatar_url } : null };
       }
-      
+
       return roadmapData;
     },
     enabled: !!id,
@@ -188,28 +199,28 @@ const RoadmapView = () => {
   });
 
   // Handlers for dynamic lists
-  const addSkill = () => setTemplateData((prev:any) => ({ ...prev, skills: [...(prev.skills||[]), { id: genId(), name: '', checked: false }] }));
-  const updateSkill = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, skills: (prev.skills||[]).map((s:any)=> s.id===id ? {...s, ...patch} : s) }));
-  const removeSkill = (id: string) => setTemplateData((prev:any) => ({ ...prev, skills: (prev.skills||[]).filter((s:any)=> s.id!==id) }));
+  const addSkill = () => setTemplateData((prev: any) => ({ ...prev, skills: [...(prev.skills || []), { id: genId(), name: '', checked: false }] }));
+  const updateSkill = (id: string, patch: Partial<any>) => setTemplateData((prev: any) => ({ ...prev, skills: (prev.skills || []).map((s: any) => s.id === id ? { ...s, ...patch } : s) }));
+  const removeSkill = (id: string) => setTemplateData((prev: any) => ({ ...prev, skills: (prev.skills || []).filter((s: any) => s.id !== id) }));
 
-  const addSideTopic = () => setTemplateData((prev:any) => ({ ...prev, sideTopics: [...(prev.sideTopics||[]), { id: genId(), name: '', checked: false }] }));
-  const updateSideTopic = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, sideTopics: (prev.sideTopics||[]).map((t:any)=> t.id===id ? {...t, ...patch} : t) }));
-  const removeSideTopic = (id: string) => setTemplateData((prev:any) => ({ ...prev, sideTopics: (prev.sideTopics||[]).filter((t:any)=> t.id!==id) }));
+  const addSideTopic = () => setTemplateData((prev: any) => ({ ...prev, sideTopics: [...(prev.sideTopics || []), { id: genId(), name: '', checked: false }] }));
+  const updateSideTopic = (id: string, patch: Partial<any>) => setTemplateData((prev: any) => ({ ...prev, sideTopics: (prev.sideTopics || []).map((t: any) => t.id === id ? { ...t, ...patch } : t) }));
+  const removeSideTopic = (id: string) => setTemplateData((prev: any) => ({ ...prev, sideTopics: (prev.sideTopics || []).filter((t: any) => t.id !== id) }));
 
-  const addResource = () => setTemplateData((prev:any) => ({ ...prev, resources: [...(prev.resources||[]), { id: genId(), title: '', url: '' }] }));
-  const updateResource = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, resources: (prev.resources||[]).map((r:any)=> r.id===id ? {...r, ...patch} : r) }));
-  const removeResource = (id: string) => setTemplateData((prev:any) => ({ ...prev, resources: (prev.resources||[]).filter((r:any)=> r.id!==id) }));
+  const addResource = () => setTemplateData((prev: any) => ({ ...prev, resources: [...(prev.resources || []), { id: genId(), title: '', url: '' }] }));
+  const updateResource = (id: string, patch: Partial<any>) => setTemplateData((prev: any) => ({ ...prev, resources: (prev.resources || []).map((r: any) => r.id === id ? { ...r, ...patch } : r) }));
+  const removeResource = (id: string) => setTemplateData((prev: any) => ({ ...prev, resources: (prev.resources || []).filter((r: any) => r.id !== id) }));
 
-  const addGoal = () => setTemplateData((prev:any) => ({ ...prev, goals: [...(prev.goals||[]), { id: genId(), text: '', checked: false }] }));
-  const updateGoal = (id: string, patch: Partial<any>) => setTemplateData((prev:any) => ({ ...prev, goals: (prev.goals||[]).map((g:any)=> g.id===id ? {...g, ...patch} : g) }));
-  const removeGoal = (id: string) => setTemplateData((prev:any) => ({ ...prev, goals: (prev.goals||[]).filter((g:any)=> g.id!==id) }));
+  const addGoal = () => setTemplateData((prev: any) => ({ ...prev, goals: [...(prev.goals || []), { id: genId(), text: '', checked: false }] }));
+  const updateGoal = (id: string, patch: Partial<any>) => setTemplateData((prev: any) => ({ ...prev, goals: (prev.goals || []).map((g: any) => g.id === id ? { ...g, ...patch } : g) }));
+  const removeGoal = (id: string) => setTemplateData((prev: any) => ({ ...prev, goals: (prev.goals || []).filter((g: any) => g.id !== id) }));
 
-  const addAchievement = () => setTemplateData((prev:any) => ({ ...prev, achievements: [...(prev.achievements||[]), { id: genId(), text: '' }] }));
-  const updateAchievement = (id: string, text: string) => setTemplateData((prev:any) => ({ ...prev, achievements: (prev.achievements||[]).map((a:any)=> a.id===id ? {...a, text} : a) }));
-  const removeAchievement = (id: string) => setTemplateData((prev:any) => ({ ...prev, achievements: (prev.achievements||[]).filter((a:any)=> a.id!==id) }));
+  const addAchievement = () => setTemplateData((prev: any) => ({ ...prev, achievements: [...(prev.achievements || []), { id: genId(), text: '' }] }));
+  const updateAchievement = (id: string, text: string) => setTemplateData((prev: any) => ({ ...prev, achievements: (prev.achievements || []).map((a: any) => a.id === id ? { ...a, text } : a) }));
+  const removeAchievement = (id: string) => setTemplateData((prev: any) => ({ ...prev, achievements: (prev.achievements || []).filter((a: any) => a.id !== id) }));
 
-  const addProgressRow = () => setTemplateData((prev:any) => ({ ...prev, progressRows: [...(prev.progressRows||[]), { id: genId(), phase: '', status: '', timeline: '', notes: '' }] }));
-  const removeProgressRow = (id: string) => setTemplateData((prev:any) => ({ ...prev, progressRows: (prev.progressRows||[]).filter((r:any)=> r.id!==id) }));
+  const addProgressRow = () => setTemplateData((prev: any) => ({ ...prev, progressRows: [...(prev.progressRows || []), { id: genId(), phase: '', status: '', timeline: '', notes: '' }] }));
+  const removeProgressRow = (id: string) => setTemplateData((prev: any) => ({ ...prev, progressRows: (prev.progressRows || []).filter((r: any) => r.id !== id) }));
   const { isFollowing, toggleFollow } = useUserFollows(roadmap?.user_id);
 
   const updateRoadmapMutation = useMutation({
@@ -252,7 +263,7 @@ const RoadmapView = () => {
     const done = (steps || []).filter(s => (s.id === stepId ? completed : s.completed)).length;
     const newProgress = total > 0 ? Math.round((done / total) * 100) : 0;
     if (roadmap && roadmap.progress !== newProgress) {
-        updateRoadmapMutation.mutate({ progress: newProgress, status: newProgress === 100 ? 'completed' : 'in-progress' });
+      updateRoadmapMutation.mutate({ progress: newProgress, status: newProgress === 100 ? 'completed' : 'in-progress' });
     }
   };
 
@@ -310,7 +321,7 @@ const RoadmapView = () => {
     mutationFn: async (data: any) => {
       if (!user?.id || !id) throw new Error("User or roadmap not specified");
       const existingTemplate = templates?.[0];
-      
+
       if (existingTemplate) {
         const { error } = await supabase
           .from('roadmap_templates')
@@ -347,86 +358,86 @@ const RoadmapView = () => {
   }, [templateData, updateTemplateMutation]);
 
   // Load template data when available
-useEffect(() => {
-  if (templates && templates.length > 0) {
-    const template = templates[0];
-    if (template.template_data && typeof template.template_data === "object") {
-      setTemplateData(template.template_data);
+  useEffect(() => {
+    if (templates && templates.length > 0) {
+      const template = templates[0];
+      if (template.template_data && typeof template.template_data === "object") {
+        setTemplateData(template.template_data);
+      }
     }
-  }
-}, [templates]);
+  }, [templates]);
 
-const isLoading =
-  isLoadingRoadmap ||
-  isLoadingSteps ||
-  isLoadingResources ||
-  isLoadingTemplate ||
-  isLoadingSkills;
+  const isLoading =
+    isLoadingRoadmap ||
+    isLoadingSteps ||
+    isLoadingResources ||
+    isLoadingTemplate ||
+    isLoadingSkills;
 
-const isOwner = user?.id === roadmap?.user_id;
+  const isOwner = user?.id === roadmap?.user_id;
 
-// Initialize skills if they don't exist
-useEffect(() => {
-  const initializeSkills = async () => {
-    if (!roadmap || !user || !isOwner) return;
-    if (roadmapSkills && roadmapSkills.length > 0) return;
+  // Initialize skills if they don't exist
+  useEffect(() => {
+    const initializeSkills = async () => {
+      if (!roadmap || !user || !isOwner) return;
+      if (roadmapSkills && roadmapSkills.length > 0) return;
 
-    const defaultSkills = getSkillsForDomain(roadmap.category);
-    if (defaultSkills.length === 0) return;
+      const defaultSkills = getSkillsForDomain(roadmap.category);
+      if (defaultSkills.length === 0) return;
 
-    const skillsToInsert = defaultSkills.map((skill) => ({
-      roadmap_id: id!,
-      skill_name: skill,
-      is_checked: false,
-    }));
+      const skillsToInsert = defaultSkills.map((skill) => ({
+        roadmap_id: id!,
+        skill_name: skill,
+        is_checked: false,
+      }));
 
-    await supabase.from("roadmap_skills").insert(skillsToInsert);
-    queryClient.invalidateQueries({ queryKey: ["roadmapSkills", id] });
-  };
+      await supabase.from("roadmap_skills").insert(skillsToInsert);
+      queryClient.invalidateQueries({ queryKey: ["roadmapSkills", id] });
+    };
 
-  initializeSkills();
-}, [roadmap, roadmapSkills, user, isOwner, id, queryClient]);
+    initializeSkills();
+  }, [roadmap, roadmapSkills, user, isOwner, id, queryClient]);
 
-const toggleSkillMutation = useMutation({
-  mutationFn: async ({
-    skillId,
-    isChecked,
-  }: {
-    skillId: string;
-    isChecked: boolean;
-  }) => {
-    const { error } = await supabase
-      .from("roadmap_skills")
-      .update({ is_checked: isChecked })
-      .eq("id", skillId);
-    if (error) throw error;
-    return { skillId, isChecked };
-  },
-  onSuccess: ({ skillId, isChecked }) => {
-    queryClient.setQueryData(["roadmapSkills", id], (old: any[] | undefined) =>
-      old?.map((s) =>
-        s.id === skillId ? { ...s, is_checked: isChecked } : s
-      )
+  const toggleSkillMutation = useMutation({
+    mutationFn: async ({
+      skillId,
+      isChecked,
+    }: {
+      skillId: string;
+      isChecked: boolean;
+    }) => {
+      const { error } = await supabase
+        .from("roadmap_skills")
+        .update({ is_checked: isChecked })
+        .eq("id", skillId);
+      if (error) throw error;
+      return { skillId, isChecked };
+    },
+    onSuccess: ({ skillId, isChecked }) => {
+      queryClient.setQueryData(["roadmapSkills", id], (old: any[] | undefined) =>
+        old?.map((s) =>
+          s.id === skillId ? { ...s, is_checked: isChecked } : s
+        )
+      );
+    },
+  });
+
+  // ✅ Return JSX after all hooks are declared
+  if (isLoading) {
+    return (
+      <Layout>
+        <div>Loading roadmap...</div>
+      </Layout>
     );
-  },
-});
+  }
 
-// ✅ Return JSX after all hooks are declared
-if (isLoading) {
-  return (
-    <Layout>
-      <div>Loading roadmap...</div>
-    </Layout>
-  );
-}
-
-if (!roadmap) {
-  return (
-    <Layout>
-      <div>Roadmap not found.</div>
-    </Layout>
-  );
-}
+  if (!roadmap) {
+    return (
+      <Layout>
+        <div>Roadmap not found.</div>
+      </Layout>
+    );
+  }
 
 
   const groupedSteps = (steps || []).reduce((acc, step) => {
@@ -486,9 +497,31 @@ if (!roadmap) {
                   <span className="text-muted-foreground">Unknown User</span>
                 )}
                 {!isOwner && user && roadmap.user && (
-                  <Button size="sm" variant={isFollowing ? "outline" : "default"} onClick={() => toggleFollow()}>
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
+                  isFollowing ? (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button size="sm" variant="outline">
+                          Following
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Unfollow {roadmap.user.full_name || 'User'}?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to unfollow this user?
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => toggleFollow()}>Unfollow</AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  ) : (
+                    <Button size="sm" onClick={() => toggleFollow()}>
+                      Follow
+                    </Button>
+                  )
                 )}
               </div>
             </div>
@@ -579,7 +612,7 @@ if (!roadmap) {
                             <div className="space-y-6">
                               {/* Description */}
                               <p className="text-base leading-relaxed">{step.description}</p>
-                              
+
                               {/* Time Estimate */}
                               {step.estimated_hours && (
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -863,27 +896,27 @@ if (!roadmap) {
                             {(templateData.progressRows || []).map((row: any, idx: number) => (
                               <tr key={row.id} className="border-t">
                                 <td className="p-3 align-top">
-                                  <Input value={row.phase} placeholder={`Phase ${idx + 1}`} onChange={(e) => setTemplateData((prev:any)=>{
-                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, phase: e.target.value} : r);
-                                    return {...prev, progressRows: rows};
+                                  <Input value={row.phase} placeholder={`Phase ${idx + 1}`} onChange={(e) => setTemplateData((prev: any) => {
+                                    const rows = (prev.progressRows || []).map((r: any) => r.id === row.id ? { ...r, phase: e.target.value } : r);
+                                    return { ...prev, progressRows: rows };
                                   })} />
                                 </td>
                                 <td className="p-3 align-top">
-                                  <Input value={row.status} placeholder="Not Started" onChange={(e) => setTemplateData((prev:any)=>{
-                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, status: e.target.value} : r);
-                                    return {...prev, progressRows: rows};
+                                  <Input value={row.status} placeholder="Not Started" onChange={(e) => setTemplateData((prev: any) => {
+                                    const rows = (prev.progressRows || []).map((r: any) => r.id === row.id ? { ...r, status: e.target.value } : r);
+                                    return { ...prev, progressRows: rows };
                                   })} />
                                 </td>
                                 <td className="p-3 align-top">
-                                  <Input value={row.timeline} placeholder="2-4 weeks" onChange={(e) => setTemplateData((prev:any)=>{
-                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, timeline: e.target.value} : r);
-                                    return {...prev, progressRows: rows};
+                                  <Input value={row.timeline} placeholder="2-4 weeks" onChange={(e) => setTemplateData((prev: any) => {
+                                    const rows = (prev.progressRows || []).map((r: any) => r.id === row.id ? { ...r, timeline: e.target.value } : r);
+                                    return { ...prev, progressRows: rows };
                                   })} />
                                 </td>
                                 <td className="p-3 align-top">
-                                  <Textarea value={row.notes} placeholder="Notes..." rows={2} onChange={(e) => setTemplateData((prev:any)=>{
-                                    const rows = (prev.progressRows || []).map((r:any)=> r.id===row.id ? {...r, notes: e.target.value} : r);
-                                    return {...prev, progressRows: rows};
+                                  <Textarea value={row.notes} placeholder="Notes..." rows={2} onChange={(e) => setTemplateData((prev: any) => {
+                                    const rows = (prev.progressRows || []).map((r: any) => r.id === row.id ? { ...r, notes: e.target.value } : r);
+                                    return { ...prev, progressRows: rows };
                                   })} className="resize-none" />
                                 </td>
                                 <td className="p-3 align-top">
@@ -912,11 +945,11 @@ if (!roadmap) {
                         <div className="space-y-3">
                           <Label className="text-sm font-medium">Top Goals</Label>
                           <div className="space-y-2">
-                            {(templateData.goals||[]).map((g:any)=> (
+                            {(templateData.goals || []).map((g: any) => (
                               <div key={g.id} className="flex items-start gap-2 p-2 rounded-md bg-muted/50">
-                                <Checkbox checked={g.checked} onCheckedChange={(c)=> updateGoal(g.id, { checked: !!c })} className="mt-1" />
-                                <Input placeholder="Goal..." value={g.text} onChange={(e)=> updateGoal(g.id, { text: e.target.value })} className="border-0 bg-transparent" />
-                                <Button size="icon" variant="ghost" onClick={()=> removeGoal(g.id)}><Trash2 className="h-4 w-4" /></Button>
+                                <Checkbox checked={g.checked} onCheckedChange={(c) => updateGoal(g.id, { checked: !!c })} className="mt-1" />
+                                <Input placeholder="Goal..." value={g.text} onChange={(e) => updateGoal(g.id, { text: e.target.value })} className="border-0 bg-transparent" />
+                                <Button size="icon" variant="ghost" onClick={() => removeGoal(g.id)}><Trash2 className="h-4 w-4" /></Button>
                               </div>
                             ))}
                           </div>
@@ -925,9 +958,9 @@ if (!roadmap) {
                         <div className="space-y-3">
                           <Label className="text-sm font-medium">Experience & Time</Label>
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                            <Input placeholder="Experience (Beginner/Intermediate)" value={templateData.experienceLevel} onChange={(e)=>handleTemplateUpdate('experienceLevel', e.target.value)} />
-                            <Input placeholder="Weekly hrs" value={templateData.weeklyTime} onChange={(e)=>handleTemplateUpdate('weeklyTime', e.target.value)} />
-                            <Input placeholder="Total months" value={templateData.totalMonths} onChange={(e)=>handleTemplateUpdate('totalMonths', e.target.value)} />
+                            <Input placeholder="Experience (Beginner/Intermediate)" value={templateData.experienceLevel} onChange={(e) => handleTemplateUpdate('experienceLevel', e.target.value)} />
+                            <Input placeholder="Weekly hrs" value={templateData.weeklyTime} onChange={(e) => handleTemplateUpdate('weeklyTime', e.target.value)} />
+                            <Input placeholder="Total months" value={templateData.totalMonths} onChange={(e) => handleTemplateUpdate('totalMonths', e.target.value)} />
                           </div>
                         </div>
                       </div>
@@ -946,14 +979,14 @@ if (!roadmap) {
                     </CardHeader>
                     <CardContent>
                       <Label className="text-sm font-medium">Learning Journal</Label>
-                      <Textarea value={templateData.learningJournal} onChange={(e)=>handleTemplateUpdate('learningJournal', e.target.value)} rows={6} className="resize-none" placeholder="Daily/weekly notes..." />
+                      <Textarea value={templateData.learningJournal} onChange={(e) => handleTemplateUpdate('learningJournal', e.target.value)} rows={6} className="resize-none" placeholder="Daily/weekly notes..." />
 
                       <div className="mt-4 space-y-2">
                         <Label className="text-sm font-medium">Achievements</Label>
-                        {(templateData.achievements||[]).map((a:any)=> (
+                        {(templateData.achievements || []).map((a: any) => (
                           <div key={a.id} className="flex items-center gap-2">
-                            <Input placeholder="Achievement" value={a.text} onChange={(e)=> updateAchievement(a.id, e.target.value)} className="flex-1" />
-                            <Button size="icon" variant="ghost" onClick={()=> removeAchievement(a.id)}><Trash2 className="h-4 w-4" /></Button>
+                            <Input placeholder="Achievement" value={a.text} onChange={(e) => updateAchievement(a.id, e.target.value)} className="flex-1" />
+                            <Button size="icon" variant="ghost" onClick={() => removeAchievement(a.id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         ))}
                       </div>
@@ -962,7 +995,7 @@ if (!roadmap) {
                 </div>
 
                 {/* Right / Sidebar */}
-                  <aside className="space-y-6">
+                <aside className="space-y-6">
                   {/* Skills Checklist */}
                   <Card className="p-4">
                     <CardHeader>
@@ -975,11 +1008,11 @@ if (!roadmap) {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {(templateData.skills||[]).map((s:any)=> (
+                        {(templateData.skills || []).map((s: any) => (
                           <div key={s.id} className="flex items-center gap-2">
-                            <Checkbox checked={s.checked} onCheckedChange={(c)=> updateSkill(s.id, { checked: !!c })} />
-                            <Input value={s.name} placeholder="Skill name" onChange={(e)=> updateSkill(s.id, { name: e.target.value })} className="flex-1" />
-                            <Button size="icon" variant="ghost" onClick={()=> removeSkill(s.id)}><Trash2 className="h-4 w-4" /></Button>
+                            <Checkbox checked={s.checked} onCheckedChange={(c) => updateSkill(s.id, { checked: !!c })} />
+                            <Input value={s.name} placeholder="Skill name" onChange={(e) => updateSkill(s.id, { name: e.target.value })} className="flex-1" />
+                            <Button size="icon" variant="ghost" onClick={() => removeSkill(s.id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         ))}
                       </div>
@@ -998,11 +1031,11 @@ if (!roadmap) {
                     </CardHeader>
                     <CardContent>
                       <div className="space-y-2">
-                        {(templateData.sideTopics||[]).map((t:any)=> (
+                        {(templateData.sideTopics || []).map((t: any) => (
                           <div key={t.id} className="flex items-center gap-2">
-                            <Checkbox checked={t.checked} onCheckedChange={(c)=> updateSideTopic(t.id, { checked: !!c })} />
-                            <Input value={t.name} placeholder="Topic name" onChange={(e)=> updateSideTopic(t.id, { name: e.target.value })} className="flex-1" />
-                            <Button size="icon" variant="ghost" onClick={()=> removeSideTopic(t.id)}><Trash2 className="h-4 w-4" /></Button>
+                            <Checkbox checked={t.checked} onCheckedChange={(c) => updateSideTopic(t.id, { checked: !!c })} />
+                            <Input value={t.name} placeholder="Topic name" onChange={(e) => updateSideTopic(t.id, { name: e.target.value })} className="flex-1" />
+                            <Button size="icon" variant="ghost" onClick={() => removeSideTopic(t.id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         ))}
                       </div>
@@ -1021,14 +1054,14 @@ if (!roadmap) {
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 gap-3">
-                        {(templateData.resources||[]).map((r:any)=> (
+                        {(templateData.resources || []).map((r: any) => (
                           <div key={r.id} className="p-2 rounded-md border bg-background flex items-center gap-2">
                             <LinkIcon className="h-4 w-4" />
                             <div className="flex-1">
-                              <Input placeholder="Resource title" value={r.title} onChange={(e)=> updateResource(r.id, { title: e.target.value })} className="border-0 bg-transparent" />
-                              <Input placeholder="https://example.com" value={r.url} onChange={(e)=> updateResource(r.id, { url: e.target.value })} className="border-0 bg-transparent text-xs text-muted-foreground mt-1" />
+                              <Input placeholder="Resource title" value={r.title} onChange={(e) => updateResource(r.id, { title: e.target.value })} className="border-0 bg-transparent" />
+                              <Input placeholder="https://example.com" value={r.url} onChange={(e) => updateResource(r.id, { url: e.target.value })} className="border-0 bg-transparent text-xs text-muted-foreground mt-1" />
                             </div>
-                            <Button size="icon" variant="ghost" onClick={()=> removeResource(r.id)}><Trash2 className="h-4 w-4" /></Button>
+                            <Button size="icon" variant="ghost" onClick={() => removeResource(r.id)}><Trash2 className="h-4 w-4" /></Button>
                           </div>
                         ))}
                       </div>
