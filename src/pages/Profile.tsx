@@ -127,6 +127,17 @@ const Profile = () => {
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
+  const { data: stats } = useQuery({
+    queryKey: ['profileStats', targetUserId],
+    queryFn: async () => {
+      if (!targetUserId) return null;
+      const { data, error } = await supabase.rpc('get_profile_stats' as any, { target_user_id: targetUserId });
+      if (error) throw error;
+      return data as { post_count: number; roadmap_count: number; follower_count: number; following_count: number };
+    },
+    enabled: !!targetUserId,
+  });
+
   const { data: userRoadmaps, isLoading: isLoadingRoadmaps } = useQuery({
     queryKey: ['userRoadmaps', targetUserId, currentUser?.id],
     queryFn: async () => {
@@ -146,7 +157,7 @@ const Profile = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!targetUserId,
+    enabled: !!targetUserId && canViewProfile,
   });
 
   const { data: userActivity, isLoading: isLoadingActivity } = useQuery({
@@ -162,7 +173,7 @@ const Profile = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!targetUserId,
+    enabled: !!targetUserId && canViewProfile,
   });
 
   const { data: userPosts, isLoading: isLoadingUserPosts } = useQuery({
@@ -178,21 +189,7 @@ const Profile = () => {
       if (error) throw error;
       return data || [];
     },
-    enabled: !!targetUserId,
-  });
-
-  const { data: postCount } = useQuery({
-    queryKey: ['postCount', targetUserId],
-    queryFn: async () => {
-      if (!targetUserId) return 0;
-      const { count, error } = await supabase
-        .from('posts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', targetUserId);
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!targetUserId,
+    enabled: !!targetUserId && canViewProfile,
   });
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -281,35 +278,7 @@ const Profile = () => {
     return <Layout><div className="flex items-center justify-center min-h-screen"><p className="text-muted-foreground">Loading profile...</p></div></Layout>;
   }
 
-  // Show private account message if viewer doesn't have access
-  if (!canViewProfile && isPrivateAccount) {
-    return (
-      <Layout>
-        <div className="container mx-auto px-4 py-6 max-w-2xl">
-          <Card className="text-center py-12">
-            <CardContent>
-              <div className="flex flex-col items-center gap-4">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={publicUserData?.avatar_url || ''} />
-                  <AvatarFallback className="text-3xl">{initials}</AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="text-2xl font-bold mb-2">{publicUserData?.full_name || 'User'}</h2>
-                  <p className="text-muted-foreground mb-4">This account is private</p>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Follow this account to see their posts, roadmaps, and activity.
-                  </p>
-                  <Button onClick={toggleFollow} disabled={isLoadingFollowStatus}>
-                    {isFollowing ? 'Following' : 'Follow'}
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </Layout>
-    );
-  }
+
 
   return (
     <Layout>
@@ -470,215 +439,231 @@ const Profile = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-6 pt-6 border-t">
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{followerCount}</div><div className="text-xs text-muted-foreground">Followers</div></div>
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{followingCount}</div><div className="text-xs text-muted-foreground">Following</div></div>
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{postCount || 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{userRoadmaps?.length || 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.follower_count ?? followerCount ?? 0}</div><div className="text-xs text-muted-foreground">Followers</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.following_count ?? followingCount ?? 0}</div><div className="text-xs text-muted-foreground">Following</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.post_count ?? 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
+              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.roadmap_count ?? 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
             </div>
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="roadmaps" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
-            <TabsTrigger value="roadmaps">Roadmaps</TabsTrigger>
-            <TabsTrigger value="skills">Skills</TabsTrigger>
-            <TabsTrigger value="achievements">Achievements</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-          </TabsList>
+        {(!canViewProfile && isPrivateAccount) ? (
+          <Card className="text-center py-12">
+            <CardContent>
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
+                  <Lock className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold mb-2">This account is private</h2>
+                  <p className="text-muted-foreground">Follow to see their posts, roadmaps, and activity.</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Tabs defaultValue="roadmaps" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
+              <TabsTrigger value="roadmaps">Roadmaps</TabsTrigger>
+              <TabsTrigger value="skills">Skills</TabsTrigger>
+              <TabsTrigger value="achievements">Achievements</TabsTrigger>
+              <TabsTrigger value="activity">Activity</TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="roadmaps">
-            <Card>
-              <CardHeader><CardTitle>My Roadmaps</CardTitle></CardHeader>
-              <CardContent>
-                {isLoadingRoadmaps ? <p>Loading roadmaps...</p> : (userRoadmaps || []).length === 0 ? <p>No roadmaps created yet.</p> : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(userRoadmaps || []).map((roadmap: any) => (
-                      <Link to={`/roadmaps/${roadmap.id}`} key={roadmap.id} className="block">
-                        <Card className="hover:border-primary transition-colors">
+            <TabsContent value="roadmaps">
+              <Card>
+                <CardHeader><CardTitle>My Roadmaps</CardTitle></CardHeader>
+                <CardContent>
+                  {isLoadingRoadmaps ? <p>Loading roadmaps...</p> : (userRoadmaps || []).length === 0 ? <p>No roadmaps created yet.</p> : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(userRoadmaps || []).map((roadmap: any) => (
+                        <Link to={`/roadmaps/${roadmap.id}`} key={roadmap.id} className="block">
+                          <Card className="hover:border-primary transition-colors">
+                            <CardContent className="p-4">
+                              <h4 className="font-semibold mb-1">{roadmap.title}</h4>
+                              <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{roadmap.description}</p>
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>Progress: {roadmap.progress}%</span>
+                                <Badge variant="secondary">{roadmap.status}</Badge>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="skills">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <CardTitle>Skills</CardTitle>
+                    {editMode && <Button size="sm" onClick={() => setFormData({ ...formData, skills: [...(formData.skills || []), { name: '', category: '', level: 0 }] })}><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {editMode ? (
+                    <div className="space-y-4">
+                      {(formData.skills || []).map((skill: Skill, index: number) => (
+                        <div key={index} className="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
+                          <div className="flex-1 space-y-2">
+                            <Input placeholder="Skill name (e.g., React)" value={skill.name} onChange={(e) => {
+                              const newSkills = [...formData.skills]; newSkills[index].name = e.target.value; setFormData({ ...formData, skills: newSkills });
+                            }} />
+                            <Input placeholder="Category (e.g., Frontend)" value={skill.category} onChange={(e) => {
+                              const newSkills = [...formData.skills]; newSkills[index].category = e.target.value; setFormData({ ...formData, skills: newSkills });
+                            }} />
+                            <div className="flex items-center gap-2"><Label className="text-sm">Level:</Label><Input type="range" min="0" max="100" value={skill.level} onChange={(e) => {
+                              const newSkills = [...formData.skills]; newSkills[index].level = parseInt(e.target.value) || 0; setFormData({ ...formData, skills: newSkills });
+                            }} className="w-full" /><span className="text-sm font-medium">{skill.level}%</span></div>
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setFormData({ ...formData, skills: formData.skills.filter((_: any, i: number) => i !== index) })}><X className="h-4 w-4" /></Button>
+                        </div>
+                      ))}
+                      {(formData.skills || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No skills added yet.</p>}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(profileDetails?.skills || []).map((skill: Skill, index: number) => (
+                        <Card key={index}>
                           <CardContent className="p-4">
-                            <h4 className="font-semibold mb-1">{roadmap.title}</h4>
-                            <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{roadmap.description}</p>
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>Progress: {roadmap.progress}%</span>
-                              <Badge variant="secondary">{roadmap.status}</Badge>
+                            <div className="flex items-center justify-between mb-2"><h4 className="font-semibold">{skill.name}</h4><Badge variant="secondary">{skill.category}</Badge></div>
+                            <div>
+                              <div className="flex items-center justify-between text-xs mb-1"><span className="text-muted-foreground">Proficiency</span><span className="font-medium">{skill.level}%</span></div>
+                              <div className="w-full bg-muted rounded-full h-2"><div className="bg-primary h-2 rounded-full" style={{ width: `${skill.level}%` }} /></div>
                             </div>
                           </CardContent>
                         </Card>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="skills">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Skills</CardTitle>
-                  {editMode && <Button size="sm" onClick={() => setFormData({ ...formData, skills: [...(formData.skills || []), { name: '', category: '', level: 0 }] })}><Plus className="h-4 w-4 mr-1" /> Add</Button>}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {editMode ? (
-                  <div className="space-y-4">
-                    {(formData.skills || []).map((skill: Skill, index: number) => (
-                      <div key={index} className="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
-                        <div className="flex-1 space-y-2">
-                          <Input placeholder="Skill name (e.g., React)" value={skill.name} onChange={(e) => {
-                            const newSkills = [...formData.skills]; newSkills[index].name = e.target.value; setFormData({ ...formData, skills: newSkills });
-                          }} />
-                          <Input placeholder="Category (e.g., Frontend)" value={skill.category} onChange={(e) => {
-                            const newSkills = [...formData.skills]; newSkills[index].category = e.target.value; setFormData({ ...formData, skills: newSkills });
-                          }} />
-                          <div className="flex items-center gap-2"><Label className="text-sm">Level:</Label><Input type="range" min="0" max="100" value={skill.level} onChange={(e) => {
-                            const newSkills = [...formData.skills]; newSkills[index].level = parseInt(e.target.value) || 0; setFormData({ ...formData, skills: newSkills });
-                          }} className="w-full" /><span className="text-sm font-medium">{skill.level}%</span></div>
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setFormData({ ...formData, skills: formData.skills.filter((_: any, i: number) => i !== index) })}><X className="h-4 w-4" /></Button>
-                      </div>
-                    ))}
-                    {(formData.skills || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No skills added yet.</p>}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(profileDetails?.skills || []).map((skill: Skill, index: number) => (
-                      <Card key={index}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center justify-between mb-2"><h4 className="font-semibold">{skill.name}</h4><Badge variant="secondary">{skill.category}</Badge></div>
-                          <div>
-                            <div className="flex items-center justify-between text-xs mb-1"><span className="text-muted-foreground">Proficiency</span><span className="font-medium">{skill.level}%</span></div>
-                            <div className="w-full bg-muted rounded-full h-2"><div className="bg-primary h-2 rounded-full" style={{ width: `${skill.level}%` }} /></div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {(profileDetails?.skills || []).length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center py-8">No skills to show.</p>}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="achievements">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between"><CardTitle>Achievements</CardTitle>
-                  {editMode && <Button size="sm" onClick={() => setFormData({ ...formData, achievements: [...(formData.achievements || []), { name: '', description: '', icon: '🏆', date: new Date().toISOString().split('T')[0] }] })}><Plus className="h-4 w-4 mr-1" /> Add</Button>}
-                </div>
-              </CardHeader>
-              <CardContent>
-                {editMode ? (
-                  <div className="space-y-4">
-                    {(formData.achievements || []).map((achievement: Achievement, index: number) => (
-                      <div key={index} className="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2">
-                            <Input placeholder="Icon" value={achievement.icon} onChange={(e) => { const newA = [...formData.achievements]; newA[index].icon = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="w-20" />
-                            <Input placeholder="Achievement name" value={achievement.name} onChange={(e) => { const newA = [...formData.achievements]; newA[index].name = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="flex-1" />
-                          </div>
-                          <Textarea placeholder="Description" value={achievement.description} onChange={(e) => { const newA = [...formData.achievements]; newA[index].description = e.target.value; setFormData({ ...formData, achievements: newA }); }} rows={2} />
-                          <Input type="date" value={achievement.date} onChange={(e) => { const newA = [...formData.achievements]; newA[index].date = e.target.value; setFormData({ ...formData, achievements: newA }); }} />
-                        </div>
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setFormData({ ...formData, achievements: formData.achievements.filter((_: any, i: number) => i !== index) })}><X className="h-4 w-4" /></Button>
-                      </div>
-                    ))}
-                    {(formData.achievements || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No achievements added yet.</p>}
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(profileDetails?.achievements || []).map((achievement: Achievement, index: number) => (
-                      <Card key={index}>
-                        <CardContent className="p-4 flex items-start space-x-4">
-                          <div className="text-2xl mt-1">{achievement.icon}</div>
-                          <div>
-                            <h4 className="font-semibold">{achievement.name}</h4>
-                            <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                            <p className="text-xs text-muted-foreground mt-2"><Calendar className="h-3 w-3 inline mr-1" />{new Date(achievement.date).toLocaleDateString()}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {(profileDetails?.achievements || []).length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center py-8">No achievements to show.</p>}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="activity">
-            <Card>
-              <CardHeader><CardTitle>Learning Activity</CardTitle></CardHeader>
-              <CardContent>
-                {isLoadingActivity ? <p>Loading activity...</p> : (userActivity || []).length === 0 ? null : (
-                  <div className="space-y-3">
-                    {(userActivity || []).map((activity: any) => (
-                      <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50">
-                        <div className="mt-1">
-                          {activity.activity_type === 'post_created' && <BookOpen className="h-5 w-5 text-blue-500" />}
-                          {activity.activity_type === 'roadmap_created' && <Target className="h-5 w-5 text-green-500" />}
-                          {activity.activity_type === 'comment_created' && <Users className="h-5 w-5 text-purple-500" />}
-                          {activity.activity_type === 'like' && <Star className="h-5 w-5 text-yellow-500" />}
-                          {!['post_created', 'roadmap_created', 'comment_created', 'like'].includes(activity.activity_type) && <TrendingUp className="h-5 w-5 text-gray-500" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm"><span className="font-medium">{activity.activity_type.replace(/_/g, ' ')}</span>
-                            {activity.metadata?.title && <span className="text-muted-foreground">: {activity.metadata.title}</span>}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1">{new Date(activity.created_at).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                {/* User posts section */}
-                <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-3">Posts</h3>
-                  {isLoadingUserPosts ? (
-                    <p>Loading posts...</p>
-                  ) : (userPosts || []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No posts yet.</p>
-                  ) : (
-                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1">
-                      {(userPosts || []).map((p: any) => {
-                        // Extract thumbnail from markdown images or video tags
-                        const imgMatch = (p.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/);
-                        const videoMatch = (p.content || "").match(/<video[^>]+src="([^"]+)"/);
-                        const thumb = imgMatch?.[1] || videoMatch?.[1] || null;
-
-                        return (
-                          <div
-                            key={p.id}
-                            className="aspect-square rounded overflow-hidden shadow-sm hover:shadow-md transition-all group relative cursor-pointer bg-muted"
-                            onClick={() => setPreviewPost(p)}
-                          >
-                            {thumb ? (
-                              <div className="w-full h-full overflow-hidden">
-                                <img
-                                  src={thumb}
-                                  alt={p.title || "Post"}
-                                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                                />
-                              </div>
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground p-2 text-center">
-                                <span className="line-clamp-3">{p.title}</span>
-                              </div>
-                            )}
-                            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                          </div>
-                        );
-                      })}
+                      ))}
+                      {(profileDetails?.skills || []).length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center py-8">No skills to show.</p>}
                     </div>
                   )}
-                </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="achievements">
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between"><CardTitle>Achievements</CardTitle>
+                    {editMode && <Button size="sm" onClick={() => setFormData({ ...formData, achievements: [...(formData.achievements || []), { name: '', description: '', icon: '🏆', date: new Date().toISOString().split('T')[0] }] })}><Plus className="h-4 w-4 mr-1" /> Add</Button>}
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {editMode ? (
+                    <div className="space-y-4">
+                      {(formData.achievements || []).map((achievement: Achievement, index: number) => (
+                        <div key={index} className="flex items-start gap-2 p-3 border rounded-lg bg-muted/30">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Input placeholder="Icon" value={achievement.icon} onChange={(e) => { const newA = [...formData.achievements]; newA[index].icon = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="w-20" />
+                              <Input placeholder="Achievement name" value={achievement.name} onChange={(e) => { const newA = [...formData.achievements]; newA[index].name = e.target.value; setFormData({ ...formData, achievements: newA }); }} className="flex-1" />
+                            </div>
+                            <Textarea placeholder="Description" value={achievement.description} onChange={(e) => { const newA = [...formData.achievements]; newA[index].description = e.target.value; setFormData({ ...formData, achievements: newA }); }} rows={2} />
+                            <Input type="date" value={achievement.date} onChange={(e) => { const newA = [...formData.achievements]; newA[index].date = e.target.value; setFormData({ ...formData, achievements: newA }); }} />
+                          </div>
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setFormData({ ...formData, achievements: formData.achievements.filter((_: any, i: number) => i !== index) })}><X className="h-4 w-4" /></Button>
+                        </div>
+                      ))}
+                      {(formData.achievements || []).length === 0 && <p className="text-sm text-muted-foreground text-center py-8">No achievements added yet.</p>}
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(profileDetails?.achievements || []).map((achievement: Achievement, index: number) => (
+                        <Card key={index}>
+                          <CardContent className="p-4 flex items-start space-x-4">
+                            <div className="text-2xl mt-1">{achievement.icon}</div>
+                            <div>
+                              <h4 className="font-semibold">{achievement.name}</h4>
+                              <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                              <p className="text-xs text-muted-foreground mt-2"><Calendar className="h-3 w-3 inline mr-1" />{new Date(achievement.date).toLocaleDateString()}</p>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                      {(profileDetails?.achievements || []).length === 0 && <p className="text-sm text-muted-foreground col-span-full text-center py-8">No achievements to show.</p>}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-        </Tabs>
+            <TabsContent value="activity">
+              <Card>
+                <CardHeader><CardTitle>Learning Activity</CardTitle></CardHeader>
+                <CardContent>
+                  {isLoadingActivity ? <p>Loading activity...</p> : (userActivity || []).length === 0 ? null : (
+                    <div className="space-y-3">
+                      {(userActivity || []).map((activity: any) => (
+                        <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50">
+                          <div className="mt-1">
+                            {activity.activity_type === 'post_created' && <BookOpen className="h-5 w-5 text-blue-500" />}
+                            {activity.activity_type === 'roadmap_created' && <Target className="h-5 w-5 text-green-500" />}
+                            {activity.activity_type === 'comment_created' && <Users className="h-5 w-5 text-purple-500" />}
+                            {activity.activity_type === 'like' && <Star className="h-5 w-5 text-yellow-500" />}
+                            {!['post_created', 'roadmap_created', 'comment_created', 'like'].includes(activity.activity_type) && <TrendingUp className="h-5 w-5 text-gray-500" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm"><span className="font-medium">{activity.activity_type.replace(/_/g, ' ')}</span>
+                              {activity.metadata?.title && <span className="text-muted-foreground">: {activity.metadata.title}</span>}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">{new Date(activity.created_at).toLocaleString()}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {/* User posts section */}
+                  <div className="mt-6">
+                    <h3 className="text-lg font-semibold mb-3">Posts</h3>
+                    {isLoadingUserPosts ? (
+                      <p>Loading posts...</p>
+                    ) : (userPosts || []).length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No posts yet.</p>
+                    ) : (
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1">
+                        {(userPosts || []).map((p: any) => {
+                          // Extract thumbnail from markdown images or video tags
+                          const imgMatch = (p.content || "").match(/!\[[^\]]*\]\(([^)]+)\)/);
+                          const videoMatch = (p.content || "").match(/<video[^>]+src="([^"]+)"/);
+                          const thumb = imgMatch?.[1] || videoMatch?.[1] || null;
+
+                          return (
+                            <div
+                              key={p.id}
+                              className="aspect-square rounded overflow-hidden shadow-sm hover:shadow-md transition-all group relative cursor-pointer bg-muted"
+                              onClick={() => setPreviewPost(p)}
+                            >
+                              {thumb ? (
+                                <div className="w-full h-full overflow-hidden">
+                                  <img
+                                    src={thumb}
+                                    alt={p.title || "Post"}
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                  />
+                                </div>
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-xs text-muted-foreground p-2 text-center">
+                                  <span className="line-clamp-3">{p.title}</span>
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+          </Tabs>
+        )}
       </div>
 
       {/* Post preview modal */}
