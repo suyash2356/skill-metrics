@@ -75,6 +75,8 @@ export function useUserFollows(targetUserId?: string) {
 
         queryClient.invalidateQueries({ queryKey: ['isFollowing', currentUserId, targetUserId] });
         queryClient.invalidateQueries({ queryKey: ['followerCount', targetUserId] });
+        queryClient.invalidateQueries({ queryKey: ['feedPosts'] });
+        queryClient.invalidateQueries({ queryKey: ['personalizedFeed'] });
       } else if (followRequestStatus) {
         // Cancel pending request
         const { error } = await supabase
