@@ -137,19 +137,25 @@ Deno.serve(async (req: Request) => {
     // Cast posts
     const posts = (rawPosts || []) as Post[];
 
-    // Fetch profiles for posts
+    // Fetch profiles for posts using the RPC function that respects privacy
     const postUserIds = [...new Set(posts.map(p => p.user_id))];
-    const { data: rawPostProfiles } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, avatar_url")
-      .in("user_id", postUserIds);
-
-    const postProfiles = (rawPostProfiles || []) as Profile[];
-
-    const profilesMap = postProfiles.reduce<Record<string, Profile>>((acc, p) => {
-      acc[p.user_id] = p;
-      return acc;
-    }, {});
+    const profilesMap: Record<string, { full_name: string; avatar_url: string | null }> = {};
+    
+    // Use Promise.all to fetch author info for each user
+    await Promise.all(postUserIds.map(async (authorId) => {
+      const { data } = await supabase.rpc('get_post_author_info', {
+        _viewer_id: user.id,
+        _author_id: authorId
+      });
+      if (data) {
+        profilesMap[authorId] = {
+          full_name: data.full_name || 'Anonymous',
+          avatar_url: data.avatar_url || null
+        };
+      } else {
+        profilesMap[authorId] = { full_name: 'Anonymous', avatar_url: null };
+      }
+    }));
 
     // Fetch public roadmaps
     const { data: rawRoadmaps, error: roadmapsError } = await supabase
@@ -272,13 +278,13 @@ ${roadmaps.slice(0, 20).map(r => `- ID: ${r.id}, Title: ${r.title}, Category: ${
     const scoredPosts = posts
       .map(post => {
         const rec = recommendations.posts?.find(r => r.id === post.id);
-        const profile = profilesMap[post.user_id];
+        const profile = profilesMap[post.user_id] || { full_name: 'Anonymous', avatar_url: null };
         return {
           ...post,
-          profiles: profile ? {
-            full_name: profile.full_name || 'Anonymous',
+          profiles: {
+            full_name: profile.full_name,
             avatar_url: profile.avatar_url,
-          } : { full_name: 'Anonymous', avatar_url: null },
+          },
           score: rec?.score || 0,
           recommendation_reason: rec?.reason || "",
         };
