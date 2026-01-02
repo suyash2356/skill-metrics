@@ -97,7 +97,7 @@ const Home = () => {
     const from = pageParam * pageSize;
     const to = from + pageSize - 1;
 
-    // Fetch posts
+    // Fetch posts - RLS will filter based on privacy settings
     const { data: postsData, error } = await supabase
       .from("posts")
       .select("*")
@@ -112,25 +112,28 @@ const Home = () => {
     // Get unique user IDs
     const userIds = [...new Set(postsData.map(p => p.user_id))];
 
-    // Fetch profiles separately
-    const { data: profilesData } = await supabase
-      .from("profiles")
-      .select("user_id, full_name, title, avatar_url")
-      .in("user_id", userIds);
+    // Fetch author info using the RPC function that respects privacy
+    const profilePromises = userIds.map(async (userId) => {
+      const { data } = await supabase.rpc('get_post_author_info', {
+        _viewer_id: user?.id || null,
+        _author_id: userId
+      });
+      return { userId, profile: data };
+    });
 
-    // Create a map of profiles
-    const profilesMap = (profilesData || []).reduce((acc, profile) => {
-      acc[profile.user_id] = profile;
+    const profileResults = await Promise.all(profilePromises);
+    const profilesMap = profileResults.reduce((acc, { userId, profile }) => {
+      acc[userId] = profile || { full_name: 'Anonymous', title: null, avatar_url: null };
       return acc;
     }, {} as Record<string, any>);
 
     const posts: PostWithProfile[] = postsData.map((post: any) => ({
       ...post,
-      profiles: profilesMap[post.user_id] ? {
-        full_name: profilesMap[post.user_id].full_name,
-        title: profilesMap[post.user_id].title,
-        avatar_url: profilesMap[post.user_id].avatar_url,
-      } : { full_name: 'Anonymous', title: 'User', avatar_url: null },
+      profiles: {
+        full_name: profilesMap[post.user_id]?.full_name || 'Anonymous',
+        title: profilesMap[post.user_id]?.title || null,
+        avatar_url: profilesMap[post.user_id]?.avatar_url || null,
+      },
       likes_count: 0,
       comments_count: 0,
     }));
