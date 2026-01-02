@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { UserMinus, Loader2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface FollowersFollowingDialogProps {
   open: boolean;
@@ -24,6 +25,7 @@ interface FollowUser {
   full_name: string | null;
   avatar_url: string | null;
   relationship_id: string;
+  followsYou?: boolean;
 }
 
 export function FollowersFollowingDialog({
@@ -81,7 +83,7 @@ export function FollowersFollowingDialog({
     enabled: open && !!userId && isOwnProfile,
   });
 
-  // Fetch following list
+  // Fetch following list with "follows you" indicator
   const { data: following, isLoading: isLoadingFollowing } = useQuery({
     queryKey: ["followingList", userId],
     queryFn: async () => {
@@ -96,23 +98,36 @@ export function FollowersFollowingDialog({
       if (relError) throw relError;
       if (!followingRelations || followingRelations.length === 0) return [];
 
-      // Get profile info for each following
       const followingIds = followingRelations.map((f) => f.following_id);
-      const { data: profiles, error: profileError } = await supabase
-        .from("profiles")
-        .select("user_id, full_name, avatar_url")
-        .in("user_id", followingIds);
 
-      if (profileError) throw profileError;
+      // Get profile info and check who follows back
+      const [profilesResult, followBackResult] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("user_id, full_name, avatar_url")
+          .in("user_id", followingIds),
+        supabase
+          .from("followers")
+          .select("follower_id")
+          .eq("following_id", userId)
+          .in("follower_id", followingIds),
+      ]);
+
+      if (profilesResult.error) throw profilesResult.error;
+
+      const followsYouSet = new Set(
+        followBackResult.data?.map((f) => f.follower_id) || []
+      );
 
       return followingRelations.map((rel) => {
-        const profile = profiles?.find((p) => p.user_id === rel.following_id);
+        const profile = profilesResult.data?.find((p) => p.user_id === rel.following_id);
         return {
           id: rel.following_id,
           user_id: rel.following_id,
           full_name: profile?.full_name || "Anonymous",
           avatar_url: profile?.avatar_url || null,
           relationship_id: rel.id,
+          followsYou: followsYouSet.has(rel.following_id),
         } as FollowUser;
       });
     },
@@ -221,9 +236,16 @@ export function FollowersFollowingDialog({
                   <AvatarImage src={user.avatar_url || undefined} />
                   <AvatarFallback>{getInitials(user.full_name)}</AvatarFallback>
                 </Avatar>
-                <span className="font-medium truncate">
-                  {user.full_name || "Anonymous"}
-                </span>
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="font-medium truncate">
+                    {user.full_name || "Anonymous"}
+                  </span>
+                  {type === "following" && user.followsYou && (
+                    <Badge variant="secondary" className="text-xs flex-shrink-0">
+                      Follows you
+                    </Badge>
+                  )}
+                </div>
               </Link>
 
               {isOwnProfile && (
