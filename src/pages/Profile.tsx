@@ -57,47 +57,45 @@ const Profile = () => {
   const targetUserId = userId || currentUser?.id;
   const { toast } = useToast();
 
-  const { isFollowing, toggleFollow, followerCount, followingCount, isLoadingFollowStatus, getFollowButtonState } = useUserFollows(targetUserId);
+  const { isFollowing, toggleFollow, followerCount, followingCount, isLoadingFollowStatus, getFollowButtonState, followRequestStatus } = useUserFollows(targetUserId);
   const { profileDetails, isLoading: isLoadingProfile, updateProfileDetails, isUpdating } = useUserProfileDetails(targetUserId);
 
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [previewPost, setPreviewPost] = useState<any | null>(null);
 
-  const { data: publicUserData, isLoading: isLoadingPublicUser } = useQuery({
-    queryKey: ['publicProfile', targetUserId],
+  // Fetch basic profile info using RPC function (always works, bypasses RLS)
+  const { data: basicProfileInfo, isLoading: isLoadingPublicUser } = useQuery({
+    queryKey: ['basicProfileInfo', targetUserId],
     queryFn: async () => {
       if (!targetUserId) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('full_name, avatar_url')
-        .eq('user_id', targetUserId)
-        .single();
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      const { data, error } = await supabase.rpc('get_basic_profile_info', { 
+        target_user_id: targetUserId 
+      });
+      if (error) {
+        console.error('Error fetching basic profile info:', error);
+        return { full_name: 'Anonymous', avatar_url: null, is_private: false };
+      }
+      return data as { user_id: string; full_name: string; avatar_url: string | null; is_private: boolean };
     },
     enabled: !!targetUserId,
   });
 
-  // Check if profile is private and if viewer has access
-  const { data: privacySettings } = useQuery({
-    queryKey: ['userPrivacy', targetUserId],
-    queryFn: async () => {
-      if (!targetUserId) return null;
-      const { data, error } = await supabase
-        .from('user_preferences')
-        .select('profile_visibility')
-        .eq('user_id', targetUserId)
-        .single();
-      if (error && error.code !== 'PGRST116') return { profile_visibility: 'public' };
-      return data || { profile_visibility: 'public' };
-    },
-    enabled: !!targetUserId,
-  });
-
+  // Derive privacy from basic profile info
   const isOwnProfile = currentUser?.id === targetUserId;
-  const isPrivateAccount = privacySettings?.profile_visibility === 'private';
+  const isPrivateAccount = basicProfileInfo?.is_private ?? false;
+  
+  // Check if user has a pending follow request
+  const hasPendingRequest = !!followRequestStatus;
+  
+  // Can view profile content if: own profile, public account, or following
   const canViewProfile = isOwnProfile || !isPrivateAccount || isFollowing;
+  
+  // For backwards compatibility
+  const publicUserData = basicProfileInfo ? {
+    full_name: basicProfileInfo.full_name,
+    avatar_url: basicProfileInfo.avatar_url
+  } : null;
 
   useEffect(() => {
     if (profileDetails && publicUserData) {
