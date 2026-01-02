@@ -139,6 +139,49 @@ const Profile = () => {
     enabled: !!targetUserId,
   });
 
+  // Fetch mutual followers count (people both you and this user follow)
+  const { data: mutualFollowers } = useQuery({
+    queryKey: ['mutualFollowers', currentUser?.id, targetUserId],
+    queryFn: async () => {
+      if (!currentUser?.id || !targetUserId || currentUser.id === targetUserId) return { count: 0, users: [] };
+      
+      // Get users the current user follows
+      const { data: myFollowing, error: myError } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', currentUser.id);
+      
+      if (myError) throw myError;
+      
+      // Get users the target user follows
+      const { data: theirFollowing, error: theirError } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', targetUserId);
+      
+      if (theirError) throw theirError;
+      
+      const myFollowingIds = new Set(myFollowing?.map(f => f.following_id) || []);
+      const mutualIds = (theirFollowing || [])
+        .filter(f => myFollowingIds.has(f.following_id))
+        .map(f => f.following_id);
+      
+      if (mutualIds.length === 0) return { count: 0, users: [] };
+      
+      // Get profile info for first 3 mutual followers
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('user_id, full_name, avatar_url')
+        .in('user_id', mutualIds.slice(0, 3));
+      
+      return { 
+        count: mutualIds.length, 
+        users: profiles || [] 
+      };
+    },
+    enabled: !!currentUser?.id && !!targetUserId && currentUser.id !== targetUserId,
+  });
+
   const { data: userRoadmaps, isLoading: isLoadingRoadmaps } = useQuery({
     queryKey: ['userRoadmaps', targetUserId, currentUser?.id],
     queryFn: async () => {
@@ -467,6 +510,29 @@ const Profile = () => {
               <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.post_count ?? 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
               <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.roadmap_count ?? 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
             </div>
+            
+            {/* Mutual followers indicator - only show when viewing another user's profile */}
+            {!isOwnProfile && mutualFollowers && mutualFollowers.count > 0 && (
+              <div className="flex items-center gap-2 mt-4 pt-4 border-t text-sm text-muted-foreground">
+                <div className="flex -space-x-2">
+                  {mutualFollowers.users.slice(0, 3).map((user: any) => (
+                    <Avatar key={user.user_id} className="h-6 w-6 border-2 border-background">
+                      <AvatarImage src={user.avatar_url} />
+                      <AvatarFallback className="text-xs">
+                        {(user.full_name || 'U').charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                  ))}
+                </div>
+                <span>
+                  <span className="font-medium text-foreground">{mutualFollowers.count}</span>
+                  {' '}mutual {mutualFollowers.count === 1 ? 'connection' : 'connections'}
+                  {mutualFollowers.users.length > 0 && (
+                    <span> including <span className="font-medium text-foreground">{mutualFollowers.users[0].full_name}</span></span>
+                  )}
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
 
