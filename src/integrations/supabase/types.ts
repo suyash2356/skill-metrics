@@ -1018,6 +1018,15 @@ export type Database = {
         Args: { user_id_to_delete: string }
         Returns: undefined
       }
+      get_basic_profile_info: {
+        Args: { target_user_id: string }
+        Returns: Json
+      }
+      get_post_author_info: {
+        Args: { _author_id: string; _viewer_id: string }
+        Returns: Json
+      }
+      get_profile_stats: { Args: { target_user_id: string }; Returns: Json }
       has_community_role: {
         Args: {
           _community_id: string
