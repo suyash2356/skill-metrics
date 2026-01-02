@@ -8,7 +8,8 @@ const corsHeaders = {
 interface LoginAlertRequest {
   email: string;
   deviceInfo: string;
-  location: string;
+  // Removed location for privacy - only country if available
+  country?: string;
   timestamp: string;
 }
 
@@ -18,7 +19,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, deviceInfo, location, timestamp }: LoginAlertRequest = await req.json();
+    const { email, deviceInfo, country, timestamp }: LoginAlertRequest = await req.json();
 
     console.log("Login alert request for:", email);
     
@@ -31,6 +32,9 @@ const handler = async (req: Request): Promise<Response> => {
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
+
+    // Privacy-focused: only show country if available, never city/IP
+    const locationText = country ? `Country: ${country}` : 'Location: Not available (privacy protected)';
 
     // Send email using Resend REST API
     const emailResponse = await fetch("https://api.resend.com/emails", {
@@ -57,6 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
               .label { font-weight: bold; color: #667eea; }
               .warning { background: #fef2f2; border-left-color: #ef4444; padding: 15px; margin: 20px 0; border-radius: 4px; }
               .footer { text-align: center; margin-top: 20px; color: #6b7280; font-size: 14px; }
+              .privacy-note { font-size: 12px; color: #9ca3af; margin-top: 10px; }
             </style>
           </head>
           <body>
@@ -77,8 +82,9 @@ const handler = async (req: Request): Promise<Response> => {
                     <span class="label">Device:</span> ${deviceInfo}
                   </div>
                   <div class="info-item">
-                    <span class="label">Location:</span> ${location}
+                    <span class="label">${locationText}</span>
                   </div>
+                  <p class="privacy-note">🔐 For your privacy, we do not store exact IP addresses or city-level location data.</p>
                 </div>
 
                 <div class="warning">

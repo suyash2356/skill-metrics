@@ -916,7 +916,9 @@ export type Database = {
           ip_address: unknown
           is_active: boolean | null
           last_activity: string
+          masked_ip: string | null
           os: string | null
+          security_notes: string | null
           timezone: string | null
           user_agent: string | null
           user_id: string
@@ -933,7 +935,9 @@ export type Database = {
           ip_address?: unknown
           is_active?: boolean | null
           last_activity?: string
+          masked_ip?: string | null
           os?: string | null
+          security_notes?: string | null
           timezone?: string | null
           user_agent?: string | null
           user_id: string
@@ -950,7 +954,9 @@ export type Database = {
           ip_address?: unknown
           is_active?: boolean | null
           last_activity?: string
+          masked_ip?: string | null
           os?: string | null
+          security_notes?: string | null
           timezone?: string | null
           user_agent?: string | null
           user_id?: string
@@ -1022,6 +1028,19 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: Json
       }
+      get_my_sessions: {
+        Args: never
+        Returns: {
+          browser: string
+          country: string
+          created_at: string
+          device_type: string
+          id: string
+          is_active: boolean
+          last_activity: string
+          os: string
+        }[]
+      }
       get_post_author_info: {
         Args: { _author_id: string; _viewer_id: string }
         Returns: Json
@@ -1035,6 +1054,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      mask_ip_address: { Args: { ip: unknown }; Returns: string }
       migrate_profile_data: { Args: never; Returns: undefined }
     }
     Enums: {
