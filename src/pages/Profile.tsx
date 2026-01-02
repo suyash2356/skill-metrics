@@ -50,6 +50,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { FollowersFollowingDialog } from "@/components/FollowersFollowingDialog";
 
 const Profile = () => {
   const { user: currentUser } = useAuth();
@@ -63,6 +64,8 @@ const Profile = () => {
   const [editMode, setEditMode] = useState(false);
   const [formData, setFormData] = useState<any>({});
   const [previewPost, setPreviewPost] = useState<any | null>(null);
+  const [showFollowersDialog, setShowFollowersDialog] = useState(false);
+  const [followersDialogTab, setFollowersDialogTab] = useState<"followers" | "following">("followers");
 
   // Fetch basic profile info using RPC function (always works, bypasses RLS)
   const { data: basicProfileInfo, isLoading: isLoadingPublicUser } = useQuery({
@@ -437,10 +440,32 @@ const Profile = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-6 pt-6 border-t">
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.follower_count ?? followerCount ?? 0}</div><div className="text-xs text-muted-foreground">Followers</div></div>
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.following_count ?? followingCount ?? 0}</div><div className="text-xs text-muted-foreground">Following</div></div>
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.post_count ?? 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
-              <div><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.roadmap_count ?? 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
+              <div 
+                className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
+                onClick={() => {
+                  if (isOwnProfile) {
+                    setFollowersDialogTab("followers");
+                    setShowFollowersDialog(true);
+                  }
+                }}
+              >
+                <div className="text-xl sm:text-2xl font-bold text-primary">{stats?.follower_count ?? followerCount ?? 0}</div>
+                <div className="text-xs text-muted-foreground">Followers</div>
+              </div>
+              <div 
+                className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
+                onClick={() => {
+                  if (isOwnProfile) {
+                    setFollowersDialogTab("following");
+                    setShowFollowersDialog(true);
+                  }
+                }}
+              >
+                <div className="text-xl sm:text-2xl font-bold text-primary">{stats?.following_count ?? followingCount ?? 0}</div>
+                <div className="text-xs text-muted-foreground">Following</div>
+              </div>
+              <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.post_count ?? 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
+              <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.roadmap_count ?? 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
             </div>
           </CardContent>
         </Card>
@@ -747,6 +772,16 @@ const Profile = () => {
             </Card>
           </motion.div>
         </motion.div>
+      )}
+
+      {/* Followers/Following Dialog - Only visible to profile owner */}
+      {isOwnProfile && targetUserId && (
+        <FollowersFollowingDialog
+          open={showFollowersDialog}
+          onOpenChange={setShowFollowersDialog}
+          userId={targetUserId}
+          initialTab={followersDialogTab}
+        />
       )}
 
     </Layout>
