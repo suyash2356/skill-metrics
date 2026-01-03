@@ -1056,6 +1056,14 @@ export type Database = {
       }
       mask_ip_address: { Args: { ip: unknown }; Returns: string }
       migrate_profile_data: { Args: never; Returns: undefined }
+      search_profiles: {
+        Args: { result_limit?: number; search_query: string }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       community_role: "admin" | "moderator" | "member"
