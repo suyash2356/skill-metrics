@@ -40,11 +40,13 @@ export function useUserFollows(targetUserId?: string) {
         .select('id, status')
         .eq('requester_id', currentUserId)
         .eq('requested_id', targetUserId)
-        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      // Only return if pending, otherwise null (so user can re-request)
+      return data?.status === 'pending' ? data : null;
     },
     enabled: !!currentUserId && !!targetUserId && currentUserId !== targetUserId,
     staleTime: 1 * 60 * 1000,
@@ -89,6 +91,22 @@ export function useUserFollows(targetUserId?: string) {
 
         queryClient.invalidateQueries({ queryKey: ['followRequestStatus', currentUserId, targetUserId] });
       } else {
+        // Check if there's an existing request (rejected/accepted) and delete it first
+        const { data: existingRequest } = await supabase
+          .from('follow_requests')
+          .select('id')
+          .eq('requester_id', currentUserId)
+          .eq('requested_id', targetUserId)
+          .maybeSingle();
+
+        if (existingRequest) {
+          // Delete old request before creating new one
+          await supabase
+            .from('follow_requests')
+            .delete()
+            .eq('id', existingRequest.id);
+        }
+
         // Send follow request
         const { error } = await supabase
           .from('follow_requests')
@@ -99,8 +117,6 @@ export function useUserFollows(targetUserId?: string) {
           });
 
         if (error) throw error;
-
-        // Note: Notification is sent via database trigger 'on_new_follow_request'
 
         toast({ title: "Follow request sent!" });
 
