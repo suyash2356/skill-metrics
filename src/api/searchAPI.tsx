@@ -98,24 +98,20 @@ export async function fetchPeopleCommunitySuggestions(query: string, limit = 10)
   if (!q) return [];
   if (suggestionCache[`people:${q}`]) return suggestionCache[`people:${q}`];
 
-  const prefix = `${q}%`;
-  const contains = `%${q}%`;
-
-  const profilesRes = await supabase
-    .from("profiles")
-    .select("user_id, full_name, avatar_url")
-    .or(`full_name.ilike.${prefix},full_name.ilike.${contains}`)
-    .limit(limit);
+  // Use the search_profiles function to find all users (including private accounts)
+  // This function returns basic info (name, avatar) for all users regardless of privacy
+  const { data: profilesData, error } = await supabase
+    .rpc('search_profiles', { search_query: q, result_limit: limit });
 
   const suggestions: Suggestion[] = [];
 
-  if (profilesRes.data) {
-    profilesRes.data.forEach((p) => {
+  if (!error && profilesData) {
+    profilesData.forEach((p: { user_id: string; full_name: string | null; avatar_url: string | null }) => {
       suggestions.push({
         kind: "user",
         id: p.user_id,
         name: p.full_name || p.user_id,
-        avatar: p.avatar_url,
+        avatar: p.avatar_url ?? undefined,
       });
     });
   }
