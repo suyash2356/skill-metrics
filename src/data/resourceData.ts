@@ -1,1689 +1,1918 @@
 import { Recommendation } from "@/api/searchAPI";
 
+/**
+ * Curated high-quality learning resources
+ * Each resource is marked as Free, Paid, or Free (with paid certificate)
+ * Priority given to comprehensive, well-maintained, and highly-rated resources
+ */
 export const resourceData: Record<string, Recommendation[]> = {
-    "machine learning": [
-        {
-            "type": "youtube",
-            "title": "Andrew Ng",
-            "description": "Founder of deeplearning.ai, sharing high-quality tutorials and insights on machine learning and deep learning. (Free)",
-            "url": "https://www.youtube.com/c/AndrewNg"
-        },
-        {
-            "type": "youtube",
-            "title": "Sentdex",
-            "description": "Practical programming tutorials including deep learning and machine learning projects using Python. (Free)",
-            "url": "https://www.youtube.com/user/sentdex"
-        },
-        {
-            "type": "youtube",
-            "title": "Deep Lizard",
-            "description": "Clear explanations about deep learning concepts, neural networks, and TensorFlow tutorials. (Free)",
-            "url": "https://www.youtube.com/c/DeepLizard"
-        },
-        {
-            "type": "youtube",
-            "title": "lex Fridman",
-            "description": "Interviews and talks with AI researchers and experts covering a variety of deep learning topics. (Free)",
-            "url": "https://www.youtube.com/c/lexfridman"
-        },
-        {
-            "type": "youtube",
-            "title": "The AI Hacker",
-            "description": "Focused tutorials on machine learning, deep learning, and how to implement them in projects. (Free)",
-            "url": "https://www.youtube.com/c/TheAIHacker"
-        },
-        {
-            "type": "book",
-            "title": "Deep Learning",
-            "author": "Ian Goodfellow, Yoshua Bengio, Aaron Courville",
-            "description": "Authoritative book covering core concepts and theories in deep learning. (Paid)",
-            "url": "https://www.deeplearningbook.org/"
-        },
-        {
-            "type": "book",
-            "title": "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow",
-            "author": "Aurélien Géron",
-            "description": "Practical guide to machine learning and deep learning using Python libraries. (Paid)",
-            "url": "https://www.oreilly.com/library/view/hands-on-machine-learning/9781492032632/"
-        },
-        {
-            "type": "book",
-            "title": "Pattern Recognition and Machine Learning",
-            "author": "Christopher M. Bishop",
-            "description": "Classic machine learning textbook focused on statistical techniques. (Paid)",
-            "url": "https://www.springer.com/gp/book/9780387310732"
-        },
-        {
-            "type": "book",
-            "title": "Neural Networks and Deep Learning",
-            "author": "Michael Nielsen",
-            "description": "An online book to understand neural networks and deep learning in an intuitive way. (Free)",
-            "url": "http://neuralnetworksanddeeplearning.com/"
-        },
-        {
-            "type": "book",
-            "title": "Machine Learning Yearning",
-            "author": "Andrew Ng",
-            "description": "Strategic guide to designing ML projects by Andrew Ng. (Free)",
-            "url": "https://www.deeplearning.ai/machine-learning-yearning/"
-        },
-        {
-            "type": "course",
-            "title": "Machine Learning",
-            "provider": "Coursera, Andrew Ng",
-            "description": "Comprehensive introduction to machine learning concepts and techniques. Free to audit, paid certificate available.",
-            "url": "https://www.coursera.org/learn/machine-learning"
-        },
-        {
-            "type": "course",
-            "title": "Deep Learning Specialization",
-            "provider": "deeplearning.ai, Coursera",
-            "description": "In-depth specialization on deep learning, including neural networks and sequence models. (Paid)",
-            "url": "https://www.coursera.org/specializations/deep-learning"
-        },
-        {
-            "type": "course",
-            "title": "Fast.ai Practical Deep Learning for Coders",
-            "provider": "Fast.ai",
-            "description": "Hands-on deep learning course emphasizing practical implementation using PyTorch. (Free)",
-            "url": "https://course.fast.ai/"
-        },
-        {
-            "type": "course",
-            "title": "CS231n: Convolutional Neural Networks for Visual Recognition",
-            "provider": "Stanford University",
-            "description": "Deep learning course focused on computer vision applications. (Free)",
-            "url": "http://cs231n.stanford.edu/"
-        },
-        {
-            "type": "course",
-            "title": "MIT Deep Learning for Self-Driving Cars",
-            "provider": "MIT OpenCourseWare",
-            "description": "Applied deep learning course featuring autonomous driving systems. (Free)",
-            "url": "https://selfdrivingcars.mit.edu/"
-        },
-        {
-            "type": "website",
-            "title": "TensorFlow Official Docs",
-            "description": "Comprehensive tutorials and guides on TensorFlow framework for ML and DL. (Free)",
-            "url": "https://www.tensorflow.org/"
-        },
-        {
-            "type": "website",
-            "title": "PyTorch Official Docs",
-            "description": "Official documentation and tutorials for PyTorch deep learning framework. (Free)",
-            "url": "https://pytorch.org/"
-        },
-        {
-            "type": "website",
-            "title": "Papers with Code",
-            "description": "Latest research papers on ML/DL with code implementations. (Free)",
-            "url": "https://paperswithcode.com/"
-        },
-        {
-            "type": "website",
-            "title": "DeepLearning.ai",
-            "description": "Platform by Andrew Ng offering courses and resources in deep learning and AI. (Paid with some free content)",
-            "url": "https://www.deeplearning.ai"
-        },
-        {
-            "type": "website",
-            "title": "Machine Learning Mastery",
-            "description": "Blog with practical guides, tutorials, and books for ML and DL practice. (Paid and Free content)",
-            "url": "https://machinelearningmastery.com/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/MachineLearning",
-            "description": "Popular community discussing wide-ranging machine learning research and applications. (Free)",
-            "url": "https://www.reddit.com/r/MachineLearning/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/deeplearning",
-            "description": "Focused subreddit on deep learning research, news, and tutorials. (Free)",
-            "url": "https://www.reddit.com/r/deeplearning/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/LearnMachineLearning",
-            "description": "Community of learners sharing resources and advice for mastering machine learning. (Free)",
-            "url": "https://www.reddit.com/r/learnmachinelearning/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/DataScience",
-            "description": "Data science community with significant ML and DL discussions. (Free)",
-            "url": "https://www.reddit.com/r/datascience/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/ArtificialInteligence",
-            "description": "General AI and ML discussions including deep learning topics. (Free)",
-            "url": "https://www.reddit.com/r/ArtificialInteligence/"
-        },
-        {
-            "type": "discord",
-            "title": "AI & ML Discord Community",
-            "description": "Engaged community for machine learning and deep learning help and collaboration. (Free)",
-            "url": "https://discord.gg/ai"
-        },
-        {
-            "type": "discord",
-            "title": "Deep Learning",
-            "description": "Dedicated deep learning discussion and support Discord server. (Free)",
-            "url": "https://discord.gg/deeplearning"
-        },
-        {
-            "type": "discord",
-            "title": "Machine Learning & Data Science",
-            "description": "Active Discord server focusing on ML, DL, data science projects, and career advice. (Free)",
-            "url": "https://discord.gg/machinelearning"
-        },
-        {
-            "type": "discord",
-            "title": "TensorFlow",
-            "description": "Official TensorFlow Discord server with useful ML and DL discussions. (Free)",
-            "url": "https://discord.gg/tensorflow"
-        },
-        {
-            "type": "discord",
-            "title": "PyTorch",
-            "description": "Official PyTorch Discord community focusing on deep learning support and projects. (Free)",
-            "url": "https://discord.gg/pytorch"
-        }
-    ],
-    "data science": [
-        {
-            "type": "youtube",
-            "title": "Ken Jee",
-            "description": "Covers data science projects, career advice, and tutorials for all skill levels. (Free)",
-            "url": "https://www.youtube.com/c/KenJee1"
-        },
-        {
-            "type": "youtube",
-            "title": "Data School",
-            "description": "Clear, beginner-friendly tutorials on data science concepts and Python tools. (Free)",
-            "url": "https://www.youtube.com/c/DataSchool"
-        },
-        {
-            "type": "youtube",
-            "title": "Chanin Nantasenamat (Data Professor)",
-            "description": "Data science tutorials focused on R, Python, machine learning, and bioinformatics. (Free)",
-            "url": "https://www.youtube.com/c/DataProfessor"
-        },
-        {
-            "type": "youtube",
-            "title": "Alex The Analyst",
-            "description": "Insights into data science career skills, SQL, Tableau, and analytics. (Free)",
-            "url": "https://www.youtube.com/@AlexTheAnalyst"
-        },
-        {
-            "type": "youtube",
-            "title": "StatQuest with Josh Starmer",
-            "description": "Excellent statistical concepts breakdowns for data science and ML. (Free)",
-            "url": "https://www.youtube.com/user/joshstarmer"
-        },
-        {
-            "type": "book",
-            "title": "Data Science from Scratch",
-            "author": "Joel Grus",
-            "description": "Practical guide covering data science fundamentals using Python. (Paid)",
-            "url": "https://www.oreilly.com/library/view/data-science-from/9781491901427/"
-        },
-        {
-            "type": "book",
-            "title": "Python for Data Analysis",
-            "author": "Wes McKinney",
-            "description": "Comprehensive book on data analysis with pandas and Python. (Paid)",
-            "url": "https://www.oreilly.com/library/view/python-for-data/9781491957653/"
-        },
-        {
-            "type": "book",
-            "title": "Practical Statistics for Data Scientists",
-            "author": "Peter Bruce and Andrew Bruce",
-            "description": "Essential statistical concepts for data science practice. (Paid)",
-            "url": "https://www.oreilly.com/library/view/practical-statistics-for/9781491952962/"
-        },
-        {
-            "type": "book",
-            "title": "The Data Science Handbook",
-            "author": "Carl Shan, et al.",
-            "description": "Interviews and insights from top data scientists. (Free)",
-            "url": "https://www.thedatasciencehandbook.com/"
-        },
-        {
-            "type": "book",
-            "title": "Storytelling with Data",
-            "author": "Cole Nussbaumer Knaflic",
-            "description": "Guide on effective data visualization and storytelling. (Paid)",
-            "url": "https://www.storytellingwithdata.com/book"
-        },
-        {
-            "type": "course",
-            "title": "IBM Data Science Professional Certificate",
-            "provider": "Coursera",
-            "description": "Comprehensive introduction to data science concepts and tools. Paid with free audit option.",
-            "url": "https://www.coursera.org/professional-certificates/ibm-data-science"
-        },
-        {
-            "type": "course",
-            "title": "Data Science MicroMasters",
-            "provider": "edX, UC San Diego",
-            "description": "Graduate-level courses covering broad data science topics. (Paid)",
-            "url": "https://www.edx.org/micromasters/uc-san-diegox-data-science"
-        },
-        {
-            "type": "course",
-            "title": "Introduction to Data Science",
-            "provider": "Microsoft via edX",
-            "description": "Fundamentals of data science including R, Python, and visualization. (Free with paid certificate)",
-            "url": "https://www.edx.org/course/introduction-to-data-science"
-        },
-        {
-            "type": "course",
-            "title": "Data Science and Machine Learning Bootcamp",
-            "provider": "Udemy",
-            "description": "Comprehensive course covering data science, ML, and Python tools. (Paid)",
-            "url": "https://www.udemy.com/course/data-science-and-machine-learning-bootcamp-with-r/"
-        },
-        {
-            "type": "course",
-            "title": "Google Data Analytics Professional Certificate",
-            "provider": "Coursera",
-            "description": "Robust course on data analytics skills and tools. Paid with free audit option.",
-            "url": "https://www.coursera.org/professional-certificates/google-data-analytics"
-        },
-        {
-            "type": "website",
-            "title": "Kaggle",
-            "description": "Data sets, competitions, and free tutorials for data science projects. (Free)",
-            "url": "https://www.kaggle.com/"
-        },
-        {
-            "type": "website",
-            "title": "KDnuggets",
-            "description": "Data science news, tutorials, and resources. (Free)",
-            "url": "https://www.kdnuggets.com/"
-        },
-        {
-            "type": "website",
-            "title": "DataCamp",
-            "description": "Interactive data science and analytics training platform. (Free trial, paid subscriptions)",
-            "url": "https://www.datacamp.com/"
-        },
-        {
-            "type": "website",
-            "title": "FlowingData",
-            "description": "Data visualization tutorials and examples. (Free)",
-            "url": "https://flowingdata.com/"
-        },
-        {
-            "type": "website",
-            "title": "FiveThirtyEight",
-            "description": "Data-driven journalism with public datasets and explanatory stories. (Free)",
-            "url": "https://fivethirtyeight.com/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/datascience",
-            "description": "Active community for data science questions, resources, and discussions. (Free)",
-            "url": "https://www.reddit.com/r/datascience/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/dataisbeautiful",
-            "description": "Celebrates excellent data visualizations and storytelling. (Free)",
-            "url": "https://www.reddit.com/r/dataisbeautiful/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/learnDataScience",
-            "description": "Community for beginners to learn data science concepts and careers. (Free)",
-            "url": "https://www.reddit.com/r/learnDataScience/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/bigdata",
-            "description": "Discussions on big data technologies, tools, and projects. (Free)",
-            "url": "https://www.reddit.com/r/bigdata/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/SQL",
-            "description": "Community dedicated to SQL for data manipulation and analysis. (Free)",
-            "url": "https://www.reddit.com/r/SQL/"
-        },
-        {
-            "type": "discord",
-            "title": "Data Science Discord",
-            "description": "Discord community for data science discussions, projects, and help. (Free)",
-            "url": "https://discord.gg/datascience"
-        },
-        {
-            "type": "discord",
-            "title": "DataTalks.Club",
-            "description": "Active community for data scientists, learners, and job seekers. (Free)",
-            "url": "https://discord.gg/datatalks"
-        },
-        {
-            "type": "discord",
-            "title": "Analytics Vidhya",
-            "description": "Community with discussions, webinars, and tutorials for data practitioners. (Free)",
-            "url": "https://discord.com/invite/analyticsvidhya"
-        },
-        {
-            "type": "discord",
-            "title": "r/DataScience Official Server",
-            "description": "Official Discord server for the r/datascience Reddit community. (Free)",
-            "url": "https://discord.gg/datascienceofficial"
-        },
-        {
-            "type": "discord",
-            "title": "Tableau Community",
-            "description": "Focused on data visualization and analytics using Tableau software. (Free)",
-            "url": "https://discord.gg/tableau"
-        }
-    ],
-    "data analyst": [
-        {
-            "type": "youtube",
-            "title": "Alex The Analyst",
-            "description": "Data analyst career guidance, SQL, Excel, and visualization tutorials. (Free)",
-            "url": "https://www.youtube.com/@AlexTheAnalyst"
-        },
-        {
-            "type": "youtube",
-            "title": "Chanelle Marie",
-            "description": "Data analytics tutorials and career advice geared towards new analysts. (Free)",
-            "url": "https://www.youtube.com/c/ChanelleMarie"
-        },
-        {
-            "type": "youtube",
-            "title": "Career Karma",
-            "description": "Data analytics and data science tutorials, bootcamp reviews, and advice. (Free)",
-            "url": "https://www.youtube.com/c/CareerKarma"
-        },
-        {
-            "type": "youtube",
-            "title": "365 Data Science",
-            "description": "Data analyst skills, Excel, Power BI, and Tableau tutorials. (Free and Paid)",
-            "url": "https://www.youtube.com/c/365DataScience"
-        },
-        {
-            "type": "youtube",
-            "title": "Kevin Stratvert",
-            "description": "Excel and Power BI tutorials for aspiring data analysts. (Free)",
-            "url": "https://www.youtube.com/user/kevstrat"
-        },
-        {
-            "type": "book",
-            "title": "Data Analytics Made Accessible",
-            "author": "Anil Maheshwari",
-            "description": "Comprehensive guide to data analytics concepts and tools. (Paid)",
-            "url": "https://www.amazon.com/Data-Analytics-Made-Accessible-3rd/dp/1537526255"
-        },
-        {
-            "type": "book",
-            "title": "Storytelling with Data",
-            "author": "Cole Nussbaumer Knaflic",
-            "description": "How to effectively visualize and communicate data insights. (Paid)",
-            "url": "https://www.storytellingwithdata.com/book"
-        },
-        {
-            "type": "book",
-            "title": "Data Analytics for Beginners",
-            "author": "Victor Finch",
-            "description": "Starting guide for data analysis concepts and basic tools. (Paid)",
-            "url": "https://www.amazon.com/Data-Analytics-Beginners-practical-introduction/dp/B08LZQRL45"
-        },
-        {
-            "type": "book",
-            "title": "SQL for Data Analytics",
-            "author": "Upom Malik",
-            "description": "Complete guide to using SQL for querying and analyzing data. (Paid)",
-            "url": "https://www.amazon.com/SQL-Data-Analytics-Upom-Malik/dp/1484257292"
-        },
-        {
-            "type": "book",
-            "title": "Microsoft Excel Data Analysis and Business Modeling",
-            "author": "Wayne Winston",
-            "description": "Master Excel techniques for business analytics and data interpretation. (Paid)",
-            "url": "https://www.amazon.com/Microsoft-Excel-Analysis-Business-Modeling/dp/1509305887"
-        },
-        {
-            "type": "course",
-            "title": "Google Data Analytics Professional Certificate",
-            "provider": "Coursera",
-            "description": "Foundations of data analysis, visualization, and tools like SQL and R. Free to audit, paid certificate.",
-            "url": "https://www.coursera.org/professional-certificates/google-data-analytics"
-        },
-        {
-            "type": "course",
-            "title": "Excel to MySQL: Analytic Techniques for Business Specialization",
-            "provider": "Coursera, Duke University",
-            "description": "Covers Excel, SQL, and data visualization for analytics projects. Paid with free audit.",
-            "url": "https://www.coursera.org/specializations/excel-mysql"
-        },
-        {
-            "type": "course",
-            "title": "Data Analysis with Python",
-            "provider": "freeCodeCamp",
-            "description": "Hands-on course teaching data analysis using Python libraries. (Free)",
-            "url": "https://www.freecodecamp.org/learn/data-analysis-with-python/"
-        },
-        {
-            "type": "course",
-            "title": "Complete Data Analyst Bootcamp",
-            "provider": "Udemy",
-            "description": "Comprehensive bootcamp covering Excel, SQL, Tableau, and Power BI. (Paid)",
-            "url": "https://www.udemy.com/course/the-data-analyst-course/"
-        },
-        {
-            "type": "course",
-            "title": "Introduction to Data Analytics",
-            "provider": "edX, Microsoft",
-            "description": "Beginner friendly course on data analytics principles and techniques. (Free with paid certificate)",
-            "url": "https://www.edx.org/course/introduction-to-data-analytics"
-        },
-        {
-            "type": "website",
-            "title": "Mode Analytics SQL Tutorial",
-            "description": "Free interactive tutorials to learn SQL for data analysis. (Free)",
-            "url": "https://mode.com/sql-tutorial/"
-        },
-        {
-            "type": "website",
-            "title": "Tableau Public",
-            "description": "Free resource for learning and sharing data visualizations. (Free)",
-            "url": "https://public.tableau.com/en-us/s/resources"
-        },
-        {
-            "type": "website",
-            "title": "DataCamp",
-            "description": "Interactive courses covering data analytics tools and techniques. Free trial available, paid subscription.",
-            "url": "https://www.datacamp.com/"
-        },
-        {
-            "type": "website",
-            "title": "SQLBolt",
-            "description": "Interactive SQL lessons and exercises for data analysts. (Free)",
-            "url": "https://sqlbolt.com/"
-        },
-        {
-            "type": "website",
-            "title": "Analytics Vidhya",
-            "description": "Blog and training focused on data analysis, SQL, and visualization skills. (Free and Paid content)",
-            "url": "https://www.analyticsvidhya.com/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/dataanalysis",
-            "description": "Community for data analyst questions, tutorials, and career support. (Free)",
-            "url": "https://www.reddit.com/r/dataanalysis/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/excel",
-            "description": "Community focused on Excel tips, tricks, and problems solving. (Free)",
-            "url": "https://www.reddit.com/r/excel/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/PowerBI",
-            "description": "Community for Microsoft Power BI users to share knowledge and troubleshooting tips. (Free)",
-            "url": "https://www.reddit.com/r/PowerBI/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/Tableau",
-            "description": "Tableau software community sharing dashboards, tutorials, and help. (Free)",
-            "url": "https://www.reddit.com/r/Tableau/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/SQL",
-            "description": "Subreddit dedicated to SQL questions and learning. (Free)",
-            "url": "https://www.reddit.com/r/SQL/"
-        },
-        {
-            "type": "discord",
-            "title": "Data Analyst Hub",
-            "description": "Community for data analyst skill development, jobs, and project collaboration. (Free)",
-            "url": "https://discord.gg/dataanalyst"
-        },
-        {
-            "type": "discord",
-            "title": "Analytics Vidhya Discord",
-            "description": "Discord server with channels focused on data analytics and visualization. (Free)",
-            "url": "https://discord.com/invite/analyticsvidhya"
-        },
-        {
-            "type": "discord",
-            "title": "Data Visualization Society",
-            "description": "Focused on data viz tools, best practices, and careers. (Free)",
-            "url": "https://discord.gg/data-viz"
-        },
-        {
-            "type": "discord",
-            "title": "Power BI Community",
-            "description": "Power BI users supporting each other with tips and help. (Free)",
-            "url": "https://discord.gg/powerbi"
-        },
-        {
-            "type": "discord",
-            "title": "Tableau Community",
-            "description": "Learning and sharing Tableau insights and dashboards. (Free)",
-            "url": "https://discord.gg/tableau"
-        }
-    ],
-    "cyber security": [
-        {
-            "type": "youtube",
-            "title": "NetworkChuck",
-            "description": "Engaging tutorials covering cybersecurity concepts, certifications, and hands-on labs. (Free)",
-            "url": "https://www.youtube.com/c/NetworkChuck"
-        },
-        {
-            "type": "youtube",
-            "title": "The Cyber Mentor",
-            "description": "In-depth ethical hacking and penetration testing tutorials. (Free and Paid content)",
-            "url": "https://www.youtube.com/c/TheCyberMentor"
-        },
-        {
-            "type": "youtube",
-            "title": "HackerSploit",
-            "description": "Comprehensive cybersecurity, ethical hacking, and Linux tutorials. (Free)",
-            "url": "https://www.youtube.com/c/HackerSploit"
-        },
-        {
-            "type": "youtube",
-            "title": "John Hammond",
-            "description": "Detailed walkthroughs of CTF challenges and cybersecurity concepts. (Free)",
-            "url": "https://www.youtube.com/c/JohnHammond010"
-        },
-        {
-            "type": "youtube",
-            "title": "LiveOverflow",
-            "description": "Explains hacking techniques and security vulnerabilities in an accessible way. (Free)",
-            "url": "https://www.youtube.com/c/LiveOverflow"
-        },
-        {
-            "type": "book",
-            "title": "The Web Application Hacker's Handbook",
-            "author": "Dafydd Stuttard and Marcus Pinto",
-            "description": "Detailed guide to web application security and penetration testing. (Paid)",
-            "url": "https://www.amazon.com/Web-Application-Hackers-Handbook-Exploiting/dp/1118026470"
-        },
-        {
-            "type": "book",
-            "title": "Metasploit: The Penetration Tester's Guide",
-            "author": "David Kennedy et al.",
-            "description": "Comprehensive guide to using Metasploit for penetration testing. (Paid)",
-            "url": "https://www.amazon.com/Metasploit-Penetration-Testers-David-Kennedy/dp/159327288X"
-        },
-        {
-            "type": "book",
-            "title": "Hacking: The Art of Exploitation",
-            "author": "Jon Erickson",
-            "description": "Fundamental guide to hacking techniques and computer security. (Paid)",
-            "url": "https://www.nostarch.com/hacking2.htm"
-        },
-        {
-            "type": "book",
-            "title": "Cybersecurity and Cyberwar: What Everyone Needs to Know",
-            "author": "P.W. Singer and Allan Friedman",
-            "description": "Accessible overview of cybersecurity landscape and challenges. (Paid)",
-            "url": "https://www.amazon.com/Cybersecurity-Cyberwar-Everyone-Needs-Know/dp/0199918090"
-        },
-        {
-            "type": "book",
-            "title": "Blue Team Handbook",
-            "author": "Don Murdoch",
-            "description": "Defensive cybersecurity guide for blue team professionals. (Paid)",
-            "url": "https://www.amazon.com/Blue-Team-Handbook---Field/dp/1515201295"
-        },
-        {
-            "type": "course",
-            "title": "Introduction to Cyber Security Specialization",
-            "provider": "Coursera, NYU",
-            "description": "Covers basic cybersecurity principles, attacks, and defense strategies. Free to audit, paid certificate available.",
-            "url": "https://www.coursera.org/specializations/intro-cyber-security"
-        },
-        {
-            "type": "course",
-            "title": "Cybersecurity Fundamentals",
-            "provider": "edX, Rochester Institute of Technology",
-            "description": "Fundamentals of cybersecurity and risk management. Free with paid certificate.",
-            "url": "https://www.edx.org/course/cybersecurity-fundamentals"
-        },
-        {
-            "type": "course",
-            "title": "Certified Ethical Hacker (CEH) v12",
-            "provider": "EC-Council (Official)",
-            "description": "Detailed CEH certification preparation course. (Paid)",
-            "url": "https://www.eccouncil.org/programs/certified-ethical-hacker-ceh/"
-        },
-        {
-            "type": "course",
-            "title": "Cybersecurity Bootcamp",
-            "provider": "Udemy",
-            "description": "Hands-on cybersecurity and ethical hacking course. (Paid)",
-            "url": "https://www.udemy.com/course/learn-cyber-security/"
-        },
-        {
-            "type": "course",
-            "title": "Practical Network Penetration Tester",
-            "provider": "Pentester Academy",
-            "description": "Lab-based penetration testing training. (Paid)",
-            "url": "https://www.pentesteracademy.com/course?id=7"
-        },
-        {
-            "type": "website",
-            "title": "OWASP",
-            "description": "Open Web Application Security Project – guides and tools for web security. (Free)",
-            "url": "https://owasp.org/"
-        },
-        {
-            "type": "website",
-            "title": "Hack The Box",
-            "description": "Platform for hands-on penetration testing labs and challenges. (Free and paid tiers)",
-            "url": "https://www.hackthebox.eu/"
-        },
-        {
-            "type": "website",
-            "title": "Cybrary",
-            "description": "Cybersecurity training courses and career resources. (Free and paid content)",
-            "url": "https://www.cybrary.it/"
-        },
-        {
-            "type": "website",
-            "title": "SecurityTube",
-            "description": "Free cybersecurity video tutorials and lectures. (Free)",
-            "url": "http://www.securitytube.net/"
-        },
-        {
-            "type": "website",
-            "title": "Sans Institute",
-            "description": "Industry-leading cybersecurity training and certifications. (Paid)",
-            "url": "https://www.sans.org/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/cybersecurity",
-            "description": "Discussions and news about cybersecurity. (Free)",
-            "url": "https://www.reddit.com/r/cybersecurity/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/netsec",
-            "description": "Network security focused community with news, articles, and help. (Free)",
-            "url": "https://www.reddit.com/r/netsec/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/ethicalhacking",
-            "description": "Ethical hacking tutorials, challenges, and discussions. (Free)",
-            "url": "https://www.reddit.com/r/ethicalhacking/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/AskNetsec",
-            "description": "Community for asking network security questions. (Free)",
-            "url": "https://www.reddit.com/r/AskNetsec/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/ReverseEngineering",
-            "description": "Discussions on reverse engineering malware and software. (Free)",
-            "url": "https://www.reddit.com/r/ReverseEngineering/"
-        },
-        {
-            "type": "discord",
-            "title": "The Many Hats Club",
-            "description": "Cybersecurity community focused on learning and sharing. (Free)",
-            "url": "https://discord.gg/themanyhatsclub"
-        },
-        {
-            "type": "discord",
-            "title": "HackerOne Community",
-            "description": "Bug bounty and security researcher community. (Free)",
-            "url": "https://discord.gg/hackerone"
-        },
-        {
-            "type": "discord",
-            "title": "InfoSec Prep",
-            "description": "Community for cybersecurity certification preparation and study groups. (Free)",
-            "url": "https://discord.gg/infosecprep"
-        },
-        {
-            "type": "discord",
-            "title": "Red Team Village",
-            "description": "Focused on red team tactics, tools, and training. (Free)",
-            "url": "https://discord.gg/redteamvillage"
-        },
-        {
-            "type": "discord",
-            "title": "MalwareTech Community",
-            "description": "Community around malware research and cybersecurity. (Free)",
-            "url": "https://discord.gg/malwaretech"
-        }
-    ],
-    "cloud computing": [
-        {
-            "type": "youtube",
-            "title": "AWS",
-            "description": "Official Amazon Web Services channel with tutorials and announcements. (Free)",
-            "url": "https://www.youtube.com/user/AmazonWebServices"
-        },
-        {
-            "type": "youtube",
-            "title": "Google Cloud Platform",
-            "description": "Official Google Cloud tutorials and product announcements. (Free)",
-            "url": "https://www.youtube.com/user/googlecloudplatform"
-        },
-        {
-            "type": "youtube",
-            "title": "Azure",
-            "description": "Microsoft Azure channel with cloud solutions and how-tos. (Free)",
-            "url": "https://www.youtube.com/user/windowsazure"
-        },
-        {
-            "type": "youtube",
-            "title": "TechWorld with Nana",
-            "description": "Cloud computing, Kubernetes, DevOps, and infrastructure tutorials. (Free)",
-            "url": "https://www.youtube.com/c/TechWorldwithNana"
-        },
-        {
-            "type": "youtube",
-            "title": "Cloud Academy",
-            "description": "Cloud certifications and tutorials for AWS, Azure, GCP. (Free and Paid content)",
-            "url": "https://www.youtube.com/c/CloudAcademyInc"
-        },
-        {
-            "type": "book",
-            "title": "AWS Certified Solutions Architect Official Study Guide",
-            "author": "Ben Piper and David Clinton",
-            "description": "Comprehensive study guide for AWS Solutions Architect exam. (Paid)",
-            "url": "https://www.amazon.com/AWS-Certified-Solutions-Architect-Official/dp/111950421X"
-        },
-        {
-            "type": "book",
-            "title": "Cloud Computing: Concepts, Technology & Architecture",
-            "author": "Thomas Erl",
-            "description": "Detailed exploration of cloud computing architectures and services. (Paid)",
-            "url": "https://www.amazon.com/Cloud-Computing-Concepts-Technology-Architecture/dp/0133387526"
-        },
-        {
-            "type": "book",
-            "title": "Microsoft Azure Fundamentals",
-            "author": "Jim Cheshire",
-            "description": "Guide to Azure cloud concepts and services for certification prep. (Paid)",
-            "url": "https://www.amazon.com/Microsoft-Azure-Fundamentals-Jim-Cheshire/dp/0136872974"
-        },
-        {
-            "type": "book",
-            "title": "Google Cloud Platform for Architects",
-            "author": "Vitthal Srinivasan and Janani Ravi",
-            "description": "Cloud architecture design and best practices on GCP. (Paid)",
-            "url": "https://www.amazon.com/Google-Cloud-Platform-Architects-Srinivasan/dp/1484258001"
-        },
-        {
-            "type": "book",
-            "title": "Kubernetes Up & Running",
-            "author": "Brendan Burns, Joe Beda, Kelsey Hightower",
-            "description": "Practical guide to container orchestration with Kubernetes. (Paid)",
-            "url": "https://www.oreilly.com/library/view/kubernetes-up-and/9781491935675/"
-        },
-        {
-            "type": "course",
-            "title": "AWS Certified Solutions Architect - Associate",
-            "provider": "Udemy",
-            "description": "Complete preparation course for AWS Solutions Architect exam. (Paid)",
-            "url": "https://www.udemy.com/course/aws-certified-solutions-architect-associate/"
-        },
-        {
-            "type": "course",
-            "title": "Google Cloud Platform Fundamentals: Core Infrastructure",
-            "provider": "Coursera, Google Cloud",
-            "description": "Introduction to GCP products and services. Free to audit, paid certificate.",
-            "url": "https://www.coursera.org/learn/gcp-fundamentals"
-        },
-        {
-            "type": "course",
-            "title": "Microsoft Azure Fundamentals AZ-900",
-            "provider": "Udemy",
-            "description": "Preparation for Microsoft Azure fundamentals certification exam. (Paid)",
-            "url": "https://www.udemy.com/course/az900-azure/"
-        },
-        {
-            "type": "course",
-            "title": "Introduction to Cloud Computing",
-            "provider": "edX, IBM",
-            "description": "Basic cloud computing concepts and architecture. Free with paid certificate.",
-            "url": "https://www.edx.org/course/introduction-to-cloud-computing"
-        },
-        {
-            "type": "course",
-            "title": "Cloud Computing Specialization",
-            "provider": "Coursera, University of Illinois",
-            "description": "Comprehensive specialization covering cloud fundamentals and services. Paid with audit option.",
-            "url": "https://www.coursera.org/specializations/cloud-computing"
-        },
-        {
-            "type": "website",
-            "title": "AWS Documentation",
-            "description": "Official documentation and tutorials for all AWS services. (Free)",
-            "url": "https://docs.aws.amazon.com/"
-        },
-        {
-            "type": "website",
-            "title": "Microsoft Azure Docs",
-            "description": "Microsoft’s official Azure documentation and learning center. (Free)",
-            "url": "https://docs.microsoft.com/en-us/azure/"
-        },
-        {
-            "type": "website",
-            "title": "Google Cloud Platform Documentation",
-            "description": "Detailed GCP docs, sample code, and tutorials. (Free)",
-            "url": "https://cloud.google.com/docs"
-        },
-        {
-            "type": "website",
-            "title": "Kubernetes Documentation",
-            "description": "Official Kubernetes docs and tutorials for container orchestration. (Free)",
-            "url": "https://kubernetes.io/docs/"
-        },
-        {
-            "type": "website",
-            "title": "Cloud Academy",
-            "description": "Cloud training platform offering courses, labs, and practice exams. (Free and Paid)",
-            "url": "https://cloudacademy.com/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/aws",
-            "description": "Community sharing AWS questions, tips, and announcements. (Free)",
-            "url": "https://www.reddit.com/r/aws/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/Azure",
-            "description": "Microsoft Azure discussion and help community. (Free)",
-            "url": "https://www.reddit.com/r/AZURE/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/googlecloud",
-            "description": "Google Cloud Platform related news and support community. (Free)",
-            "url": "https://www.reddit.com/r/googlecloud/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/kubernetes",
-            "description": "Discussions, news, and help related to Kubernetes technology. (Free)",
-            "url": "https://www.reddit.com/r/kubernetes/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/devops",
-            "description": "Community for DevOps best practices using cloud and automation. (Free)",
-            "url": "https://www.reddit.com/r/devops/"
-        },
-        {
-            "type": "discord",
-            "title": "Cloud Community",
-            "description": "Active cloud computing Discord with AWS, Azure, GCP channels. (Free)",
-            "url": "https://discord.gg/cloud"
-        },
-        {
-            "type": "discord",
-            "title": "AWS Discord",
-            "description": "Official and community-supported AWS discussion and help server. (Free)",
-            "url": "https://discord.gg/aws"
-        },
-        {
-            "type": "discord",
-            "title": "Google Cloud Discord",
-            "description": "Community for GCP users to share tips and projects. (Free)",
-            "url": "https://discord.gg/googlecloud"
-        },
-        {
-            "type": "discord",
-            "title": "Microsoft Azure Discord",
-            "description": "Azure support and learning community. (Free)",
-            "url": "https://discord.gg/microsoftazure"
-        },
-        {
-            "type": "discord",
-            "title": "Kubernetes Community",
-            "description": "Official Kubernetes chat server for users and developers. (Free)",
-            "url": "https://discord.gg/kubernetes"
-        }
-    ],
-    "full stack development": [
-        {
-            "type": "youtube",
-            "title": "Traversy Media",
-            "description": "Comprehensive tutorials covering front-end, back-end, and full stack development. (Free)",
-            "url": "https://www.youtube.com/c/TraversyMedia"
-        },
-        {
-            "type": "youtube",
-            "title": "The Net Ninja",
-            "description": "Wide-ranging programming tutorials including React, Node.js, and full-stack projects. (Free)",
-            "url": "https://www.youtube.com/c/TheNetNinja"
-        },
-        {
-            "type": "youtube",
-            "title": "Academind",
-            "description": "Modern web development and full-stack tutorials with practical examples. (Free)",
-            "url": "https://www.youtube.com/c/Academind"
-        },
-        {
-            "type": "youtube",
-            "title": "Programming with Mosh",
-            "description": "Beginner to advanced tutorials on full stack technologies and software development principles. (Free and Paid content)",
-            "url": "https://www.youtube.com/c/programmingwithmosh"
-        },
-        {
-            "type": "youtube",
-            "title": "freeCodeCamp.org",
-            "description": "Full-length courses covering full stack development and many programming languages. (Free)",
-            "url": "https://www.youtube.com/c/Freecodecamp"
-        },
-        {
-            "type": "book",
-            "title": "Eloquent JavaScript",
-            "author": "Marijn Haverbeke",
-            "description": "Modern JavaScript programming deep dive, essential for front-end and full stack dev. (Free and Paid)",
-            "url": "https://eloquentjavascript.net/"
-        },
-        {
-            "type": "book",
-            "title": "You Don't Know JS (book series)",
-            "author": "Kyle Simpson",
-            "description": "In-depth series exploring JavaScript’s core mechanisms to build strong foundational knowledge. (Free and Paid)",
-            "url": "https://github.com/getify/You-Dont-Know-JS"
-        },
-        {
-            "type": "book",
-            "title": "Fullstack React",
-            "author": "Accomazzo, Murray, and Hernandez",
-            "description": "Guide to building full stack web apps with React and related technologies. (Paid)",
-            "url": "https://www.fullstackreact.com/"
-        },
-        {
-            "type": "book",
-            "title": "The Pragmatic Programmer",
-            "author": "Andrew Hunt and David Thomas",
-            "description": "Classic book on effective software and full stack development practices. (Paid)",
-            "url": "https://www.amazon.com/Pragmatic-Programmer-journey-mastery-Anniversary/dp/0135957052"
-        },
-        {
-            "type": "book",
-            "title": "Clean Code",
-            "author": "Robert C. Martin",
-            "description": "Best practices and principles for writing maintainable and efficient code. (Paid)",
-            "url": "https://www.oreilly.com/library/view/clean-code-a/9780136083238/"
-        },
-        {
-            "type": "course",
-            "title": "The Web Developer Bootcamp 2025",
-            "provider": "Udemy",
-            "description": "Complete front-end and back-end web development course. (Paid)",
-            "url": "https://www.udemy.com/course/the-web-developer-bootcamp/"
-        },
-        {
-            "type": "course",
-            "title": "Full Stack Open",
-            "provider": "University of Helsinki",
-            "description": "Free course covering modern full stack JavaScript development with React and Node.js. (Free)",
-            "url": "https://fullstackopen.com/en/"
-        },
-        {
-            "type": "course",
-            "title": "CS50’s Web Programming with Python and JavaScript",
-            "provider": "Harvard University, edX",
-            "description": "In-depth course on web app development with Python, JavaScript, and SQL. Free to audit, paid certificate.",
-            "url": "https://cs50.harvard.edu/web/2020/"
-        },
-        {
-            "type": "course",
-            "title": "Frontend Masters",
-            "provider": "Frontend Masters",
-            "description": "Industry-expert full stack and front-end development courses. (Paid)",
-            "url": "https://frontendmasters.com/"
-        },
-        {
-            "type": "course",
-            "title": "freeCodeCamp Full Stack Certification",
-            "provider": "freeCodeCamp",
-            "description": "Complete certification program covering front-end and back-end technologies. (Free)",
-            "url": "https://www.freecodecamp.org/learn/full-stack/"
-        },
-        {
-            "type": "website",
-            "title": "MDN Web Docs",
-            "description": "Comprehensive web development references and tutorials by Mozilla. (Free)",
-            "url": "https://developer.mozilla.org/en-US/"
-        },
-        {
-            "type": "website",
-            "title": "W3Schools",
-            "description": "Easy-to-follow tutorials for HTML, CSS, JavaScript, and server-side languages. (Free)",
-            "url": "https://www.w3schools.com/"
-        },
-        {
-            "type": "website",
-            "title": "Stack Overflow",
-            "description": "Largest programming Q&A community for help with development problems. (Free)",
-            "url": "https://stackoverflow.com/"
-        },
-        {
-            "type": "website",
-            "title": "Dev.to",
-            "description": "Community-driven blog platform for programming and software development. (Free)",
-            "url": "https://dev.to/"
-        },
-        {
-            "type": "website",
-            "title": "GitHub",
-            "description": "Platform for hosting and collaborating on software projects. (Free and Paid)",
-            "url": "https://github.com/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/webdev",
-            "description": "Community for discussing web development technologies and trends. (Free)",
-            "url": "https://www.reddit.com/r/webdev/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/frontend",
-            "description": "Focused community for front-end development discussions. (Free)",
-            "url": "https://www.reddit.com/r/frontend/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/javascript",
-            "description": "Discussion and news about JavaScript development. (Free)",
-            "url": "https://www.reddit.com/r/javascript/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/learnprogramming",
-            "description": "Helpful subreddit for learners in many programming domains. (Free)",
-            "url": "https://www.reddit.com/r/learnprogramming/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/coding",
-            "description": "General programming discussions and help. (Free)",
-            "url": "https://www.reddit.com/r/coding/"
-        },
-        {
-            "type": "discord",
-            "title": "The Coding Den",
-            "description": "Friendly Discord community for programmers of all levels. (Free)",
-            "url": "https://discord.gg/codingden"
-        },
-        {
-            "type": "discord",
-            "title": "Reactiflux",
-            "description": "Community focusing on React and front-end development. (Free)",
-            "url": "https://discord.gg/reactiflux"
-        },
-        {
-            "type": "discord",
-            "title": "Dev Community",
-            "description": "Developer discussions, mentorship, and collaboration. (Free)",
-            "url": "https://discord.gg/devcommunity"
-        },
-        {
-            "type": "discord",
-            "title": "100Devs",
-            "description": "Coding community with careers guidance and peer support. (Free)",
-            "url": "https://discord.gg/100devs"
-        },
-        {
-            "type": "discord",
-            "title": "CodeSupport",
-            "description": "A large community supporting and encouraging software developers. (Free)",
-            "url": "https://discord.gg/codesupport"
-        }
-    ],
-    "software development": [
-        {
-            "type": "youtube",
-            "title": "Computerphile",
-            "description": "Videos about computers and computer stuff from the University of Nottingham. (Free)",
-            "url": "https://www.youtube.com/user/Computerphile"
-        },
-        {
-            "type": "youtube",
-            "title": "Tom Scott",
-            "description": "Educational videos including many on computer science and software topics. (Free)",
-            "url": "https://www.youtube.com/c/TomScottGo"
-        },
-        {
-            "type": "youtube",
-            "title": "Ben Eater",
-            "description": "Building a computer from scratch and other low-level electronics/software tutorials. (Free)",
-            "url": "https://www.youtube.com/c/BenEater"
-        },
-        {
-            "type": "youtube",
-            "title": "Fireship",
-            "description": "High-intensity code tutorials and tech news. (Free)",
-            "url": "https://www.youtube.com/c/Fireship"
-        },
-        {
-            "type": "book",
-            "title": "Design Patterns: Elements of Reusable Object-Oriented Software",
-            "author": "Erich Gamma et al.",
-            "description": "The classic book on software design patterns. (Paid)",
-            "url": "https://www.amazon.com/Design-Patterns-Elements-Reusable-Object-Oriented/dp/0201633612"
-        },
-        {
-            "type": "book",
-            "title": "Refactoring",
-            "author": "Martin Fowler",
-            "description": "Improving the design of existing code. (Paid)",
-            "url": "https://martinfowler.com/books/refactoring.html"
-        },
-        {
-            "type": "book",
-            "title": "Introduction to Algorithms",
-            "author": "Thomas H. Cormen et al.",
-            "description": "Comprehensive textbook on algorithms. (Paid)",
-            "url": "https://mitpress.mit.edu/books/introduction-algorithms-third-edition"
-        },
-        {
-            "type": "course",
-            "title": "Software Development Lifecycle Specialization",
-            "provider": "Coursera, University of Minnesota",
-            "description": "Learn the SDLC and software methodologies. Paid with audit option.",
-            "url": "https://www.coursera.org/specializations/software-development-lifecycle"
-        },
-        {
-            "type": "course",
-            "title": "CS50: Introduction to Computer Science",
-            "provider": "Harvard, edX",
-            "description": "Introduction to the intellectual enterprises of computer science and the art of programming. (Free)",
-            "url": "https://cs50.harvard.edu/x/"
-        },
-        {
-            "type": "website",
-            "title": "GeeksforGeeks",
-            "description": "A computer science portal for geeks. (Free)",
-            "url": "https://www.geeksforgeeks.org/"
-        },
-        {
-            "type": "website",
-            "title": "HackerRank",
-            "description": "Practice coding, prepare for interviews, and get hired. (Free)",
-            "url": "https://www.hackerrank.com/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/softwaredevelopment",
-            "description": "General discussion about software development methods and practices. (Free)",
-            "url": "https://www.reddit.com/r/softwaredevelopment/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/cscareerquestions",
-            "description": "A subreddit for those with questions about working in the tech industry. (Free)",
-            "url": "https://www.reddit.com/r/cscareerquestions/"
-        }
-    ],
-    "devops": [
-        {
-            "type": "youtube",
-            "title": "DevOps Directive",
-            "description": "Tutorials and interviews about DevOps, Cloud, and Infrastructure. (Free)",
-            "url": "https://www.youtube.com/c/DevOpsDirective"
-        },
-        {
-            "type": "youtube",
-            "title": "Nana Janashia",
-            "description": "DevOps and Cloud computing tutorials. (Free)",
-            "url": "https://www.youtube.com/c/TechWorldwithNana"
-        },
-        {
-            "type": "youtube",
-            "title": "Stephane Maarek",
-            "description": "AWS and Kafka tutorials. (Free)",
-            "url": "https://www.youtube.com/c/StephaneMaarek"
-        },
-        {
-            "type": "book",
-            "title": "The Phoenix Project",
-            "author": "Gene Kim et al.",
-            "description": "A novel about IT, DevOps, and helping your business win. (Paid)",
-            "url": "https://itrevolution.com/book/the-phoenix-project/"
-        },
-        {
-            "type": "book",
-            "title": "The DevOps Handbook",
-            "author": "Gene Kim et al.",
-            "description": "How to create world-class agility, reliability, and security in technology organizations. (Paid)",
-            "url": "https://itrevolution.com/book/the-devops-handbook/"
-        },
-        {
-            "type": "book",
-            "title": "Accelerate",
-            "author": "Nicole Forsgren et al.",
-            "description": "The science of lean software and devops. (Paid)",
-            "url": "https://itrevolution.com/book/accelerate/"
-        },
-        {
-            "type": "course",
-            "title": "DevOps Culture and Mindset",
-            "provider": "Coursera, UC Davis",
-            "description": "Introduction to DevOps culture. Paid with audit option.",
-            "url": "https://www.coursera.org/learn/devops-culture-and-mindset"
-        },
-        {
-            "type": "course",
-            "title": "Docker and Kubernetes: The Complete Guide",
-            "provider": "Udemy",
-            "description": "Hands-on guide to Docker and Kubernetes. (Paid)",
-            "url": "https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/"
-        },
-        {
-            "type": "website",
-            "title": "DevOps.com",
-            "description": "News, insights, and resources for DevOps. (Free)",
-            "url": "https://devops.com/"
-        },
-        {
-            "type": "website",
-            "title": "CNCF",
-            "description": "Cloud Native Computing Foundation - home of Kubernetes and Prometheus. (Free)",
-            "url": "https://www.cncf.io/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/devops",
-            "description": "DevOps community. (Free)",
-            "url": "https://www.reddit.com/r/devops/"
-        },
-        {
-            "type": "discord",
-            "title": "DevOps Engineers",
-            "description": "Community for DevOps professionals. (Free)",
-            "url": "https://discord.gg/devops"
-        }
-    ],
-    "blockchain": [
-        {
-            "type": "youtube",
-            "title": "Whiteboard Crypto",
-            "description": "Explains crypto and blockchain concepts using analogies. (Free)",
-            "url": "https://www.youtube.com/c/WhiteboardCrypto"
-        },
-        {
-            "type": "youtube",
-            "title": "Dapp University",
-            "description": "Learn to build decentralized apps on the Ethereum blockchain. (Free)",
-            "url": "https://www.youtube.com/c/DappUniversity"
-        },
-        {
-            "type": "youtube",
-            "title": "Andreas M. Antonopoulos",
-            "description": "Talks and Q&As about Bitcoin and open blockchains. (Free)",
-            "url": "https://www.youtube.com/user/aantonop"
-        },
-        {
-            "type": "book",
-            "title": "Mastering Bitcoin",
-            "author": "Andreas M. Antonopoulos",
-            "description": "Technical guide to Bitcoin. (Free/Paid)",
-            "url": "https://github.com/bitcoinbook/bitcoinbook"
-        },
-        {
-            "type": "book",
-            "title": "Mastering Ethereum",
-            "author": "Andreas M. Antonopoulos and Gavin Wood",
-            "description": "Guide to smart contracts and DApps. (Free/Paid)",
-            "url": "https://github.com/ethereumbook/ethereumbook"
-        },
-        {
-            "type": "course",
-            "title": "Blockchain Specialization",
-            "provider": "Coursera, University at Buffalo",
-            "description": "Broad introduction to blockchain technology. Paid with audit option.",
-            "url": "https://www.coursera.org/specializations/blockchain"
-        },
-        {
-            "type": "course",
-            "title": "Ethereum and Solidity: The Complete Developer's Guide",
-            "provider": "Udemy",
-            "description": "Build DApps with Ethereum and Solidity. (Paid)",
-            "url": "https://www.udemy.com/course/ethereum-and-solidity-the-complete-developers-guide/"
-        },
-        {
-            "type": "website",
-            "title": "CoinDesk",
-            "description": "News and insights on cryptocurrency and blockchain. (Free)",
-            "url": "https://www.coindesk.com/"
-        },
-        {
-            "type": "website",
-            "title": "Solidity Documentation",
-            "description": "Official documentation for the Solidity language. (Free)",
-            "url": "https://docs.soliditylang.org/"
-        },
-        {
-            "type": "reddit",
-            "title": "r/ethdev",
-            "description": "Ethereum development community. (Free)",
-            "url": "https://www.reddit.com/r/ethdev/"
-        },
-        {
-            "type": "discord",
-            "title": "CryptoDevs",
-            "description": "Community for crypto developers. (Free)",
-            "url": "https://discord.gg/cryptodevs"
-        }
-    ],
-    "iot": [
-        {
-            "type": "youtube",
-            "title": "Kevin McAleer",
-            "description": "Robotics and IoT projects with Raspberry Pi and MicroPython. (Free)",
-            "url": "https://www.youtube.com/c/KevinMcAleer"
-        },
-        {
-            "type": "youtube",
-            "title": "DroneBot Workshop",
-            "description": "Tutorials on Arduino, Raspberry Pi, and electronics. (Free)",
-            "url": "https://www.youtube.com/c/Dronebotworkshop"
-        },
-        {
-            "type": "book",
-            "title": "Designing the Internet of Things",
-            "author": "Adrian McEwen and Hakim Cassimally",
-            "description": "Connecting devices and sensors to the internet. (Paid)",
-            "url": "https://www.wiley.com/en-us/Designing+the+Internet+of+Things-p-9781118430620"
-        },
-        {
-            "type": "course",
-            "title": "Internet of Things (IoT) Specialization",
-            "provider": "Coursera, UC Irvine",
-            "description": "Design and create IoT devices. Paid with audit option.",
-            "url": "https://www.coursera.org/specializations/iot"
-        },
-        {
-            "type": "website",
-            "title": "Hackster.io",
-            "description": "Community dedicated to hardware hacking and IoT projects. (Free)",
-            "url": "https://www.hackster.io/"
-        },
-        {
-            "type": "website",
-            "title": "Arduino Project Hub",
-            "description": "Official showcase of Arduino projects. (Free)",
-            "url": "https://create.arduino.cc/projecthub"
-        }
-    ],
-    "ar/vr": [
-        {
-            "type": "youtube",
-            "title": "Dilmer Valecillos",
-            "description": "Tutorials on AR/VR development with Unity and XR Interaction Toolkit. (Free)",
-            "url": "https://www.youtube.com/c/DilmerValecillos"
-        },
-        {
-            "type": "youtube",
-            "title": "Valem",
-            "description": "VR development tutorials for Unity. (Free)",
-            "url": "https://www.youtube.com/c/ValemVR"
-        },
-        {
-            "type": "book",
-            "title": "Unity 2020 Virtual Reality Projects",
-            "author": "Jonathan Linowes",
-            "description": "Learn VR development by building projects in Unity. (Paid)",
-            "url": "https://www.packtpub.com/product/unity-2020-virtual-reality-projects-third-edition/9781839217379"
-        },
-        {
-            "type": "course",
-            "title": "XR Design and Development",
-            "provider": "Coursera, Unity",
-            "description": "Official Unity course on AR and VR development. Paid with audit option.",
-            "url": "https://www.coursera.org/specializations/xr-design-development"
-        },
-        {
-            "type": "website",
-            "title": "Unity Learn",
-            "description": "Official learning platform for Unity, including XR pathways. (Free)",
-            "url": "https://learn.unity.com/"
-        }
-    ],
-    "communication": [
-        {
-            "type": "youtube",
-            "title": "TED",
-            "description": "Talks from expert speakers on education, business, science, tech and creativity. (Free)",
-            "url": "https://www.youtube.com/user/TEDtalksDirector"
-        },
-        {
-            "type": "youtube",
-            "title": "Charisma on Command",
-            "description": "Tips to be more charismatic and confident in social situations. (Free)",
-            "url": "https://www.youtube.com/user/charismaoncommand"
-        },
-        {
-            "type": "book",
-            "title": "Crucial Conversations",
-            "author": "Kerry Patterson et al.",
-            "description": "Tools for talking when stakes are high. (Paid)",
-            "url": "https://www.amazon.com/Crucial-Conversations-Talking-Stakes-Second/dp/1469047293"
-        },
-        {
-            "type": "book",
-            "title": "How to Win Friends and Influence People",
-            "author": "Dale Carnegie",
-            "description": "Classic advice on communication and relationships. (Paid)",
-            "url": "https://www.amazon.com/How-Win-Friends-Influence-People/dp/0671027034"
-        },
-        {
-            "type": "course",
-            "title": "Effective Communication: Writing, Design, and Presentation",
-            "provider": "Coursera, University of Colorado Boulder",
-            "description": "Improve business communication skills. Paid with audit option.",
-            "url": "https://www.coursera.org/specializations/effective-business-communication"
-        }
-    ],
-    "project management": [
-        {
-            "type": "youtube",
-            "title": "ProjectManager",
-            "description": "Tips, tools, and training for project managers. (Free)",
-            "url": "https://www.youtube.com/user/projectmanagervideos"
-        },
-        {
-            "type": "youtube",
-            "title": "Adriana Girdler",
-            "description": "Productivity and project management advice. (Free)",
-            "url": "https://www.youtube.com/c/AdrianaGirdler"
-        },
-        {
-            "type": "book",
-            "title": "A Guide to the Project Management Body of Knowledge (PMBOK Guide)",
-            "author": "PMI",
-            "description": "The standard guide for project management. (Paid)",
-            "url": "https://www.pmi.org/pmbok-guide-standards/foundational/pmbok"
-        },
-        {
-            "type": "course",
-            "title": "Google Project Management: Professional Certificate",
-            "provider": "Coursera",
-            "description": "Prepare for a career in project management. Paid with audit option.",
-            "url": "https://www.coursera.org/professional-certificates/google-project-management"
-        },
-        {
-            "type": "website",
-            "title": "Project Management Institute (PMI)",
-            "description": "Professional organization for project management. (Free/Paid)",
-            "url": "https://www.pmi.org/"
-        }
-    ],
-    "digital marketing": [
-        {
-            "type": "youtube",
-            "title": "Neil Patel",
-            "description": "SEO and digital marketing tips. (Free)",
-            "url": "https://www.youtube.com/user/neilvkpatel"
-        },
-        {
-            "type": "youtube",
-            "title": "Ahrefs",
-            "description": "SEO tutorials and marketing case studies. (Free)",
-            "url": "https://www.youtube.com/c/AhrefsCom"
-        },
-        {
-            "type": "book",
-            "title": "Building a StoryBrand",
-            "author": "Donald Miller",
-            "description": "Clarify your message so customers will listen. (Paid)",
-            "url": "https://storybrand.com/book/"
-        },
-        {
-            "type": "course",
-            "title": "Google Digital Marketing & E-commerce Professional Certificate",
-            "provider": "Coursera",
-            "description": "Learn digital marketing skills. Paid with audit option.",
-            "url": "https://www.coursera.org/professional-certificates/google-digital-marketing-ecommerce"
-        },
-        {
-            "type": "website",
-            "title": "HubSpot Blog",
-            "description": "Marketing, sales, and service content. (Free)",
-            "url": "https://blog.hubspot.com/"
-        }
-    ],
-    "financial management": [
-        {
-            "type": "youtube",
-            "title": "The Plain Bagel",
-            "description": "Finance and investment education. (Free)",
-            "url": "https://www.youtube.com/c/ThePlainBagel"
-        },
-        {
-            "type": "youtube",
-            "title": "Khan Academy Finance",
-            "description": "Educational videos on finance and capital markets. (Free)",
-            "url": "https://www.khanacademy.org/economics-finance-domain/core-finance"
-        },
-        {
-            "type": "book",
-            "title": "Rich Dad Poor Dad",
-            "author": "Robert Kiyosaki",
-            "description": "Personal finance classic. (Paid)",
-            "url": "https://www.richdad.com/"
-        },
-        {
-            "type": "course",
-            "title": "Financial Markets",
-            "provider": "Coursera, Yale University",
-            "description": "Overview of ideas, methods, and institutions that permit human society to manage risks and foster enterprise. (Free)",
-            "url": "https://www.coursera.org/learn/financial-markets-global"
-        },
-        {
-            "type": "website",
-            "title": "Investopedia",
-            "description": "Financial education website. (Free)",
-            "url": "https://www.investopedia.com/"
-        }
-    ],
-    "emotional intelligence": [
-        {
-            "type": "youtube",
-            "title": "School of Life",
-            "description": "Videos on emotional intelligence and self-knowledge. (Free)",
-            "url": "https://www.youtube.com/c/theschooloflifetv"
-        },
-        {
-            "type": "book",
-            "title": "Emotional Intelligence 2.0",
-            "author": "Travis Bradberry and Jean Greaves",
-            "description": "Strategies to increase your EQ. (Paid)",
-            "url": "https://www.amazon.com/Emotional-Intelligence-2-0-Travis-Bradberry/dp/0974320625"
-        },
-        {
-            "type": "course",
-            "title": "Inspiring Leadership through Emotional Intelligence",
-            "provider": "Coursera, Case Western Reserve University",
-            "description": "Build better relationships and lead effectively. Paid with audit option.",
-            "url": "https://www.coursera.org/learn/emotional-intelligence-leadership"
-        }
-    ]
+  "machine learning": [
+    // Courses - High Quality
+    {
+      type: "course",
+      title: "Machine Learning Specialization",
+      provider: "Coursera, Stanford (Andrew Ng)",
+      description: "The definitive ML course updated for 2024. Covers supervised/unsupervised learning, neural networks, and best practices. Free to audit, paid certificate.",
+      url: "https://www.coursera.org/specializations/machine-learning-introduction",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Fast.ai Practical Deep Learning for Coders",
+      provider: "Fast.ai",
+      description: "Top-down approach to deep learning. Build real models from day one using PyTorch. Completely free with notebooks.",
+      url: "https://course.fast.ai/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "CS229: Machine Learning",
+      provider: "Stanford University",
+      description: "Full Stanford ML course with video lectures, notes, and problem sets. Free.",
+      url: "https://cs229.stanford.edu/",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "Google Machine Learning Crash Course",
+      provider: "Google",
+      description: "Fast-paced intro to ML with TensorFlow. Includes exercises and real-world case studies. Free.",
+      url: "https://developers.google.com/machine-learning/crash-course",
+      rating: 4.7
+    },
+    // Books - Essential
+    {
+      type: "book",
+      title: "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow",
+      author: "Aurélien Géron",
+      description: "The most practical ML book. Covers end-to-end projects with code. Paid, but essential.",
+      url: "https://www.oreilly.com/library/view/hands-on-machine-learning/9781098125974/",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "Neural Networks and Deep Learning",
+      author: "Michael Nielsen",
+      description: "Free online book explaining neural networks intuitively with interactive visualizations. Free.",
+      url: "http://neuralnetworksanddeeplearning.com/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "The Hundred-Page Machine Learning Book",
+      author: "Andriy Burkov",
+      description: "Concise yet comprehensive ML overview. Perfect for busy learners. Paid (read-first, pay-later model).",
+      url: "http://themlbook.com/",
+      rating: 4.7
+    },
+    {
+      type: "book",
+      title: "Machine Learning Yearning",
+      author: "Andrew Ng",
+      description: "Strategic guide to structuring ML projects. Focus on practical decision-making. Free PDF.",
+      url: "https://www.deeplearning.ai/resources/machine-learning-yearning/",
+      rating: 4.8
+    },
+    // YouTube - Best Channels
+    {
+      type: "youtube",
+      title: "3Blue1Brown - Neural Networks Series",
+      description: "Stunning visual explanations of neural networks and deep learning fundamentals. Free.",
+      url: "https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi",
+      rating: 5.0
+    },
+    {
+      type: "youtube",
+      title: "StatQuest with Josh Starmer",
+      description: "Statistics and ML concepts explained clearly with humor. Essential for understanding fundamentals. Free.",
+      url: "https://www.youtube.com/c/joshstarmer",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Sentdex",
+      description: "Practical Python ML tutorials with real projects. Great for hands-on learners. Free.",
+      url: "https://www.youtube.com/c/sentdex",
+      rating: 4.7
+    },
+    // Websites & Tools
+    {
+      type: "website",
+      title: "Kaggle Learn",
+      description: "Free micro-courses on ML, deep learning, and data science with hands-on notebooks. Free.",
+      url: "https://www.kaggle.com/learn",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "Papers With Code",
+      description: "Latest ML research papers with implementation code. Essential for staying current. Free.",
+      url: "https://paperswithcode.com/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "ML Glossary",
+      description: "Clear definitions and explanations of ML terms with code examples. Free.",
+      url: "https://ml-cheatsheet.readthedocs.io/",
+      rating: 4.6
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/MachineLearning",
+      description: "Active community for ML research, papers, and discussions. 2M+ members. Free.",
+      url: "https://www.reddit.com/r/MachineLearning/",
+      rating: 4.7
+    },
+    {
+      type: "reddit",
+      title: "r/learnmachinelearning",
+      description: "Supportive community for ML beginners with learning resources and advice. Free.",
+      url: "https://www.reddit.com/r/learnmachinelearning/",
+      rating: 4.6
+    }
+  ],
+
+  "data science": [
+    // Courses
+    {
+      type: "course",
+      title: "IBM Data Science Professional Certificate",
+      provider: "Coursera",
+      description: "Complete data science curriculum from IBM. Covers Python, SQL, ML, and visualization. Free to audit, paid certificate.",
+      url: "https://www.coursera.org/professional-certificates/ibm-data-science",
+      rating: 4.6
+    },
+    {
+      type: "course",
+      title: "Google Data Analytics Professional Certificate",
+      provider: "Coursera",
+      description: "Job-ready data analytics skills from Google. Beginner-friendly with real projects. Free to audit, paid certificate.",
+      url: "https://www.coursera.org/professional-certificates/google-data-analytics",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "Data Science Fundamentals with Python and SQL",
+      provider: "IBM via edX",
+      description: "Core data science skills using Python and SQL. Hands-on labs included. Free to audit.",
+      url: "https://www.edx.org/professional-certificate/ibm-data-science",
+      rating: 4.5
+    },
+    {
+      type: "course",
+      title: "Introduction to Data Science",
+      provider: "Harvard via edX (CS50)",
+      description: "Harvard's introduction to data science. Rigorous but accessible. Free to audit.",
+      url: "https://www.edx.org/course/introduction-to-data-science-with-python",
+      rating: 4.7
+    },
+    // Books
+    {
+      type: "book",
+      title: "Python for Data Analysis",
+      author: "Wes McKinney (pandas creator)",
+      description: "The definitive guide to data analysis with pandas. Written by the library's creator. Paid.",
+      url: "https://wesmckinney.com/book/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "Storytelling with Data",
+      author: "Cole Nussbaumer Knaflic",
+      description: "Master data visualization and communication. Essential for presenting insights. Paid.",
+      url: "https://www.storytellingwithdata.com/book",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "The Data Science Handbook",
+      author: "Field Cady",
+      description: "Practical guide covering the full data science workflow. Free chapters available.",
+      url: "https://www.thedatasciencehandbook.com/",
+      rating: 4.5
+    },
+    {
+      type: "book",
+      title: "Think Stats",
+      author: "Allen B. Downey",
+      description: "Statistics for programmers using Python examples. Free online, paid print.",
+      url: "https://greenteapress.com/thinkstats2/",
+      rating: 4.6
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "StatQuest with Josh Starmer",
+      description: "Statistics and ML fundamentals explained simply. Essential for data scientists. Free.",
+      url: "https://www.youtube.com/c/joshstarmer",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Ken Jee",
+      description: "Data science projects, career advice, and portfolio building tips. Free.",
+      url: "https://www.youtube.com/c/KenJee1",
+      rating: 4.7
+    },
+    {
+      type: "youtube",
+      title: "Alex The Analyst",
+      description: "SQL, Excel, Tableau tutorials focused on job-ready skills. Free.",
+      url: "https://www.youtube.com/@AlexTheAnalyst",
+      rating: 4.8
+    },
+    // Websites
+    {
+      type: "website",
+      title: "Kaggle",
+      description: "Datasets, competitions, notebooks, and free courses. The data science hub. Free.",
+      url: "https://www.kaggle.com/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "Mode Analytics SQL Tutorial",
+      description: "Comprehensive SQL tutorial with practice problems and real datasets. Free.",
+      url: "https://mode.com/sql-tutorial/",
+      rating: 4.7
+    },
+    {
+      type: "website",
+      title: "Towards Data Science",
+      description: "Quality articles on data science, ML, and analytics from practitioners. Free (Medium membership for full access).",
+      url: "https://towardsdatascience.com/",
+      rating: 4.6
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/datascience",
+      description: "Professional data science community with career advice and technical discussions. Free.",
+      url: "https://www.reddit.com/r/datascience/",
+      rating: 4.7
+    },
+    {
+      type: "discord",
+      title: "DataTalks.Club",
+      description: "Active community with free courses, study groups, and job postings. Free.",
+      url: "https://datatalks.club/",
+      rating: 4.8
+    }
+  ],
+
+  "python": [
+    // Courses
+    {
+      type: "course",
+      title: "Python for Everybody Specialization",
+      provider: "Coursera, University of Michigan",
+      description: "Most popular Python course on Coursera. Perfect for absolute beginners. Free to audit.",
+      url: "https://www.coursera.org/specializations/python",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "CS50's Introduction to Programming with Python",
+      provider: "Harvard via edX",
+      description: "Harvard's rigorous Python introduction. High quality, challenging content. Free.",
+      url: "https://cs50.harvard.edu/python/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "100 Days of Code: Python",
+      provider: "Udemy, Angela Yu",
+      description: "Comprehensive bootcamp building 100 projects. Best value for money. Paid.",
+      url: "https://www.udemy.com/course/100-days-of-code/",
+      rating: 4.7
+    },
+    // Books
+    {
+      type: "book",
+      title: "Automate the Boring Stuff with Python",
+      author: "Al Sweigart",
+      description: "Learn Python by automating real tasks. Perfect for practical learners. Free online.",
+      url: "https://automatetheboringstuff.com/",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "Python Crash Course",
+      author: "Eric Matthes",
+      description: "Fast-paced, thorough Python introduction with projects. Great for beginners. Paid.",
+      url: "https://nostarch.com/pythoncrashcourse2e",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "Fluent Python",
+      author: "Luciano Ramalho",
+      description: "Master Python's features and idioms. Best for intermediate to advanced. Paid.",
+      url: "https://www.oreilly.com/library/view/fluent-python-2nd/9781492056348/",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "Think Python",
+      author: "Allen B. Downey",
+      description: "Computer science introduction using Python. Free online, great for CS fundamentals.",
+      url: "https://greenteapress.com/thinkpython2/",
+      rating: 4.6
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Corey Schafer",
+      description: "Clear, professional Python tutorials. Best for learning specific topics. Free.",
+      url: "https://www.youtube.com/c/Coreyms",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Tech With Tim",
+      description: "Python projects and tutorials for all levels. Active community. Free.",
+      url: "https://www.youtube.com/c/TechWithTim",
+      rating: 4.7
+    },
+    {
+      type: "youtube",
+      title: "Arjan Codes",
+      description: "Python best practices, design patterns, and clean code. For intermediate+. Free.",
+      url: "https://www.youtube.com/c/ArjanCodes",
+      rating: 4.8
+    },
+    // Websites
+    {
+      type: "website",
+      title: "Real Python",
+      description: "High-quality Python tutorials and articles. Some free, full access paid.",
+      url: "https://realpython.com/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "Python Official Tutorial",
+      description: "Official Python documentation tutorial. Comprehensive and authoritative. Free.",
+      url: "https://docs.python.org/3/tutorial/",
+      rating: 4.5
+    },
+    {
+      type: "website",
+      title: "Exercism Python Track",
+      description: "Free coding exercises with mentor feedback. Great for practice. Free.",
+      url: "https://exercism.org/tracks/python",
+      rating: 4.7
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/learnpython",
+      description: "Supportive community for Python learners. Active help and resources. Free.",
+      url: "https://www.reddit.com/r/learnpython/",
+      rating: 4.8
+    },
+    {
+      type: "discord",
+      title: "Python Discord",
+      description: "Large active Python community with help channels and projects. Free.",
+      url: "https://discord.gg/python",
+      rating: 4.7
+    }
+  ],
+
+  "javascript": [
+    // Courses
+    {
+      type: "course",
+      title: "The Complete JavaScript Course 2024",
+      provider: "Udemy, Jonas Schmedtmann",
+      description: "Modern JavaScript from zero to advanced. Includes projects and challenges. Paid.",
+      url: "https://www.udemy.com/course/the-complete-javascript-course/",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "JavaScript Algorithms and Data Structures",
+      provider: "freeCodeCamp",
+      description: "Interactive curriculum with 300+ challenges. Earn certification. Free.",
+      url: "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/",
+      rating: 4.7
+    },
+    {
+      type: "course",
+      title: "The Odin Project - JavaScript Path",
+      provider: "The Odin Project",
+      description: "Full-stack JavaScript curriculum with projects. Community-driven and free.",
+      url: "https://www.theodinproject.com/paths/full-stack-javascript",
+      rating: 4.9
+    },
+    // Books
+    {
+      type: "book",
+      title: "Eloquent JavaScript",
+      author: "Marijn Haverbeke",
+      description: "Modern JavaScript introduction with exercises. Beautiful free online edition.",
+      url: "https://eloquentjavascript.net/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "You Don't Know JS (book series)",
+      author: "Kyle Simpson",
+      description: "Deep dive into JavaScript mechanics. Essential for truly understanding JS. Free on GitHub.",
+      url: "https://github.com/getify/You-Dont-Know-JS",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "JavaScript: The Good Parts",
+      author: "Douglas Crockford",
+      description: "Classic guide to JavaScript's best features. Short but influential. Paid.",
+      url: "https://www.oreilly.com/library/view/javascript-the-good/9780596517748/",
+      rating: 4.6
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Fireship",
+      description: "Fast-paced JavaScript and web dev content. Great for staying current. Free.",
+      url: "https://www.youtube.com/c/Fireship",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Traversy Media",
+      description: "Practical web development tutorials. Clear explanations. Free.",
+      url: "https://www.youtube.com/c/TraversyMedia",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "Web Dev Simplified",
+      description: "JavaScript concepts explained simply. Great for beginners. Free.",
+      url: "https://www.youtube.com/c/WebDevSimplified",
+      rating: 4.7
+    },
+    // Websites
+    {
+      type: "website",
+      title: "JavaScript.info",
+      description: "Modern JavaScript tutorial. Comprehensive and well-organized. Free.",
+      url: "https://javascript.info/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "MDN Web Docs",
+      description: "Mozilla's JavaScript reference. The authoritative resource. Free.",
+      url: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
+      rating: 5.0
+    },
+    {
+      type: "website",
+      title: "JavaScript30",
+      description: "30 vanilla JS projects in 30 days by Wes Bos. Free.",
+      url: "https://javascript30.com/",
+      rating: 4.8
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/javascript",
+      description: "JavaScript news, articles, and discussions. Free.",
+      url: "https://www.reddit.com/r/javascript/",
+      rating: 4.6
+    },
+    {
+      type: "discord",
+      title: "Reactiflux",
+      description: "Large community for React and JavaScript developers. Free.",
+      url: "https://www.reactiflux.com/",
+      rating: 4.8
+    }
+  ],
+
+  "react": [
+    // Courses
+    {
+      type: "course",
+      title: "React - The Complete Guide 2024",
+      provider: "Udemy, Maximilian Schwarzmüller",
+      description: "Most comprehensive React course. Covers hooks, Redux, Next.js. Paid.",
+      url: "https://www.udemy.com/course/react-the-complete-guide-incl-redux/",
+      rating: 4.7
+    },
+    {
+      type: "course",
+      title: "React Official Tutorial",
+      provider: "React Team",
+      description: "Learn React from the source. Updated for React 18. Free.",
+      url: "https://react.dev/learn",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Full Stack Open - React",
+      provider: "University of Helsinki",
+      description: "Modern React and full-stack development. University quality, free.",
+      url: "https://fullstackopen.com/en/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Epic React",
+      provider: "Kent C. Dodds",
+      description: "Advanced React patterns from a React expert. Worth the investment. Paid.",
+      url: "https://epicreact.dev/",
+      rating: 4.9
+    },
+    // Books
+    {
+      type: "book",
+      title: "React Documentation",
+      author: "React Team",
+      description: "New interactive React docs. The best starting point. Free.",
+      url: "https://react.dev/",
+      rating: 5.0
+    },
+    {
+      type: "book",
+      title: "Learning React",
+      author: "Alex Banks & Eve Porcello",
+      description: "Functional web development with React and Redux. Paid.",
+      url: "https://www.oreilly.com/library/view/learning-react-2nd/9781492051718/",
+      rating: 4.6
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Codevolution",
+      description: "In-depth React tutorials including hooks, Redux, and TypeScript. Free.",
+      url: "https://www.youtube.com/c/Codevolution",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "Jack Herrington",
+      description: "Advanced React patterns and best practices. Great for experienced devs. Free.",
+      url: "https://www.youtube.com/c/JackHerrington",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "Theo - t3.gg",
+      description: "Modern React ecosystem and best practices. Opinionated but insightful. Free.",
+      url: "https://www.youtube.com/c/TheoBrowne1017",
+      rating: 4.7
+    },
+    // Websites
+    {
+      type: "website",
+      title: "React Docs",
+      description: "Official React documentation. Interactive examples and guides. Free.",
+      url: "https://react.dev/",
+      rating: 5.0
+    },
+    {
+      type: "website",
+      title: "React Patterns",
+      description: "Common React patterns and best practices. Free.",
+      url: "https://reactpatterns.com/",
+      rating: 4.5
+    },
+    // Communities
+    {
+      type: "discord",
+      title: "Reactiflux",
+      description: "200K+ React developers. Active help channels. Free.",
+      url: "https://www.reactiflux.com/",
+      rating: 4.8
+    },
+    {
+      type: "reddit",
+      title: "r/reactjs",
+      description: "React community with news, help, and discussions. Free.",
+      url: "https://www.reddit.com/r/reactjs/",
+      rating: 4.7
+    }
+  ],
+
+  "web development": [
+    // Courses
+    {
+      type: "course",
+      title: "The Odin Project",
+      provider: "Community",
+      description: "Complete free curriculum for full-stack web development. Project-based. Free.",
+      url: "https://www.theodinproject.com/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "CS50's Web Programming with Python and JavaScript",
+      provider: "Harvard via edX",
+      description: "Build web apps with Python, JavaScript, and SQL. University quality. Free.",
+      url: "https://cs50.harvard.edu/web/",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "Full Stack Open",
+      provider: "University of Helsinki",
+      description: "Modern web development with React, Node, and GraphQL. Free.",
+      url: "https://fullstackopen.com/en/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "freeCodeCamp Responsive Web Design",
+      provider: "freeCodeCamp",
+      description: "Learn HTML, CSS with hands-on projects. Earn certification. Free.",
+      url: "https://www.freecodecamp.org/learn/2022/responsive-web-design/",
+      rating: 4.7
+    },
+    // Books
+    {
+      type: "book",
+      title: "MDN Web Development Learning Path",
+      author: "Mozilla",
+      description: "Comprehensive web dev curriculum from the MDN team. Free.",
+      url: "https://developer.mozilla.org/en-US/docs/Learn",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "HTML & CSS: Design and Build Websites",
+      author: "Jon Duckett",
+      description: "Beautiful visual introduction to web development. Beginner-friendly. Paid.",
+      url: "https://www.htmlandcssbook.com/",
+      rating: 4.7
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Fireship",
+      description: "Quick, high-quality web dev tutorials and news. Free.",
+      url: "https://www.youtube.com/c/Fireship",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Traversy Media",
+      description: "Practical web development tutorials from basics to advanced. Free.",
+      url: "https://www.youtube.com/c/TraversyMedia",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "Kevin Powell",
+      description: "CSS master. Deep dives into modern CSS techniques. Free.",
+      url: "https://www.youtube.com/kepowob",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Net Ninja",
+      description: "Complete courses on web technologies. Great for following along. Free.",
+      url: "https://www.youtube.com/c/TheNetNinja",
+      rating: 4.8
+    },
+    // Websites
+    {
+      type: "website",
+      title: "MDN Web Docs",
+      description: "The definitive web development reference. Free.",
+      url: "https://developer.mozilla.org/",
+      rating: 5.0
+    },
+    {
+      type: "website",
+      title: "CSS-Tricks",
+      description: "Tips, tricks, and techniques on CSS and web design. Free.",
+      url: "https://css-tricks.com/",
+      rating: 4.7
+    },
+    {
+      type: "website",
+      title: "Frontend Mentor",
+      description: "Real-world projects to build your portfolio. Free tier available.",
+      url: "https://www.frontendmentor.io/",
+      rating: 4.8
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/webdev",
+      description: "Web development community with news and discussions. Free.",
+      url: "https://www.reddit.com/r/webdev/",
+      rating: 4.6
+    },
+    {
+      type: "discord",
+      title: "The Coding Den",
+      description: "Friendly community for developers of all levels. Free.",
+      url: "https://discord.gg/code",
+      rating: 4.7
+    }
+  ],
+
+  "cyber security": [
+    // Courses
+    {
+      type: "course",
+      title: "Google Cybersecurity Professional Certificate",
+      provider: "Coursera",
+      description: "Job-ready cybersecurity skills from Google. Beginner-friendly. Free to audit.",
+      url: "https://www.coursera.org/professional-certificates/google-cybersecurity",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "TryHackMe",
+      provider: "TryHackMe",
+      description: "Hands-on cybersecurity training with virtual labs. Gamified learning. Free tier + Paid.",
+      url: "https://tryhackme.com/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Hack The Box Academy",
+      provider: "Hack The Box",
+      description: "Structured cybersecurity learning paths. Industry-recognized. Free tier + Paid.",
+      url: "https://academy.hackthebox.com/",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "Introduction to Cyber Security Specialization",
+      provider: "Coursera, NYU",
+      description: "Foundational cybersecurity concepts from NYU. Free to audit.",
+      url: "https://www.coursera.org/specializations/intro-cyber-security",
+      rating: 4.6
+    },
+    // Books
+    {
+      type: "book",
+      title: "The Web Application Hacker's Handbook",
+      author: "Dafydd Stuttard & Marcus Pinto",
+      description: "The bible of web application security testing. Essential reading. Paid.",
+      url: "https://portswigger.net/web-security/web-application-hackers-handbook",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "Hacking: The Art of Exploitation",
+      author: "Jon Erickson",
+      description: "Classic introduction to hacking techniques and exploitation. Paid.",
+      url: "https://nostarch.com/hacking2.htm",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "OWASP Testing Guide",
+      author: "OWASP Foundation",
+      description: "Comprehensive web security testing methodology. Free.",
+      url: "https://owasp.org/www-project-web-security-testing-guide/",
+      rating: 4.7
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "NetworkChuck",
+      description: "Engaging cybersecurity and networking tutorials. Great for beginners. Free.",
+      url: "https://www.youtube.com/c/NetworkChuck",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "John Hammond",
+      description: "CTF walkthroughs and security research. Excellent for learning. Free.",
+      url: "https://www.youtube.com/c/JohnHammond010",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "LiveOverflow",
+      description: "Deep technical security content. Great for understanding vulnerabilities. Free.",
+      url: "https://www.youtube.com/c/LiveOverflow",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "IppSec",
+      description: "Hack The Box walkthroughs. Learn real penetration testing. Free.",
+      url: "https://www.youtube.com/c/ippsec",
+      rating: 4.9
+    },
+    // Websites
+    {
+      type: "website",
+      title: "PortSwigger Web Security Academy",
+      description: "Free, comprehensive web security training from Burp Suite creators. Free.",
+      url: "https://portswigger.net/web-security",
+      rating: 5.0
+    },
+    {
+      type: "website",
+      title: "OWASP",
+      description: "Open-source web security resources and documentation. Free.",
+      url: "https://owasp.org/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "OverTheWire Wargames",
+      description: "Learn security concepts through games. Great for practice. Free.",
+      url: "https://overthewire.org/wargames/",
+      rating: 4.7
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/netsec",
+      description: "Network security news and discussions. Professional community. Free.",
+      url: "https://www.reddit.com/r/netsec/",
+      rating: 4.7
+    },
+    {
+      type: "discord",
+      title: "Hack The Box Discord",
+      description: "Active security community with help and discussions. Free.",
+      url: "https://discord.gg/hackthebox",
+      rating: 4.8
+    }
+  ],
+
+  "cloud computing": [
+    // Courses
+    {
+      type: "course",
+      title: "AWS Cloud Practitioner Essentials",
+      provider: "AWS",
+      description: "Official AWS foundational course. Great starting point. Free.",
+      url: "https://aws.amazon.com/training/digital/aws-cloud-practitioner-essentials/",
+      rating: 4.7
+    },
+    {
+      type: "course",
+      title: "Google Cloud Digital Leader Training",
+      provider: "Google Cloud",
+      description: "Introduction to Google Cloud concepts and services. Free.",
+      url: "https://cloud.google.com/training/cloud-infrastructure#cloud-digital-leader-path",
+      rating: 4.6
+    },
+    {
+      type: "course",
+      title: "Microsoft Azure Fundamentals (AZ-900)",
+      provider: "Microsoft Learn",
+      description: "Free Azure fundamentals training from Microsoft. Free.",
+      url: "https://learn.microsoft.com/en-us/training/paths/az-900-describe-cloud-concepts/",
+      rating: 4.7
+    },
+    {
+      type: "course",
+      title: "AWS Solutions Architect Associate",
+      provider: "Udemy, Stephane Maarek",
+      description: "Best-selling AWS certification course. Thorough and practical. Paid.",
+      url: "https://www.udemy.com/course/aws-certified-solutions-architect-associate-saa-c03/",
+      rating: 4.8
+    },
+    // Books
+    {
+      type: "book",
+      title: "AWS Documentation",
+      author: "Amazon Web Services",
+      description: "Official AWS documentation. Comprehensive and authoritative. Free.",
+      url: "https://docs.aws.amazon.com/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "The Google Cloud Cookbook",
+      author: "Rui Costa & Drew Hodun",
+      description: "Practical recipes for Google Cloud Platform. Paid.",
+      url: "https://www.oreilly.com/library/view/google-cloud-cookbook/9781492092889/",
+      rating: 4.5
+    },
+    {
+      type: "book",
+      title: "Kubernetes Up & Running",
+      author: "Brendan Burns, Joe Beda, Kelsey Hightower",
+      description: "Essential guide to container orchestration. From Kubernetes creators. Paid.",
+      url: "https://www.oreilly.com/library/view/kubernetes-up-and/9781098110192/",
+      rating: 4.8
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "TechWorld with Nana",
+      description: "DevOps and cloud computing tutorials. Beginner-friendly. Free.",
+      url: "https://www.youtube.com/c/TechWorldwithNana",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "AWS Events",
+      description: "Official AWS conference talks and tutorials. Free.",
+      url: "https://www.youtube.com/c/AWSEventsChannel",
+      rating: 4.6
+    },
+    {
+      type: "youtube",
+      title: "Google Cloud Tech",
+      description: "Official Google Cloud tutorials and updates. Free.",
+      url: "https://www.youtube.com/c/GoogleCloudTech",
+      rating: 4.7
+    },
+    // Websites
+    {
+      type: "website",
+      title: "AWS Skill Builder",
+      description: "Free AWS learning platform with courses and labs. Free tier available.",
+      url: "https://skillbuilder.aws/",
+      rating: 4.7
+    },
+    {
+      type: "website",
+      title: "Microsoft Learn",
+      description: "Free Azure learning paths and modules. Free.",
+      url: "https://learn.microsoft.com/en-us/azure/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "Google Cloud Skills Boost",
+      description: "Google Cloud learning platform with labs. Free tier + Paid.",
+      url: "https://www.cloudskillsboost.google/",
+      rating: 4.7
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/aws",
+      description: "AWS community with tips, news, and help. Free.",
+      url: "https://www.reddit.com/r/aws/",
+      rating: 4.6
+    },
+    {
+      type: "reddit",
+      title: "r/kubernetes",
+      description: "Kubernetes community for container orchestration. Free.",
+      url: "https://www.reddit.com/r/kubernetes/",
+      rating: 4.7
+    }
+  ],
+
+  "devops": [
+    // Courses
+    {
+      type: "course",
+      title: "DevOps with Docker",
+      provider: "University of Helsinki",
+      description: "Learn Docker from basics to deployment. Free.",
+      url: "https://devopswithdocker.com/",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "DevOps with Kubernetes",
+      provider: "University of Helsinki",
+      description: "Kubernetes fundamentals and practices. Free.",
+      url: "https://devopswithkubernetes.com/",
+      rating: 4.7
+    },
+    {
+      type: "course",
+      title: "Docker and Kubernetes: The Complete Guide",
+      provider: "Udemy, Stephen Grider",
+      description: "Comprehensive Docker and K8s course with projects. Paid.",
+      url: "https://www.udemy.com/course/docker-and-kubernetes-the-complete-guide/",
+      rating: 4.7
+    },
+    {
+      type: "course",
+      title: "GitHub Actions - The Complete Guide",
+      provider: "Udemy, Maximilian Schwarzmüller",
+      description: "Master CI/CD with GitHub Actions. Paid.",
+      url: "https://www.udemy.com/course/github-actions-the-complete-guide/",
+      rating: 4.8
+    },
+    // Books
+    {
+      type: "book",
+      title: "The Phoenix Project",
+      author: "Gene Kim, Kevin Behr, George Spafford",
+      description: "Novel about IT and DevOps transformation. Essential reading. Paid.",
+      url: "https://itrevolution.com/product/the-phoenix-project/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "The DevOps Handbook",
+      author: "Gene Kim, Jez Humble, Patrick Debois",
+      description: "How to create world-class agility with DevOps. Paid.",
+      url: "https://itrevolution.com/product/the-devops-handbook-second-edition/",
+      rating: 4.7
+    },
+    {
+      type: "book",
+      title: "Docker Documentation",
+      author: "Docker Inc.",
+      description: "Official Docker docs and tutorials. Free.",
+      url: "https://docs.docker.com/",
+      rating: 4.8
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "TechWorld with Nana",
+      description: "DevOps, Kubernetes, and cloud tutorials. Beginner-friendly. Free.",
+      url: "https://www.youtube.com/c/TechWorldwithNana",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "DevOps Directive",
+      description: "DevOps tools and practices explained clearly. Free.",
+      url: "https://www.youtube.com/c/DevOpsDirective",
+      rating: 4.7
+    },
+    {
+      type: "youtube",
+      title: "Kunal Kushwaha",
+      description: "DevOps bootcamp and tutorials. Great for beginners. Free.",
+      url: "https://www.youtube.com/c/KunalKushwaha",
+      rating: 4.8
+    },
+    // Websites
+    {
+      type: "website",
+      title: "Kubernetes Documentation",
+      description: "Official K8s docs with tutorials and examples. Free.",
+      url: "https://kubernetes.io/docs/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "DevOps Roadmap",
+      description: "Step-by-step DevOps learning roadmap. Free.",
+      url: "https://roadmap.sh/devops",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "KodeKloud",
+      description: "DevOps labs and practice environments. Free tier + Paid.",
+      url: "https://kodekloud.com/",
+      rating: 4.7
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/devops",
+      description: "DevOps community with discussions and resources. Free.",
+      url: "https://www.reddit.com/r/devops/",
+      rating: 4.7
+    },
+    {
+      type: "discord",
+      title: "DevOps, SRE, & Infrastructure",
+      description: "Active DevOps community for help and networking. Free.",
+      url: "https://discord.gg/VEEnHkPzY6",
+      rating: 4.6
+    }
+  ],
+
+  "artificial intelligence": [
+    // Courses
+    {
+      type: "course",
+      title: "CS50's Introduction to Artificial Intelligence",
+      provider: "Harvard via edX",
+      description: "AI fundamentals with Python. Covers search, knowledge, uncertainty, learning. Free.",
+      url: "https://cs50.harvard.edu/ai/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Deep Learning Specialization",
+      provider: "Coursera, deeplearning.ai",
+      description: "Andrew Ng's legendary deep learning courses. Free to audit.",
+      url: "https://www.coursera.org/specializations/deep-learning",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Practical Deep Learning for Coders",
+      provider: "Fast.ai",
+      description: "Build deep learning models from day one. Free.",
+      url: "https://course.fast.ai/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Hugging Face NLP Course",
+      provider: "Hugging Face",
+      description: "Learn NLP with transformers library. Free.",
+      url: "https://huggingface.co/learn/nlp-course",
+      rating: 4.8
+    },
+    // Books
+    {
+      type: "book",
+      title: "Artificial Intelligence: A Modern Approach",
+      author: "Stuart Russell & Peter Norvig",
+      description: "The definitive AI textbook used worldwide. Paid.",
+      url: "http://aima.cs.berkeley.edu/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "Deep Learning",
+      author: "Ian Goodfellow, Yoshua Bengio, Aaron Courville",
+      description: "Comprehensive deep learning textbook. Free online.",
+      url: "https://www.deeplearningbook.org/",
+      rating: 4.7
+    },
+    {
+      type: "book",
+      title: "Dive into Deep Learning",
+      author: "Aston Zhang et al.",
+      description: "Interactive deep learning book with code. Free online.",
+      url: "https://d2l.ai/",
+      rating: 4.8
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Two Minute Papers",
+      description: "AI research papers explained in minutes. Stay current. Free.",
+      url: "https://www.youtube.com/c/KárolyZsolnai",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "Yannic Kilcher",
+      description: "Deep dives into AI research papers. For advanced learners. Free.",
+      url: "https://www.youtube.com/c/YannicKilcher",
+      rating: 4.7
+    },
+    {
+      type: "youtube",
+      title: "Lex Fridman",
+      description: "Interviews with AI researchers and leaders. Free.",
+      url: "https://www.youtube.com/c/lexfridman",
+      rating: 4.8
+    },
+    // Websites
+    {
+      type: "website",
+      title: "OpenAI Documentation",
+      description: "Learn to use GPT and other OpenAI models. Free.",
+      url: "https://platform.openai.com/docs",
+      rating: 4.7
+    },
+    {
+      type: "website",
+      title: "Hugging Face",
+      description: "AI models, datasets, and tutorials. Free.",
+      url: "https://huggingface.co/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "Distill.pub",
+      description: "Clear explanations of machine learning research. Free.",
+      url: "https://distill.pub/",
+      rating: 4.9
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/artificial",
+      description: "AI news and discussions. Free.",
+      url: "https://www.reddit.com/r/artificial/",
+      rating: 4.5
+    },
+    {
+      type: "discord",
+      title: "Hugging Face Discord",
+      description: "AI/ML community with model discussions. Free.",
+      url: "https://discord.gg/huggingface",
+      rating: 4.8
+    }
+  ],
+
+  "sql": [
+    // Courses
+    {
+      type: "course",
+      title: "SQL for Data Science",
+      provider: "Coursera, UC Davis",
+      description: "Learn SQL for data analysis. Beginner-friendly. Free to audit.",
+      url: "https://www.coursera.org/learn/sql-for-data-science",
+      rating: 4.6
+    },
+    {
+      type: "course",
+      title: "The Complete SQL Bootcamp",
+      provider: "Udemy, Jose Portilla",
+      description: "PostgreSQL focused SQL course with exercises. Paid.",
+      url: "https://www.udemy.com/course/the-complete-sql-bootcamp/",
+      rating: 4.7
+    },
+    // Books
+    {
+      type: "book",
+      title: "Learning SQL",
+      author: "Alan Beaulieu",
+      description: "Comprehensive SQL fundamentals book. Paid.",
+      url: "https://www.oreilly.com/library/view/learning-sql-3rd/9781492057604/",
+      rating: 4.6
+    },
+    // Websites
+    {
+      type: "website",
+      title: "SQLBolt",
+      description: "Interactive SQL lessons with exercises. Free.",
+      url: "https://sqlbolt.com/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "Mode SQL Tutorial",
+      description: "SQL tutorial with real datasets and practice. Free.",
+      url: "https://mode.com/sql-tutorial/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "W3Schools SQL",
+      description: "Interactive SQL reference with try-it-yourself. Free.",
+      url: "https://www.w3schools.com/sql/",
+      rating: 4.5
+    },
+    {
+      type: "website",
+      title: "PostgreSQL Tutorial",
+      description: "Comprehensive PostgreSQL tutorial. Free.",
+      url: "https://www.postgresqltutorial.com/",
+      rating: 4.7
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Alex The Analyst - SQL Series",
+      description: "Practical SQL tutorials for data analysts. Free.",
+      url: "https://www.youtube.com/playlist?list=PLUaB-1hjhk8GT6N5ne2qpf603sF26m2PW",
+      rating: 4.8
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/SQL",
+      description: "SQL help and discussion community. Free.",
+      url: "https://www.reddit.com/r/SQL/",
+      rating: 4.6
+    }
+  ],
+
+  "git": [
+    // Courses
+    {
+      type: "course",
+      title: "Git and GitHub for Beginners",
+      provider: "freeCodeCamp",
+      description: "Complete Git crash course on YouTube. Free.",
+      url: "https://www.youtube.com/watch?v=RGOj5yH7evk",
+      rating: 4.8
+    },
+    // Books
+    {
+      type: "book",
+      title: "Pro Git",
+      author: "Scott Chacon & Ben Straub",
+      description: "The complete Git book. Available free online.",
+      url: "https://git-scm.com/book/en/v2",
+      rating: 4.9
+    },
+    // Websites
+    {
+      type: "website",
+      title: "Learn Git Branching",
+      description: "Interactive Git branching tutorial. Visual and fun. Free.",
+      url: "https://learngitbranching.js.org/",
+      rating: 5.0
+    },
+    {
+      type: "website",
+      title: "GitHub Skills",
+      description: "Interactive GitHub courses from GitHub. Free.",
+      url: "https://skills.github.com/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "Atlassian Git Tutorials",
+      description: "Comprehensive Git tutorials and guides. Free.",
+      url: "https://www.atlassian.com/git/tutorials",
+      rating: 4.7
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "The Coding Train - Git and GitHub",
+      description: "Beginner-friendly Git series with animations. Free.",
+      url: "https://www.youtube.com/playlist?list=PLRqwX-V7Uu6ZF9C0YMKuns9sLDzK6zoiV",
+      rating: 4.7
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/git",
+      description: "Git help and best practices. Free.",
+      url: "https://www.reddit.com/r/git/",
+      rating: 4.5
+    }
+  ],
+
+  "system design": [
+    // Courses
+    {
+      type: "course",
+      title: "Grokking System Design Interview",
+      provider: "Educative",
+      description: "Popular system design course for interviews. Paid.",
+      url: "https://www.educative.io/courses/grokking-modern-system-design-interview-for-engineers-managers",
+      rating: 4.7
+    },
+    // Books
+    {
+      type: "book",
+      title: "Designing Data-Intensive Applications",
+      author: "Martin Kleppmann",
+      description: "The system design bible. Essential for engineers. Paid.",
+      url: "https://dataintensive.net/",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "System Design Interview",
+      author: "Alex Xu",
+      description: "Step-by-step framework for system design interviews. Paid.",
+      url: "https://bytebytego.com/",
+      rating: 4.8
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "ByteByteGo",
+      description: "System design concepts explained visually. Free.",
+      url: "https://www.youtube.com/c/ByteByteGo",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "System Design Interview",
+      description: "Deep dives into real system designs. Free.",
+      url: "https://www.youtube.com/c/SystemDesignInterview",
+      rating: 4.7
+    },
+    {
+      type: "youtube",
+      title: "Gaurav Sen",
+      description: "System design tutorials and interview prep. Free.",
+      url: "https://www.youtube.com/c/GauravSensei",
+      rating: 4.8
+    },
+    // Websites
+    {
+      type: "website",
+      title: "System Design Primer",
+      description: "Comprehensive GitHub repo for system design. Free.",
+      url: "https://github.com/donnemartin/system-design-primer",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "High Scalability",
+      description: "Real-world architecture case studies. Free.",
+      url: "http://highscalability.com/",
+      rating: 4.6
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/ExperiencedDevs",
+      description: "Senior developer discussions including system design. Free.",
+      url: "https://www.reddit.com/r/ExperiencedDevs/",
+      rating: 4.7
+    }
+  ],
+
+  "algorithms": [
+    // Courses
+    {
+      type: "course",
+      title: "Algorithms Specialization",
+      provider: "Coursera, Stanford",
+      description: "Stanford's algorithm courses by Tim Roughgarden. Free to audit.",
+      url: "https://www.coursera.org/specializations/algorithms",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "Algorithms, Part I & II",
+      provider: "Coursera, Princeton",
+      description: "Princeton's algorithms course with Robert Sedgewick. Free.",
+      url: "https://www.coursera.org/learn/algorithms-part1",
+      rating: 4.9
+    },
+    // Books
+    {
+      type: "book",
+      title: "Introduction to Algorithms (CLRS)",
+      author: "Cormen, Leiserson, Rivest, Stein",
+      description: "The algorithms bible. Comprehensive reference. Paid.",
+      url: "https://mitpress.mit.edu/books/introduction-algorithms-fourth-edition",
+      rating: 4.7
+    },
+    {
+      type: "book",
+      title: "Grokking Algorithms",
+      author: "Aditya Bhargava",
+      description: "Illustrated guide to algorithms. Beginner-friendly. Paid.",
+      url: "https://www.manning.com/books/grokking-algorithms-second-edition",
+      rating: 4.8
+    },
+    // Websites
+    {
+      type: "website",
+      title: "LeetCode",
+      description: "Coding problems for interview prep. Free tier + Paid.",
+      url: "https://leetcode.com/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "NeetCode",
+      description: "Curated LeetCode problems with video solutions. Free.",
+      url: "https://neetcode.io/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "Visualgo",
+      description: "Visualize algorithms and data structures. Free.",
+      url: "https://visualgo.net/",
+      rating: 4.7
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "NeetCode",
+      description: "LeetCode solutions and DSA explanations. Free.",
+      url: "https://www.youtube.com/c/NeetCode",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Abdul Bari",
+      description: "Algorithm tutorials with clear explanations. Free.",
+      url: "https://www.youtube.com/c/AbdulBari",
+      rating: 4.8
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/leetcode",
+      description: "LeetCode and algorithms discussion. Free.",
+      url: "https://www.reddit.com/r/leetcode/",
+      rating: 4.6
+    }
+  ],
+
+  "blockchain": [
+    // Courses
+    {
+      type: "course",
+      title: "Blockchain Specialization",
+      provider: "Coursera, University at Buffalo",
+      description: "Comprehensive blockchain introduction. Free to audit.",
+      url: "https://www.coursera.org/specializations/blockchain",
+      rating: 4.5
+    },
+    {
+      type: "course",
+      title: "CryptoZombies",
+      description: "Learn Solidity by building a game. Interactive and fun. Free.",
+      url: "https://cryptozombies.io/",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "Solidity by Example",
+      description: "Learn Solidity through examples. Free.",
+      url: "https://solidity-by-example.org/",
+      rating: 4.7
+    },
+    // Books
+    {
+      type: "book",
+      title: "Mastering Bitcoin",
+      author: "Andreas M. Antonopoulos",
+      description: "Technical deep dive into Bitcoin. Free on GitHub.",
+      url: "https://github.com/bitcoinbook/bitcoinbook",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "Mastering Ethereum",
+      author: "Andreas M. Antonopoulos & Gavin Wood",
+      description: "Ethereum and smart contracts guide. Free on GitHub.",
+      url: "https://github.com/ethereumbook/ethereumbook",
+      rating: 4.7
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Patrick Collins",
+      description: "Full smart contract development courses. Free.",
+      url: "https://www.youtube.com/c/PatrickCollins",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Dapp University",
+      description: "Ethereum and DeFi development tutorials. Free.",
+      url: "https://www.youtube.com/c/DappUniversity",
+      rating: 4.6
+    },
+    // Websites
+    {
+      type: "website",
+      title: "Ethereum.org Learn",
+      description: "Official Ethereum learning resources. Free.",
+      url: "https://ethereum.org/en/learn/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "Solidity Documentation",
+      description: "Official Solidity docs. Free.",
+      url: "https://docs.soliditylang.org/",
+      rating: 4.6
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/ethdev",
+      description: "Ethereum development community. Free.",
+      url: "https://www.reddit.com/r/ethdev/",
+      rating: 4.7
+    }
+  ],
+
+  "ui ux design": [
+    // Courses
+    {
+      type: "course",
+      title: "Google UX Design Professional Certificate",
+      provider: "Coursera",
+      description: "Complete UX design curriculum from Google. Free to audit.",
+      url: "https://www.coursera.org/professional-certificates/google-ux-design",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "Figma UI UX Design Essentials",
+      provider: "Udemy, Daniel Scott",
+      description: "Learn Figma for UI/UX design. Paid.",
+      url: "https://www.udemy.com/course/figma-ux-ui-design-user-experience-tutorial-course/",
+      rating: 4.6
+    },
+    // Books
+    {
+      type: "book",
+      title: "Don't Make Me Think",
+      author: "Steve Krug",
+      description: "Web usability classic. Essential reading. Paid.",
+      url: "https://sensible.com/dont-make-me-think/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "The Design of Everyday Things",
+      author: "Don Norman",
+      description: "Fundamental design principles. Must-read. Paid.",
+      url: "https://www.nngroup.com/books/design-everyday-things-revised/",
+      rating: 4.7
+    },
+    {
+      type: "book",
+      title: "Refactoring UI",
+      author: "Adam Wathan & Steve Schoger",
+      description: "Practical UI design tips for developers. Paid.",
+      url: "https://www.refactoringui.com/",
+      rating: 4.9
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Figma",
+      description: "Official Figma tutorials and tips. Free.",
+      url: "https://www.youtube.com/c/Figma",
+      rating: 4.7
+    },
+    {
+      type: "youtube",
+      title: "DesignCourse",
+      description: "UI/UX and web design tutorials. Free.",
+      url: "https://www.youtube.com/c/DesignCourse",
+      rating: 4.6
+    },
+    // Websites
+    {
+      type: "website",
+      title: "Nielsen Norman Group",
+      description: "UX research and articles. Industry authority. Free.",
+      url: "https://www.nngroup.com/articles/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "Laws of UX",
+      description: "Collection of UX principles with explanations. Free.",
+      url: "https://lawsofux.com/",
+      rating: 4.8
+    },
+    {
+      type: "website",
+      title: "Figma Community",
+      description: "Free design resources and templates. Free.",
+      url: "https://www.figma.com/community",
+      rating: 4.7
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/UXDesign",
+      description: "UX design community and resources. Free.",
+      url: "https://www.reddit.com/r/UXDesign/",
+      rating: 4.5
+    }
+  ],
+
+  "mobile development": [
+    // Courses
+    {
+      type: "course",
+      title: "CS193p - Developing Apps for iOS",
+      provider: "Stanford University",
+      description: "Stanford's iOS development course with SwiftUI. Free.",
+      url: "https://cs193p.sites.stanford.edu/",
+      rating: 4.9
+    },
+    {
+      type: "course",
+      title: "Android Basics with Compose",
+      provider: "Google",
+      description: "Official Android development course. Free.",
+      url: "https://developer.android.com/courses/android-basics-compose/course",
+      rating: 4.8
+    },
+    {
+      type: "course",
+      title: "The Complete Flutter Development Bootcamp",
+      provider: "Udemy, Angela Yu",
+      description: "Cross-platform mobile development with Flutter. Paid.",
+      url: "https://www.udemy.com/course/flutter-bootcamp-with-dart/",
+      rating: 4.7
+    },
+    {
+      type: "course",
+      title: "React Native - The Practical Guide",
+      provider: "Udemy, Maximilian Schwarzmüller",
+      description: "Build cross-platform apps with React Native. Paid.",
+      url: "https://www.udemy.com/course/react-native-the-practical-guide/",
+      rating: 4.6
+    },
+    // Books
+    {
+      type: "book",
+      title: "SwiftUI Documentation",
+      author: "Apple",
+      description: "Official SwiftUI tutorials and reference. Free.",
+      url: "https://developer.apple.com/tutorials/swiftui",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "Flutter Documentation",
+      author: "Google",
+      description: "Official Flutter docs with codelabs. Free.",
+      url: "https://docs.flutter.dev/",
+      rating: 4.7
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Sean Allen",
+      description: "Swift and iOS development tutorials. Free.",
+      url: "https://www.youtube.com/c/SeanAllen",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "Philipp Lackner",
+      description: "Android and Kotlin tutorials. Free.",
+      url: "https://www.youtube.com/c/PhilippLackner",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "The Flutter Way",
+      description: "Flutter UI tutorials and projects. Free.",
+      url: "https://www.youtube.com/c/TheFlutterWay",
+      rating: 4.6
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/FlutterDev",
+      description: "Flutter development community. Free.",
+      url: "https://www.reddit.com/r/FlutterDev/",
+      rating: 4.7
+    },
+    {
+      type: "reddit",
+      title: "r/iOSProgramming",
+      description: "iOS development discussions. Free.",
+      url: "https://www.reddit.com/r/iOSProgramming/",
+      rating: 4.6
+    }
+  ],
+
+  "software development": [
+    // Courses
+    {
+      type: "course",
+      title: "CS50: Introduction to Computer Science",
+      provider: "Harvard via edX",
+      description: "Harvard's legendary intro CS course. Free.",
+      url: "https://cs50.harvard.edu/x/",
+      rating: 5.0
+    },
+    {
+      type: "course",
+      title: "Missing Semester of Your CS Education",
+      provider: "MIT",
+      description: "Practical skills every developer needs. Free.",
+      url: "https://missing.csail.mit.edu/",
+      rating: 4.9
+    },
+    // Books
+    {
+      type: "book",
+      title: "Clean Code",
+      author: "Robert C. Martin",
+      description: "Writing maintainable, professional code. Essential. Paid.",
+      url: "https://www.oreilly.com/library/view/clean-code-a/9780136083238/",
+      rating: 4.8
+    },
+    {
+      type: "book",
+      title: "The Pragmatic Programmer",
+      author: "David Thomas & Andrew Hunt",
+      description: "Timeless software development wisdom. Paid.",
+      url: "https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/",
+      rating: 4.9
+    },
+    {
+      type: "book",
+      title: "Design Patterns",
+      author: "Gang of Four",
+      description: "Classic software design patterns. Paid.",
+      url: "https://www.oreilly.com/library/view/design-patterns-elements/0201633612/",
+      rating: 4.6
+    },
+    // YouTube
+    {
+      type: "youtube",
+      title: "Fireship",
+      description: "Quick tech explainers and tutorials. Free.",
+      url: "https://www.youtube.com/c/Fireship",
+      rating: 4.9
+    },
+    {
+      type: "youtube",
+      title: "Computerphile",
+      description: "Computer science concepts explained. Free.",
+      url: "https://www.youtube.com/c/Computerphile",
+      rating: 4.8
+    },
+    {
+      type: "youtube",
+      title: "ThePrimeagen",
+      description: "Software development and productivity. Free.",
+      url: "https://www.youtube.com/c/ThePrimeagen",
+      rating: 4.7
+    },
+    // Websites
+    {
+      type: "website",
+      title: "Roadmap.sh",
+      description: "Developer roadmaps for all paths. Free.",
+      url: "https://roadmap.sh/",
+      rating: 4.9
+    },
+    {
+      type: "website",
+      title: "GeeksforGeeks",
+      description: "CS concepts, tutorials, and practice. Free.",
+      url: "https://www.geeksforgeeks.org/",
+      rating: 4.6
+    },
+    // Communities
+    {
+      type: "reddit",
+      title: "r/learnprogramming",
+      description: "Learning to code support community. Free.",
+      url: "https://www.reddit.com/r/learnprogramming/",
+      rating: 4.8
+    },
+    {
+      type: "reddit",
+      title: "r/cscareerquestions",
+      description: "CS career advice and discussions. Free.",
+      url: "https://www.reddit.com/r/cscareerquestions/",
+      rating: 4.6
+    }
+  ]
 };
 
+// Trending resources for the Explore page
 export const trendingResources = [
-    {
-        title: "Deep Learning Specialization — Coursera",
-        description: "Andrew Ng's legendary deep learning course series.",
-        link: "https://www.coursera.org/specializations/deep-learning",
-        icon: "GraduationCap",
-        color: "from-indigo-500 to-blue-600",
-        difficulty: "intermediate",
-        relevantBackgrounds: ["student", "professional"],
-        relatedSkills: ["Deep Learning", "AI"]
-    },
-    {
-        title: "The Data Science Handbook",
-        description: "Insights from top data scientists around the world.",
-        link: "https://www.thedatasciencehandbook.com/",
-        icon: "BookOpen",
-        color: "from-green-500 to-emerald-600",
-        difficulty: "beginner",
-        relevantBackgrounds: ["student", "self-learner"],
-        relatedSkills: ["Data Science"]
-    },
-    {
-        title: "FreeCodeCamp — Machine Learning",
-        description: "Hands-on tutorials for ML, Python, and TensorFlow.",
-        link: "https://www.freecodecamp.org/learn/",
-        icon: "Code",
-        color: "from-cyan-500 to-sky-500",
-        difficulty: "beginner",
-        relevantBackgrounds: ["student", "self-learner"],
-        relatedSkills: ["Machine Learning", "Python"]
-    },
-    {
-        title: "r/learnprogramming (Reddit)",
-        description: "Join 4M+ learners discussing tips and resources.",
-        link: "https://www.reddit.com/r/learnprogramming/",
-        icon: "MessageSquare",
-        color: "from-orange-500 to-red-500",
-        difficulty: "beginner",
-        relevantBackgrounds: ["student", "self-learner", "professional"],
-        relatedSkills: ["Programming"]
-    },
-    {
-        title: "Medium — Towards Data Science",
-        description: "The most-read blog for AI and ML learners.",
-        link: "https://towardsdatascience.com/",
-        icon: "PenTool",
-        color: "from-yellow-500 to-amber-500",
-        difficulty: "intermediate",
-        relevantBackgrounds: ["professional", "student"],
-        relatedSkills: ["Data Science", "AI"]
-    },
-    {
-        title: "MIT OpenCourseWare",
-        description: "Free online courses from MIT covering all domains.",
-        link: "https://ocw.mit.edu/",
-        icon: "Globe",
-        color: "from-blue-500 to-violet-500",
-        difficulty: "advanced",
-        relevantBackgrounds: ["student", "self-learner"],
-        relatedSkills: ["Computer Science", "Engineering"]
-    }
+  {
+    title: "Fast.ai - Practical Deep Learning",
+    description: "World-class deep learning course. Build real models from day one. Completely free.",
+    link: "https://course.fast.ai/",
+    icon: "Brain",
+    color: "from-purple-500 to-indigo-600",
+    difficulty: "intermediate",
+    relevantBackgrounds: ["student", "professional", "self-learner"],
+    relatedSkills: ["Deep Learning", "Python", "Machine Learning"]
+  },
+  {
+    title: "The Odin Project",
+    description: "Complete full-stack curriculum. Project-based learning from zero to job-ready. Free.",
+    link: "https://www.theodinproject.com/",
+    icon: "Code",
+    color: "from-orange-500 to-red-500",
+    difficulty: "beginner",
+    relevantBackgrounds: ["student", "self-learner"],
+    relatedSkills: ["Web Development", "JavaScript", "React"]
+  },
+  {
+    title: "CS50: Introduction to Computer Science",
+    description: "Harvard's legendary CS course. Gold standard for CS education. Free.",
+    link: "https://cs50.harvard.edu/x/",
+    icon: "GraduationCap",
+    color: "from-red-500 to-pink-600",
+    difficulty: "beginner",
+    relevantBackgrounds: ["student", "self-learner"],
+    relatedSkills: ["Computer Science", "Programming"]
+  },
+  {
+    title: "PortSwigger Web Security Academy",
+    description: "Free, comprehensive web security training from Burp Suite creators.",
+    link: "https://portswigger.net/web-security",
+    icon: "Shield",
+    color: "from-green-500 to-emerald-600",
+    difficulty: "intermediate",
+    relevantBackgrounds: ["student", "professional"],
+    relatedSkills: ["Cyber Security", "Web Security", "Penetration Testing"]
+  },
+  {
+    title: "Kaggle Learn",
+    description: "Free micro-courses on ML, Python, and data science with hands-on notebooks.",
+    link: "https://www.kaggle.com/learn",
+    icon: "Database",
+    color: "from-cyan-500 to-blue-500",
+    difficulty: "beginner",
+    relevantBackgrounds: ["student", "self-learner", "professional"],
+    relatedSkills: ["Data Science", "Machine Learning", "Python"]
+  },
+  {
+    title: "Full Stack Open",
+    description: "University of Helsinki's modern web development course. React, Node, GraphQL. Free.",
+    link: "https://fullstackopen.com/en/",
+    icon: "Layers",
+    color: "from-blue-500 to-violet-500",
+    difficulty: "intermediate",
+    relevantBackgrounds: ["student", "professional"],
+    relatedSkills: ["React", "Node.js", "Full Stack"]
+  }
 ];
-

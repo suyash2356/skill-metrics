@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useUserProfileDetails } from './useUserProfileDetails';
 import { useUserPreferences } from './useUserPreferences';
+import { useRecentActivity } from './useRecentActivity';
 import { createPersonalizationEngine, ScoredItem } from '@/lib/personalization';
 import { techCategories, nonTechCategories, Category } from '@/data/categories';
 import { exams, Exam } from '@/data/exams';
@@ -32,14 +33,17 @@ export interface PersonalizedExploreData {
 }
 
 /**
- * Hook to get personalized explore page content based on user profile
+ * Hook to get personalized explore page content based on user profile,
+ * learning path progress, and recent activity
  */
 export function usePersonalizedExplore(): PersonalizedExploreData {
   const { profileDetails, isLoading: profileLoading } = useUserProfileDetails();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
+  const { recentActivity, isLoading: activityLoading } = useRecentActivity();
 
   const personalizedData = useMemo(() => {
-    const engine = createPersonalizationEngine(profileDetails, preferences);
+    // Create engine with profile, preferences, and recent activity
+    const engine = createPersonalizationEngine(profileDetails, preferences, recentActivity);
 
     return {
       techCategories: engine.scoreAndSort(techCategories).slice(0, 8),
@@ -50,10 +54,10 @@ export function usePersonalizedExplore(): PersonalizedExploreData {
       degrees: engine.scoreAndSort(degrees).slice(0, 20),
       trendingResources: engine.scoreAndSort(trendingResources as any as TrendingResource[]).slice(0, 6),
     };
-  }, [profileDetails, preferences]);
+  }, [profileDetails, preferences, recentActivity]);
 
   return {
     ...personalizedData,
-    isLoading: profileLoading || prefsLoading,
+    isLoading: profileLoading || prefsLoading || activityLoading,
   };
 }
