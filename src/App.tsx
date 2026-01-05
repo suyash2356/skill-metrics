@@ -28,6 +28,8 @@ import MyPosts from "./pages/MyPosts";
 import Support from "./pages/Support";
 import SavedPosts from "./pages/SavedPosts";
 import MyCommunities from "./pages/MyCommunities";
+import AdminLogin from "./pages/AdminLogin";
+import AdminDashboard from "./pages/AdminDashboard";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { VideoMuteProvider } from "@/context/VideoMuteContext";
 
@@ -78,6 +80,9 @@ const App = () => (
                 <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/my-communities" element={<ProtectedRoute><MyCommunities /></ProtectedRoute>} />
+                {/* Admin Routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin/dashboard" element={<AdminDashboard />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

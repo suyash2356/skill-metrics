@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      admins: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       bookmarks: {
         Row: {
           created_at: string
@@ -367,6 +388,69 @@ export type Database = {
           title?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      resources: {
+        Row: {
+          category: string
+          color: string | null
+          created_at: string
+          description: string
+          difficulty: string
+          duration: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          is_free: boolean
+          link: string
+          provider: string | null
+          rating: number | null
+          related_skills: string[] | null
+          relevant_backgrounds: string[] | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          color?: string | null
+          created_at?: string
+          description: string
+          difficulty?: string
+          duration?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_free?: boolean
+          link: string
+          provider?: string | null
+          rating?: number | null
+          related_skills?: string[] | null
+          relevant_backgrounds?: string[] | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          color?: string | null
+          created_at?: string
+          description?: string
+          difficulty?: string
+          duration?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          is_free?: boolean
+          link?: string
+          provider?: string | null
+          rating?: number | null
+          related_skills?: string[] | null
+          relevant_backgrounds?: string[] | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -1054,8 +1138,13 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: { user_uuid: string }; Returns: boolean }
       mask_ip_address: { Args: { ip: unknown }; Returns: string }
       migrate_profile_data: { Args: never; Returns: undefined }
+      register_first_admin: {
+        Args: { admin_email: string; admin_user_id: string }
+        Returns: boolean
+      }
       search_profiles: {
         Args: { result_limit?: number; search_query: string }
         Returns: {
