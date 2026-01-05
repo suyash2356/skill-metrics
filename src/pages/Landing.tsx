@@ -8,7 +8,8 @@ import {
   Users, 
   Sparkles, 
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  Shield
 } from "lucide-react";
 import heroImage from "@/assets/hero-education.jpg";
 import { useAuth } from "@/hooks/useAuth";
@@ -295,8 +296,8 @@ const Landing = () => {
       {/* Footer */}
       <footer className="bg-card border-t py-12">
         <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">SM</span>
               </div>
@@ -304,9 +305,18 @@ const Landing = () => {
                 Skill-Metrics
               </span>
             </div>
-            <p className="text-muted-foreground text-sm">
-              © 2024 Skill-Metrics. Empowering learners worldwide.
-            </p>
+            <div className="flex items-center gap-6">
+              <Link 
+                to="/admin/login" 
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Shield className="h-3.5 w-3.5" />
+                Admin
+              </Link>
+              <p className="text-muted-foreground text-sm">
+                © 2024 Skill-Metrics. Empowering learners worldwide.
+              </p>
+            </div>
           </div>
         </div>
       </footer>
