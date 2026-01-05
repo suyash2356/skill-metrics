@@ -48,19 +48,30 @@ export class PersonalizationEngine {
   }
 
   /**
+   * Safely get learning path as array
+   */
+  private getLearningPathArray(): LearningPathItem[] {
+    const learningPath = this.context.profileDetails?.learning_path;
+    if (!learningPath || !Array.isArray(learningPath)) return [];
+    return learningPath;
+  }
+
+  /**
    * Get user's learning goals from bio, job title, and learning path
    */
   private getLearningGoals(): string[] {
     const bio = this.context.profileDetails?.bio || '';
     const jobTitle = this.context.profileDetails?.job_title || '';
-    const learningPath = this.context.profileDetails?.learning_path || [];
+    const learningPath = this.getLearningPathArray();
     
     // Extract keywords from bio and job title
     const bioKeywords = bio.toLowerCase().split(/\s+/).filter(w => w.length > 3);
     const titleKeywords = jobTitle.toLowerCase().split(/\s+/).filter(w => w.length > 3);
     
     // Extract skills from learning path
-    const learningPathSkills = learningPath.map(item => item.skill.toLowerCase());
+    const learningPathSkills = learningPath
+      .filter(item => item && typeof item.skill === 'string')
+      .map(item => item.skill.toLowerCase());
     
     return [...new Set([...bioKeywords, ...titleKeywords, ...learningPathSkills])];
   }
@@ -69,9 +80,14 @@ export class PersonalizationEngine {
    * Get user's active learning path items (in progress)
    */
   private getActiveLearningPath(): LearningPathItem[] {
-    const learningPath = this.context.profileDetails?.learning_path || [];
+    const learningPath = this.getLearningPathArray();
     // Return items that are in progress (not 0% and not 100%)
-    return learningPath.filter(item => item.progress > 0 && item.progress < 100);
+    return learningPath.filter(item => 
+      item && 
+      typeof item.progress === 'number' && 
+      item.progress > 0 && 
+      item.progress < 100
+    );
   }
 
   /**
