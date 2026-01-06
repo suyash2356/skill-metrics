@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
-import { useIsAdmin, useRegisterFirstAdmin } from '@/hooks/useAdmin';
+import { useIsAdmin } from '@/hooks/useAdmin';
 import { Shield, Loader2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -13,12 +13,10 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const { user, signIn, loading: authLoading } = useAuth();
   const { data: isAdmin, isLoading: adminCheckLoading } = useIsAdmin();
-  const registerFirstAdmin = useRegisterFirstAdmin();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showFirstAdminSetup, setShowFirstAdminSetup] = useState(false);
 
   // Redirect if already logged in as admin
   useEffect(() => {
@@ -50,20 +48,6 @@ const AdminLogin = () => {
     }
   };
 
-  const handleRegisterAsFirstAdmin = async () => {
-    if (!user) return;
-    
-    registerFirstAdmin.mutate(
-      { userId: user.id, email: user.email || '' },
-      {
-        onSuccess: (success) => {
-          if (success) {
-            navigate('/admin/dashboard');
-          }
-        },
-      }
-    );
-  };
 
   // Show loading while checking auth
   if (authLoading) {
@@ -74,61 +58,29 @@ const AdminLogin = () => {
     );
   }
 
-  // If user is logged in but not admin, show option to become first admin
+  // If user is logged in but not admin, show access denied
   if (user && isAdmin === false && !adminCheckLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-yellow-500/10">
-              <Shield className="h-8 w-8 text-yellow-500" />
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+              <Shield className="h-8 w-8 text-destructive" />
             </div>
-            <CardTitle className="text-2xl">Not an Admin</CardTitle>
+            <CardTitle className="text-2xl">Access Denied</CardTitle>
             <CardDescription>
-              You're logged in as <span className="font-medium">{user.email}</span>, but you don't have admin access.
+              You don't have admin privileges to access this area.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {showFirstAdminSetup ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground text-center">
-                  If no admin exists yet, you can register as the first admin.
-                </p>
-                <Button 
-                  onClick={handleRegisterAsFirstAdmin} 
-                  className="w-full"
-                  disabled={registerFirstAdmin.isPending}
-                >
-                  {registerFirstAdmin.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Register as First Admin
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setShowFirstAdminSetup(false)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <Button 
-                  variant="outline" 
-                  className="w-full"
-                  onClick={() => setShowFirstAdminSetup(true)}
-                >
-                  I'm setting up the first admin
-                </Button>
-                <Button 
-                  variant="ghost" 
-                  className="w-full"
-                  onClick={() => navigate('/')}
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Home
-                </Button>
-              </div>
-            )}
+          <CardContent>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => navigate('/')}
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
           </CardContent>
         </Card>
       </div>
