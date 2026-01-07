@@ -8,7 +8,8 @@ import { exams, Exam } from '@/data/exams';
 import { certifications, Certification } from '@/data/certifications';
 import { learningPaths, LearningPath } from '@/data/learningPaths';
 import { degrees, Degree } from '@/data/degrees';
-import { trendingResources } from '@/data/resourceData';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface TrendingResource {
   title: string;
@@ -41,6 +42,33 @@ export function usePersonalizedExplore(): PersonalizedExploreData {
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { recentActivity, isLoading: activityLoading } = useRecentActivity();
 
+  // Fetch trending resources from database
+  const { data: dbResources = [], isLoading: resourcesLoading } = useQuery({
+    queryKey: ['trendingResources'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('resources')
+        .select('*')
+        .eq('is_active', true)
+        .eq('is_featured', true)
+        .limit(20);
+      
+      if (error) throw error;
+      
+      return (data || []).map(r => ({
+        title: r.title,
+        description: r.description,
+        link: r.link,
+        icon: r.icon,
+        color: r.color,
+        difficulty: r.difficulty,
+        relevantBackgrounds: r.relevant_backgrounds,
+        relatedSkills: r.related_skills,
+      })) as TrendingResource[];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
   const personalizedData = useMemo(() => {
     // Create engine with profile, preferences, and recent activity
     const engine = createPersonalizationEngine(profileDetails, preferences, recentActivity);
@@ -52,12 +80,12 @@ export function usePersonalizedExplore(): PersonalizedExploreData {
       certifications: engine.scoreAndSort(certifications).slice(0, 10),
       learningPaths: engine.scoreAndSort(learningPaths).slice(0, 6),
       degrees: engine.scoreAndSort(degrees).slice(0, 20),
-      trendingResources: engine.scoreAndSort(trendingResources as any as TrendingResource[]).slice(0, 6),
+      trendingResources: engine.scoreAndSort(dbResources).slice(0, 6),
     };
-  }, [profileDetails, preferences, recentActivity]);
+  }, [profileDetails, preferences, recentActivity, dbResources]);
 
   return {
     ...personalizedData,
-    isLoading: profileLoading || prefsLoading || activityLoading,
+    isLoading: profileLoading || prefsLoading || activityLoading || resourcesLoading,
   };
 }

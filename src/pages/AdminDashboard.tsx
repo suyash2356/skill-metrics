@@ -14,9 +14,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { 
   Shield, LogOut, Plus, Search, MoreHorizontal, 
   Pencil, Trash2, Eye, EyeOff, Star, Loader2,
-  BookOpen, Database, Users, TrendingUp
+  BookOpen, Database, Users, TrendingUp, Download, Upload
 } from 'lucide-react';
 import ResourceForm from '@/components/admin/ResourceForm';
+import ImportExportDialog from '@/components/admin/ImportExportDialog';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -30,7 +31,7 @@ const AdminDashboard = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-
+  const [isImportExportOpen, setIsImportExportOpen] = useState(false);
   // Redirect if not admin
   if (!adminLoading && !isAdmin) {
     navigate('/admin/login');
@@ -156,10 +157,16 @@ const AdminDashboard = () => {
                 <CardTitle>Resources</CardTitle>
                 <CardDescription>Manage learning resources for users</CardDescription>
               </div>
-              <Button onClick={() => setIsFormOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Resource
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setIsImportExportOpen(true)}>
+                  <Download className="mr-2 h-4 w-4" />
+                  Import/Export
+                </Button>
+                <Button onClick={() => setIsFormOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Resource
+                </Button>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -314,6 +321,13 @@ const AdminDashboard = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Import/Export Dialog */}
+      <ImportExportDialog 
+        open={isImportExportOpen}
+        onOpenChange={setIsImportExportOpen}
+        resources={resources}
+      />
     </div>
   );
 };
