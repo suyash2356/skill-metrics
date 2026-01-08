@@ -192,10 +192,10 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
           description: item.description || '',
           link: item.link || '',
           category: item.category || 'General',
-          difficulty: item.difficulty || 'Beginner',
+          difficulty: item.difficulty || 'beginner',
           is_free: item.is_free ?? true,
           icon: item.icon || '📚',
-          color: item.color || 'bg-blue-500',
+          color: item.color || 'blue',
           related_skills: item.related_skills || [],
           relevant_backgrounds: item.relevant_backgrounds || [],
           provider: item.provider || null,
@@ -203,6 +203,12 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
           rating: item.rating || null,
           is_featured: item.is_featured ?? false,
           is_active: item.is_active ?? true,
+          resource_type: item.resource_type || 'course',
+          section_type: item.section_type || 'domain',
+          target_countries: item.target_countries || [],
+          estimated_time: item.estimated_time || null,
+          prerequisites: item.prerequisites || [],
+          education_levels: item.education_levels || [],
         };
 
         await new Promise<void>((resolve, reject) => {

@@ -68,6 +68,12 @@ const ResourceForm = ({ resource, onSuccess, onCancel }: ResourceFormProps) => {
     rating: null,
     is_featured: false,
     is_active: true,
+    resource_type: 'course',
+    section_type: 'domain',
+    target_countries: [],
+    estimated_time: '',
+    prerequisites: [],
+    education_levels: [],
   });
 
   const [newSkill, setNewSkill] = useState('');
@@ -81,15 +87,21 @@ const ResourceForm = ({ resource, onSuccess, onCancel }: ResourceFormProps) => {
         category: resource.category,
         difficulty: resource.difficulty,
         is_free: resource.is_free,
-        icon: resource.icon,
-        color: resource.color,
+        icon: resource.icon || '📚',
+        color: resource.color || 'blue',
         related_skills: resource.related_skills || [],
         relevant_backgrounds: resource.relevant_backgrounds || [],
         provider: resource.provider || '',
         duration: resource.duration || '',
         rating: resource.rating,
-        is_featured: resource.is_featured,
-        is_active: resource.is_active,
+        is_featured: resource.is_featured ?? false,
+        is_active: resource.is_active ?? true,
+        resource_type: resource.resource_type || 'course',
+        section_type: resource.section_type || 'domain',
+        target_countries: resource.target_countries || [],
+        estimated_time: resource.estimated_time || '',
+        prerequisites: resource.prerequisites || [],
+        education_levels: resource.education_levels || [],
       });
     }
   }, [resource]);
