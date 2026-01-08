@@ -11,17 +11,24 @@ export interface Resource {
   category: string;
   difficulty: string;
   is_free: boolean;
-  icon: string;
-  color: string;
-  related_skills: string[];
-  relevant_backgrounds: string[];
+  icon: string | null;
+  color: string | null;
+  related_skills: string[] | null;
+  relevant_backgrounds: string[] | null;
   provider: string | null;
   duration: string | null;
   rating: number | null;
-  is_featured: boolean;
-  is_active: boolean;
+  is_featured: boolean | null;
+  is_active: boolean | null;
   created_at: string;
   updated_at: string;
+  // New fields
+  resource_type: string;
+  section_type: string;
+  target_countries: string[] | null;
+  estimated_time: string | null;
+  prerequisites: string[] | null;
+  education_levels: string[] | null;
 }
 
 export type ResourceInsert = Omit<Resource, 'id' | 'created_at' | 'updated_at'>;

@@ -399,16 +399,22 @@ export type Database = {
           description: string
           difficulty: string
           duration: string | null
+          education_levels: string[] | null
+          estimated_time: string | null
           icon: string | null
           id: string
           is_active: boolean | null
           is_featured: boolean | null
           is_free: boolean
           link: string
+          prerequisites: string[] | null
           provider: string | null
           rating: number | null
           related_skills: string[] | null
           relevant_backgrounds: string[] | null
+          resource_type: string
+          section_type: string
+          target_countries: string[] | null
           title: string
           updated_at: string
         }
@@ -419,16 +425,22 @@ export type Database = {
           description: string
           difficulty?: string
           duration?: string | null
+          education_levels?: string[] | null
+          estimated_time?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean
           link: string
+          prerequisites?: string[] | null
           provider?: string | null
           rating?: number | null
           related_skills?: string[] | null
           relevant_backgrounds?: string[] | null
+          resource_type?: string
+          section_type?: string
+          target_countries?: string[] | null
           title: string
           updated_at?: string
         }
@@ -439,16 +451,22 @@ export type Database = {
           description?: string
           difficulty?: string
           duration?: string | null
+          education_levels?: string[] | null
+          estimated_time?: string | null
           icon?: string | null
           id?: string
           is_active?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean
           link?: string
+          prerequisites?: string[] | null
           provider?: string | null
           rating?: number | null
           related_skills?: string[] | null
           relevant_backgrounds?: string[] | null
+          resource_type?: string
+          section_type?: string
+          target_countries?: string[] | null
           title?: string
           updated_at?: string
         }
