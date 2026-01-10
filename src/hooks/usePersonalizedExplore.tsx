@@ -3,13 +3,19 @@ import { useUserProfileDetails } from './useUserProfileDetails';
 import { useUserPreferences } from './useUserPreferences';
 import { useRecentActivity } from './useRecentActivity';
 import { createPersonalizationEngine, ScoredItem } from '@/lib/personalization';
-import { techCategories, nonTechCategories, Category } from '@/data/categories';
-import { exams, Exam } from '@/data/exams';
-import { certifications, Certification } from '@/data/certifications';
-import { learningPaths, LearningPath } from '@/data/learningPaths';
-import { degrees, Degree } from '@/data/degrees';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { 
+  useCategories, 
+  useExams, 
+  useCertifications, 
+  useDegrees, 
+  useLearningPaths,
+  useTrendingResources,
+  Category,
+  Exam,
+  Certification,
+  Degree,
+  LearningPath
+} from './useExploreData';
 
 export interface TrendingResource {
   title: string;
@@ -35,43 +41,28 @@ export interface PersonalizedExploreData {
 
 /**
  * Hook to get personalized explore page content based on user profile,
- * learning path progress, and recent activity
+ * learning path progress, and recent activity - ALL FROM DATABASE
  */
 export function usePersonalizedExplore(): PersonalizedExploreData {
   const { profileDetails, isLoading: profileLoading } = useUserProfileDetails();
   const { preferences, isLoading: prefsLoading } = useUserPreferences();
   const { recentActivity, isLoading: activityLoading } = useRecentActivity();
 
-  // Fetch trending resources from database
-  const { data: dbResources = [], isLoading: resourcesLoading } = useQuery({
-    queryKey: ['trendingResources'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('resources')
-        .select('*')
-        .eq('is_active', true)
-        .eq('is_featured', true)
-        .limit(20);
-      
-      if (error) throw error;
-      
-      return (data || []).map(r => ({
-        title: r.title,
-        description: r.description,
-        link: r.link,
-        icon: r.icon,
-        color: r.color,
-        difficulty: r.difficulty,
-        relevantBackgrounds: r.relevant_backgrounds,
-        relatedSkills: r.related_skills,
-      })) as TrendingResource[];
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+  // Fetch all data from database
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
+  const { data: exams = [], isLoading: examsLoading } = useExams();
+  const { data: certifications = [], isLoading: certificationsLoading } = useCertifications();
+  const { data: degrees = [], isLoading: degreesLoading } = useDegrees();
+  const { data: learningPaths = [], isLoading: learningPathsLoading } = useLearningPaths();
+  const { data: trendingResources = [], isLoading: resourcesLoading } = useTrendingResources();
 
   const personalizedData = useMemo(() => {
     // Create engine with profile, preferences, and recent activity
     const engine = createPersonalizationEngine(profileDetails, preferences, recentActivity);
+
+    // Split categories into tech and non-tech
+    const techCategories = categories.filter(c => c.type === 'tech');
+    const nonTechCategories = categories.filter(c => c.type === 'non-tech');
 
     return {
       techCategories: engine.scoreAndSort(techCategories).slice(0, 8),
@@ -80,12 +71,14 @@ export function usePersonalizedExplore(): PersonalizedExploreData {
       certifications: engine.scoreAndSort(certifications).slice(0, 10),
       learningPaths: engine.scoreAndSort(learningPaths).slice(0, 6),
       degrees: engine.scoreAndSort(degrees).slice(0, 20),
-      trendingResources: engine.scoreAndSort(dbResources).slice(0, 6),
+      trendingResources: engine.scoreAndSort(trendingResources).slice(0, 6),
     };
-  }, [profileDetails, preferences, recentActivity, dbResources]);
+  }, [profileDetails, preferences, recentActivity, categories, exams, certifications, degrees, learningPaths, trendingResources]);
 
   return {
     ...personalizedData,
-    isLoading: profileLoading || prefsLoading || activityLoading || resourcesLoading,
+    isLoading: profileLoading || prefsLoading || activityLoading || 
+               categoriesLoading || examsLoading || certificationsLoading || 
+               degreesLoading || learningPathsLoading || resourcesLoading,
   };
 }
