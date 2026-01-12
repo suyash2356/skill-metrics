@@ -201,40 +201,40 @@ function Explore() {
 
                   return (
                     <SwiperSlide key={idx}>
-                      <Card
-                        onClick={() => {
-                          if (category.link) window.open(category.link, '_blank');
-                          else handleCategoryClick(category.title);
-                        }}
-                        className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
-                      >
-                        <CardHeader className="flex items-center gap-3">
-                          <div
-                            className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}
-                          >
-                            <IconComponent className="h-6 w-6" />
-                          </div>
-                          <CardTitle className="text-lg font-bold break-words">{category.title}</CardTitle>
-                          {scoredCategory.reasons[0] && (
-                            <Badge variant="secondary" className="text-xs">{scoredCategory.reasons[0]}</Badge>
-                          )}
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-muted-foreground text-sm">{category.description}</p>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (category.link) window.open(category.link, '_blank');
-                              else handleCategoryClick(category.title);
-                            }}
-                          >
-                            Explore
-                          </Button>
-                        </CardContent>
-                      </Card>
+                        <Card
+                          onClick={() => {
+                            if (category.link) window.open(category.link, '_blank');
+                            else handleCategoryClick(category.title);
+                          }}
+                          className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500 h-[220px] flex flex-col"
+                        >
+                          <CardHeader className="flex items-center gap-3 flex-shrink-0">
+                            <div
+                              className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg flex-shrink-0`}
+                            >
+                              <IconComponent className="h-6 w-6" />
+                            </div>
+                            <CardTitle className="text-lg font-bold line-clamp-1">{category.title}</CardTitle>
+                            {scoredCategory.reasons[0] && (
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredCategory.reasons[0]}</Badge>
+                            )}
+                          </CardHeader>
+                          <CardContent className="flex-1 flex flex-col justify-between">
+                            <p className="text-muted-foreground text-sm line-clamp-2">{category.description}</p>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (category.link) window.open(category.link, '_blank');
+                                else handleCategoryClick(category.title);
+                              }}
+                            >
+                              Explore
+                            </Button>
+                          </CardContent>
+                        </Card>
                     </SwiperSlide>
                   );
                 })}
@@ -271,19 +271,19 @@ function Explore() {
                             if (category.link) window.open(category.link, '_blank');
                             else handleCategoryClick(category.title);
                           }}
-                          className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+                          className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500 h-[220px] flex flex-col"
                         >
-                          <CardHeader className="flex items-center gap-3">
-                            <div className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg`}>
+                          <CardHeader className="flex items-center gap-3 flex-shrink-0">
+                            <div className={`p-3 rounded-full bg-gradient-to-r ${category.color} text-white shadow-lg flex-shrink-0`}>
                               <IconComponent className="h-6 w-6" />
                             </div>
-                            <CardTitle className="text-lg font-bold break-words">{category.title}</CardTitle>
+                            <CardTitle className="text-lg font-bold line-clamp-1">{category.title}</CardTitle>
                             {scoredCategory.reasons[0] && (
-                              <Badge variant="secondary" className="text-xs">{scoredCategory.reasons[0]}</Badge>
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredCategory.reasons[0]}</Badge>
                             )}
                           </CardHeader>
-                          <CardContent>
-                            <p className="text-muted-foreground text-sm">{category.description}</p>
+                          <CardContent className="flex-1 flex flex-col justify-between">
+                            <p className="text-muted-foreground text-sm line-clamp-2">{category.description}</p>
                             <Button
                               variant="outline"
                               size="sm"
@@ -327,19 +327,19 @@ function Explore() {
                       <SwiperSlide key={`exam-${idx}`}>
                         <Card
                           onClick={() => { if (exam.link) window.open(exam.link, '_blank'); else handleCategoryClick(exam.title); }}
-                          className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500"
+                          className="group cursor-pointer overflow-hidden bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500 h-[220px] flex flex-col"
                         >
-                          <CardHeader className="flex items-center gap-3">
-                            <div className={`p-3 rounded-full bg-gradient-to-r ${exam.color} text-white shadow-lg`}>
+                          <CardHeader className="flex items-center gap-3 flex-shrink-0">
+                            <div className={`p-3 rounded-full bg-gradient-to-r ${exam.color} text-white shadow-lg flex-shrink-0`}>
                               <GraduationCap className="h-6 w-6" />
                             </div>
-                            <CardTitle className="text-lg font-bold break-words">{exam.title}</CardTitle>
+                            <CardTitle className="text-lg font-bold line-clamp-1">{exam.title}</CardTitle>
                             {scoredExam.reasons[0] && (
-                              <Badge variant="secondary" className="text-xs">{scoredExam.reasons[0]}</Badge>
+                              <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredExam.reasons[0]}</Badge>
                             )}
                           </CardHeader>
-                          <CardContent>
-                            <p className="text-muted-foreground text-sm">{exam.description}</p>
+                          <CardContent className="flex-1 flex flex-col justify-between">
+                            <p className="text-muted-foreground text-sm line-clamp-2">{exam.description}</p>
                             <Button
                               variant="outline"
                               size="sm"
@@ -379,19 +379,19 @@ function Explore() {
                       {/* MINI CARD: very compact; title + university + mode only */}
                       <Card
                         onClick={() => setSelectedDegree(deg)}
-                        className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all"
+                        className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all h-[140px] flex flex-col"
                       >
-                        <CardHeader className="flex items-start gap-3 p-4">
+                        <CardHeader className="flex items-start gap-3 p-4 flex-1">
                           <div
                             className={`p-2.5 rounded-full bg-gradient-to-r ${deg.mode.toLowerCase().includes("online")
                               ? "from-teal-400 to-cyan-500"
                               : "from-sky-500 to-indigo-500"
-                              } text-white shadow`}
+                              } text-white shadow flex-shrink-0`}
                           >
                             <GraduationCap className="h-5 w-5" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <CardTitle className="text-base font-semibold truncate">
+                            <CardTitle className="text-base font-semibold line-clamp-1">
                               {deg.title}
                             </CardTitle>
                             <div className="text-xs text-muted-foreground truncate">
@@ -512,19 +512,20 @@ function Explore() {
                     <motion.div key={i} whileHover={{ scale: 1.03 }} transition={{ type: "spring", stiffness: 300 }}>
                       <Card
                         onClick={() => window.open(cert.link, "_blank")}
-                        className="cursor-pointer bg-gradient-to-br from-background to-muted shadow-md hover:shadow-lg transition-all border-0"
+                        className="cursor-pointer bg-gradient-to-br from-background to-muted shadow-md hover:shadow-lg transition-all border-0 h-[180px] flex flex-col"
                       >
-                        <CardHeader className="flex items-center gap-3">
-                          <div className={`p-3 rounded-full bg-gradient-to-r ${cert.color} text-white shadow-lg`}>
+                        <CardHeader className="flex items-center gap-3 flex-shrink-0">
+                          <div className={`p-3 rounded-full bg-gradient-to-r ${cert.color} text-white shadow-lg flex-shrink-0`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
-                          <CardTitle className="text-lg font-semibold break-words">{cert.name}</CardTitle>
+                          <CardTitle className="text-lg font-semibold line-clamp-1">{cert.name}</CardTitle>
                           {scoredCert.reasons[0] && (
-                            <Badge variant="secondary" className="text-xs">{scoredCert.reasons[0]}</Badge>
+                            <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredCert.reasons[0]}</Badge>
                           )}
                         </CardHeader>
-                        <CardContent>
+                        <CardContent className="flex-1 flex flex-col justify-center">
                           <p className="text-muted-foreground text-sm">Offered by {cert.provider}</p>
+                          {cert.estimatedTime && <p className="text-muted-foreground text-xs mt-1">{cert.estimatedTime}</p>}
                         </CardContent>
                       </Card>
                     </motion.div>
@@ -545,8 +546,8 @@ function Explore() {
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {personalizedData.learningPaths.map((scoredPath, idx) => {
                   const path = scoredPath.item;
-                  const iconMap: any = { Brain, Database, Laptop, Shield, Cloud, Rocket };
-                  const IconComponent = iconMap[
+                  const pathIconMap: any = { Brain, Database, Laptop, Shield, Cloud, Rocket };
+                  const IconComponent = pathIconMap[
                     path.title.includes('Data') ? 'Database' :
                       path.title.includes('Developer') || path.title.includes('Full') ? 'Laptop' :
                         path.title.includes('Cyber') || path.title.includes('Security') ? 'Shield' :
@@ -568,20 +569,22 @@ function Explore() {
                     <motion.div key={idx} whileHover={{ scale: 1.04 }} transition={{ type: "spring", stiffness: 250 }}>
                       <Card
                         onClick={() => setSelectedPath(path)}
-                        className="bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer"
+                        className="bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-xl transition-all duration-500 cursor-pointer h-[220px] flex flex-col"
                       >
-                        <CardHeader className="flex items-center gap-3 p-4">
-                          <div className={`p-3 rounded-full bg-gradient-to-r ${pathColor} text-white shadow-lg`}>
+                        <CardHeader className="flex items-center gap-3 p-4 flex-shrink-0">
+                          <div className={`p-3 rounded-full bg-gradient-to-r ${pathColor} text-white shadow-lg flex-shrink-0`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
-                          <CardTitle className="text-base font-bold break-words">{path.title}</CardTitle>
+                          <CardTitle className="text-base font-bold line-clamp-1">{path.title}</CardTitle>
                           {scoredPath.reasons[0] && (
-                            <Badge variant="secondary" className="text-xs">{scoredPath.reasons[0]}</Badge>
+                            <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredPath.reasons[0]}</Badge>
                           )}
                         </CardHeader>
-                        <CardContent className="pt-0 pb-4 px-4">
-                          <p className="text-xs text-muted-foreground">{path.duration}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{path.difficulty} level</p>
+                        <CardContent className="pt-0 pb-4 px-4 flex-1 flex flex-col justify-between">
+                          <div>
+                            <p className="text-xs text-muted-foreground">{path.duration}</p>
+                            <p className="text-xs text-muted-foreground mt-1 capitalize">{path.difficulty} level</p>
+                          </div>
                           <Button
                             variant="outline"
                             size="sm"
@@ -679,19 +682,19 @@ function Explore() {
                     <motion.div key={i} whileHover={{ y: -5, scale: 1.03 }} transition={{ type: "spring", stiffness: 300 }}>
                       <Card
                         onClick={() => window.open(res.link, "_blank")}
-                        className="cursor-pointer bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-lg transition-all"
+                        className="cursor-pointer bg-gradient-to-br from-background to-muted border-0 shadow-md hover:shadow-lg transition-all h-[180px] flex flex-col"
                       >
-                        <CardHeader className="flex items-center gap-3">
-                          <div className={`p-3 rounded-full bg-gradient-to-r ${res.color} text-white shadow-lg`}>
+                        <CardHeader className="flex items-center gap-3 flex-shrink-0">
+                          <div className={`p-3 rounded-full bg-gradient-to-r ${res.color} text-white shadow-lg flex-shrink-0`}>
                             <IconComponent className="h-6 w-6" />
                           </div>
-                          <CardTitle className="text-lg font-semibold leading-snug break-words">{res.title}</CardTitle>
+                          <CardTitle className="text-lg font-semibold leading-snug line-clamp-1">{res.title}</CardTitle>
                           {scoredRes.reasons[0] && (
-                            <Badge variant="secondary" className="text-xs">{scoredRes.reasons[0]}</Badge>
+                            <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredRes.reasons[0]}</Badge>
                           )}
                         </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-muted-foreground">{res.description}</p>
+                        <CardContent className="flex-1">
+                          <p className="text-sm text-muted-foreground line-clamp-2">{res.description}</p>
                         </CardContent>
                       </Card>
                     </motion.div>
