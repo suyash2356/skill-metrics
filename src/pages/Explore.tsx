@@ -546,11 +546,12 @@ function Explore() {
                 {personalizedData.learningPaths.map((scoredPath, idx) => {
                   const path = scoredPath.item;
                   const iconMap: any = { Brain, Database, Laptop, Shield, Cloud, Rocket };
-                  const IconComponent = iconMap[path.roadmap[0]?.phase?.includes('AI') ? 'Brain' :
+                  const IconComponent = iconMap[
                     path.title.includes('Data') ? 'Database' :
                       path.title.includes('Developer') || path.title.includes('Full') ? 'Laptop' :
                         path.title.includes('Cyber') || path.title.includes('Security') ? 'Shield' :
                           path.title.includes('Cloud') || path.title.includes('DevOps') ? 'Cloud' :
+                            path.title.includes('AI') || path.title.includes('ML') ? 'Brain' :
                             'Rocket'] || Rocket;
 
                   const colorMap: any = {
@@ -579,7 +580,7 @@ function Explore() {
                           )}
                         </CardHeader>
                         <CardContent className="pt-0 pb-4 px-4">
-                          <p className="text-xs text-muted-foreground">{path.roadmap.length} Steps • {path.duration}</p>
+                          <p className="text-xs text-muted-foreground">{path.duration}</p>
                           <p className="text-xs text-muted-foreground mt-1">{path.difficulty} level</p>
                           <Button
                             variant="outline"

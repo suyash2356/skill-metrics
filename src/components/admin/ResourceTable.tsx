@@ -15,11 +15,9 @@ import { Loader2 } from 'lucide-react';
 
 interface ResourceTableProps {
   resources: Resource[];
-  categoryFilter: string;
-  onBack: () => void;
-  onAdd: () => void;
+  sectionType: 'domain' | 'exam';
+  category: string;
   onEdit: (resource: Resource) => void;
-  onImportExport: () => void;
 }
 
 const RESOURCE_TYPE_EMOJI: Record<string, string> = {
@@ -37,11 +35,9 @@ const RESOURCE_TYPE_EMOJI: Record<string, string> = {
 
 const ResourceTable = ({ 
   resources, 
-  categoryFilter, 
-  onBack, 
-  onAdd, 
-  onEdit, 
-  onImportExport 
+  sectionType,
+  category,
+  onEdit
 }: ResourceTableProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
@@ -53,7 +49,8 @@ const ResourceTable = ({
   // Get filtered resources
   const filteredResources = useMemo(() => {
     return resources.filter(resource => {
-      const matchesCategory = resource.category === categoryFilter;
+      const matchesCategory = resource.category === category;
+      const matchesSectionType = resource.section_type === sectionType;
       const matchesSearch = 
         resource.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         resource.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -61,20 +58,20 @@ const ResourceTable = ({
       const matchesType = typeFilter === 'all' || resource.resource_type === typeFilter;
       const matchesDifficulty = difficultyFilter === 'all' || resource.difficulty === difficultyFilter;
       
-      return matchesCategory && matchesSearch && matchesType && matchesDifficulty;
+      return matchesCategory && matchesSectionType && matchesSearch && matchesType && matchesDifficulty;
     });
-  }, [resources, categoryFilter, searchTerm, typeFilter, difficultyFilter]);
+  }, [resources, category, sectionType, searchTerm, typeFilter, difficultyFilter]);
 
   // Get available types for this category
   const availableTypes = useMemo(() => {
     const types = new Set<string>();
     resources
-      .filter(r => r.category === categoryFilter)
+      .filter(r => r.category === category && r.section_type === sectionType)
       .forEach(r => {
         if (r.resource_type) types.add(r.resource_type);
       });
     return Array.from(types).sort();
-  }, [resources, categoryFilter]);
+  }, [resources, category, sectionType]);
 
   const handleDelete = (id: string) => {
     deleteResource.mutate(id, {
@@ -84,29 +81,9 @@ const ResourceTable = ({
 
   return (
     <div className="space-y-4">
-      {/* Header with back button */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h2 className="text-xl font-bold">{categoryFilter}</h2>
-            <p className="text-sm text-muted-foreground">
-              {filteredResources.length} resources found
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onImportExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Import/Export
-          </Button>
-          <Button onClick={onAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Resource
-          </Button>
-        </div>
+      {/* Stats summary */}
+      <div className="text-sm text-muted-foreground">
+        {filteredResources.length} resources found
       </div>
 
       {/* Filters */}
