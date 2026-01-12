@@ -1171,6 +1171,35 @@ export type Database = {
           user_id: string
         }[]
       }
+      send_comment_notification: {
+        Args: {
+          p_comment_text: string
+          p_post_id: string
+          p_post_owner_id: string
+          p_post_title: string
+        }
+        Returns: undefined
+      }
+      send_follow_accepted_notification: {
+        Args: { p_requester_id: string }
+        Returns: undefined
+      }
+      send_follow_notification: {
+        Args: { p_followed_user_id: string }
+        Returns: undefined
+      }
+      send_follow_request_notification: {
+        Args: { p_requested_user_id: string }
+        Returns: undefined
+      }
+      send_like_notification: {
+        Args: {
+          p_post_id: string
+          p_post_owner_id: string
+          p_post_title: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       community_role: "admin" | "moderator" | "member"
