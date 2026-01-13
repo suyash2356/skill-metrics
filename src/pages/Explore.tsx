@@ -219,8 +219,8 @@ function Explore() {
                               <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredCategory.reasons[0]}</Badge>
                             )}
                           </CardHeader>
-                          <CardContent className="flex-1 flex flex-col justify-between">
-                            <p className="text-muted-foreground text-sm line-clamp-2">{category.description}</p>
+                          <CardContent className="flex-1 flex flex-col justify-between overflow-hidden">
+                            <p className="text-muted-foreground text-sm line-clamp-2 overflow-hidden">{category.description}</p>
                             <Button
                               variant="outline"
                               size="sm"
@@ -282,8 +282,8 @@ function Explore() {
                               <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredCategory.reasons[0]}</Badge>
                             )}
                           </CardHeader>
-                          <CardContent className="flex-1 flex flex-col justify-between">
-                            <p className="text-muted-foreground text-sm line-clamp-2">{category.description}</p>
+                          <CardContent className="flex-1 flex flex-col justify-between overflow-hidden">
+                            <p className="text-muted-foreground text-sm line-clamp-2 overflow-hidden">{category.description}</p>
                             <Button
                               variant="outline"
                               size="sm"
@@ -338,8 +338,8 @@ function Explore() {
                               <Badge variant="secondary" className="text-xs flex-shrink-0">{scoredExam.reasons[0]}</Badge>
                             )}
                           </CardHeader>
-                          <CardContent className="flex-1 flex flex-col justify-between">
-                            <p className="text-muted-foreground text-sm line-clamp-2">{exam.description}</p>
+                          <CardContent className="flex-1 flex flex-col justify-between overflow-hidden">
+                            <p className="text-muted-foreground text-sm line-clamp-2 overflow-hidden">{exam.description}</p>
                             <Button
                               variant="outline"
                               size="sm"
