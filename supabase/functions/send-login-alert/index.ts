@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +7,6 @@ const corsHeaders = {
 };
 
 interface LoginAlertRequest {
-  email: string;
   deviceInfo: string;
   // Removed location for privacy - only country if available
   country?: string;
@@ -19,9 +19,47 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, deviceInfo, country, timestamp }: LoginAlertRequest = await req.json();
+    // SECURITY FIX: Verify the user is authenticated before sending login alerts
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Authentication required' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    console.log("Login alert request for:", email);
+    // Create Supabase client and verify the token
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+
+    // Validate the token and get user claims
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    
+    if (claimsError || !claimsData?.claims) {
+      console.error("Token validation failed:", claimsError);
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Get the user's email from the verified token claims
+    const userEmail = claimsData.claims.email as string;
+    if (!userEmail) {
+      return new Response(
+        JSON.stringify({ error: 'User email not found in token' }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    const { deviceInfo, country, timestamp }: LoginAlertRequest = await req.json();
+
+    console.log("Login alert request for authenticated user:", userEmail);
     
     // Get RESEND_API_KEY from environment
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
@@ -36,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Privacy-focused: only show country if available, never city/IP
     const locationText = country ? `Country: ${country}` : 'Location: Not available (privacy protected)';
 
-    // Send email using Resend REST API
+    // Send email using Resend REST API to the authenticated user's email
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -45,7 +83,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Security <onboarding@resend.dev>",
-        to: [email],
+        to: [userEmail], // Use verified email from token, not from request body
         subject: "New Login Detected - Security Alert",
         html: `
           <!DOCTYPE html>
