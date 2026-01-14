@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useIsAdmin, useResources, Resource } from '@/hooks/useAdmin';
@@ -13,8 +12,7 @@ import {
 } from 'lucide-react';
 import EnhancedResourceForm from '@/components/admin/EnhancedResourceForm';
 import ImportExportDialog from '@/components/admin/ImportExportDialog';
-import DomainList from '@/components/admin/DomainList';
-import ExamList from '@/components/admin/ExamList';
+import CategoryManager from '@/components/admin/CategoryManager';
 import ResourceTable from '@/components/admin/ResourceTable';
 
 const AdminDashboard = () => {
@@ -249,24 +247,16 @@ const AdminDashboard = () => {
                 </TabsList>
 
                 <TabsContent value="domains">
-                  <DomainList 
-                    resources={resources} 
-                    onDomainSelect={handleDomainSelect}
-                    onAddResource={() => {
-                      setEditingResource(null);
-                      setIsFormOpen(true);
-                    }}
+                  <CategoryManager 
+                    type="domain"
+                    onCategorySelect={handleDomainSelect}
                   />
                 </TabsContent>
 
                 <TabsContent value="exams">
-                  <ExamList 
-                    resources={resources} 
-                    onExamSelect={handleExamSelect}
-                    onAddResource={() => {
-                      setEditingResource(null);
-                      setIsFormOpen(true);
-                    }}
+                  <CategoryManager 
+                    type="exam"
+                    onCategorySelect={handleExamSelect}
                   />
                 </TabsContent>
               </Tabs>
