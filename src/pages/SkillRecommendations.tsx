@@ -1,41 +1,20 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fetchRecommendations, Recommendation } from "@/api/searchAPI";
-import { Book, Layers, Youtube, Globe, Brain, Star } from "lucide-react";
+import { Book, Layers, Youtube, Globe, Brain, Star, Map, Library } from "lucide-react";
 import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
 import { getPersonalizedResources } from "@/lib/resourceMatcher";
+import { getSkillRoadmap, generateGenericRoadmap } from "@/lib/skillRoadmaps";
+import { SkillRoadmapSection } from "@/components/SkillRoadmapSection";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
-
-const skillDescriptions: Record<string, string> = {
-  "ai": "Artificial Intelligence (AI) is the field of building systems that can perform tasks that normally require human intelligence — including perception, reasoning, learning and natural language understanding.",
-  "machine learning": "Machine Learning focuses on algorithms that learn patterns from data to make predictions or decisions without being explicitly programmed for each task.",
-  "data science": "Data Science combines statistics, data analysis, and domain knowledge to extract insights and drive decisions from data.",
-  "data analyst": "Data Analytics involves inspecting, cleansing, transforming, and modeling data with the goal of discovering useful information, informing conclusions, and supporting decision-making.",
-  "cyber security": "Cybersecurity covers protecting networks, systems, and programs from digital attacks and unauthorized access.",
-  "cloud computing": "Cloud Computing provides on-demand compute, storage, and services over the internet to build scalable applications.",
-  "blockchain": "Blockchain is a distributed ledger technology for decentralized and tamper-resistant record keeping, used in cryptocurrencies and beyond.",
-  "software development": "Software Development is the process of designing, building, testing, and maintaining software applications and systems.",
-  "full stack development": "Full Stack Development involves working on both the front-end (client-side) and back-end (server-side) of web applications.",
-  "devops": "DevOps is a set of practices that combines software development (Dev) and IT operations (Ops) to shorten the systems development life cycle.",
-  "iot": "The Internet of Things (IoT) describes physical objects with sensors, processing ability, software, and other technologies that connect and exchange data with other devices and systems.",
-  "ar/vr": "Augmented Reality (AR) and Virtual Reality (VR) are immersive technologies that blend the physical and digital worlds or create entirely new simulated environments.",
-  "communication": "Communication skills are essential for conveying information effectively and efficiently, including verbal, non-verbal, and written communication.",
-  "project management": "Project Management is the application of processes, methods, skills, knowledge, and experience to achieve specific project objectives.",
-  "design": "Design covers UX, UI, and product design practices to create user-centered, accessible, and delightful experiences.",
-  "digital marketing": "Digital Marketing focuses on online channels to reach customers via search, social, email, and content strategies.",
-  "finance": "Finance degrees focus on financial analysis, markets, corporate finance, and investment strategies.",
-  "financial management": "Financial Management refers to the strategic planning, organizing, directing, and controlling of financial undertakings in an organization.",
-  "education": "Education covers pedagogy, curriculum design and instructional strategies for effective learning experiences.",
-  "emotional intelligence": "Emotional Intelligence (EQ) is the ability to understand, use, and manage your own emotions in positive ways to relieve stress, communicate effectively, empathize with others, overcome challenges and defuse conflict.",
-};
 
 export default function SkillRecommendations() {
   const { skill } = useParams<{ skill: string }>();
@@ -44,9 +23,14 @@ export default function SkillRecommendations() {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'roadmap' | 'resources'>('roadmap');
   const { profileDetails } = useUserProfileDetails();
 
-  const skillKey = q.toLowerCase();
+  // Get skill roadmap
+  const skillRoadmap = useMemo(() => {
+    if (!q) return null;
+    return getSkillRoadmap(q) || generateGenericRoadmap(q);
+  }, [q]);
 
   useEffect(() => {
     let mounted = true;
@@ -90,13 +74,12 @@ export default function SkillRecommendations() {
     return map;
   }, [personalizedRecommendations]);
 
-  const tabs = [
+  const resourceTabs = [
     { key: "all", label: "All" },
     { key: "youtube", label: `Videos (${counts.youtube || 0})` },
     { key: "book", label: `Books (${counts.book || 0})` },
     { key: "course", label: `Courses (${counts.course || 0})` },
     { key: "website", label: `Websites (${counts.website || 0})` },
-    { key: "other", label: `Other (${personalizedRecommendations.length - (counts.youtube || 0) - (counts.book || 0) - (counts.course || 0) - (counts.website || 0)})` },
   ];
 
   function typeIcon(t: Recommendation["type"]) {
@@ -111,94 +94,96 @@ export default function SkillRecommendations() {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-10 max-w-6xl">
-        <header className="mb-8">
+      <div className="container mx-auto px-4 py-6 md:py-10 max-w-6xl">
+        {/* Header */}
+        <header className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-extrabold">{q ? q : "Skill"} Recommendations</h1>
+              <h1 className="text-2xl md:text-4xl font-extrabold">{q || "Skill"}</h1>
               {profileDetails && (
                 <Badge variant="secondary" className="mt-2">
                   Personalized for {profileDetails.experience_level || 'your'} level
                 </Badge>
               )}
-              <p className="text-muted-foreground mt-2 max-w-2xl">
-                {skillDescriptions[skillKey] || `Curated resources, courses, books and videos to help you learn ${q || 'this skill'} effectively.`}
-              </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                <div>Resources: <span className="font-medium text-gray-900">{recommendations.length}</span></div>
-                <div className="flex items-center gap-2 mt-1">Top Rating: <Star className="w-4 h-4 text-yellow-400" /> <span className="font-medium">{(recommendations.reduce((s, r) => s + (r.rating || 0), 0) / Math.max(1, recommendations.filter(r => r.rating).length)).toFixed(1)}</span></div>
-              </div>
-              <Button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>Back to top</Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant={activeTab === 'roadmap' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('roadmap')}
+                className="gap-2"
+              >
+                <Map className="w-4 h-4" />
+                Learning Path
+              </Button>
+              <Button
+                variant={activeTab === 'resources' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('resources')}
+                className="gap-2"
+              >
+                <Library className="w-4 h-4" />
+                Resources ({recommendations.length})
+              </Button>
             </div>
           </div>
         </header>
 
         <main>
-          <Card className="mb-6">
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
-                <div className="md:col-span-2">
-                  <h2 className="text-lg font-semibold">About {q}</h2>
-                  <p className="text-sm text-muted-foreground mt-2">
-                    {skillDescriptions[skillKey] || `Resources selected to help you build practical knowledge in ${q}. Browse videos, books, courses and websites curated from multiple sources.`}
-                  </p>
-                </div>
-                <div className="flex flex-col items-start md:items-end">
-                  <div className="text-sm text-muted-foreground">Estimated time to proficiency</div>
-                  <div className="text-xl font-semibold mt-1">{q ? (q.length > 8 ? '3-6 months' : '1-3 months') : 'Varies'}</div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Learning Path Tab */}
+          {activeTab === 'roadmap' && skillRoadmap && (
+            <SkillRoadmapSection roadmap={skillRoadmap} />
+          )}
 
-          <Tabs defaultValue="all" className="space-y-6">
-            <TabsList className="grid grid-cols-3 md:grid-cols-6 gap-2">
-              {tabs.map((t) => (
-                <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
+          {/* Resources Tab */}
+          {activeTab === 'resources' && (
+            <Tabs defaultValue="all" className="space-y-6">
+              <TabsList className="flex flex-wrap gap-2">
+                {resourceTabs.map((t) => (
+                  <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
+                ))}
+              </TabsList>
+
+              {resourceTabs.map((t) => (
+                <TabsContent key={t.key} value={t.key}>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {loading && <div className="text-sm text-muted-foreground">Loading recommendations…</div>}
+                    {!loading && personalizedRecommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).length === 0 && (
+                      <div className="text-sm text-muted-foreground">No recommendations found for this category.</div>
+                    )}
+
+                    {!loading && personalizedRecommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).map((r, i) => (
+                      <Card key={`${t.key}-${i}`} className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all">
+                        <CardHeader className="flex items-center gap-3">
+                          <div className="p-2 rounded bg-white/5">
+                            {typeIcon(r.type)}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between gap-3">
+                              <h3 className="font-semibold">{r.title}</h3>
+                              <div className="text-sm text-muted-foreground">{r.provider || r.type}</div>
+                            </div>
+                            {r.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>}
+                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
+                              {r.rating && <div className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400" />{r.rating.toFixed(1)}</div>}
+                              {r.duration && <div>{r.duration}</div>}
+                              {r.difficulty && <div className="capitalize">{r.difficulty}</div>}
+                            </div>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="flex items-center justify-between">
+                            <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Open resource</a>
+                            <div className="text-sm text-muted-foreground">{r.views}</div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </TabsContent>
               ))}
-            </TabsList>
-
-            {tabs.map((t) => (
-              <TabsContent key={t.key} value={t.key}>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {loading && <div className="text-sm text-muted-foreground">Loading recommendations…</div>}
-                  {!loading && recommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).length === 0 && (
-                    <div className="text-sm text-muted-foreground">No recommendations found for this category.</div>
-                  )}
-
-                  {!loading && recommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).map((r, i) => (
-                    <Card key={`${t.key}-${i}`} className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all">
-                      <CardHeader className="flex items-center gap-3">
-                        <div className="p-2 rounded bg-white/5">
-                          {typeIcon(r.type)}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between gap-3">
-                            <h3 className="font-semibold">{r.title}</h3>
-                            <div className="text-sm text-muted-foreground">{r.provider || r.type}</div>
-                          </div>
-                          {r.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>}
-                          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                            {r.rating && <div className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400" />{r.rating.toFixed(1)}</div>}
-                            {r.duration && <div>{r.duration}</div>}
-                            {r.difficulty && <div className="capitalize">{r.difficulty}</div>}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between">
-                          <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Open resource</a>
-                          <div className="text-sm text-muted-foreground">{r.views}</div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </TabsContent>
-            ))}
-          </Tabs>
+            </Tabs>
+          )}
         </main>
       </div>
     </Layout>
