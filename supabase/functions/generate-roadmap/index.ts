@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,6 +17,144 @@ interface RoadmapRequest {
   learningDuration?: string;
 }
 
+interface DBResource {
+  id: string;
+  title: string;
+  link: string;
+  category: string;
+  difficulty: string;
+  resource_type: string;
+  related_skills: string[] | null;
+  description: string;
+  duration: string | null;
+  provider: string | null;
+}
+
+// Map user skill level to difficulty levels for resource matching
+function getDifficultyLevels(skillLevel: string): string[] {
+  const level = skillLevel.toLowerCase();
+  if (level.includes('beginner')) {
+    return ['beginner', 'intermediate'];
+  } else if (level.includes('intermediate')) {
+    return ['beginner', 'intermediate', 'advanced'];
+  } else if (level.includes('advanced')) {
+    return ['intermediate', 'advanced'];
+  }
+  return ['beginner', 'intermediate', 'advanced'];
+}
+
+// Find matching resources from database based on step context
+function findMatchingResources(
+  allResources: DBResource[],
+  stepTitle: string,
+  stepTopics: string[],
+  category: string,
+  difficultyLevels: string[],
+  learningStyle: string,
+  maxResources: number = 6
+): any[] {
+  const searchTerms = [
+    stepTitle.toLowerCase(),
+    ...stepTopics.map(t => t.toLowerCase())
+  ];
+  
+  // Score each resource based on relevance
+  const scoredResources = allResources.map(resource => {
+    let score = 0;
+    const resourceTitle = resource.title.toLowerCase();
+    const resourceCategory = resource.category?.toLowerCase() || '';
+    const resourceSkills = (resource.related_skills || []).map(s => s.toLowerCase());
+    const resourceDifficulty = resource.difficulty?.toLowerCase() || '';
+    
+    // Category match (high priority)
+    if (category && resourceCategory.includes(category.toLowerCase())) {
+      score += 50;
+    }
+    
+    // Difficulty match
+    if (difficultyLevels.includes(resourceDifficulty)) {
+      score += 20;
+    }
+    
+    // Title/topic matches
+    for (const term of searchTerms) {
+      if (resourceTitle.includes(term)) {
+        score += 30;
+      }
+      for (const skill of resourceSkills) {
+        if (skill.includes(term) || term.includes(skill)) {
+          score += 15;
+        }
+      }
+    }
+    
+    // Learning style preference
+    const resourceType = resource.resource_type?.toLowerCase() || '';
+    if (learningStyle.toLowerCase().includes('visual') && 
+        (resourceType.includes('video') || resourceType.includes('course'))) {
+      score += 10;
+    }
+    if (learningStyle.toLowerCase().includes('reading') && 
+        (resourceType.includes('article') || resourceType.includes('book') || resourceType.includes('documentation'))) {
+      score += 10;
+    }
+    if (learningStyle.toLowerCase().includes('hands-on') && 
+        (resourceType.includes('project') || resourceType.includes('tutorial') || resourceType.includes('practice'))) {
+      score += 10;
+    }
+    
+    return { resource, score };
+  });
+  
+  // Sort by score and take top matches
+  const topResources = scoredResources
+    .filter(r => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, maxResources)
+    .map(r => ({
+      title: r.resource.title,
+      url: r.resource.link,
+      type: mapResourceType(r.resource.resource_type),
+      duration: r.resource.duration || estimateDuration(r.resource.resource_type),
+      difficulty: r.resource.difficulty || 'intermediate',
+      provider: r.resource.provider || null,
+    }));
+  
+  return topResources;
+}
+
+// Map database resource types to display types
+function mapResourceType(dbType: string): string {
+  const typeMap: Record<string, string> = {
+    'course': 'course',
+    'video': 'video',
+    'article': 'article',
+    'book': 'book',
+    'documentation': 'documentation',
+    'tutorial': 'article',
+    'tool': 'tool',
+    'practice': 'practice',
+    'certification': 'certification',
+    'exam_prep': 'course',
+  };
+  return typeMap[dbType?.toLowerCase()] || 'article';
+}
+
+// Estimate duration based on resource type
+function estimateDuration(resourceType: string): string {
+  const durationMap: Record<string, string> = {
+    'course': '10-20 hours',
+    'video': '1-2 hours',
+    'article': '15-30 minutes',
+    'book': '10-20 hours',
+    'documentation': '2-4 hours',
+    'tutorial': '1-3 hours',
+    'tool': 'N/A',
+    'practice': '5-10 hours',
+  };
+  return durationMap[resourceType?.toLowerCase()] || '1-2 hours';
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -25,11 +164,38 @@ serve(async (req) => {
     const { title, description, skillLevel, timeCommitment, learningStyle, focusAreas, category, learningDuration }: RoadmapRequest = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
+    
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Supabase configuration is missing');
+    }
 
-    // Construct the enhanced detailed prompt
+    // Initialize Supabase client
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Fetch all active resources from the database
+    console.log('Fetching resources from database...');
+    const { data: dbResources, error: dbError } = await supabase
+      .from('resources')
+      .select('id, title, link, category, difficulty, resource_type, related_skills, description, duration, provider')
+      .eq('is_active', true);
+    
+    if (dbError) {
+      console.error('Error fetching resources:', dbError);
+    }
+    
+    const allResources: DBResource[] = dbResources || [];
+    console.log(`Fetched ${allResources.length} resources from database`);
+
+    // Get difficulty levels for resource matching
+    const difficultyLevels = getDifficultyLevels(skillLevel);
+
+    // Construct the enhanced detailed prompt (without resources - AI will generate structure only)
     const prompt = `You are an expert learning path designer with deep industry experience. Create an exceptionally detailed, actionable, and personalized learning roadmap based on the following requirements:
 
 Title: ${title}
@@ -47,13 +213,7 @@ ${category === 'Exam Prep' ? 'IMPORTANT: This is for exam preparation. Focus on 
 ${category === 'Non-Tech' ? 'IMPORTANT: This is a non-technical skill. Focus on practical applications, real-world scenarios, portfolio building, and soft skills development. Include case studies and industry examples.' : ''}
 ${category === 'Tech' ? 'IMPORTANT: This is a technical skill. Focus on hands-on coding projects, documentation reading, debugging skills, and building a technical portfolio. Include specific tools, frameworks, and best practices.' : ''}
 
-CRITICAL REQUIREMENTS FOR DETAILED CONTENT:
-- BE EXTREMELY SPECIFIC: No vague advice like "learn the basics" - specify exactly what concepts, tools, or techniques
-- INCLUDE CONCRETE EXAMPLES: Real projects, real code patterns, real industry scenarios
-- BREAK DOWN COMPLEX CONCEPTS: Provide substeps and milestones within each major step
-- ANTICIPATE CHALLENGES: List common mistakes and how to avoid them
-- PROVIDE CLEAR SUCCESS CRITERIA: How to know when you've mastered each step
-- USE REAL NUMBERS: Specific time estimates, page numbers, project sizes
+CRITICAL: DO NOT include any "resources" array in your response. Resources will be added separately from our curated database.
 
 Return your response as a valid JSON object with this EXACT structure:
 {
@@ -100,15 +260,6 @@ Return your response as a valid JSON object with this EXACT structure:
           "difficulty": "intermediate"
         }
       ],
-      "resources": [
-        {
-          "title": "Specific resource title",
-          "url": "https://actual-real-url.com",
-          "type": "article|video|course|documentation|book",
-          "duration": "2 hours",
-          "difficulty": "beginner"
-        }
-      ],
       "commonPitfalls": [
         "Specific mistake beginners make: [problem] - Solution: [how to avoid/fix it]",
         "Challenge with [specific concept]: [issue] - Tip: [actionable advice]"
@@ -133,12 +284,7 @@ DETAILED GUIDELINES:
 4. PREREQUISITES (1-3): What must be known before starting this step
 5. MILESTONES (2-4 per step): Break each step into digestible substeps with time estimates
 6. TASKS (2-3 per step): Hands-on projects with specific requirements and expected outcomes
-7. RESOURCES (5-8 per step): ONLY use real, high-quality URLs from:
-   - Official documentation (MDN, React docs, etc.)
-   - Popular learning platforms (freeCodeCamp, Coursera, edX, Udemy)
-   - Quality YouTube channels (Traversy Media, Fireship, etc.)
-   - Authoritative books and articles
-   - GitHub repositories with good stars
+7. DO NOT include resources - they will be added from our database
 8. COMMON PITFALLS (2-4): Specific mistakes with actionable solutions
 9. ASSESSMENT CRITERIA (2-4): How to self-evaluate mastery
 10. REAL-WORLD EXAMPLES (2-3): Concrete industry applications or case studies
@@ -157,15 +303,6 @@ QUALITY STANDARDS:
 Return ONLY the JSON object, no additional text or markdown formatting.`;
 
     console.log('Calling Lovable AI (Google Gemini)...');
-    console.log('Request payload:', JSON.stringify({
-      title,
-      skillLevel,
-      timeCommitment,
-      learningStyle,
-      focusAreas,
-      category,
-      learningDuration
-    }));
     
     // Using Lovable AI with Google Gemini Pro for better detailed content
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -175,7 +312,7 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-pro',
+        model: 'google/gemini-3-flash-preview',
         messages: [
           {
             role: 'user',
@@ -191,10 +328,16 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
       console.error('Lovable AI error:', response.status, errorText);
       
       if (response.status === 429) {
-        throw new Error('Rate limit exceeded. Please try again in a moment.');
+        return new Response(JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.' }), {
+          status: 429,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
       if (response.status === 402) {
-        throw new Error('AI usage limit reached. Please contact support.');
+        return new Response(JSON.stringify({ error: 'AI usage limit reached. Please contact support.' }), {
+          status: 402,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
       }
       
       throw new Error(`Lovable AI error: ${response.status} - ${errorText}`);
@@ -239,7 +382,28 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
       throw new Error('Invalid roadmap structure from AI');
     }
 
-    console.log(`Generated roadmap with ${roadmapData.steps.length} steps`);
+    console.log(`AI generated ${roadmapData.steps.length} steps, now adding resources from database...`);
+
+    // Add matching resources from database to each step
+    for (const step of roadmapData.steps) {
+      const stepTopics = step.topics || [];
+      const matchedResources = findMatchingResources(
+        allResources,
+        step.title,
+        stepTopics,
+        category || title,
+        difficultyLevels,
+        learningStyle,
+        6 // Max 6 resources per step
+      );
+      
+      step.resources = matchedResources;
+      console.log(`Step "${step.title}": Added ${matchedResources.length} resources from database`);
+    }
+
+    // Log summary
+    const totalResources = roadmapData.steps.reduce((sum: number, step: any) => sum + (step.resources?.length || 0), 0);
+    console.log(`Total: Generated roadmap with ${roadmapData.steps.length} steps and ${totalResources} curated resources`);
 
     return new Response(JSON.stringify(roadmapData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
