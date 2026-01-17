@@ -28,8 +28,10 @@ import {
   Trophy,
   MessageCircle,
   Lock,
-  Globe
+  Globe,
+  Trash2
 } from "lucide-react";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +43,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useParams } from "react-router-dom";
 import { useUserFollows } from "@/hooks/useUserFollows";
@@ -72,8 +74,8 @@ const Profile = () => {
     queryKey: ['basicProfileInfo', targetUserId],
     queryFn: async () => {
       if (!targetUserId) return null;
-      const { data, error } = await supabase.rpc('get_basic_profile_info', { 
-        target_user_id: targetUserId 
+      const { data, error } = await supabase.rpc('get_basic_profile_info', {
+        target_user_id: targetUserId
       });
       if (error) {
         console.error('Error fetching basic profile info:', error);
@@ -87,18 +89,18 @@ const Profile = () => {
   // Derive privacy from basic profile info
   const isOwnProfile = currentUser?.id === targetUserId;
   const isPrivateAccount = basicProfileInfo?.is_private ?? false;
-  
+
   // Check if user has a pending follow request
   const hasPendingRequest = !!followRequestStatus;
-  
+
   // Can view profile content if: own profile, public account, or following
   const canViewProfile = isOwnProfile || !isPrivateAccount || isFollowing;
-  
+
   // For backwards compatibility
-  const publicUserData = basicProfileInfo ? {
+  const publicUserData = useMemo(() => basicProfileInfo ? {
     full_name: basicProfileInfo.full_name,
     avatar_url: basicProfileInfo.avatar_url
-  } : null;
+  } : null, [basicProfileInfo]);
 
   useEffect(() => {
     if (profileDetails && publicUserData) {
@@ -144,39 +146,39 @@ const Profile = () => {
     queryKey: ['mutualFollowers', currentUser?.id, targetUserId],
     queryFn: async () => {
       if (!currentUser?.id || !targetUserId || currentUser.id === targetUserId) return { count: 0, users: [] };
-      
+
       // Get users the current user follows
       const { data: myFollowing, error: myError } = await supabase
         .from('followers')
         .select('following_id')
         .eq('follower_id', currentUser.id);
-      
+
       if (myError) throw myError;
-      
+
       // Get users the target user follows
       const { data: theirFollowing, error: theirError } = await supabase
         .from('followers')
         .select('following_id')
         .eq('follower_id', targetUserId);
-      
+
       if (theirError) throw theirError;
-      
+
       const myFollowingIds = new Set(myFollowing?.map(f => f.following_id) || []);
       const mutualIds = (theirFollowing || [])
         .filter(f => myFollowingIds.has(f.following_id))
         .map(f => f.following_id);
-      
+
       if (mutualIds.length === 0) return { count: 0, users: [] };
-      
+
       // Get profile info for first 3 mutual followers
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url')
         .in('user_id', mutualIds.slice(0, 3));
-      
-      return { 
-        count: mutualIds.length, 
-        users: profiles || [] 
+
+      return {
+        count: mutualIds.length,
+        users: profiles || []
       };
     },
     enabled: !!currentUser?.id && !!targetUserId && currentUser.id !== targetUserId,
@@ -336,12 +338,23 @@ const Profile = () => {
                   <AvatarFallback className="text-3xl sm:text-4xl">{initials}</AvatarFallback>
                 </Avatar>
                 {currentUser?.id === targetUserId && editMode && (
-                  <label htmlFor="avatar-upload" className="absolute -bottom-1 -right-1 cursor-pointer">
-                    <div className="p-2 bg-primary rounded-full text-primary-foreground">
-                      <Upload className="h-4 w-4" />
-                    </div>
-                    <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
-                  </label>
+                  <div className="absolute -bottom-1 right-0 flex gap-1">
+                    <label htmlFor="avatar-upload" className="cursor-pointer">
+                      <div className="p-2 bg-primary rounded-full text-primary-foreground hover:bg-primary/90 transition-colors" title="Upload new photo">
+                        <Upload className="h-4 w-4" />
+                      </div>
+                      <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                    </label>
+                    {formData.avatar && (
+                      <button
+                        onClick={() => setFormData({ ...formData, avatar: null })}
+                        className="p-2 bg-destructive rounded-full text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                        title="Remove photo"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -400,10 +413,14 @@ const Profile = () => {
                         {(formData.socialLinks || []).map((s: any, idx: number) => (
                           <div key={idx} className="flex gap-2 items-center">
                             <Input placeholder="Title (e.g., GitHub)" value={s.title || ''} onChange={(e) => {
-                              const newLinks = [...(formData.socialLinks || [])]; newLinks[idx].title = e.target.value; setFormData({ ...formData, socialLinks: newLinks });
+                              const newLinks = [...(formData.socialLinks || [])];
+                              newLinks[idx] = { ...newLinks[idx], title: e.target.value };
+                              setFormData({ ...formData, socialLinks: newLinks });
                             }} />
                             <Input placeholder="https://" value={s.url || ''} onChange={(e) => {
-                              const newLinks = [...(formData.socialLinks || [])]; newLinks[idx].url = e.target.value; setFormData({ ...formData, socialLinks: newLinks });
+                              const newLinks = [...(formData.socialLinks || [])];
+                              newLinks[idx] = { ...newLinks[idx], url: e.target.value };
+                              setFormData({ ...formData, socialLinks: newLinks });
                             }} />
                             <Button variant="ghost" size="icon" onClick={() => { const newLinks = (formData.socialLinks || []).filter((_: any, i: number) => i !== idx); setFormData({ ...formData, socialLinks: newLinks }); }}><X className="h-4 w-4" /></Button>
                           </div>
@@ -483,7 +500,7 @@ const Profile = () => {
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-6 pt-6 border-t">
-              <div 
+              <div
                 className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
                 onClick={() => {
                   if (isOwnProfile) {
@@ -495,7 +512,7 @@ const Profile = () => {
                 <div className="text-xl sm:text-2xl font-bold text-primary">{stats?.follower_count ?? followerCount ?? 0}</div>
                 <div className="text-xs text-muted-foreground">Followers</div>
               </div>
-              <div 
+              <div
                 className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
                 onClick={() => {
                   if (isOwnProfile) {
@@ -510,7 +527,7 @@ const Profile = () => {
               <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.post_count ?? 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
               <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.roadmap_count ?? 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
             </div>
-            
+
             {/* Mutual followers indicator - only show when viewing another user's profile */}
             {!isOwnProfile && mutualFollowers && mutualFollowers.count > 0 && (
               <div className="flex items-center gap-2 mt-4 pt-4 border-t text-sm text-muted-foreground">
