@@ -6,11 +6,16 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fetchRecommendations, Recommendation } from "@/api/searchAPI";
-import { Book, Layers, Youtube, Globe, Brain, Star, Map, Library } from "lucide-react";
+import { Book, Layers, Youtube, Globe, Brain, Star, Map, Library, ThumbsUp, ThumbsDown, MessageSquare, CheckCircle } from "lucide-react";
 import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
 import { getPersonalizedResources } from "@/lib/resourceMatcher";
 import { getSkillRoadmap, generateGenericRoadmap } from "@/lib/skillRoadmaps";
 import { SkillRoadmapSection } from "@/components/SkillRoadmapSection";
+import { ResourceRatingCard } from "@/components/ResourceRatingCard";
+import { useResourceRatings } from "@/hooks/useResourceRatings";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -153,31 +158,7 @@ export default function SkillRecommendations() {
                     )}
 
                     {!loading && personalizedRecommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).map((r, i) => (
-                      <Card key={`${t.key}-${i}`} className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all">
-                        <CardHeader className="flex items-center gap-3">
-                          <div className="p-2 rounded bg-white/5">
-                            {typeIcon(r.type)}
-                          </div>
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between gap-3">
-                              <h3 className="font-semibold">{r.title}</h3>
-                              <div className="text-sm text-muted-foreground">{r.provider || r.type}</div>
-                            </div>
-                            {r.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>}
-                            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                              {r.rating && <div className="flex items-center gap-1"><Star className="w-3 h-3 text-yellow-400" />{r.rating.toFixed(1)}</div>}
-                              {r.duration && <div>{r.duration}</div>}
-                              {r.difficulty && <div className="capitalize">{r.difficulty}</div>}
-                            </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="flex items-center justify-between">
-                            <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Open resource</a>
-                            <div className="text-sm text-muted-foreground">{r.views}</div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <ResourceCard key={`${t.key}-${i}`} recommendation={r} typeIcon={typeIcon} />
                     ))}
                   </div>
                 </TabsContent>
@@ -187,5 +168,161 @@ export default function SkillRecommendations() {
         </main>
       </div>
     </Layout>
+  );
+}
+
+// Enhanced Resource Card with Rating Integration
+interface ResourceCardProps {
+  recommendation: Recommendation;
+  typeIcon: (t: Recommendation["type"]) => React.ReactNode;
+}
+
+function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
+  const { user } = useAuth();
+  const [resourceId, setResourceId] = useState<string | null>(null);
+  const [showRatingCard, setShowRatingCard] = useState(false);
+  
+  // Try to find matching resource in database by title
+  useEffect(() => {
+    async function findResource() {
+      const { data } = await supabase
+        .from('resources')
+        .select('id, avg_rating, total_ratings, recommend_percent, total_votes')
+        .ilike('title', r.title)
+        .limit(1)
+        .maybeSingle();
+      
+      if (data) {
+        setResourceId(data.id);
+      }
+    }
+    findResource();
+  }, [r.title]);
+
+  const {
+    stats,
+    userVote,
+    hasEnoughRatings,
+    formatRatingCount,
+    submitVote,
+    isAuthenticated,
+  } = useResourceRatings(resourceId || undefined);
+
+  const handleVote = (voteType: 'up' | 'down') => {
+    if (!isAuthenticated) {
+      toast.error('Please log in to vote');
+      return;
+    }
+    if (!resourceId) {
+      toast.error('Resource not found in database');
+      return;
+    }
+    submitVote(voteType);
+  };
+
+  return (
+    <Card className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all">
+      <CardHeader className="flex items-center gap-3 pb-2">
+        <div className="p-2 rounded bg-white/5">
+          {typeIcon(r.type)}
+        </div>
+        <div className="flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="font-semibold">{r.title}</h3>
+            <div className="text-sm text-muted-foreground">{r.provider || r.type}</div>
+          </div>
+          {r.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>}
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-3">
+        {/* Rating Display */}
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center gap-3">
+            {resourceId && stats ? (
+              hasEnoughRatings ? (
+                <>
+                  <div className="flex items-center gap-1">
+                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                    <span className="font-medium">{stats.avg_rating?.toFixed(1)}</span>
+                    <span className="text-muted-foreground">({formatRatingCount(stats.total_ratings)})</span>
+                  </div>
+                  {stats.recommend_percent !== null && (
+                    <div className="flex items-center gap-1 text-green-600">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>{stats.recommend_percent}%</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <span className="text-muted-foreground text-xs">
+                  {stats.total_ratings}/10 ratings needed
+                </span>
+              )
+            ) : (
+              // Fallback to API rating
+              r.rating && (
+                <div className="flex items-center gap-1">
+                  <Star className="w-3 h-3 text-yellow-400" />
+                  <span>{r.rating.toFixed(1)}</span>
+                </div>
+              )
+            )}
+            {r.duration && <span className="text-muted-foreground">{r.duration}</span>}
+            {r.difficulty && <Badge variant="outline" className="text-xs capitalize">{r.difficulty}</Badge>}
+          </div>
+        </div>
+
+        {/* Vote Buttons (compact) */}
+        {resourceId && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant={userVote?.vote_type === 'up' ? 'default' : 'outline'}
+              size="sm"
+              className="h-7 px-2 gap-1 text-xs"
+              onClick={() => handleVote('up')}
+            >
+              <ThumbsUp className={`w-3 h-3 ${userVote?.vote_type === 'up' ? 'fill-current' : ''}`} />
+              Recommend
+            </Button>
+            <Button
+              variant={userVote?.vote_type === 'down' ? 'destructive' : 'outline'}
+              size="sm"
+              className="h-7 px-2 gap-1 text-xs"
+              onClick={() => handleVote('down')}
+            >
+              <ThumbsDown className={`w-3 h-3 ${userVote?.vote_type === 'down' ? 'fill-current' : ''}`} />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 gap-1 text-xs ml-auto"
+              onClick={() => setShowRatingCard(!showRatingCard)}
+            >
+              <MessageSquare className="w-3 h-3" />
+              Rate & Review
+            </Button>
+          </div>
+        )}
+
+        {/* Expandable Rating Card */}
+        {showRatingCard && resourceId && (
+          <div className="pt-2 border-t">
+            <ResourceRatingCard
+              resourceId={resourceId}
+              resourceTitle={r.title}
+            />
+          </div>
+        )}
+
+        {/* Open Resource Link */}
+        <div className="flex items-center justify-between pt-2 border-t">
+          <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
+            Open resource →
+          </a>
+          {r.views && <span className="text-xs text-muted-foreground">{r.views}</span>}
+        </div>
+      </CardContent>
+    </Card>
   );
 }
