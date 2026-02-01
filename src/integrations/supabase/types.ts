@@ -430,8 +430,146 @@ export type Database = {
         }
         Relationships: []
       }
+      resource_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          stars: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          stars: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          stars?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_ratings_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_review_helpful: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          review_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_review_helpful_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "resource_reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_reviews: {
+        Row: {
+          created_at: string
+          helpful_count: number
+          id: string
+          is_verified: boolean
+          resource_id: string
+          review_text: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          is_verified?: boolean
+          resource_id: string
+          review_text: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          helpful_count?: number
+          id?: string
+          is_verified?: boolean
+          resource_id?: string
+          review_text?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_reviews_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_votes: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          user_id: string
+          vote_type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          user_id: string
+          vote_type: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          user_id?: string
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_votes_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resources: {
         Row: {
+          avg_rating: number | null
           category: string
           color: string | null
           created_at: string
@@ -449,15 +587,21 @@ export type Database = {
           prerequisites: string[] | null
           provider: string | null
           rating: number | null
+          recommend_percent: number | null
           related_skills: string[] | null
           relevant_backgrounds: string[] | null
           resource_type: string
           section_type: string
           target_countries: string[] | null
           title: string
+          total_ratings: number | null
+          total_reviews: number | null
+          total_votes: number | null
           updated_at: string
+          weighted_rating: number | null
         }
         Insert: {
+          avg_rating?: number | null
           category: string
           color?: string | null
           created_at?: string
@@ -475,15 +619,21 @@ export type Database = {
           prerequisites?: string[] | null
           provider?: string | null
           rating?: number | null
+          recommend_percent?: number | null
           related_skills?: string[] | null
           relevant_backgrounds?: string[] | null
           resource_type?: string
           section_type?: string
           target_countries?: string[] | null
           title: string
+          total_ratings?: number | null
+          total_reviews?: number | null
+          total_votes?: number | null
           updated_at?: string
+          weighted_rating?: number | null
         }
         Update: {
+          avg_rating?: number | null
           category?: string
           color?: string | null
           created_at?: string
@@ -501,13 +651,18 @@ export type Database = {
           prerequisites?: string[] | null
           provider?: string | null
           rating?: number | null
+          recommend_percent?: number | null
           related_skills?: string[] | null
           relevant_backgrounds?: string[] | null
           resource_type?: string
           section_type?: string
           target_countries?: string[] | null
           title?: string
+          total_ratings?: number | null
+          total_reviews?: number | null
+          total_votes?: number | null
           updated_at?: string
+          weighted_rating?: number | null
         }
         Relationships: []
       }
@@ -1148,10 +1303,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      calculate_weighted_rating: {
+        Args: { p_resource_id: string }
+        Returns: number
+      }
       can_view_profile: {
         Args: { _profile_user_id: string; _viewer_id: string }
         Returns: boolean
       }
+      check_rating_rate_limit: { Args: { p_user_id: string }; Returns: boolean }
       cleanup_old_activity: { Args: never; Returns: undefined }
       create_default_collections_for_existing_users: {
         Args: never
@@ -1187,6 +1347,7 @@ export type Database = {
         Returns: Json
       }
       get_profile_stats: { Args: { target_user_id: string }; Returns: Json }
+      get_site_average_rating: { Args: never; Returns: number }
       has_community_role: {
         Args: {
           _community_id: string
