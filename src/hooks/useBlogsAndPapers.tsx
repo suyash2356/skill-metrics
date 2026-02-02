@@ -16,6 +16,12 @@ export interface BlogOrPaper {
   educationLevels: string[];
   isFeatured: boolean;
   rating: number | null;
+  // Rating aggregates
+  avg_rating?: number | null;
+  weighted_rating?: number | null;
+  total_ratings?: number | null;
+  recommend_percent?: number | null;
+  total_votes?: number | null;
 }
 
 interface UserOnboardingData {
@@ -94,14 +100,16 @@ export function useBlogsAndPapers() {
         }
       }
 
-      // Fetch blogs and research papers from resources
+      // Fetch blogs and research papers from resources - sorted by ratings
       const { data, error } = await supabase
         .from('resources')
         .select('*')
         .eq('is_active', true)
         .in('resource_type', ['blog', 'research_paper', 'article', 'paper'])
+        .order('weighted_rating', { ascending: false, nullsFirst: false })
+        .order('recommend_percent', { ascending: false, nullsFirst: false })
         .order('is_featured', { ascending: false })
-        .order('rating', { ascending: false })
+        .order('total_ratings', { ascending: false, nullsFirst: false })
         .limit(50);
 
       if (error) throw error;
@@ -121,6 +129,12 @@ export function useBlogsAndPapers() {
         educationLevels: r.education_levels || [],
         isFeatured: r.is_featured || false,
         rating: r.rating,
+        // Add rating aggregates
+        avg_rating: r.avg_rating,
+        weighted_rating: r.weighted_rating,
+        total_ratings: r.total_ratings,
+        recommend_percent: r.recommend_percent,
+        total_votes: r.total_votes,
       }));
 
       // Score and sort based on user's onboarding data
@@ -182,9 +196,22 @@ export function useBlogsAndPapers() {
           }
         }
         
-        // Boost highly rated content
-        if (item.rating && item.rating >= 4.5) {
+        // Boost highly rated content (use weighted rating for trust)
+        if (item.weighted_rating && item.weighted_rating >= 4.0) {
+          score += 8;
+          matchReasons.push('⭐ Highly rated');
+        } else if (item.avg_rating && item.avg_rating >= 4.5 && (item.total_ratings || 0) >= 10) {
+          score += 6;
+        } else if (item.rating && item.rating >= 4.5) {
           score += 2;
+        }
+
+        // Boost resources with high recommendation percentage
+        if (item.recommend_percent && item.recommend_percent >= 85 && (item.total_votes || 0) >= 5) {
+          score += 5;
+          if (!matchReasons.some(r => r.includes('rated'))) {
+            matchReasons.push('✅ Highly recommended');
+          }
         }
         
         return { 
