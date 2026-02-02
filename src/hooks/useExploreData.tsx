@@ -24,9 +24,17 @@ export interface DBResource {
   target_countries: string[] | null;
   estimated_time: string | null;
   prerequisites: string[] | null;
+  // Rating fields for recommendation sorting
+  avg_rating: number | null;
+  weighted_rating: number | null;
+  total_ratings: number | null;
+  recommend_percent: number | null;
+  total_votes: number | null;
+  total_reviews: number | null;
 }
 
 export interface Category {
+  id?: string;
   title: string;
   icon: string;
   color: string;
@@ -37,9 +45,16 @@ export interface Category {
   educationLevels: string[];
   relatedSkills: string[];
   type: 'tech' | 'non-tech';
+  // Rating fields
+  avg_rating?: number | null;
+  weighted_rating?: number | null;
+  total_ratings?: number | null;
+  recommend_percent?: number | null;
+  total_votes?: number | null;
 }
 
 export interface Exam {
+  id?: string;
   title: string;
   icon: string;
   color: string;
@@ -50,9 +65,15 @@ export interface Exam {
   educationLevels: string[];
   targetCountries: string[];
   category: string;
+  avg_rating?: number | null;
+  weighted_rating?: number | null;
+  total_ratings?: number | null;
+  recommend_percent?: number | null;
+  total_votes?: number | null;
 }
 
 export interface Certification {
+  id?: string;
   name: string;
   provider: string;
   description?: string;
@@ -66,14 +87,20 @@ export interface Certification {
   cost?: 'free' | 'paid';
   icon: string;
   color: string;
+  avg_rating?: number | null;
+  weighted_rating?: number | null;
+  total_ratings?: number | null;
+  recommend_percent?: number | null;
+  total_votes?: number | null;
 }
 
 export interface Degree {
+  id?: string;
   title: string;
   university: string;
   mode: string;
   fees: string;
-  rating: string;
+  ratingDisplay: string;
   duration: string;
   link: string;
   exam: string;
@@ -83,6 +110,12 @@ export interface Degree {
   educationLevels: string[];
   relatedSkills: string[];
   field: string;
+  rating?: number | null;
+  avg_rating?: number | null;
+  weighted_rating?: number | null;
+  total_ratings?: number | null;
+  recommend_percent?: number | null;
+  total_votes?: number | null;
 }
 
 export interface LearningPath {
@@ -164,6 +197,7 @@ export function useExams() {
       (data || []).forEach((r: DBResource) => {
         if (!examMap.has(r.category)) {
           examMap.set(r.category, {
+            id: r.id,
             title: r.category,
             icon: r.icon || 'GraduationCap',
             color: r.color || 'from-indigo-500 to-blue-500',
@@ -174,6 +208,11 @@ export function useExams() {
             educationLevels: r.education_levels || [],
             targetCountries: r.target_countries || [],
             category: r.category,
+            avg_rating: r.avg_rating,
+            weighted_rating: r.weighted_rating,
+            total_ratings: r.total_ratings,
+            recommend_percent: r.recommend_percent,
+            total_votes: r.total_votes,
           });
         }
       });
@@ -199,6 +238,7 @@ export function useCertifications() {
       if (error) throw error;
 
       return (data || []).map((r: DBResource) => ({
+        id: r.id,
         name: r.title,
         provider: r.provider || '',
         description: r.description,
@@ -212,6 +252,11 @@ export function useCertifications() {
         cost: r.is_free ? 'free' : 'paid',
         icon: r.icon || 'Award',
         color: r.color || 'from-indigo-500 to-purple-500',
+        avg_rating: r.avg_rating,
+        weighted_rating: r.weighted_rating,
+        total_ratings: r.total_ratings,
+        recommend_percent: r.recommend_percent,
+        total_votes: r.total_votes,
       })) as Certification[];
     },
     staleTime: 5 * 60 * 1000,
@@ -233,11 +278,13 @@ export function useDegrees() {
       if (error) throw error;
 
       return (data || []).map((r: DBResource) => ({
+        id: r.id,
         title: r.title,
         university: r.provider || '',
         mode: r.duration?.includes('online') ? 'online' : 'offline',
         fees: 'See official page',
-        rating: r.rating ? `${r.rating}/5` : 'N/A',
+        ratingDisplay: r.rating ? `${r.rating}/5` : 'N/A',
+        rating: r.rating,
         duration: r.duration || '',
         link: r.link,
         exam: '',
@@ -247,6 +294,11 @@ export function useDegrees() {
         educationLevels: r.education_levels || [],
         relatedSkills: r.related_skills || [],
         field: r.category,
+        avg_rating: r.avg_rating,
+        weighted_rating: r.weighted_rating,
+        total_ratings: r.total_ratings,
+        recommend_percent: r.recommend_percent,
+        total_votes: r.total_votes,
       })) as Degree[];
     },
     staleTime: 5 * 60 * 1000,
@@ -283,7 +335,7 @@ export function useLearningPaths() {
   });
 }
 
-// Hook to fetch trending/featured resources
+// Hook to fetch trending/featured resources - sorted by ratings
 export function useTrendingResources() {
   return useQuery({
     queryKey: ['trendingResources'],
@@ -293,11 +345,15 @@ export function useTrendingResources() {
         .select('*')
         .eq('is_active', true)
         .eq('is_featured', true)
+        .order('weighted_rating', { ascending: false, nullsFirst: false })
+        .order('recommend_percent', { ascending: false, nullsFirst: false })
+        .order('total_ratings', { ascending: false, nullsFirst: false })
         .limit(20);
 
       if (error) throw error;
 
       return (data || []).map((r: DBResource) => ({
+        id: r.id,
         title: r.title,
         description: r.description,
         link: r.link,
@@ -306,13 +362,18 @@ export function useTrendingResources() {
         difficulty: r.difficulty,
         relevantBackgrounds: r.relevant_backgrounds || [],
         relatedSkills: r.related_skills || [],
+        avg_rating: r.avg_rating,
+        weighted_rating: r.weighted_rating,
+        total_ratings: r.total_ratings,
+        recommend_percent: r.recommend_percent,
+        total_votes: r.total_votes,
       }));
     },
     staleTime: 5 * 60 * 1000,
   });
 }
 
-// Hook to fetch all resources for a specific category/skill
+// Hook to fetch all resources for a specific category/skill - sorted by ratings
 export function useResourcesByCategory(category: string) {
   return useQuery({
     queryKey: ['resources', category],
@@ -322,8 +383,10 @@ export function useResourcesByCategory(category: string) {
         .select('*')
         .eq('is_active', true)
         .or(`category.ilike.%${category}%,related_skills.cs.{${category}},title.ilike.%${category}%`)
+        .order('weighted_rating', { ascending: false, nullsFirst: false })
+        .order('recommend_percent', { ascending: false, nullsFirst: false })
         .order('is_featured', { ascending: false })
-        .order('rating', { ascending: false });
+        .order('total_ratings', { ascending: false, nullsFirst: false });
 
       if (error) throw error;
       return data || [];

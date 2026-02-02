@@ -18,6 +18,7 @@ import {
 } from './useExploreData';
 
 export interface TrendingResource {
+  id?: string;
   title: string;
   description: string;
   link: string;
@@ -26,6 +27,11 @@ export interface TrendingResource {
   difficulty: string;
   relevantBackgrounds: string[];
   relatedSkills: string[];
+  avg_rating?: number | null;
+  weighted_rating?: number | null;
+  total_ratings?: number | null;
+  recommend_percent?: number | null;
+  total_votes?: number | null;
 }
 
 export interface PersonalizedExploreData {
