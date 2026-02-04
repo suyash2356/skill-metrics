@@ -138,6 +138,51 @@ export const useCreateResource = () => {
   });
 };
 
+// Bulk insert for import - uses direct Supabase batch insert
+export const useBulkCreateResources = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (resources: ResourceInsert[]) => {
+      const BATCH_SIZE = 100;
+      const results: Resource[] = [];
+      const errors: string[] = [];
+
+      // Process in batches to avoid timeouts
+      for (let i = 0; i < resources.length; i += BATCH_SIZE) {
+        const batch = resources.slice(i, i + BATCH_SIZE);
+        
+        const { data, error } = await supabase
+          .from('resources')
+          .insert(batch)
+          .select();
+
+        if (error) {
+          errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
+        } else if (data) {
+          results.push(...(data as Resource[]));
+        }
+
+        // Small delay to prevent overwhelming the database
+        if (i + BATCH_SIZE < resources.length) {
+          await new Promise(resolve => setTimeout(resolve, 50));
+        }
+      }
+
+      return { inserted: results, errors };
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ['adminResources'] });
+      if (result.errors.length > 0) {
+        console.error('Bulk insert errors:', result.errors);
+      }
+    },
+    onError: (error) => {
+      console.error('Error bulk creating resources:', error);
+    },
+  });
+};
+
 export const useUpdateResource = () => {
   const queryClient = useQueryClient();
 
