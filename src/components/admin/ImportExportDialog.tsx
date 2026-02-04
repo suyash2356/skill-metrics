@@ -31,7 +31,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
   const [importFormat, setImportFormat] = useState<'json' | 'csv'>('json');
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
-  const [importResult, setImportResult] = useState<{ success: number; failed: number; errors: string[] } | null>(null);
+  const [importResult, setImportResult] = useState<{ success: number; failed: number; errors: string[]; skipped?: number } | null>(null);
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bulkCreate = useBulkCreateResources();
@@ -295,23 +295,28 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
 
     setImportProgress(30);
 
-    // Bulk insert using the new mutation
+    // Bulk insert using upsert (skips duplicates automatically)
     try {
       const result = await bulkCreate.mutateAsync(valid);
       
       setImportProgress(100);
       
       const successCount = result.inserted.length;
-      const failedCount = valid.length - successCount + validationErrs.length;
+      const skippedCount = result.skipped || 0;
+      const failedCount = validationErrs.length + result.errors.length;
       
       setImportResult({ 
         success: successCount, 
         failed: failedCount,
-        errors: result.errors 
+        errors: result.errors,
+        skipped: skippedCount
       });
 
       if (successCount > 0) {
-        toast.success(`Imported ${successCount} resources successfully!`);
+        toast.success(`Imported ${successCount} new resources!`);
+      }
+      if (skippedCount > 0) {
+        toast.info(`Skipped ${skippedCount} duplicate resources`);
       }
       if (failedCount > 0) {
         toast.error(`Failed to import ${failedCount} resources`);
@@ -322,7 +327,8 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
       setImportResult({ 
         success: 0, 
         failed: dataToImport.length,
-        errors: [error instanceof Error ? error.message : 'Unknown error']
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+        skipped: 0
       });
     }
 
@@ -507,8 +513,9 @@ Example Resource,Description here,https://example.com,Web Development,beginner,t
                 )}
                 <AlertDescription>
                   <p>
-                    Imported {importResult.success} resources successfully.
-                    {importResult.failed > 0 && ` Failed: ${importResult.failed}`}
+                    ✅ Imported {importResult.success} new resources.
+                    {importResult.skipped && importResult.skipped > 0 && ` ⏭️ Skipped ${importResult.skipped} duplicates.`}
+                    {importResult.failed > 0 && ` ❌ Failed: ${importResult.failed}`}
                   </p>
                   {importResult.errors.length > 0 && (
                     <ul className="list-disc pl-4 text-sm mt-2">
