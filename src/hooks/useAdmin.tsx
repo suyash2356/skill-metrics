@@ -118,27 +118,41 @@ export const useCreateResource = () => {
 
   return useMutation({
     mutationFn: async (resource: ResourceInsert) => {
+      // Use upsert to handle duplicates - skip if already exists
       const { data, error } = await supabase
         .from('resources')
-        .insert(resource)
+        .upsert(resource, { 
+          onConflict: 'title,link,category',
+          ignoreDuplicates: true 
+        })
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        // If no rows returned due to duplicate, it's not an error
+        if (error.code === 'PGRST116') {
+          throw new Error('Resource already exists with same title, link and category');
+        }
+        throw error;
+      }
       return data as Resource;
     },
     onSuccess: () => {
       toast.success('Resource created successfully!');
       queryClient.invalidateQueries({ queryKey: ['adminResources'] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Error creating resource:', error);
-      toast.error('Failed to create resource');
+      if (error.message.includes('already exists')) {
+        toast.error('Resource already exists');
+      } else {
+        toast.error('Failed to create resource');
+      }
     },
   });
 };
 
-// Bulk insert for import - uses direct Supabase batch insert
+// Bulk insert for import - uses upsert to skip duplicates
 export const useBulkCreateResources = () => {
   const queryClient = useQueryClient();
 
@@ -147,20 +161,27 @@ export const useBulkCreateResources = () => {
       const BATCH_SIZE = 100;
       const results: Resource[] = [];
       const errors: string[] = [];
+      let skippedCount = 0;
 
       // Process in batches to avoid timeouts
       for (let i = 0; i < resources.length; i += BATCH_SIZE) {
         const batch = resources.slice(i, i + BATCH_SIZE);
         
+        // Use upsert with ignoreDuplicates to skip existing resources
         const { data, error } = await supabase
           .from('resources')
-          .insert(batch)
+          .upsert(batch, { 
+            onConflict: 'title,link,category',
+            ignoreDuplicates: true 
+          })
           .select();
 
         if (error) {
           errors.push(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${error.message}`);
         } else if (data) {
           results.push(...(data as Resource[]));
+          // Calculate skipped (batch size - inserted)
+          skippedCount += batch.length - data.length;
         }
 
         // Small delay to prevent overwhelming the database
@@ -169,7 +190,7 @@ export const useBulkCreateResources = () => {
         }
       }
 
-      return { inserted: results, errors };
+      return { inserted: results, errors, skipped: skippedCount };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['adminResources'] });
