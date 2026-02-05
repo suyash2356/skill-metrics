@@ -99,6 +99,37 @@ export const InstagramPost = ({
     const attachments: Array<{ name: string; url: string; type: string }> = [];
     let text = content;
 
+   // Try parsing as JSON block format first
+   try {
+     const parsed = JSON.parse(content);
+     if (parsed && typeof parsed === 'object' && parsed.type === 'post' && Array.isArray(parsed.blocks)) {
+       let extractedText = '';
+       for (const block of parsed.blocks) {
+         if (block.type === 'paragraph' && block.content) {
+           extractedText += block.content + '\n\n';
+         } else if (block.type === 'image' && block.imageUrl) {
+           media.push({ type: 'image', url: block.imageUrl });
+         } else if (block.type === 'video' && block.videoUrl) {
+           // Check if it's a direct video file or a YouTube/external link
+           const videoUrl = block.videoUrl;
+           if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+             // For YouTube, we'll show as a link in text
+             extractedText += `\n📹 Video: ${videoUrl}\n`;
+           } else {
+             media.push({ type: 'video', url: videoUrl });
+           }
+         } else if (block.type === 'document' && block.documentUrl) {
+           const name = block.documentName || 'Document';
+           const ext = name.split('.').pop()?.toLowerCase() || 'file';
+           attachments.push({ name, url: block.documentUrl, type: ext });
+         }
+       }
+       return { text: extractedText.trim(), media, attachments };
+     }
+   } catch {
+     // Not JSON, continue with markdown parsing
+   }
+
     // Extract base64 images
     const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
     const base64Matches = content.matchAll(base64Regex);
@@ -108,7 +139,8 @@ export const InstagramPost = ({
     }
 
     // Extract image URLs (including relative paths and full URLs)
-    const imgRegex = /!\[.*?\]\(((?:https?:\/\/[^)]+|\/[^)]+\.(?:jpg|jpeg|png|gif|webp|svg)))\)/gi;
+   // Updated regex to also match Supabase storage URLs without extensions
+   const imgRegex = /!\[.*?\]\(((?:https?:\/\/[^\s)]+(?:\.(?:jpg|jpeg|png|gif|webp|svg))?|\/[^)]+\.(?:jpg|jpeg|png|gif|webp|svg)))\)/gi;
     const imgMatches = content.matchAll(imgRegex);
     for (const match of imgMatches) {
       media.push({ type: "image", url: match[1] });
@@ -116,12 +148,21 @@ export const InstagramPost = ({
     }
 
     // ✅ Fixed regex: no double-escaping
-    const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
+   // Also match video tags embedded in content
+   const videoRegex = /(https?:\/\/[^\s<>"]+\.(?:mp4|webm|ogg))/gi;
     const videoMatches = content.matchAll(videoRegex);
     for (const match of videoMatches) {
       media.push({ type: "video", url: match[0] });
       text = text.replace(match[0], "");
     }
+
+   // Also extract video from <video> tags
+   const videoTagRegex = /<video[^>]+src=["']([^"']+)["'][^>]*>/gi;
+   const videoTagMatches = content.matchAll(videoTagRegex);
+   for (const match of videoTagMatches) {
+     media.push({ type: "video", url: match[1] });
+     text = text.replace(match[0], "");
+   }
 
     // Extract file attachments
     const attachmentRegex = /\[Attachment: (.*?)\]\((.*?)\)/g;
