@@ -1356,7 +1356,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      is_admin: { Args: { user_uuid: string }; Returns: boolean }
+      is_admin:
+        | { Args: never; Returns: boolean }
+        | { Args: { user_uuid: string }; Returns: boolean }
       mask_ip_address: { Args: { ip: unknown }; Returns: string }
       migrate_profile_data: { Args: never; Returns: undefined }
       register_first_admin: {
