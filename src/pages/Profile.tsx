@@ -57,6 +57,7 @@ import { FollowersFollowingDialog } from "@/components/FollowersFollowingDialog"
 const Profile = () => {
   const { user: currentUser } = useAuth();
   const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   const targetUserId = userId || currentUser?.id;
   const { toast } = useToast();
 
