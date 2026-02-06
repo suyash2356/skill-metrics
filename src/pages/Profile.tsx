@@ -492,8 +492,7 @@ const Profile = () => {
                       className="flex-1"
                       onClick={async () => {
                         try {
-                          const { useConversations } = await import('@/hooks/useConversations');
-                          const { data, error } = await (await import('@/integrations/supabase/client')).supabase.rpc('find_or_create_conversation', {
+                          const { data, error } = await supabase.rpc('find_or_create_conversation', {
                             _user1: currentUser?.id,
                             _user2: targetUserId,
                           });
@@ -502,9 +501,9 @@ const Profile = () => {
                         } catch (err: any) {
                           const msg = err?.message || 'Cannot start conversation';
                           if (msg.includes('mutual followers')) {
-                            (await import('sonner')).toast.error('You must be mutual followers to message this user');
+                            toast({ title: 'Cannot message', description: 'You must be mutual followers to message this user', variant: 'destructive' });
                           } else {
-                            (await import('sonner')).toast.error(msg);
+                            toast({ title: 'Error', description: msg, variant: 'destructive' });
                           }
                         }
                       }}
