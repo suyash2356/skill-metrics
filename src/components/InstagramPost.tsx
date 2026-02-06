@@ -67,6 +67,8 @@ interface InstagramPostProps {
   connectedBelow?: boolean;
 }
 
+import { SharePostDialog } from "./SharePostDialog";
+
 export const InstagramPost = ({
   post,
   isLiked,
@@ -82,6 +84,7 @@ export const InstagramPost = ({
 }: InstagramPostProps) => {
   const [imageError, setImageError] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [isVideoPlaying, setIsVideoPlaying] = useState(false);
@@ -95,40 +98,39 @@ export const InstagramPost = ({
   const parseMedia = (content: string | null) => {
     if (!content) return { text: "", media: [], attachments: [] };
 
-    const media: Array<{ type: "image" | "video"; url: string }> = [];
+    const media: Array<{ type: "image" | "video" | "youtube"; url: string }> = [];
     const attachments: Array<{ name: string; url: string; type: string }> = [];
     let text = content;
 
-   // Try parsing as JSON block format first
-   try {
-     const parsed = JSON.parse(content);
-     if (parsed && typeof parsed === 'object' && parsed.type === 'post' && Array.isArray(parsed.blocks)) {
-       let extractedText = '';
-       for (const block of parsed.blocks) {
-         if (block.type === 'paragraph' && block.content) {
-           extractedText += block.content + '\n\n';
-         } else if (block.type === 'image' && block.imageUrl) {
-           media.push({ type: 'image', url: block.imageUrl });
-         } else if (block.type === 'video' && block.videoUrl) {
-           // Check if it's a direct video file or a YouTube/external link
-           const videoUrl = block.videoUrl;
-           if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-             // For YouTube, we'll show as a link in text
-             extractedText += `\n📹 Video: ${videoUrl}\n`;
-           } else {
-             media.push({ type: 'video', url: videoUrl });
-           }
-         } else if (block.type === 'document' && block.documentUrl) {
-           const name = block.documentName || 'Document';
-           const ext = name.split('.').pop()?.toLowerCase() || 'file';
-           attachments.push({ name, url: block.documentUrl, type: ext });
-         }
-       }
-       return { text: extractedText.trim(), media, attachments };
-     }
-   } catch {
-     // Not JSON, continue with markdown parsing
-   }
+    // Try parsing as JSON block format first
+    try {
+      const parsed = JSON.parse(content);
+      if (parsed && typeof parsed === 'object' && parsed.type === 'post' && Array.isArray(parsed.blocks)) {
+        let extractedText = '';
+        for (const block of parsed.blocks) {
+          if (block.type === 'paragraph' && block.content) {
+            extractedText += block.content + '\n\n';
+          } else if (block.type === 'image' && block.imageUrl) {
+            media.push({ type: 'image', url: block.imageUrl });
+          } else if (block.type === 'video' && block.videoUrl) {
+            // Check if it's a direct video file or a YouTube/external link
+            const videoUrl = block.videoUrl;
+            if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
+              media.push({ type: 'youtube', url: videoUrl });
+            } else {
+              media.push({ type: 'video', url: videoUrl });
+            }
+          } else if (block.type === 'document' && block.documentUrl) {
+            const name = block.documentName || 'Document';
+            const ext = name.split('.').pop()?.toLowerCase() || 'file';
+            attachments.push({ name, url: block.documentUrl, type: ext });
+          }
+        }
+        return { text: extractedText.trim(), media, attachments };
+      }
+    } catch {
+      // Not JSON, continue with markdown parsing
+    }
 
     // Extract base64 images
     const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
@@ -139,8 +141,8 @@ export const InstagramPost = ({
     }
 
     // Extract image URLs (including relative paths and full URLs)
-   // Updated regex to also match Supabase storage URLs without extensions
-   const imgRegex = /!\[.*?\]\(((?:https?:\/\/[^\s)]+(?:\.(?:jpg|jpeg|png|gif|webp|svg))?|\/[^)]+\.(?:jpg|jpeg|png|gif|webp|svg)))\)/gi;
+    // Updated regex to also match Supabase storage URLs without extensions
+    const imgRegex = /!\[.*?\]\(((?:https?:\/\/[^\s)]+(?:\.(?:jpg|jpeg|png|gif|webp|svg))?|\/[^)]+\.(?:jpg|jpeg|png|gif|webp|svg)))\)/gi;
     const imgMatches = content.matchAll(imgRegex);
     for (const match of imgMatches) {
       media.push({ type: "image", url: match[1] });
@@ -148,21 +150,37 @@ export const InstagramPost = ({
     }
 
     // ✅ Fixed regex: no double-escaping
-   // Also match video tags embedded in content
-   const videoRegex = /(https?:\/\/[^\s<>"]+\.(?:mp4|webm|ogg))/gi;
+    // Also match video tags embedded in content
+    const videoRegex = /(https?:\/\/[^\s<>"]+\.(?:mp4|webm|ogg))/gi;
     const videoMatches = content.matchAll(videoRegex);
     for (const match of videoMatches) {
       media.push({ type: "video", url: match[0] });
       text = text.replace(match[0], "");
     }
 
-   // Also extract video from <video> tags
-   const videoTagRegex = /<video[^>]+src=["']([^"']+)["'][^>]*>/gi;
-   const videoTagMatches = content.matchAll(videoTagRegex);
-   for (const match of videoTagMatches) {
-     media.push({ type: "video", url: match[1] });
-     text = text.replace(match[0], "");
-   }
+    // Check for YouTube links in regular text if not already found in blocks
+    const youtubeRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/gi;
+    const youtubeMatches = Array.from(content.matchAll(youtubeRegex));
+
+    // Only add if we haven't already extracted it (avoid duplicates if using JSON blocks)
+    // We only process if no blocks were found or if mixed content. 
+    // Simply simplify: if we see a YouTube link in text that wasn't removed, let's treat it as media
+    for (const match of youtubeMatches) {
+      // Avoid duplicating if it was already part of a block which removed it from 'text'
+      // But 'text' here is being cleaned sequentially.
+      // We'll just add it to media and remove from text to be safe
+      media.push({ type: 'youtube', url: match[0] });
+      text = text.replace(match[0], "");
+    }
+
+
+    // Also extract video from <video> tags
+    const videoTagRegex = /<video[^>]+src=["']([^"']+)["'][^>]*>/gi;
+    const videoTagMatches = content.matchAll(videoTagRegex);
+    for (const match of videoTagMatches) {
+      media.push({ type: "video", url: match[1] });
+      text = text.replace(match[0], "");
+    }
 
     // Extract file attachments
     const attachmentRegex = /\[Attachment: (.*?)\]\((.*?)\)/g;
@@ -500,6 +518,19 @@ export const InstagramPost = ({
                 onError={() => setImageError(true)}
                 onLoad={onImageLoad}
               />
+            ) : media[currentMediaIndex].type === "youtube" ? (
+              <div className="relative w-full aspect-video group">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${media[currentMediaIndex].url.match(/(?:v=|youtu\.be\/|\/)([a-zA-Z0-9_-]{11})/)?.[1]}?enablejsapi=1`}
+                  title="YouTube video player"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0"
+                />
+              </div>
             ) : (
               <div className="relative w-full h-full group">
                 <video
@@ -670,7 +701,7 @@ export const InstagramPost = ({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 hover:bg-green-50 dark:hover:bg-green-950/20 transition-colors"
-                onClick={onShare}
+                onClick={() => setShareDialogOpen(true)}
               >
                 <Share2 className="h-5 w-5 hover:scale-110 transition-transform" />
               </Button>
@@ -753,6 +784,11 @@ export const InstagramPost = ({
       <ReportPostDialog
         open={reportDialogOpen}
         onOpenChange={setReportDialogOpen}
+        postId={post.id}
+      />
+      <SharePostDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
         postId={post.id}
       />
     </div>

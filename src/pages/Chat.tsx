@@ -19,6 +19,7 @@ import {
 import { toast } from 'sonner';
 import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { SharedPostPreview } from '@/components/chat/SharedPostPreview';
 
 const QUICK_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥', '👏', '🙏'];
 
@@ -305,7 +306,8 @@ function MessageBubble({
           'px-4 py-2.5 rounded-2xl text-sm leading-relaxed relative',
           isOwn
             ? 'bg-primary text-primary-foreground rounded-br-md'
-            : 'bg-muted text-foreground rounded-bl-md'
+            : 'bg-muted text-foreground rounded-bl-md',
+          message.message_type === 'post_share' && 'bg-transparent p-0 shadow-none'
         )}>
           {isEditing ? (
             <div className="flex items-center gap-2">
@@ -323,6 +325,8 @@ function MessageBubble({
                 <X className="h-3 w-3" />
               </Button>
             </div>
+          ) : message.message_type === 'post_share' && message.shared_post_id ? (
+            <SharedPostPreview postId={message.shared_post_id} />
           ) : (
             <p className="whitespace-pre-wrap break-words">{message.content}</p>
           )}
