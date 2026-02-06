@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useUserFollows } from "@/hooks/useUserFollows";
 import { useUserProfileDetails, SocialLink, Skill, Achievement, LearningPathItem } from "@/hooks/useUserProfileDetails";
 import { useQuery } from "@tanstack/react-query";
