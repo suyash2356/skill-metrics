@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useUserFollows } from "@/hooks/useUserFollows";
 import { useUserProfileDetails, SocialLink, Skill, Achievement, LearningPathItem } from "@/hooks/useUserProfileDetails";
 import { useQuery } from "@tanstack/react-query";
@@ -57,6 +57,7 @@ import { FollowersFollowingDialog } from "@/components/FollowersFollowingDialog"
 const Profile = () => {
   const { user: currentUser } = useAuth();
   const { userId } = useParams<{ userId: string }>();
+  const navigate = useNavigate();
   const targetUserId = userId || currentUser?.id;
   const { toast } = useToast();
 
@@ -486,7 +487,27 @@ const Profile = () => {
                         {getFollowButtonState().text}
                       </Button>
                     )}
-                    <Button variant="outline" className="flex-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={async () => {
+                        try {
+                          const { data, error } = await supabase.rpc('find_or_create_conversation', {
+                            _user1: currentUser?.id,
+                            _user2: targetUserId,
+                          });
+                          if (error) throw error;
+                          navigate(`/messages/${data}`);
+                        } catch (err: any) {
+                          const msg = err?.message || 'Cannot start conversation';
+                          if (msg.includes('mutual followers')) {
+                            toast({ title: 'Cannot message', description: 'You must be mutual followers to message this user', variant: 'destructive' });
+                          } else {
+                            toast({ title: 'Error', description: msg, variant: 'destructive' });
+                          }
+                        }
+                      }}
+                    >
                       <MessageCircle className="h-4 w-4 mr-2" /> Message
                     </Button>
                   </div>
