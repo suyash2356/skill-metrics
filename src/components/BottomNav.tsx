@@ -1,13 +1,13 @@
-import { Home, Users, Compass, Video, Map } from 'lucide-react';
+import { Home, Users, Compass, MessageCircle, Map } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 
 const BottomNav = () => {
   const navItems = [
     { to: '/home', icon: <Home size={24} />, label: 'Home' },
     { to: '/roadmaps', icon: <Map size={24} />, label: 'Roadmaps' },
-    { to: '/my-communities', icon: <Users size={24} />, label: 'Communities' },
+    { to: '/messages', icon: <MessageCircle size={24} />, label: 'Messages' },
     { to: '/explore', icon: <Compass size={24} />, label: 'Explore' },
-    { to: '/new-videos', icon: <Video size={24} />, label: 'Videos' },
+    { to: '/my-communities', icon: <Users size={24} />, label: 'Communities' },
   ];
 
   return (

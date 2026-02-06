@@ -82,6 +82,8 @@ const App = () => (
                 <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
                 <Route path="/my-communities" element={<ProtectedRoute><MyCommunities /></ProtectedRoute>} />
+                <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+                <Route path="/messages/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
                 {/* Admin Routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/dashboard" element={<AdminDashboard />} />

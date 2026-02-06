@@ -76,6 +76,7 @@ export const Layout = ({ children }: LayoutProps) => {
     { name: "Home", href: "/home", icon: Home },
     { name: "Explore", href: "/explore", icon: Search },
     { name: "My Roadmaps", href: "/roadmaps", icon: Map },
+    { name: "Messages", href: "/messages", icon: MessageCircle },
   ];
 
   const isActive = (path: string) => currentPath === path;

@@ -486,7 +486,28 @@ const Profile = () => {
                         {getFollowButtonState().text}
                       </Button>
                     )}
-                    <Button variant="outline" className="flex-1">
+                    <Button
+                      variant="outline"
+                      className="flex-1"
+                      onClick={async () => {
+                        try {
+                          const { useConversations } = await import('@/hooks/useConversations');
+                          const { data, error } = await (await import('@/integrations/supabase/client')).supabase.rpc('find_or_create_conversation', {
+                            _user1: currentUser?.id,
+                            _user2: targetUserId,
+                          });
+                          if (error) throw error;
+                          navigate(`/messages/${data}`);
+                        } catch (err: any) {
+                          const msg = err?.message || 'Cannot start conversation';
+                          if (msg.includes('mutual followers')) {
+                            (await import('sonner')).toast.error('You must be mutual followers to message this user');
+                          } else {
+                            (await import('sonner')).toast.error(msg);
+                          }
+                        }
+                      }}
+                    >
                       <MessageCircle className="h-4 w-4 mr-2" /> Message
                     </Button>
                   </div>
