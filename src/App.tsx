@@ -27,6 +27,8 @@ import Settings from "./pages/Settings";
 import MyPosts from "./pages/MyPosts";
 import Support from "./pages/Support";
 import SavedPosts from "./pages/SavedPosts";
+import Messages from "./pages/Messages";
+import Chat from "./pages/Chat";
 import MyCommunities from "./pages/MyCommunities";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
