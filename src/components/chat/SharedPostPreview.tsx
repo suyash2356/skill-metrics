@@ -3,6 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2, AlertCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { InstagramPost } from "@/components/InstagramPost";
+import { usePostActions } from "@/hooks/usePostActions";
+import { useAuth } from "@/hooks/useAuth";
+import { CommentDialog } from "@/components/CommentDialog";
 
 interface SharedPostPreviewProps {
     postId: string;
@@ -33,6 +36,9 @@ export const SharedPostPreview = ({ postId }: SharedPostPreviewProps) => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
+    const [commentDialogOpen, setCommentDialogOpen] = useState(false);
+    const { user } = useAuth();
+    const { toggleLike, toggleBookmark } = usePostActions();
 
     useEffect(() => {
         const fetchPost = async () => {
@@ -57,12 +63,38 @@ export const SharedPostPreview = ({ postId }: SharedPostPreviewProps) => {
                     console.log("Could not fetch profile for shared post", profileError);
                 }
 
-                // 3. Fetch counts (optional, can be 0 for preview)
-                // For now, simpler to default to 0 to avoid many requests, or do a quick count if needed.
-                // Let's stick to 0 for specific counts unless critical.
+                // 3. Fetch counts
+                const { count: likesCount } = await supabase
+                    .from("likes")
+                    .select("id", { count: "exact", head: true })
+                    .eq("post_id", postId);
+
+                const { count: commentsCount } = await supabase
+                    .from("comments")
+                    .select("id", { count: "exact", head: true })
+                    .eq("post_id", postId);
 
                 // 4. Check interaction status (liked/bookmarked)
-                // We can skip this or fetch it. Let's assume false for the preview context to be fast.
+                let userHasLiked = false;
+                let userHasBookmarked = false;
+
+                if (user) {
+                    const { data: likeData } = await supabase
+                        .from("likes")
+                        .select("id")
+                        .eq("post_id", postId)
+                        .eq("user_id", user.id)
+                        .maybeSingle();
+                    if (likeData) userHasLiked = true;
+
+                    const { data: bookmarkData } = await supabase
+                        .from("bookmarks")
+                        .select("id")
+                        .eq("post_id", postId)
+                        .eq("user_id", user.id)
+                        .maybeSingle();
+                    if (bookmarkData) userHasBookmarked = true;
+                }
 
                 setPost({
                     ...postData,
@@ -71,8 +103,10 @@ export const SharedPostPreview = ({ postId }: SharedPostPreviewProps) => {
                         avatar_url: profileData.avatar_url,
                         title: null
                     } : null,
-                    likes_count: 0,
-                    comments_count: 0
+                    likes_count: likesCount || 0,
+                    comments_count: commentsCount || 0,
+                    user_has_liked: userHasLiked,
+                    user_has_bookmarked: userHasBookmarked
                 });
             } catch (err) {
                 console.error("Error fetching shared post:", err);
@@ -85,7 +119,56 @@ export const SharedPostPreview = ({ postId }: SharedPostPreviewProps) => {
         if (postId) {
             fetchPost();
         }
-    }, [postId]);
+    }, [postId, user]);
+
+    const handleLike = async () => {
+        if (!post) return;
+        const newLikedState = !post.user_has_liked;
+
+        // Optimistic update
+        setPost(prev => prev ? ({
+            ...prev,
+            user_has_liked: newLikedState,
+            likes_count: prev.likes_count + (newLikedState ? 1 : -1)
+        }) : null);
+
+        const success = await toggleLike(
+            post.id,
+            post.user_has_liked || false,
+            post.user_id,
+            post.title
+        );
+
+        // Revert if failed
+        if (!success) {
+            setPost(prev => prev ? ({
+                ...prev,
+                user_has_liked: !newLikedState,
+                likes_count: prev.likes_count + (!newLikedState ? 1 : -1)
+            }) : null);
+        }
+    };
+
+    const handleBookmark = async () => {
+        if (!post) return;
+        const newBookmarkedState = !post.user_has_bookmarked;
+
+        // Optimistic update
+        setPost(prev => prev ? ({
+            ...prev,
+            user_has_bookmarked: newBookmarkedState
+        }) : null);
+
+        const success = await toggleBookmark(post.id, post.user_has_bookmarked || false);
+
+        // Revert if failed
+        if (!success) {
+            setPost(prev => prev ? ({
+                ...prev,
+                user_has_bookmarked: !newBookmarkedState
+            }) : null);
+        }
+    };
 
     if (loading) {
         return (
@@ -114,64 +197,71 @@ export const SharedPostPreview = ({ postId }: SharedPostPreviewProps) => {
     const hasVideo = !!videoMatch || !!youtubeMatch;
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <div className="cursor-pointer block group w-full max-w-sm">
-                    <div className="border rounded-lg overflow-hidden bg-background hover:border-primary/50 transition-colors shadow-sm">
-                        {/* Header */}
-                        <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
-                            <img
-                                src={post.profiles?.avatar_url || '/placeholder.svg'}
-                                className="w-5 h-5 rounded-full object-cover"
-                                alt=""
-                            />
-                            <span className="text-xs font-medium truncate">
-                                {post.profiles?.full_name || 'Anonymous'}
-                            </span>
-                        </div>
+        <>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogTrigger asChild>
+                    <div className="cursor-pointer block group w-full max-w-sm">
+                        <div className="border rounded-lg overflow-hidden bg-background hover:border-primary/50 transition-colors shadow-sm">
+                            {/* Header */}
+                            <div className="flex items-center gap-2 p-2 border-b bg-muted/30">
+                                <img
+                                    src={post.profiles?.avatar_url || '/placeholder.svg'}
+                                    className="w-5 h-5 rounded-full object-cover"
+                                    alt=""
+                                />
+                                <span className="text-xs font-medium truncate">
+                                    {post.profiles?.full_name || 'Anonymous'}
+                                </span>
+                            </div>
 
-                        {/* Content Preview */}
-                        <div className="flex gap-2 p-2">
-                            {thumbnail ? (
-                                <div className="h-16 w-16 flex-shrink-0 bg-muted rounded overflow-hidden">
-                                    <img src={thumbnail} className="h-full w-full object-cover" alt="Post thumbnail" />
-                                </div>
-                            ) : hasVideo ? (
-                                <div className="h-16 w-16 flex-shrink-0 bg-muted rounded flex items-center justify-center">
-                                    <div className="h-8 w-8 rounded-full bg-black/20 flex items-center justify-center">
-                                        <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-black border-b-[6px] border-b-transparent ml-1" />
+                            {/* Content Preview */}
+                            <div className="flex gap-2 p-2">
+                                {thumbnail ? (
+                                    <div className="h-16 w-16 flex-shrink-0 bg-muted rounded overflow-hidden">
+                                        <img src={thumbnail} className="h-full w-full object-cover" alt="Post thumbnail" />
                                     </div>
-                                </div>
-                            ) : null}
+                                ) : hasVideo ? (
+                                    <div className="h-16 w-16 flex-shrink-0 bg-muted rounded flex items-center justify-center">
+                                        <div className="h-8 w-8 rounded-full bg-black/20 flex items-center justify-center">
+                                            <div className="w-0 h-0 border-t-[6px] border-t-transparent border-l-[10px] border-l-black border-b-[6px] border-b-transparent ml-1" />
+                                        </div>
+                                    </div>
+                                ) : null}
 
-                            <div className="flex-1 min-w-0 flex flex-col justify-center">
-                                <h4 className="text-sm font-medium line-clamp-1 mb-0.5">{post.title}</h4>
-                                <p className="text-xs text-muted-foreground line-clamp-2">
-                                    {post.content?.replace(/!\[.*?\]\(.*?\)/g, '') // remove images
-                                        .replace(/<[^>]*>/g, '') // remove html tags
-                                        .slice(0, 100) || 'Click to view post'}
-                                </p>
+                                <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                    <h4 className="text-sm font-medium line-clamp-1 mb-0.5">{post.title}</h4>
+                                    <p className="text-xs text-muted-foreground line-clamp-2">
+                                        {post.content?.replace(/!\[.*?\]\(.*?\)/g, '') // remove images
+                                            .replace(/<[^>]*>/g, '') // remove html tags
+                                            .slice(0, 100) || 'Click to view post'}
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            </DialogTrigger>
+                </DialogTrigger>
 
-            <DialogContent className="max-w-2xl p-0 overflow-hidden bg-card border-none max-h-[90vh] overflow-y-auto">
-                {/* Render the full post */}
-                {/* Note: We pass dummy handlers for now as the goal is viewing */}
-                <div className="p-0">
-                    <InstagramPost
-                        post={post}
-                        isLiked={false}
-                        isBookmarked={false}
-                        onLike={() => { }}
-                        onBookmark={() => { }}
-                        onComment={() => { }}
-                        onShare={() => { }}
-                    />
-                </div>
-            </DialogContent>
-        </Dialog>
+                <DialogContent className="max-w-2xl p-0 overflow-hidden bg-card border-none max-h-[90vh] overflow-y-auto">
+                    {/* Render the full post */}
+                    <div className="p-0">
+                        <InstagramPost
+                            post={post}
+                            isLiked={post.user_has_liked || false}
+                            isBookmarked={post.user_has_bookmarked || false}
+                            onLike={handleLike}
+                            onBookmark={handleBookmark}
+                            onComment={() => setCommentDialogOpen(true)}
+                            onShare={() => { }} // Sharing from within shared post? Sure, why not, but maybe disabled to prevent recursion loop visual
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            <CommentDialog
+                isOpen={commentDialogOpen}
+                onClose={() => setCommentDialogOpen(false)}
+                postId={post.id}
+            />
+        </>
     );
 };

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { fetchPeopleCommunitySuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
 import { debounce } from "lodash";
 import { useAuth } from "@/hooks/useAuth";
+import { useConversations } from "@/hooks/useConversations"; // Added hook
 import {
   Home,
   Search,
@@ -49,6 +50,9 @@ export const Layout = ({ children }: LayoutProps) => {
   const [showSkillResults, setShowSkillResults] = useState(false);
   const searchRef = useRef<HTMLDivElement | null>(null);
 
+  const { conversations } = useConversations(); // Added hook usage
+  const unreadCount = conversations.reduce((acc, conv) => acc + (conv.unread_count || 0), 0);
+
   const fetchSuggestions = debounce(async (q: string) => {
     if (!q) return setSuggestions([]);
     try {
@@ -76,7 +80,6 @@ export const Layout = ({ children }: LayoutProps) => {
     { name: "Home", href: "/home", icon: Home },
     { name: "Explore", href: "/explore", icon: Search },
     { name: "My Roadmaps", href: "/roadmaps", icon: Map },
-    { name: "Messages", href: "/messages", icon: MessageCircle },
   ];
 
   const isActive = (path: string) => currentPath === path;
@@ -238,6 +241,16 @@ export const Layout = ({ children }: LayoutProps) => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon" asChild className="hidden md:flex relative">
+              <Link to="/messages">
+                <MessageCircle className="h-5 w-5 text-muted-foreground" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground animate-in zoom-in">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </Link>
+            </Button>
             <NotificationBell />
             {/* Settings Dropdown */}
             <DropdownMenu>
