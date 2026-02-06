@@ -19,7 +19,8 @@ import {
   Bookmark,
   FileText,
   HelpCircle,
-  LogOut
+  LogOut,
+  MessageCircle
 } from "lucide-react";
 import {
   DropdownMenu,
