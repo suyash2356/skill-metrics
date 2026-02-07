@@ -1,286 +1,163 @@
 
-# Resource Rating & Review System Implementation Plan
+
+# End-to-End Encrypted Messaging with Chat Password
 
 ## Overview
-This plan implements a comprehensive, trustworthy resource rating system inspired by IMDb and Rotten Tomatoes. Users will be able to rate resources (1-5 stars), recommend/not recommend (binary vote), and write detailed reviews. The system includes anti-fraud measures and weighted scoring algorithms.
+
+This plan adds client-side encryption to the existing messaging system. All messages will be encrypted in the browser before being sent to the database. Only the sender and receiver can read them. Even the database admin sees only scrambled text.
+
+Users must set a "Chat Password" (custom text, minimum 6 characters) before they can use messaging. A recovery flow via email OTP allows resetting the password if forgotten (old messages become unreadable).
 
 ---
 
-## Database Schema Design
+## How It Works (User Flow)
 
-### Table 1: `resource_ratings` - Star Ratings (1-5)
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| user_id | uuid | Foreign key to auth.users (NOT NULL) |
-| resource_id | uuid | Foreign key to resources |
-| stars | integer | Rating value 1-5 |
-| created_at | timestamp | When rating was created |
-| updated_at | timestamp | When rating was last modified |
-
-**Constraints:**
-- UNIQUE(user_id, resource_id) - One rating per user per resource
-- CHECK(stars >= 1 AND stars <= 5)
-
-### Table 2: `resource_votes` - Recommend/Not Recommend
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| user_id | uuid | Foreign key to auth.users (NOT NULL) |
-| resource_id | uuid | Foreign key to resources |
-| vote_type | text | Either 'up' or 'down' |
-| created_at | timestamp | When vote was cast |
-
-**Constraints:**
-- UNIQUE(user_id, resource_id)
-- CHECK(vote_type IN ('up', 'down'))
-
-### Table 3: `resource_reviews` - Written Reviews
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| user_id | uuid | Foreign key to auth.users (NOT NULL) |
-| resource_id | uuid | Foreign key to resources |
-| review_text | text | The review content (max 2000 chars) |
-| is_verified | boolean | User marked "I completed this" |
-| helpful_count | integer | Number of "helpful" votes |
-| created_at | timestamp | When review was written |
-| updated_at | timestamp | When review was last edited |
-
-**Constraints:**
-- UNIQUE(user_id, resource_id)
-- CHECK(length(review_text) >= 20 AND length(review_text) <= 2000)
-
-### Table 4: `resource_review_helpful` - Helpful Votes for Reviews
-| Column | Type | Description |
-|--------|------|-------------|
-| id | uuid | Primary key |
-| user_id | uuid | Who found it helpful |
-| review_id | uuid | Which review |
-| created_at | timestamp | When marked helpful |
-
-**Constraints:**
-- UNIQUE(user_id, review_id)
-
-### Update `resources` Table - Add Aggregate Columns
-| New Column | Type | Description |
-|------------|------|-------------|
-| avg_rating | numeric(3,2) | Calculated average rating |
-| weighted_rating | numeric(3,2) | IMDb-style weighted rating |
-| total_ratings | integer | Total number of ratings |
-| recommend_percent | integer | Percentage recommending (0-100) |
-| total_votes | integer | Total up + down votes |
-| total_reviews | integer | Number of written reviews |
+1. **First time visiting Messages**: User sees a setup screen asking them to create a Chat Password
+2. **Sending a message**: Browser fetches recipient's public key, encrypts the message locally, sends encrypted text to the database
+3. **Reading messages**: Browser downloads the user's encrypted private key, decrypts it using the Chat Password (held in session memory), then decrypts each message
+4. **Forgot password**: User clicks "Forgot Password" on the PIN entry screen, receives an email OTP, verifies it, then sets a new Chat Password. A new key pair is generated -- old messages become unreadable (shown as "[Cannot decrypt - password was reset]")
 
 ---
 
-## Row Level Security (RLS) Policies
+## Technical Implementation
 
-### resource_ratings
-- **SELECT**: Anyone can view ratings (public data)
-- **INSERT**: Authenticated users can rate (user_id = auth.uid())
-- **UPDATE**: Users can update their own rating only
-- **DELETE**: Users can delete their own rating only
+### Step 1: Database Changes (Migration)
 
-### resource_votes
-- **SELECT**: Anyone can view votes
-- **INSERT**: Authenticated users only (user_id = auth.uid())
-- **UPDATE**: Users can change their own vote
-- **DELETE**: Users can remove their vote
+Add a new table for encryption keys:
 
-### resource_reviews
-- **SELECT**: Anyone can view reviews
-- **INSERT**: Authenticated users only (user_id = auth.uid())
-- **UPDATE**: Users can edit their own reviews
-- **DELETE**: Users can delete their own reviews
-
----
-
-## Database Functions
-
-### 1. `calculate_weighted_rating(resource_id uuid)`
-Implements the IMDb weighted rating formula:
-```
-WR = (v / (v + m)) * R + (m / (v + m)) * C
-```
-Where:
-- R = average rating of the resource
-- v = number of votes for the resource
-- m = minimum votes required (10)
-- C = average rating across all resources
-
-### 2. `update_resource_aggregates()`
-Trigger function that updates the aggregate columns on the resources table when ratings/votes change.
-
-### 3. `check_rating_rate_limit(user_id uuid)`
-Anti-abuse function that checks if user has exceeded daily rating limit (5 per day).
-
----
-
-## Anti-Fraud Measures
-
-1. **Logged-in Users Only** - RLS enforces authentication
-2. **One Rating Per Resource** - UNIQUE constraint prevents duplicates
-3. **Minimum Votes to Display** - Show "Not enough ratings" when < 10 votes
-4. **Weighted Rating Algorithm** - Prevents gaming with few high votes
-5. **Rate Limiting** - Max 5 ratings per day per user (database function)
-6. **New Account Restrictions** - Accounts < 24 hours old cannot rate (optional)
-7. **Verified Completion Badge** - Reviews from users who marked "I completed this" get highlighted
-
----
-
-## Frontend Implementation
-
-### New Hook: `useResourceRatings.tsx`
 ```text
-Functions:
-- submitRating(resourceId, stars) - Rate a resource
-- submitVote(resourceId, voteType) - Up/down vote
-- submitReview(resourceId, reviewText, isVerified) - Write review
-- getUserRating(resourceId) - Get current user's rating
-- getResourceStats(resourceId) - Get aggregate stats
-- getReviews(resourceId) - Get all reviews with pagination
-- markReviewHelpful(reviewId) - Mark a review as helpful
+Table: user_encryption_keys
+- id (uuid, PK)
+- user_id (uuid, unique, not null)
+- public_key (text, not null)          -- RSA-OAEP public key in JWK format
+- encrypted_private_key (text, not null) -- AES-GCM encrypted private key
+- key_salt (text, not null)            -- Salt for PBKDF2 key derivation
+- key_version (integer, default 1)     -- Incremented on password reset
+- created_at, updated_at
 ```
 
-### New Component: `ResourceRatingCard.tsx`
-A card component showing:
-- Star rating display (interactive if logged in)
-- Current average rating with vote count
-- Recommend percentage bar
-- "Rate Now" / "Recommend" / "Not Recommend" buttons
-- Top review preview
-- "Write Review" button
+RLS policies:
+- SELECT: Anyone authenticated can read `public_key` (needed for encryption)
+- INSERT/UPDATE: Only own `user_id = auth.uid()`
+- A security definer function `get_public_key(target_user_id)` to fetch public keys without recursion
 
-### New Component: `ResourceReviewsDialog.tsx`
-A dialog/sheet showing:
-- All reviews with pagination
-- Sort by: Most Recent, Most Helpful, Highest Rated
-- Filter by: Verified Completers Only
-- Each review shows: user avatar, rating, review text, helpful count
-- "Mark as Helpful" button
+### Step 2: Edge Function for Password Recovery OTP
 
-### New Component: `WriteReviewDialog.tsx`
-A form dialog for writing reviews:
-- Star rating selector
-- "I completed this resource" checkbox
-- Text area for review (min 20, max 2000 chars)
-- Character counter
-- Submit button
+Create `supabase/functions/send-chat-otp/index.ts`:
+- Accepts `{ email }` in the request body
+- Generates a 6-digit OTP, stores it in a `chat_password_otps` table (with 10-minute expiry)
+- Sends it via Resend to the user's email
+- Rate-limited to 3 requests per hour per user
 
----
-
-## UI/UX Integration Points
-
-### 1. SkillRecommendations Page (`/skills/:skill`)
-Each resource card will show:
+New table `chat_password_otps`:
 ```text
-┌─────────────────────────────────────┐
-│  📚 Python ML Course                │
-│  Coursera                           │
-│                                     │
-│  ⭐ 4.6 (2.3k ratings)              │
-│  ✅ 91% Recommend                   │
-│                                     │
-│  Top Review:                        │
-│  "Best beginner friendly course..." │
-│                                     │
-│  [Rate] [👍 Recommend] [👎 Not]     │
-└─────────────────────────────────────┘
+- id, user_id, otp_hash (text), expires_at (timestamptz), used (boolean)
 ```
 
-### 2. Explore Page Resources Tab
-Add rating display to all resource cards.
+### Step 3: Crypto Utility Module
 
-### 3. Roadmap View Page
-Show ratings for resources linked to roadmap steps.
+Create `src/lib/chatCrypto.ts`:
+
+- **generateKeyPair()**: Uses Web Crypto API (`window.crypto.subtle`) to generate RSA-OAEP 2048-bit key pair
+- **deriveKeyFromPassword(password, salt)**: PBKDF2 with 100,000 iterations to derive an AES-256-GCM key from the user's password
+- **encryptPrivateKey(privateKey, password)**: Encrypts the private key JWK with the derived AES key
+- **decryptPrivateKey(encryptedBlob, password, salt)**: Reverses the above
+- **encryptMessage(plaintext, recipientPublicKey)**: Generates a random AES-256-GCM session key, encrypts the message with it, then encrypts the session key with the recipient's RSA public key. Returns a JSON blob containing both encrypted parts
+- **decryptMessage(encryptedBlob, privateKey)**: Reverses the above
+
+All using the native Web Crypto API (no external libraries needed).
+
+### Step 4: Encryption Context & Session Management
+
+Create `src/context/ChatEncryptionContext.tsx`:
+
+- Stores the decrypted private key in React state (memory only, never persisted)
+- Provides `isSetup` (has user created keys?), `isUnlocked` (has user entered password this session?)
+- Methods: `setupEncryption(password)`, `unlockWithPassword(password)`, `lockChat()`, `resetPassword(newPassword, otp)`
+- On app load, checks if `user_encryption_keys` row exists for the user
+- Auto-locks when the tab is closed (keys wiped from memory)
+
+### Step 5: UI Components
+
+**New components:**
+
+1. **`ChatPasswordSetup.tsx`** -- Full-screen modal shown on first visit to /messages
+   - Password input (min 6 chars) with confirmation field
+   - Strength indicator
+   - "Create Password" button that generates keys and saves them
+
+2. **`ChatPasswordUnlock.tsx`** -- Shown when user visits messages but hasn't entered password this session
+   - Password input field
+   - "Unlock" button
+   - "Forgot Password?" link leading to OTP recovery flow
+
+3. **`ChatPasswordReset.tsx`** -- OTP verification + new password creation
+   - Step 1: Enter email, request OTP
+   - Step 2: Enter OTP code
+   - Step 3: Create new password (generates new key pair, old messages become unreadable)
+
+### Step 6: Modify Existing Messaging Code
+
+**`useMessages.ts` changes:**
+- `sendMessage()`: Before inserting, encrypt the content using recipient's public key AND sender's public key (store two copies or use a shared session key approach). Actually, the standard approach is: generate a random AES key for the message, encrypt the message with it, then encrypt the AES key twice (once with sender's public key, once with recipient's public key). Store all as a JSON blob in the `content` column.
+- `fetchMessages()`: After fetching, decrypt each message's content using the private key from context. If decryption fails (old messages after reset), show "[Message cannot be decrypted]"
+
+**`Chat.tsx` changes:**
+- Wrap the chat view with encryption context checks
+- If not setup: show `ChatPasswordSetup`
+- If not unlocked: show `ChatPasswordUnlock`
+- If unlocked: show normal chat (messages auto-decrypted)
+- Display a green lock icon in the header indicating encryption is active
+
+**`Messages.tsx` changes:**
+- Last message preview: decrypt if possible, show "[Encrypted message]" if not unlocked
+- Add lock icon indicator
+
+**`useConversations.ts` changes:**
+- Last message content will be encrypted -- show "[Encrypted message]" in conversation list when password isn't entered yet, or decrypt preview when unlocked
+
+### Step 7: Message Format
+
+The encrypted content stored in the `messages.content` column will be a JSON string:
+
+```json
+{
+  "v": 1,
+  "type": "e2ee",
+  "keys": {
+    "<sender_user_id>": "<base64 RSA-encrypted AES key>",
+    "<recipient_user_id>": "<base64 RSA-encrypted AES key>"
+  },
+  "iv": "<base64 AES-GCM IV>",
+  "ct": "<base64 AES-GCM ciphertext>"
+}
+```
+
+This way both sender and recipient can decrypt using their own private key.
 
 ---
 
-## Implementation Steps
+## Files to Create
+- `src/lib/chatCrypto.ts` -- Core encryption/decryption utilities
+- `src/context/ChatEncryptionContext.tsx` -- React context for key management
+- `src/components/chat/ChatPasswordSetup.tsx` -- First-time setup UI
+- `src/components/chat/ChatPasswordUnlock.tsx` -- Session unlock UI
+- `src/components/chat/ChatPasswordReset.tsx` -- Forgot password recovery
+- `supabase/functions/send-chat-otp/index.ts` -- OTP email sender
+- Migration SQL for `user_encryption_keys` and `chat_password_otps` tables
 
-### Phase 1: Database Setup
-1. Create migration for new tables (resource_ratings, resource_votes, resource_reviews, resource_review_helpful)
-2. Add aggregate columns to resources table
-3. Create RLS policies for all new tables
-4. Create database functions for weighted rating calculation
-5. Create triggers to update aggregates on changes
+## Files to Modify
+- `src/hooks/useMessages.ts` -- Add encrypt/decrypt logic
+- `src/hooks/useConversations.ts` -- Handle encrypted previews
+- `src/pages/Chat.tsx` -- Add encryption gate screens
+- `src/pages/Messages.tsx` -- Show encrypted preview indicators
+- `src/App.tsx` -- Wrap with ChatEncryptionProvider
+- `supabase/config.toml` -- Add edge function config
 
-### Phase 2: Backend Hooks
-1. Create `useResourceRatings.tsx` hook with all rating functions
-2. Add optimistic updates for immediate UI feedback
-3. Implement rate limiting check
-4. Add React Query for caching and invalidation
+## Important Considerations
+- No existing functionality will break -- unencrypted old messages will display normally (backward compatible)
+- The Web Crypto API is available in all modern browsers natively
+- Private keys never leave the browser in decrypted form
+- The database only ever stores encrypted content
+- Password reset means new key pair = old messages unreadable (by design, this is the security tradeoff)
 
-### Phase 3: UI Components
-1. Create `ResourceRatingCard.tsx` component
-2. Create `ResourceReviewsDialog.tsx` for viewing reviews
-3. Create `WriteReviewDialog.tsx` for submitting reviews
-4. Create `StarRatingInput.tsx` for interactive star selection
-
-### Phase 4: Integration
-1. Update `SkillRecommendations.tsx` to include rating cards
-2. Update `Explore.tsx` resources tab with ratings
-3. Update `RoadmapView.tsx` to show resource ratings
-4. Add rating column to admin ResourceTable
-
-### Phase 5: Polish
-1. Add loading states and skeletons
-2. Add toast notifications for actions
-3. Add error handling and retry logic
-4. Implement "Not enough ratings" display
-5. Add verified badge styling
-
----
-
-## Technical Details
-
-### Files to Create
-- `supabase/migrations/[timestamp]_add_resource_ratings_system.sql`
-- `src/hooks/useResourceRatings.tsx`
-- `src/components/ResourceRatingCard.tsx`
-- `src/components/ResourceReviewsDialog.tsx`
-- `src/components/WriteReviewDialog.tsx`
-- `src/components/StarRatingInput.tsx`
-
-### Files to Modify
-- `src/pages/SkillRecommendations.tsx` - Add rating display
-- `src/pages/Explore.tsx` - Add rating to resource cards
-- `src/pages/RoadmapView.tsx` - Add rating to step resources
-- `src/components/admin/ResourceTable.tsx` - Add rating column
-- `src/integrations/supabase/types.ts` - Will auto-update
-
----
-
-## Display Logic
-
-### Rating Display Rules
-```text
-IF total_ratings >= 10:
-  Show: "⭐ 4.6 (2.3k ratings)"
-  Show: "91% Recommend"
-ELSE:
-  Show: "Not enough ratings yet"
-  Show: "Be the first to rate!"
-```
-
-### Weighted Rating Formula
-```
-weighted_score = (v / (v + 10)) * avg_rating + (10 / (v + 10)) * site_average
-```
-
-This ensures:
-- Resources with 2 votes averaging 5.0 won't outrank resources with 500 votes averaging 4.6
-- New resources start closer to the site average
-- More votes = closer to true average
-
----
-
-## Security Considerations
-
-1. All tables have RLS enabled with strict policies
-2. User_id is NOT NULL to prevent anonymous ratings
-3. Rate limiting prevents spam (5 ratings/day)
-4. Review text length is validated (20-2000 chars)
-5. No direct access to update aggregate columns - only through triggers
-6. Unique constraints prevent duplicate voting
