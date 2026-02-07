@@ -103,6 +103,33 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_password_otps: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          otp_hash: string
+          used: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp_hash: string
+          used?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp_hash?: string
+          used?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       comments: {
         Row: {
           content: string
@@ -1232,6 +1259,39 @@ export type Database = {
           },
         ]
       }
+      user_encryption_keys: {
+        Row: {
+          created_at: string
+          encrypted_private_key: string
+          id: string
+          key_salt: string
+          key_version: number
+          public_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          encrypted_private_key: string
+          id?: string
+          key_salt: string
+          key_version?: number
+          public_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          encrypted_private_key?: string
+          id?: string
+          key_salt?: string
+          key_version?: number
+          public_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           allow_follow_requests: boolean | null
@@ -1515,6 +1575,7 @@ export type Database = {
       }
       get_profile_stats: { Args: { target_user_id: string }; Returns: Json }
       get_site_average_rating: { Args: never; Returns: number }
+      get_user_public_key: { Args: { target_user_id: string }; Returns: string }
       has_community_role: {
         Args: {
           _community_id: string

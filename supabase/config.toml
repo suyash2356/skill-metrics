@@ -8,3 +8,6 @@ verify_jwt = true
 
 [functions.send-login-alert]
 verify_jwt = false
+
+[functions.send-chat-otp]
+verify_jwt = false

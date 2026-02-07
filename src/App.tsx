@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ChatEncryptionProvider } from "@/context/ChatEncryptionContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
@@ -57,6 +58,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ChatEncryptionProvider>
           <VideoMuteProvider>
             <ErrorBoundary>
               <Routes>
@@ -92,6 +94,7 @@ const App = () => (
               </Routes>
             </ErrorBoundary>
           </VideoMuteProvider>
+          </ChatEncryptionProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

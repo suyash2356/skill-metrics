@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMessages, Message } from '@/hooks/useMessages';
 import { useAuth } from '@/hooks/useAuth';
+import { useChatEncryption } from '@/context/ChatEncryptionContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   ArrowLeft, Send, Smile, MoreVertical, Reply, Pencil, Trash2,
-  Check, CheckCheck, Shield, X
+  Check, CheckCheck, Shield, X, Lock
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -17,30 +18,34 @@ import {
   Popover, PopoverContent, PopoverTrigger
 } from '@/components/ui/popover';
 import { toast } from 'sonner';
-import { formatDistanceToNow, format, isToday, isYesterday } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { SharedPostPreview } from '@/components/chat/SharedPostPreview';
+import { ChatEncryptionGate } from '@/components/chat/ChatEncryptionGate';
 
 const QUICK_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥', '👏', '🙏'];
 
-export default function Chat() {
+function ChatContent() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { privateKey, publicKey, getUserPublicKey } = useChatEncryption();
+
   const {
     messages, isLoading, isSending,
     sendMessage, editMessage, deleteMessage, toggleReaction
-  } = useMessages(conversationId || null);
+  } = useMessages(conversationId || null, { privateKey, userId: user?.id });
 
   const [input, setInput] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState('');
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [otherUser, setOtherUser] = useState<{ full_name: string | null; avatar_url: string | null; user_id: string } | null>(null);
+  const [recipientPublicKey, setRecipientPublicKey] = useState<JsonWebKey | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch other participant info
+  // Fetch other participant info + their public key
   useEffect(() => {
     if (!conversationId || !user) return;
     (async () => {
@@ -51,26 +56,41 @@ export default function Chat() {
         .neq('user_id', user.id);
 
       if (participants?.[0]) {
+        const otherUserId = participants[0].user_id;
         const { data: profile } = await supabase
           .from('profiles')
           .select('user_id, full_name, avatar_url')
-          .eq('user_id', participants[0].user_id)
+          .eq('user_id', otherUserId)
           .maybeSingle();
         if (profile) setOtherUser(profile);
+
+        // Fetch recipient's public key
+        const pubKey = await getUserPublicKey(otherUserId);
+        setRecipientPublicKey(pubKey);
       }
     })();
-  }, [conversationId, user]);
+  }, [conversationId, user, getUserPublicKey]);
 
   // Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const getEncryptionKeys = () => {
+    if (!publicKey || !recipientPublicKey || !user || !otherUser) return undefined;
+    return {
+      senderPublicKey: publicKey,
+      recipientPublicKey: recipientPublicKey,
+      senderId: user.id,
+      recipientId: otherUser.user_id,
+    };
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
     try {
-      await sendMessage(text, 'text', undefined, undefined, replyTo?.id);
+      await sendMessage(text, 'text', undefined, undefined, replyTo?.id, getEncryptionKeys());
       setInput('');
       setReplyTo(null);
     } catch {
@@ -81,7 +101,7 @@ export default function Chat() {
   const handleEdit = async () => {
     if (!editingId || !editText.trim()) return;
     try {
-      await editMessage(editingId, editText.trim());
+      await editMessage(editingId, editText.trim(), getEncryptionKeys());
       setEditingId(null);
       setEditText('');
       toast.success('Message edited');
@@ -146,8 +166,10 @@ export default function Chat() {
             </Avatar>
             <div className="text-left min-w-0">
               <p className="font-semibold text-sm truncate">{otherUser.full_name || 'Unknown'}</p>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                <Shield className="h-3 w-3" /> Private chat
+              <p className="text-xs text-green-600 flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                <Shield className="h-3 w-3" />
+                End-to-end encrypted
               </p>
             </div>
           </button>
@@ -156,6 +178,14 @@ export default function Chat() {
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+        {/* E2EE notice */}
+        <div className="flex justify-center">
+          <div className="bg-muted/50 text-muted-foreground text-xs px-4 py-2 rounded-full flex items-center gap-1.5">
+            <Lock className="h-3 w-3" />
+            Messages are end-to-end encrypted. Only you and {otherUser?.full_name || 'the recipient'} can read them.
+          </div>
+        </div>
+
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -164,7 +194,7 @@ export default function Chat() {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Shield className="h-12 w-12 text-primary/30 mb-4" />
             <p className="text-muted-foreground text-sm">
-              Start your conversation! Messages are private between you two.
+              Start your encrypted conversation!
             </p>
           </div>
         ) : (
@@ -277,7 +307,6 @@ function MessageBubble({
     );
   }
 
-  // Group reactions by emoji
   const reactionGroups = (message.reactions || []).reduce<Record<string, { count: number; hasOwn: boolean }>>((acc, r) => {
     if (!acc[r.emoji]) acc[r.emoji] = { count: 0, hasOwn: false };
     acc[r.emoji].count++;
@@ -307,7 +336,8 @@ function MessageBubble({
           isOwn
             ? 'bg-primary text-primary-foreground rounded-br-md'
             : 'bg-muted text-foreground rounded-bl-md',
-          message.message_type === 'post_share' && 'bg-transparent p-0 shadow-none'
+          message.message_type === 'post_share' && 'bg-transparent p-0 shadow-none',
+          message.decryption_failed && 'opacity-60'
         )}>
           {isEditing ? (
             <div className="flex items-center gap-2">
@@ -371,7 +401,6 @@ function MessageBubble({
           'absolute top-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 bg-card border rounded-lg shadow-sm p-0.5',
           isOwn ? '-left-2 -translate-x-full' : '-right-2 translate-x-full'
         )}>
-          {/* Quick emoji reaction */}
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -417,5 +446,13 @@ function MessageBubble({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Chat() {
+  return (
+    <ChatEncryptionGate>
+      <ChatContent />
+    </ChatEncryptionGate>
   );
 }
