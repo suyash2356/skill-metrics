@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { encryptMessage, decryptMessage, isEncryptedMessage } from '@/lib/chatCrypto';
 
 export interface Message {
   id: string;
@@ -21,6 +22,7 @@ export interface Message {
   };
   reactions?: MessageReaction[];
   reply_to?: Message | null;
+  decryption_failed?: boolean;
 }
 
 export interface MessageReaction {
@@ -30,12 +32,36 @@ export interface MessageReaction {
   emoji: string;
 }
 
-export function useMessages(conversationId: string | null) {
+interface UseMessagesOptions {
+  privateKey?: JsonWebKey | null;
+  userId?: string;
+}
+
+export function useMessages(conversationId: string | null, options?: UseMessagesOptions) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSending, setIsSending] = useState(false);
   const messagesRef = useRef<Message[]>([]);
+
+  const currentUserId = options?.userId || user?.id;
+  const privateKey = options?.privateKey;
+
+  // Decrypt a single message content
+  const tryDecrypt = useCallback(async (content: string | null): Promise<{ text: string | null; failed: boolean }> => {
+    if (!content || !isEncryptedMessage(content)) {
+      return { text: content, failed: false };
+    }
+    if (!privateKey || !currentUserId) {
+      return { text: '🔒 Encrypted message', failed: false };
+    }
+    try {
+      const decrypted = await decryptMessage(content, privateKey, currentUserId);
+      return { text: decrypted, failed: false };
+    } catch {
+      return { text: '🔒 Cannot decrypt (password was reset)', failed: true };
+    }
+  }, [privateKey, currentUserId]);
 
   const fetchMessages = useCallback(async () => {
     if (!conversationId || !user) return;
@@ -84,12 +110,28 @@ export function useMessages(conversationId: string | null) {
         (replies || []).forEach(r => { replyMap[r.id] = r; });
       }
 
-      const msgs: Message[] = (data || []).map(m => ({
-        ...m,
-        sender_profile: profileMap[m.sender_id] || { full_name: 'Unknown', avatar_url: null },
-        reactions: reactionsMap[m.id] || [],
-        reply_to: m.reply_to_id ? replyMap[m.reply_to_id] || null : null,
-      }));
+      // Decrypt all messages
+      const msgs: Message[] = await Promise.all(
+        (data || []).map(async (m) => {
+          const { text: decryptedContent, failed } = await tryDecrypt(m.content);
+
+          // Also try to decrypt reply content
+          let replyData = m.reply_to_id ? replyMap[m.reply_to_id] || null : null;
+          if (replyData && replyData.content && isEncryptedMessage(replyData.content)) {
+            const { text: decryptedReply } = await tryDecrypt(replyData.content);
+            replyData = { ...replyData, content: decryptedReply };
+          }
+
+          return {
+            ...m,
+            content: decryptedContent,
+            sender_profile: profileMap[m.sender_id] || { full_name: 'Unknown', avatar_url: null },
+            reactions: reactionsMap[m.id] || [],
+            reply_to: replyData,
+            decryption_failed: failed,
+          };
+        })
+      );
 
       setMessages(msgs);
       messagesRef.current = msgs;
@@ -106,7 +148,7 @@ export function useMessages(conversationId: string | null) {
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, user]);
+  }, [conversationId, user, tryDecrypt]);
 
   useEffect(() => {
     fetchMessages();
@@ -143,15 +185,34 @@ export function useMessages(conversationId: string | null) {
     messageType = 'text',
     sharedPostId?: string,
     sharedResourceId?: string,
-    replyToId?: string
+    replyToId?: string,
+    encryptionKeys?: {
+      senderPublicKey: JsonWebKey;
+      recipientPublicKey: JsonWebKey;
+      senderId: string;
+      recipientId: string;
+    }
   ) => {
     if (!conversationId || !user) return;
     setIsSending(true);
     try {
+      let finalContent = content;
+
+      // Encrypt if keys are provided and it's a text message
+      if (encryptionKeys && messageType === 'text') {
+        finalContent = await encryptMessage(
+          content,
+          encryptionKeys.senderPublicKey,
+          encryptionKeys.recipientPublicKey,
+          encryptionKeys.senderId,
+          encryptionKeys.recipientId
+        );
+      }
+
       const { error } = await supabase.from('messages').insert({
         conversation_id: conversationId,
         sender_id: user.id,
-        content,
+        content: finalContent,
         message_type: messageType,
         shared_post_id: sharedPostId || null,
         shared_resource_id: sharedResourceId || null,
@@ -166,12 +227,32 @@ export function useMessages(conversationId: string | null) {
     }
   };
 
-  const editMessage = async (messageId: string, newContent: string) => {
+  const editMessage = async (
+    messageId: string,
+    newContent: string,
+    encryptionKeys?: {
+      senderPublicKey: JsonWebKey;
+      recipientPublicKey: JsonWebKey;
+      senderId: string;
+      recipientId: string;
+    }
+  ) => {
     if (!user) return;
     try {
+      let finalContent = newContent;
+      if (encryptionKeys) {
+        finalContent = await encryptMessage(
+          newContent,
+          encryptionKeys.senderPublicKey,
+          encryptionKeys.recipientPublicKey,
+          encryptionKeys.senderId,
+          encryptionKeys.recipientId
+        );
+      }
+
       const { error } = await supabase
         .from('messages')
-        .update({ content: newContent, is_edited: true, updated_at: new Date().toISOString() })
+        .update({ content: finalContent, is_edited: true, updated_at: new Date().toISOString() })
         .eq('id', messageId)
         .eq('sender_id', user.id);
       if (error) throw error;
@@ -184,7 +265,6 @@ export function useMessages(conversationId: string | null) {
   const deleteMessage = async (messageId: string) => {
     if (!user) return;
     try {
-      // Soft delete
       const { error } = await supabase
         .from('messages')
         .update({ is_deleted: true, content: null, updated_at: new Date().toISOString() })
@@ -200,7 +280,6 @@ export function useMessages(conversationId: string | null) {
   const toggleReaction = async (messageId: string, emoji: string) => {
     if (!user) return;
     try {
-      // Check if reaction exists
       const { data: existing } = await supabase
         .from('message_reactions')
         .select('id')

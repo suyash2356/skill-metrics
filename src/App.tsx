@@ -94,6 +94,7 @@ const App = () => (
               </Routes>
             </ErrorBoundary>
           </VideoMuteProvider>
+          </ChatEncryptionProvider>
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
