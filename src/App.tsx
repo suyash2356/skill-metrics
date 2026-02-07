@@ -58,6 +58,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <ChatEncryptionProvider>
           <VideoMuteProvider>
             <ErrorBoundary>
               <Routes>
