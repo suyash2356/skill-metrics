@@ -22,10 +22,13 @@ const MyPosts = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [mainTab, setMainTab] = useState("posts");
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editForm, setEditForm] = useState({ title: "", content: "", category: "", tags: [] as string[] });
+  const { myResources, isLoadingMy: isLoadingResources, deleteResource } = useUserResources();
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ['myPosts', user?.id],
