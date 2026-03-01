@@ -82,6 +82,8 @@ const App = () => (
                 <Route path="/skills/:skill" element={<ProtectedRoute><SkillRecommendations /></ProtectedRoute>} />
                 <Route path="/new-videos" element={<ProtectedRoute><NewVideos /></ProtectedRoute>} />
                 <Route path="/my-posts" element={<ProtectedRoute><MyPosts /></ProtectedRoute>} />
+                <Route path="/share-resource" element={<ProtectedRoute><ShareResource /></ProtectedRoute>} />
+                <Route path="/resources/:id" element={<ProtectedRoute><ResourceView /></ProtectedRoute>} />
                 <Route path="/saved-posts" element={<ProtectedRoute><SavedPosts /></ProtectedRoute>} />
                 <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

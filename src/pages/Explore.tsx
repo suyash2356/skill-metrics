@@ -35,8 +35,11 @@ import {
 } from "lucide-react";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, FreeMode } from "swiper/modules";
+// @ts-ignore
 import "swiper/css";
+// @ts-ignore
 import "swiper/css/autoplay";
+// @ts-ignore
 import "swiper/css/free-mode";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchExploreSuggestions } from "@/api/searchAPI";
