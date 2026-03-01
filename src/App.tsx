@@ -26,6 +26,8 @@ import SkillRecommendations from "./pages/SkillRecommendations";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import MyPosts from "./pages/MyPosts";
+import ShareResource from "./pages/ShareResource";
+import ResourceView from "./pages/ResourceView";
 import Support from "./pages/Support";
 import SavedPosts from "./pages/SavedPosts";
 import Messages from "./pages/Messages";
@@ -80,6 +82,8 @@ const App = () => (
                 <Route path="/skills/:skill" element={<ProtectedRoute><SkillRecommendations /></ProtectedRoute>} />
                 <Route path="/new-videos" element={<ProtectedRoute><NewVideos /></ProtectedRoute>} />
                 <Route path="/my-posts" element={<ProtectedRoute><MyPosts /></ProtectedRoute>} />
+                <Route path="/share-resource" element={<ProtectedRoute><ShareResource /></ProtectedRoute>} />
+                <Route path="/resources/:id" element={<ProtectedRoute><ResourceView /></ProtectedRoute>} />
                 <Route path="/saved-posts" element={<ProtectedRoute><SavedPosts /></ProtectedRoute>} />
                 <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
                 <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />

@@ -1,142 +1,163 @@
 
 
-# User-Contributed Resources (YouTube-like Resource Sharing)
+# End-to-End Encrypted Messaging with Chat Password
 
 ## Overview
 
-Allow authenticated users to share educational resources (PDFs, videos, courses, links, documents) that get recommended to other users based on interest matching. Resources go through the existing recommendation engine and rating system. Rename "My Posts" to "My Contributions" and add a "Resources" tab there and on the Profile page.
+This plan adds client-side encryption to the existing messaging system. All messages will be encrypted in the browser before being sent to the database. Only the sender and receiver can read them. Even the database admin sees only scrambled text.
+
+Users must set a "Chat Password" (custom text, minimum 6 characters) before they can use messaging. A recovery flow via email OTP allows resetting the password if forgotten (old messages become unreadable).
 
 ---
 
-## Database Changes
+## How It Works (User Flow)
 
-### New table: `user_resources`
-```text
-- id (uuid, PK, default gen_random_uuid())
-- user_id (uuid, not null) -- who shared it
-- title (text, not null)
-- description (text, not null)
-- resource_type (text, not null, default 'link') -- course, book, video, document, link, pdf
-- category (text, not null) -- same categories as admin resources
-- link (text) -- external URL
-- file_url (text) -- uploaded file URL (from storage)
-- file_type (text) -- mime type of uploaded file
-- difficulty (text, default 'beginner')
-- tags (text[], default '{}')
-- status (text, default 'pending') -- pending, approved, rejected, flagged
-- moderation_note (text) -- reason for rejection/flagging
-- is_active (boolean, default true)
-- view_count (integer, default 0)
-- avg_rating (numeric)
-- total_ratings (integer, default 0)
-- created_at, updated_at (timestamptz)
-```
-
-**RLS**: Users can INSERT own, SELECT approved + own, UPDATE own (limited fields), DELETE own. Everyone can SELECT where status='approved' AND is_active=true.
-
-### New table: `user_resource_ratings`
-```text
-- id, user_id, resource_id (FK to user_resources), stars (1-5), created_at
-```
-
-### New table: `user_resource_reports`
-```text
-- id, reporter_id, resource_id, reason, description, created_at
-```
-
-### Storage bucket: `user-resources` (public)
-For uploaded PDFs, videos, documents.
-
-### Moderation function
-A `moderate_user_resource()` trigger that auto-flags resources containing blocked words in title/description (basic profanity filter). Admin can then approve/reject from the admin panel.
+1. **First time visiting Messages**: User sees a setup screen asking them to create a Chat Password
+2. **Sending a message**: Browser fetches recipient's public key, encrypts the message locally, sends encrypted text to the database
+3. **Reading messages**: Browser downloads the user's encrypted private key, decrypts it using the Chat Password (held in session memory), then decrypts each message
+4. **Forgot password**: User clicks "Forgot Password" on the PIN entry screen, receives an email OTP, verifies it, then sets a new Chat Password. A new key pair is generated -- old messages become unreadable (shown as "[Cannot decrypt - password was reset]")
 
 ---
 
-## Implementation Steps
+## Technical Implementation
 
-### Step 1: Migration
-- Create `user_resources`, `user_resource_ratings`, `user_resource_reports` tables
-- Create `user-resources` storage bucket
-- Add RLS policies
-- Add profanity check trigger
-- Add a function to sync approved user resources into the main `resources` table (so they appear in explore/recommendations)
+### Step 1: Database Changes (Migration)
 
-### Step 2: Share Resource Form (`src/pages/ShareResource.tsx`)
-- Clean, step-by-step form:
-  1. Choose type (Video, PDF, Course Link, Book, Document)
-  2. Upload file OR paste link (depending on type)
-  3. Title, description, category (dropdown matching admin categories), difficulty, tags
-  4. Preview before submit
-- File upload to `user-resources` bucket
-- Inline video/PDF/document preview
-- Submit creates row with status='pending'
+Add a new table for encryption keys:
 
-### Step 3: Resource Viewer Page (`src/pages/ResourceView.tsx`)
-- Route: `/resources/:id`
-- Renders the resource inline:
-  - Video: HTML5 `<video>` player
-  - PDF: embedded `<iframe>` or `<object>` viewer
-  - External link: metadata preview + "Open" button
-  - Image: full display
-- Star rating widget (reuse existing `StarRatingInput`)
-- Report button
-- Related resources sidebar
+```text
+Table: user_encryption_keys
+- id (uuid, PK)
+- user_id (uuid, unique, not null)
+- public_key (text, not null)          -- RSA-OAEP public key in JWK format
+- encrypted_private_key (text, not null) -- AES-GCM encrypted private key
+- key_salt (text, not null)            -- Salt for PBKDF2 key derivation
+- key_version (integer, default 1)     -- Incremented on password reset
+- created_at, updated_at
+```
 
-### Step 4: Update Explore Page
-- Add "Community Resources" section showing top-rated user-contributed resources
-- Add "Share a Resource" CTA button
-- Personalization engine scores user resources same as admin resources
+RLS policies:
+- SELECT: Anyone authenticated can read `public_key` (needed for encryption)
+- INSERT/UPDATE: Only own `user_id = auth.uid()`
+- A security definer function `get_public_key(target_user_id)` to fetch public keys without recursion
 
-### Step 5: Rename MyPosts → MyContributions + Resources Tab
-- Rename page title and route label to "My Contributions"
-- Add a "Resources" tab alongside existing post tabs
-- Resources tab shows user's shared resources in a grid/list with status badges (pending/approved/rejected)
-- CRUD: edit, delete, view from this tab
+### Step 2: Edge Function for Password Recovery OTP
 
-### Step 6: Profile Page → Resources Tab
-- Add "Resources" tab to profile page tabs (alongside Roadmaps, Skills, Achievements, Activity)
-- Shows approved resources shared by that user
-- Grid of resource cards with ratings
+Create `supabase/functions/send-chat-otp/index.ts`:
+- Accepts `{ email }` in the request body
+- Generates a 6-digit OTP, stores it in a `chat_password_otps` table (with 10-minute expiry)
+- Sends it via Resend to the user's email
+- Rate-limited to 3 requests per hour per user
 
-### Step 7: Admin Panel Integration
-- Add "User Resources" section in admin dashboard
-- Moderation queue: pending resources for approve/reject
-- When approved, auto-insert into main `resources` table with `contributed_by` field
-- Bulk approve/reject
+New table `chat_password_otps`:
+```text
+- id, user_id, otp_hash (text), expires_at (timestamptz), used (boolean)
+```
 
-### Step 8: Recommendation Engine Integration
-- Approved user resources join the main `resources` table
-- Existing personalization engine (`src/lib/personalization.ts`) already scores resources
-- Popular resources (high ratings, high views) get boosted in recommendations
-- Low-rated resources get deprioritized automatically
+### Step 3: Crypto Utility Module
+
+Create `src/lib/chatCrypto.ts`:
+
+- **generateKeyPair()**: Uses Web Crypto API (`window.crypto.subtle`) to generate RSA-OAEP 2048-bit key pair
+- **deriveKeyFromPassword(password, salt)**: PBKDF2 with 100,000 iterations to derive an AES-256-GCM key from the user's password
+- **encryptPrivateKey(privateKey, password)**: Encrypts the private key JWK with the derived AES key
+- **decryptPrivateKey(encryptedBlob, password, salt)**: Reverses the above
+- **encryptMessage(plaintext, recipientPublicKey)**: Generates a random AES-256-GCM session key, encrypts the message with it, then encrypts the session key with the recipient's RSA public key. Returns a JSON blob containing both encrypted parts
+- **decryptMessage(encryptedBlob, privateKey)**: Reverses the above
+
+All using the native Web Crypto API (no external libraries needed).
+
+### Step 4: Encryption Context & Session Management
+
+Create `src/context/ChatEncryptionContext.tsx`:
+
+- Stores the decrypted private key in React state (memory only, never persisted)
+- Provides `isSetup` (has user created keys?), `isUnlocked` (has user entered password this session?)
+- Methods: `setupEncryption(password)`, `unlockWithPassword(password)`, `lockChat()`, `resetPassword(newPassword, otp)`
+- On app load, checks if `user_encryption_keys` row exists for the user
+- Auto-locks when the tab is closed (keys wiped from memory)
+
+### Step 5: UI Components
+
+**New components:**
+
+1. **`ChatPasswordSetup.tsx`** -- Full-screen modal shown on first visit to /messages
+   - Password input (min 6 chars) with confirmation field
+   - Strength indicator
+   - "Create Password" button that generates keys and saves them
+
+2. **`ChatPasswordUnlock.tsx`** -- Shown when user visits messages but hasn't entered password this session
+   - Password input field
+   - "Unlock" button
+   - "Forgot Password?" link leading to OTP recovery flow
+
+3. **`ChatPasswordReset.tsx`** -- OTP verification + new password creation
+   - Step 1: Enter email, request OTP
+   - Step 2: Enter OTP code
+   - Step 3: Create new password (generates new key pair, old messages become unreadable)
+
+### Step 6: Modify Existing Messaging Code
+
+**`useMessages.ts` changes:**
+- `sendMessage()`: Before inserting, encrypt the content using recipient's public key AND sender's public key (store two copies or use a shared session key approach). Actually, the standard approach is: generate a random AES key for the message, encrypt the message with it, then encrypt the AES key twice (once with sender's public key, once with recipient's public key). Store all as a JSON blob in the `content` column.
+- `fetchMessages()`: After fetching, decrypt each message's content using the private key from context. If decryption fails (old messages after reset), show "[Message cannot be decrypted]"
+
+**`Chat.tsx` changes:**
+- Wrap the chat view with encryption context checks
+- If not setup: show `ChatPasswordSetup`
+- If not unlocked: show `ChatPasswordUnlock`
+- If unlocked: show normal chat (messages auto-decrypted)
+- Display a green lock icon in the header indicating encryption is active
+
+**`Messages.tsx` changes:**
+- Last message preview: decrypt if possible, show "[Encrypted message]" if not unlocked
+- Add lock icon indicator
+
+**`useConversations.ts` changes:**
+- Last message content will be encrypted -- show "[Encrypted message]" in conversation list when password isn't entered yet, or decrypt preview when unlocked
+
+### Step 7: Message Format
+
+The encrypted content stored in the `messages.content` column will be a JSON string:
+
+```json
+{
+  "v": 1,
+  "type": "e2ee",
+  "keys": {
+    "<sender_user_id>": "<base64 RSA-encrypted AES key>",
+    "<recipient_user_id>": "<base64 RSA-encrypted AES key>"
+  },
+  "iv": "<base64 AES-GCM IV>",
+  "ct": "<base64 AES-GCM ciphertext>"
+}
+```
+
+This way both sender and recipient can decrypt using their own private key.
 
 ---
-
-## Content Safety
-- Profanity filter trigger on INSERT/UPDATE of `user_resources` (checks title + description against a blocked words list)
-- All resources start as `status='pending'` — not visible to others until approved
-- Report system for flagging inappropriate content
-- Admin moderation queue with approve/reject workflow
-- File type validation: only allow pdf, mp4, webm, jpg, png, doc, docx, ppt, pptx
-- File size limit enforced via storage bucket policy
-
-## Privacy & Security
-- RLS ensures users only manage their own resources
-- Unapproved resources only visible to the owner
-- Rating limited to authenticated users
-- Report system for community moderation
 
 ## Files to Create
-- `src/pages/ShareResource.tsx` -- resource submission form
-- `src/pages/ResourceView.tsx` -- inline resource viewer
-- `src/hooks/useUserResources.tsx` -- CRUD hook for user resources
-- Migration SQL
+- `src/lib/chatCrypto.ts` -- Core encryption/decryption utilities
+- `src/context/ChatEncryptionContext.tsx` -- React context for key management
+- `src/components/chat/ChatPasswordSetup.tsx` -- First-time setup UI
+- `src/components/chat/ChatPasswordUnlock.tsx` -- Session unlock UI
+- `src/components/chat/ChatPasswordReset.tsx` -- Forgot password recovery
+- `supabase/functions/send-chat-otp/index.ts` -- OTP email sender
+- Migration SQL for `user_encryption_keys` and `chat_password_otps` tables
 
 ## Files to Modify
-- `src/pages/MyPosts.tsx` -- rename to MyContributions, add Resources tab
-- `src/pages/Profile.tsx` -- add Resources tab
-- `src/pages/Explore.tsx` -- add Community Resources section + Share CTA
-- `src/App.tsx` -- add new routes
-- `src/components/Layout.tsx` / `src/components/BottomNav.tsx` -- update nav label
-- `src/pages/AdminDashboard.tsx` -- add moderation queue
+- `src/hooks/useMessages.ts` -- Add encrypt/decrypt logic
+- `src/hooks/useConversations.ts` -- Handle encrypted previews
+- `src/pages/Chat.tsx` -- Add encryption gate screens
+- `src/pages/Messages.tsx` -- Show encrypted preview indicators
+- `src/App.tsx` -- Wrap with ChatEncryptionProvider
+- `supabase/config.toml` -- Add edge function config
+
+## Important Considerations
+- No existing functionality will break -- unencrypted old messages will display normally (backward compatible)
+- The Web Crypto API is available in all modern browsers natively
+- Private keys never leave the browser in decrypted form
+- The database only ever stores encrypted content
+- Password reset means new key pair = old messages unreadable (by design, this is the security tradeoff)
 

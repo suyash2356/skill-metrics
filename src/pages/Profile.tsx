@@ -53,6 +53,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FollowersFollowingDialog } from "@/components/FollowersFollowingDialog";
+import { ProfileResourcesTab } from "@/components/ProfileResourcesTab";
 
 const Profile = () => {
   const { user: currentUser } = useAuth();
@@ -590,11 +591,12 @@ const Profile = () => {
           </Card>
         ) : (
           <Tabs defaultValue="roadmaps" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1">
               <TabsTrigger value="roadmaps">Roadmaps</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="achievements">Achievements</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
+              <TabsTrigger value="resources">Resources</TabsTrigger>
             </TabsList>
 
             <TabsContent value="roadmaps">
@@ -787,6 +789,10 @@ const Profile = () => {
 
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="resources">
+              <ProfileResourcesTab userId={targetUserId} />
             </TabsContent>
 
           </Tabs>

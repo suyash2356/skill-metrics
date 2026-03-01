@@ -274,9 +274,9 @@ export const Layout = ({ children }: LayoutProps) => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/my-posts" className="flex items-center cursor-pointer">
+                <Link to="/my-posts" className="flex items-center cursor-pointer">
                     <FileText className="h-4 w-4 mr-2" />
-                    My Posts
+                    My Contributions
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>

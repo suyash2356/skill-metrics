@@ -1418,6 +1418,139 @@ export type Database = {
         }
         Relationships: []
       }
+      user_resource_ratings: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          stars: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          stars: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          stars?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_resource_ratings_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "user_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_resource_reports: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          reason: string
+          reporter_id: string
+          resource_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason: string
+          reporter_id: string
+          resource_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          reason?: string
+          reporter_id?: string
+          resource_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_resource_reports_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "user_resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_resources: {
+        Row: {
+          avg_rating: number | null
+          category: string
+          created_at: string
+          description: string
+          difficulty: string
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_active: boolean
+          link: string | null
+          moderation_note: string | null
+          resource_type: string
+          status: string
+          tags: string[] | null
+          title: string
+          total_ratings: number
+          updated_at: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          avg_rating?: number | null
+          category: string
+          created_at?: string
+          description: string
+          difficulty?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          link?: string | null
+          moderation_note?: string | null
+          resource_type?: string
+          status?: string
+          tags?: string[] | null
+          title: string
+          total_ratings?: number
+          updated_at?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          avg_rating?: number | null
+          category?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_active?: boolean
+          link?: string | null
+          moderation_note?: string | null
+          resource_type?: string
+          status?: string
+          tags?: string[] | null
+          title?: string
+          total_ratings?: number
+          updated_at?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       user_sessions: {
         Row: {
           browser: string | null
