@@ -790,6 +790,10 @@ const Profile = () => {
               </Card>
             </TabsContent>
 
+            <TabsContent value="resources">
+              <ProfileResourcesTab userId={targetUserId} />
+            </TabsContent>
+
           </Tabs>
         )}
       </div>
