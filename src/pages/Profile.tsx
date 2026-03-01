@@ -53,6 +53,7 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FollowersFollowingDialog } from "@/components/FollowersFollowingDialog";
+import { ProfileResourcesTab } from "@/components/ProfileResourcesTab";
 
 const Profile = () => {
   const { user: currentUser } = useAuth();

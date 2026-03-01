@@ -201,34 +201,46 @@ const MyPosts = () => {
     <Layout>
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold">My Posts</h1>
-          <Link to="/create-post">
-            <Button>Create Post</Button>
-          </Link>
+          <h1 className="text-2xl font-bold">My Contributions</h1>
+          <div className="flex gap-2">
+            <Link to="/share-resource">
+              <Button variant="outline"><PackagePlus className="h-4 w-4 mr-2" />Share Resource</Button>
+            </Link>
+            <Link to="/create-post">
+              <Button>Create Post</Button>
+            </Link>
+          </div>
         </div>
 
-        <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="image">
-              <ImageIcon className="h-4 w-4 mr-2" />
-              Images
-            </TabsTrigger>
-            <TabsTrigger value="video">
-              <Video className="h-4 w-4 mr-2" />
-              Videos
-            </TabsTrigger>
-            <TabsTrigger value="resources">
-              <FileText className="h-4 w-4 mr-2" />
-              Resources
-            </TabsTrigger>
-            <TabsTrigger value="news">
-              <Newspaper className="h-4 w-4 mr-2" />
-              News
-            </TabsTrigger>
+        <Tabs value={mainTab} onValueChange={setMainTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="posts">Posts</TabsTrigger>
+            <TabsTrigger value="resources">Resources</TabsTrigger>
           </TabsList>
 
-          <TabsContent value={selectedCategory} className="mt-0">
+          <TabsContent value="posts">
+            <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
+              <TabsList className="grid w-full grid-cols-5 mb-6">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="image">
+                  <ImageIcon className="h-4 w-4 mr-2" />
+                  Images
+                </TabsTrigger>
+                <TabsTrigger value="video">
+                  <Video className="h-4 w-4 mr-2" />
+                  Videos
+                </TabsTrigger>
+                <TabsTrigger value="resources">
+                  <FileText className="h-4 w-4 mr-2" />
+                  Resources
+                </TabsTrigger>
+                <TabsTrigger value="news">
+                  <Newspaper className="h-4 w-4 mr-2" />
+                  News
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value={selectedCategory} className="mt-0">
             {filteredPosts.length === 0 ? (
               <div className="text-center py-16 text-muted-foreground">
                 <h3 className="text-lg font-semibold">No posts yet</h3>
