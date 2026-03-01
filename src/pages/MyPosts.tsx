@@ -5,14 +5,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Link } from "react-router-dom";
-import { Trash2, Loader2, Image as ImageIcon, Video, FileText, Newspaper, Edit3, Download } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Trash2, Loader2, Image as ImageIcon, Video, FileText, Newspaper, Edit3, Download, PackagePlus, Star, Eye } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Database } from "@/integrations/supabase/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { useUserResources } from "@/hooks/useUserResources";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Post = Database['public']['Tables']['posts']['Row'];
 
