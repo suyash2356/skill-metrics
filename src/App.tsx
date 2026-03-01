@@ -26,6 +26,8 @@ import SkillRecommendations from "./pages/SkillRecommendations";
 import NotFound from "./pages/NotFound";
 import Settings from "./pages/Settings";
 import MyPosts from "./pages/MyPosts";
+import ShareResource from "./pages/ShareResource";
+import ResourceView from "./pages/ResourceView";
 import Support from "./pages/Support";
 import SavedPosts from "./pages/SavedPosts";
 import Messages from "./pages/Messages";
