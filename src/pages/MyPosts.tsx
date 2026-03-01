@@ -316,6 +316,57 @@ const MyPosts = () => {
               </div>
             )}
           </TabsContent>
+            </Tabs>
+          </TabsContent>
+
+          <TabsContent value="resources">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold">My Shared Resources</h2>
+              <Link to="/share-resource"><Button size="sm"><PackagePlus className="h-4 w-4 mr-2" />Share New</Button></Link>
+            </div>
+            {isLoadingResources ? (
+              <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin" /></div>
+            ) : myResources.length === 0 ? (
+              <div className="text-center py-16 text-muted-foreground">
+                <h3 className="text-lg font-semibold">No resources shared yet</h3>
+                <p>Share educational resources to help others learn.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {myResources.map(resource => (
+                  <Card key={resource.id} className="relative group">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-sm line-clamp-2 cursor-pointer" onClick={() => navigate(`/resources/${resource.id}`)}>{resource.title}</CardTitle>
+                        <Badge variant={resource.status === 'approved' ? 'default' : resource.status === 'rejected' ? 'destructive' : 'secondary'} className="capitalize text-[10px] ml-2 flex-shrink-0">
+                          {resource.status}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{resource.description}</p>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        <Badge variant="outline" className="capitalize text-[10px]">{resource.resource_type}</Badge>
+                        {resource.avg_rating && (
+                          <span className="flex items-center gap-1"><Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />{Number(resource.avg_rating).toFixed(1)}</span>
+                        )}
+                        <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{resource.view_count}</span>
+                      </div>
+                      {resource.moderation_note && resource.status !== 'approved' && (
+                        <p className="text-xs text-destructive mt-2">{resource.moderation_note}</p>
+                      )}
+                      <div className="flex gap-2 mt-3">
+                        <Button variant="outline" size="sm" onClick={() => navigate(`/resources/${resource.id}`)}>View</Button>
+                        <Button variant="destructive" size="sm" onClick={() => { if (confirm('Delete this resource?')) deleteResource.mutate(resource.id); }}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
 
         {/* View Post Dialog */}
