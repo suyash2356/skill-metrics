@@ -8,12 +8,13 @@ import { useIsAdmin, useResources, Resource } from '@/hooks/useAdmin';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Shield, LogOut, Loader2, BookOpen, Database, Eye, Star,
-  Layers, GraduationCap, Download, ArrowLeft
+  Layers, GraduationCap, Download, ArrowLeft, Users
 } from 'lucide-react';
 import EnhancedResourceForm from '@/components/admin/EnhancedResourceForm';
 import ImportExportDialog from '@/components/admin/ImportExportDialog';
 import CategoryManager from '@/components/admin/CategoryManager';
 import ResourceTable from '@/components/admin/ResourceTable';
+import UserResourceModeration from '@/components/admin/UserResourceModeration';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -235,7 +236,7 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsList className="grid w-full grid-cols-3 mb-6">
                   <TabsTrigger value="domains" className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     Domains
@@ -243,6 +244,10 @@ const AdminDashboard = () => {
                   <TabsTrigger value="exams" className="flex items-center gap-2">
                     <GraduationCap className="h-4 w-4" />
                     Exams
+                  </TabsTrigger>
+                  <TabsTrigger value="user-resources" className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    User Resources
                   </TabsTrigger>
                 </TabsList>
 
@@ -258,6 +263,10 @@ const AdminDashboard = () => {
                     type="exam"
                     onCategorySelect={handleExamSelect}
                   />
+                </TabsContent>
+
+                <TabsContent value="user-resources">
+                  <UserResourceModeration />
                 </TabsContent>
               </Tabs>
             </CardContent>
