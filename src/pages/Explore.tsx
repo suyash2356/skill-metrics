@@ -47,7 +47,7 @@ import { debounce } from "lodash";
 import { usePersonalizedExplore } from "@/hooks/usePersonalizedExplore";
 import { useBlogsAndPapers } from "@/hooks/useBlogsAndPapers";
 import { useUserResources } from "@/hooks/useUserResources";
-import { PackagePlus, Users } from "lucide-react";
+import { PackagePlus, Users, Loader2, Eye } from "lucide-react";
 
 function Explore() {
   const navigate = useNavigate();
