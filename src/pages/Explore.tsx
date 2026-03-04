@@ -74,7 +74,7 @@ function Explore() {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&scope=explore`);
+      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&scope=all`);
     }
   };
 

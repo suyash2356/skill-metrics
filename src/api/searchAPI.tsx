@@ -116,11 +116,62 @@ export async function fetchSearchSuggestions(query: string, limit = 10): Promise
 // ------------------------------
 // 🔹 Recommendations from Database
 // ------------------------------
+export type UniversalSearchResults = {
+  resources: any[];
+  communityResources: any[];
+  people: Suggestion[];
+};
+
+export async function fetchUniversalSearch(query: string, limit = 30): Promise<UniversalSearchResults> {
+  const q = query.trim();
+  if (!q) return { resources: [], communityResources: [], people: [] };
+
+  const resourceLimit = Math.ceil(limit * 0.5);
+  const communityLimit = Math.ceil(limit * 0.3);
+  const peopleLimit = Math.ceil(limit * 0.2);
+
+  // Run all queries in parallel
+  const [resourcesRes, communityRes, peopleRes] = await Promise.all([
+    supabase
+      .from('resources')
+      .select('*')
+      .eq('is_active', true)
+      .or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%,related_skills.cs.{${q}}`)
+      .order('weighted_rating', { ascending: false, nullsFirst: false })
+      .order('avg_rating', { ascending: false, nullsFirst: false })
+      .limit(resourceLimit),
+
+    supabase
+      .from('user_resources')
+      .select('*')
+      .eq('status', 'approved')
+      .eq('is_active', true)
+      .or(`title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`)
+      .order('avg_rating', { ascending: false, nullsFirst: false })
+      .order('view_count', { ascending: false })
+      .limit(communityLimit),
+
+    supabase.rpc('search_profiles', { search_query: q, result_limit: peopleLimit }),
+  ]);
+
+  const people: Suggestion[] = (peopleRes.data || []).map((p: any) => ({
+    kind: 'user' as const,
+    id: p.user_id,
+    name: p.full_name || p.user_id,
+    avatar: p.avatar_url ?? undefined,
+  }));
+
+  return {
+    resources: resourcesRes.data || [],
+    communityResources: communityRes.data || [],
+    people,
+  };
+}
+
 export async function fetchRecommendations(query: string): Promise<Recommendation[]> {
   const lowerQuery = query.toLowerCase();
   const recommendations: Recommendation[] = [];
 
-  // Fetch from database - match by category or related_skills
   const { data: dbResources, error } = await supabase
     .from('resources')
     .select('*')
@@ -129,7 +180,6 @@ export async function fetchRecommendations(query: string): Promise<Recommendatio
 
   if (!error && dbResources) {
     dbResources.forEach((resource) => {
-      // Determine type based on provider/link
       let type: Recommendation['type'] = 'website';
       const providerLower = (resource.provider || '').toLowerCase();
       const linkLower = (resource.link || '').toLowerCase();
