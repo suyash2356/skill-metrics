@@ -64,7 +64,7 @@ const ResourceView = () => {
 
   const isLoading = adminLoading || userLoading;
   const isAdminResource = source === 'resources';
-  const resource = isAdminResource ? adminResource : userResource;
+  const resource: any = isAdminResource ? adminResource : userResource;
 
   const { data: myRating } = useQuery({
     queryKey: ['userResourceRating', id, user?.id],
