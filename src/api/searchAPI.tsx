@@ -88,13 +88,22 @@ export async function fetchExploreSuggestions(query: string, limit = 10): Promis
     .slice(0, perKind)
     .map((s) => ({ kind: "skill", name: s }));
 
-  // Fetch categories from database resources
-  const { data: dbResources } = await supabase
-    .from('resources')
-    .select('category, title, link, description')
-    .ilike('title', `%${q}%`)
-    .eq('is_active', true)
-    .limit(perKind);
+  // Fetch from both resources and user_resources in parallel
+  const [{ data: dbResources }, { data: communityResources }] = await Promise.all([
+    supabase
+      .from('resources')
+      .select('id, category, title, link, description')
+      .ilike('title', `%${q}%`)
+      .eq('is_active', true)
+      .limit(perKind),
+    supabase
+      .from('user_resources')
+      .select('id, category, title, link, description')
+      .ilike('title', `%${q}%`)
+      .eq('status', 'approved')
+      .eq('is_active', true)
+      .limit(perKind),
+  ]);
 
   const exploreItems: Suggestion[] = (dbResources || []).map((r) => ({
     kind: "explore" as const,
@@ -104,7 +113,15 @@ export async function fetchExploreSuggestions(query: string, limit = 10): Promis
     description: r.description,
   }));
 
-  return [...skills, ...exploreItems].slice(0, limit);
+  const communityItems: Suggestion[] = (communityResources || []).map((r) => ({
+    kind: "explore" as const,
+    name: r.title,
+    subtype: "resource" as const,
+    link: r.link,
+    description: r.description,
+  }));
+
+  return [...skills, ...exploreItems, ...communityItems].slice(0, limit);
 }
 
 export async function fetchSearchSuggestions(query: string, limit = 10): Promise<Suggestion[]> {
