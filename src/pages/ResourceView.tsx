@@ -112,22 +112,14 @@ const ResourceView = () => {
           <ArrowLeft className="h-4 w-4 mr-2" /> Back
         </Button>
 
-        {/* Media viewer (user_resources only) */}
-        {!isAdminResource && resource.file_url && isVideo && (
-          <div className="rounded-xl overflow-hidden bg-black mb-6">
-            <video src={resource.file_url} controls className="w-full max-h-[70vh]" />
-          </div>
-        )}
-        {!isAdminResource && resource.file_url && isPdf && (
-          <div className="rounded-xl overflow-hidden border mb-6">
-            <iframe src={resource.file_url} className="w-full h-[70vh]" title={resource.title} />
-          </div>
-        )}
-        {!isAdminResource && resource.file_url && isImage && (
-          <div className="rounded-xl overflow-hidden bg-black/5 mb-6 flex justify-center">
-            <img src={resource.file_url} alt={resource.title} className="max-h-[70vh] object-contain" />
-          </div>
-        )}
+        {/* Universal Resource Preview */}
+        <ResourcePreview
+          link={resource.link}
+          fileUrl={resource.file_url}
+          fileType={resource.file_type}
+          resourceType={resource.resource_type}
+          title={resource.title}
+        />
 
         <Card>
           <CardContent className="p-6 space-y-4">
