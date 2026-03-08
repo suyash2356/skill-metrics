@@ -76,6 +76,7 @@ const RoadmapView = () => {
   const [editingStep, setEditingStep] = useState<string | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [activeStepId, setActiveStepId] = useState<string | null>(null);
 
   const { data: roadmap, isLoading: isLoadingRoadmap } = useQuery<RoadmapWithUser | null>({
     queryKey: ['roadmap', id],
