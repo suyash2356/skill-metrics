@@ -192,7 +192,9 @@ function Explore() {
                         className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 transition-colors border-b border-border/50 last:border-0"
                         onMouseDown={(ev) => {
                           ev.preventDefault();
-                          if (s.link) {
+                          if (s.kind === "domain") {
+                            navigate(`/skills/${encodeURIComponent(s.name)}`);
+                          } else if (s.link) {
                             window.open(s.link, "_blank");
                           } else if (s.kind === "skill") {
                             navigate(`/skills/${encodeURIComponent(s.name)}`);
@@ -202,13 +204,34 @@ function Explore() {
                           setShowSuggestions(false);
                         }}
                       >
-                        <div className="p-2 rounded-lg bg-primary/10">
-                          <Search className="h-4 w-4 text-primary" />
+                        <div className={`p-2 rounded-lg ${
+                          s.kind === "domain" ? "bg-accent/20" :
+                          s.kind === "skill" ? "bg-primary/10" :
+                          "bg-muted"
+                        }`}>
+                          {s.kind === "domain" ? (
+                            <Compass className="h-4 w-4 text-accent-foreground" />
+                          ) : s.kind === "skill" ? (
+                            <Rocket className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Search className="h-4 w-4 text-muted-foreground" />
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="font-medium truncate">{s.name}</div>
                           {s.description && <div className="text-xs text-muted-foreground truncate">{s.description}</div>}
+                          {s.kind === "domain" && (
+                            <div className="text-xs text-primary font-medium mt-0.5 flex items-center gap-1">
+                              View all resources <ArrowRight className="h-3 w-3" />
+                            </div>
+                          )}
                         </div>
+                        {s.kind === "domain" && (
+                          <Badge variant="secondary" className="text-[10px] shrink-0">Domain</Badge>
+                        )}
+                        {s.kind === "skill" && (
+                          <Badge variant="outline" className="text-[10px] shrink-0">Skill</Badge>
+                        )}
                         {s.link && <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
                       </button>
                     ))}
