@@ -93,6 +93,18 @@ const DOMAIN_ICONS: Record<string, string> = {
   'Business': 'Map',
   'Marketing': 'TrendingUp',
   'Management': 'Rocket',
+  'Finance': 'TrendingUp',
+  'Communication': 'MessageSquare',
+  'Fine Arts': 'PenTool',
+  'Music': 'BookOpen',
+  'Film & Video': 'Globe',
+  'Photography': 'Globe',
+  'Creative Writing': 'BookOpen',
+  'Performing Arts': 'Rocket',
+  'Graphic Design': 'PenTool',
+  'Animation': 'Zap',
+  'Architecture': 'Layers',
+  'Fashion Design': 'PenTool',
 };
 
 const RESOURCE_TYPE_EMOJI: Record<string, string> = {
