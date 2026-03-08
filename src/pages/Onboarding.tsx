@@ -244,6 +244,59 @@ const Onboarding = () => {
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
+                      <Label htmlFor="field">Your Field / Domain</Label>
+                      <select
+                        id="field"
+                        value={formData.field}
+                        onChange={(e) =>
+                          setFormData({ ...formData, field: e.target.value })
+                        }
+                        className="w-full p-3 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select your field</option>
+                        <optgroup label="Technology">
+                          <option value="software-development">Software Development</option>
+                          <option value="data-science">Data Science & AI</option>
+                          <option value="cybersecurity">Cybersecurity</option>
+                          <option value="cloud-devops">Cloud & DevOps</option>
+                          <option value="web-mobile">Web & Mobile Development</option>
+                        </optgroup>
+                        <optgroup label="Creative & Arts">
+                          <option value="visual-arts">Visual Arts & Painting</option>
+                          <option value="graphic-design">Graphic Design & UI/UX</option>
+                          <option value="music">Music & Audio Production</option>
+                          <option value="film-photography">Film, Photography & Video</option>
+                          <option value="writing">Creative Writing & Literature</option>
+                          <option value="fashion">Fashion & Textile Design</option>
+                          <option value="performing-arts">Performing Arts & Dance</option>
+                        </optgroup>
+                        <optgroup label="Business & Finance">
+                          <option value="finance">Finance & Accounting</option>
+                          <option value="marketing">Marketing & Sales</option>
+                          <option value="entrepreneurship">Entrepreneurship</option>
+                          <option value="management">Management & Strategy</option>
+                        </optgroup>
+                        <optgroup label="Science & Engineering">
+                          <option value="engineering">Engineering (Mech/Civil/Elec)</option>
+                          <option value="pure-science">Pure Sciences (Physics/Chem/Bio)</option>
+                          <option value="medicine-health">Medicine & Healthcare</option>
+                          <option value="environmental">Environmental Science</option>
+                        </optgroup>
+                        <optgroup label="Humanities & Social Sciences">
+                          <option value="psychology">Psychology & Counseling</option>
+                          <option value="education-teaching">Education & Teaching</option>
+                          <option value="law">Law & Political Science</option>
+                          <option value="languages">Languages & Linguistics</option>
+                          <option value="philosophy-history">Philosophy & History</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                          <option value="fitness-wellness">Fitness & Wellness</option>
+                          <option value="culinary">Culinary Arts & Food</option>
+                          <option value="other">Other</option>
+                        </optgroup>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
                       <Label htmlFor="background">Background</Label>
                       <select
                         id="background"
@@ -258,7 +311,8 @@ const Onboarding = () => {
                         <option value="professional">Working Professional</option>
                         <option value="self-learner">Self Learner</option>
                         <option value="career-switcher">Career Switcher</option>
-                        <option value="freelancer">Freelancer</option>
+                        <option value="freelancer">Freelancer / Creator</option>
+                        <option value="hobbyist">Hobbyist / Enthusiast</option>
                       </select>
                     </div>
                     <div className="space-y-2">
@@ -276,7 +330,8 @@ const Onboarding = () => {
                         <option value="bachelors">Bachelor's Degree</option>
                         <option value="masters">Master's Degree</option>
                         <option value="phd">PhD</option>
-                        <option value="bootcamp">Bootcamp</option>
+                        <option value="diploma">Diploma / Certificate</option>
+                        <option value="bootcamp">Bootcamp / Workshop</option>
                         <option value="self-taught">Self Taught</option>
                       </select>
                     </div>
