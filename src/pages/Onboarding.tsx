@@ -53,7 +53,6 @@ const Onboarding = () => {
   };
 
   const handleNext = () => {
-    // Basic validation
     if (currentStep === 1 && !formData.displayName.trim()) {
       toast({
         title: "Name required",
@@ -103,7 +102,6 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
-      // Update user_preferences
       const { error: prefsError } = await supabase
         .from("user_preferences")
         .upsert({
@@ -113,7 +111,6 @@ const Onboarding = () => {
 
       if (prefsError) throw prefsError;
 
-      // Update user_profile_details
       const { error: profileError } = await supabase
         .from("user_profile_details")
         .upsert({
@@ -136,7 +133,6 @@ const Onboarding = () => {
 
       if (profileError) throw profileError;
 
-      // Update profiles table with display name
       const { error: updateProfileError } = await supabase
         .from("profiles")
         .update({ full_name: formData.displayName })
@@ -241,7 +237,7 @@ const Onboarding = () => {
                 <div className="space-y-6">
                   <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold mb-2">Tell us about yourself</h2>
-                    <p className="text-muted-foreground">What's your current situation?</p>
+                    <p className="text-muted-foreground">This helps us personalize everything for you</p>
                   </div>
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -257,42 +253,42 @@ const Onboarding = () => {
                         <option value="">Select your field</option>
                         <optgroup label="Technology">
                           <option value="software-development">Software Development</option>
-                          <option value="data-science">Data Science & AI</option>
+                          <option value="data-science">Data Science &amp; AI</option>
                           <option value="cybersecurity">Cybersecurity</option>
-                          <option value="cloud-devops">Cloud & DevOps</option>
-                          <option value="web-mobile">Web & Mobile Development</option>
+                          <option value="cloud-devops">Cloud &amp; DevOps</option>
+                          <option value="web-mobile">Web &amp; Mobile Development</option>
                         </optgroup>
                         <optgroup label="Creative & Arts">
-                          <option value="visual-arts">Visual Arts & Painting</option>
-                          <option value="graphic-design">Graphic Design & UI/UX</option>
-                          <option value="music">Music & Audio Production</option>
-                          <option value="film-photography">Film, Photography & Video</option>
-                          <option value="writing">Creative Writing & Literature</option>
-                          <option value="fashion">Fashion & Textile Design</option>
-                          <option value="performing-arts">Performing Arts & Dance</option>
+                          <option value="visual-arts">Visual Arts &amp; Painting</option>
+                          <option value="graphic-design">Graphic Design &amp; UI/UX</option>
+                          <option value="music">Music &amp; Audio Production</option>
+                          <option value="film-photography">Film, Photography &amp; Video</option>
+                          <option value="writing">Creative Writing &amp; Literature</option>
+                          <option value="fashion">Fashion &amp; Textile Design</option>
+                          <option value="performing-arts">Performing Arts &amp; Dance</option>
                         </optgroup>
                         <optgroup label="Business & Finance">
-                          <option value="finance">Finance & Accounting</option>
-                          <option value="marketing">Marketing & Sales</option>
+                          <option value="finance">Finance &amp; Accounting</option>
+                          <option value="marketing">Marketing &amp; Sales</option>
                           <option value="entrepreneurship">Entrepreneurship</option>
-                          <option value="management">Management & Strategy</option>
+                          <option value="management">Management &amp; Strategy</option>
                         </optgroup>
                         <optgroup label="Science & Engineering">
                           <option value="engineering">Engineering (Mech/Civil/Elec)</option>
                           <option value="pure-science">Pure Sciences (Physics/Chem/Bio)</option>
-                          <option value="medicine-health">Medicine & Healthcare</option>
+                          <option value="medicine-health">Medicine &amp; Healthcare</option>
                           <option value="environmental">Environmental Science</option>
                         </optgroup>
                         <optgroup label="Humanities & Social Sciences">
-                          <option value="psychology">Psychology & Counseling</option>
-                          <option value="education-teaching">Education & Teaching</option>
-                          <option value="law">Law & Political Science</option>
-                          <option value="languages">Languages & Linguistics</option>
-                          <option value="philosophy-history">Philosophy & History</option>
+                          <option value="psychology">Psychology &amp; Counseling</option>
+                          <option value="education-teaching">Education &amp; Teaching</option>
+                          <option value="law">Law &amp; Political Science</option>
+                          <option value="languages">Languages &amp; Linguistics</option>
+                          <option value="philosophy-history">Philosophy &amp; History</option>
                         </optgroup>
                         <optgroup label="Other">
-                          <option value="fitness-wellness">Fitness & Wellness</option>
-                          <option value="culinary">Culinary Arts & Food</option>
+                          <option value="fitness-wellness">Fitness &amp; Wellness</option>
+                          <option value="culinary">Culinary Arts &amp; Food</option>
                           <option value="other">Other</option>
                         </optgroup>
                       </select>
@@ -351,7 +347,7 @@ const Onboarding = () => {
                       <Label htmlFor="jobTitle">Current Role / Job Title</Label>
                       <Input
                         id="jobTitle"
-                        placeholder="e.g. Frontend Developer, Artist, Accountant, Artist, Accountant, Artist, Accountant, Student"
+                        placeholder="e.g. Frontend Developer, Artist, Accountant, Student"
                         value={formData.jobTitle}
                         onChange={(e) =>
                           setFormData({ ...formData, jobTitle: e.target.value })
@@ -362,7 +358,8 @@ const Onboarding = () => {
                       <Label htmlFor="company">Company / Institution</Label>
                       <Input
                         id="company"
-             placeholder="e.g. Google, MIT, Freelance, Studioe={formData.company}
+                        placeholder="e.g. Google, MIT, Freelance, Studio"
+                        value={formData.company}
                         onChange={(e) =>
                           setFormData({ ...formData, company: e.target.value })
                         }
@@ -401,7 +398,8 @@ const Onboarding = () => {
                       <div className="flex gap-2">
                         <Input
                           id="skills"
-            Oil Painting, Financial Analysplaceholder="e.g. React, Oil Painting, Financial Analysislue={skillInput}
+                          placeholder="e.g. React, Oil Painting, Financial Analysis"
+                          value={skillInput}
                           onChange={(e) => setSkillInput(e.target.value)}
                           onKeyPress={(e) => e.key === "Enter" && handleAddSkill()}
                         />
