@@ -2,6 +2,29 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+interface FocusSession {
+  id: string;
+  user_id: string;
+  roadmap_id: string | null;
+  step_id: string | null;
+  duration_minutes: number;
+  xp_earned: number;
+  started_at: string;
+  ended_at: string | null;
+}
+
+interface LearningStreak {
+  id: string;
+  user_id: string;
+  current_streak: number;
+  longest_streak: number;
+  total_xp: number;
+  last_active_date: string | null;
+}
+
+// Helper to bypass Supabase type inference for new tables
+const db = supabase as any;
+
 export function useFocusSessions(roadmapId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
