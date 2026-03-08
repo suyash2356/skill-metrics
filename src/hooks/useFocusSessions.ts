@@ -22,23 +22,21 @@ interface LearningStreak {
   last_active_date: string | null;
 }
 
-// Helper to bypass Supabase type inference for new tables
-const db = supabase as any;
+// Bypass Supabase type inference for new tables not yet in generated types
+const fromTable = (name: string) => (supabase as any).from(name);
 
 export function useFocusSessions(roadmapId?: string) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Get sessions for heatmap (last 365 days)
-  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery({
+  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery<FocusSession[]>({
     queryKey: ["focusSessions", user?.id, roadmapId],
     queryFn: async () => {
       if (!user) return [];
       const oneYearAgo = new Date();
       oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-      let query = supabase
-        .from("focus_sessions" as any)
+      let query = fromTable("focus_sessions")
         .select("*")
         .eq("user_id", user.id)
         .gte("started_at", oneYearAgo.toISOString())
@@ -50,23 +48,21 @@ export function useFocusSessions(roadmapId?: string) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data || []) as FocusSession[];
     },
     enabled: !!user,
   });
 
-  // Get or create streak
-  const { data: streak, isLoading: isLoadingStreak } = useQuery({
+  const { data: streak, isLoading: isLoadingStreak } = useQuery<LearningStreak | null>({
     queryKey: ["learningStreak", user?.id],
     queryFn: async () => {
       if (!user) return null;
-      const { data, error } = await supabase
-        .from("learning_streaks" as any)
+      const { data, error } = await fromTable("learning_streaks")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data as LearningStreak | null;
     },
     enabled: !!user,
   });
@@ -83,8 +79,7 @@ export function useFocusSessions(roadmapId?: string) {
     }) => {
       if (!user) throw new Error("Not authenticated");
 
-      // Insert session
-      const { error: sessionError } = await supabase.from("focus_sessions" as any).insert({
+      const { error: sessionError } = await fromTable("focus_sessions").insert({
         user_id: user.id,
         roadmap_id: roadmapId || null,
         step_id: stepId || null,
@@ -94,7 +89,6 @@ export function useFocusSessions(roadmapId?: string) {
       });
       if (sessionError) throw sessionError;
 
-      // Update streak
       const today = new Date().toISOString().split("T")[0];
       const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
 
@@ -107,12 +101,10 @@ export function useFocusSessions(roadmapId?: string) {
         } else if (lastActive !== today) {
           newStreak = 1;
         }
-        // If lastActive === today, keep same streak
 
         const longestStreak = Math.max(streak.longest_streak, newStreak);
 
-        const { error: streakError } = await supabase
-          .from("learning_streaks" as any)
+        const { error: streakError } = await fromTable("learning_streaks")
           .update({
             current_streak: newStreak,
             longest_streak: longestStreak,
@@ -123,7 +115,7 @@ export function useFocusSessions(roadmapId?: string) {
           .eq("user_id", user.id);
         if (streakError) throw streakError;
       } else {
-        const { error: streakError } = await supabase.from("learning_streaks" as any).insert({
+        const { error: streakError } = await fromTable("learning_streaks").insert({
           user_id: user.id,
           current_streak: 1,
           longest_streak: 1,
@@ -139,8 +131,7 @@ export function useFocusSessions(roadmapId?: string) {
     },
   });
 
-  // Aggregate sessions by date for heatmap
-  const heatmapData = sessions.reduce((acc: Record<string, { minutes: number; sessions: number }>, session: any) => {
+  const heatmapData = sessions.reduce((acc: Record<string, { minutes: number; sessions: number }>, session) => {
     const date = session.started_at?.split("T")[0];
     if (!date) return acc;
     if (!acc[date]) acc[date] = { minutes: 0, sessions: 0 };
@@ -149,8 +140,7 @@ export function useFocusSessions(roadmapId?: string) {
     return acc;
   }, {});
 
-  // Total stats
-  const totalMinutes = sessions.reduce((sum: number, s: any) => sum + (s.duration_minutes || 0), 0);
+  const totalMinutes = sessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0);
   const totalSessions = sessions.length;
 
   return {
