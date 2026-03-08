@@ -14,6 +14,10 @@ import {
   BookOpen, Brain, Rocket, FlaskConical, Trophy, GraduationCap, Hourglass, ListChecks,
   Book, MonitorPlay, Youtube, Globe, Codepen, Users, Mail, Award, FolderOpen, ClipboardCheck, PenLine, CalendarCheck, Lightbulb, MessageCircle, Share2, Trash2, Eye, EyeOff
 } from "lucide-react";
+import { FocusTimer } from "@/components/roadmap/FocusTimer";
+import { LearningHeatmap } from "@/components/roadmap/LearningHeatmap";
+import { VisualTimeline } from "@/components/roadmap/VisualTimeline";
+import { DifficultyHeatmapETA } from "@/components/roadmap/DifficultyHeatmapETA";
 import {
   AlertDialog,
   AlertDialogAction,
