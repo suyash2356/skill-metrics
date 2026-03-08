@@ -62,7 +62,7 @@ const Onboarding = () => {
       });
       return;
     }
-    if (currentStep === 2 && (!formData.background || !formData.education)) {
+    if (currentStep === 2 && (!formData.background || !formData.education || !formData.field)) {
       toast({
         title: "Selection required",
         description: "Please complete all fields to continue",
