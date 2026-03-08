@@ -69,10 +69,12 @@ function Explore() {
     []
   );
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&scope=all`);
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = searchTerm.trim();
+    if (q) {
+      setShowSuggestions(false);
+      navigate(`/search?q=${encodeURIComponent(q)}&scope=all`);
     }
   };
 
