@@ -56,6 +56,18 @@ const DOMAIN_COLORS: Record<string, string> = {
   'Business': 'from-indigo-500 to-sky-500',
   'Marketing': 'from-green-500 to-emerald-500',
   'Management': 'from-indigo-600 to-violet-500',
+  'Finance': 'from-emerald-500 to-teal-500',
+  'Communication': 'from-cyan-500 to-blue-500',
+  'Fine Arts': 'from-rose-400 to-pink-600',
+  'Music': 'from-violet-400 to-purple-600',
+  'Film & Video': 'from-red-500 to-orange-500',
+  'Photography': 'from-amber-400 to-yellow-600',
+  'Creative Writing': 'from-teal-400 to-emerald-600',
+  'Performing Arts': 'from-fuchsia-500 to-pink-500',
+  'Graphic Design': 'from-orange-400 to-rose-500',
+  'Animation': 'from-blue-400 to-violet-500',
+  'Architecture': 'from-stone-500 to-slate-600',
+  'Fashion Design': 'from-pink-400 to-fuchsia-600',
 };
 
 const DOMAIN_ICONS: Record<string, string> = {
