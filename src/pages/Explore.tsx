@@ -69,10 +69,12 @@ function Explore() {
     []
   );
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchTerm.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchTerm.trim())}&scope=all`);
+  const handleSearch = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    const q = searchTerm.trim();
+    if (q) {
+      setShowSuggestions(false);
+      navigate(`/search?q=${encodeURIComponent(q)}&scope=all`);
     }
   };
 
@@ -151,15 +153,20 @@ function Explore() {
                 <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Search skills, exams, or topics..."
+                  placeholder="Search anything — skills, courses, topics, people..."
                   value={searchTerm}
                   onChange={(e) => {
                     setSearchTerm(e.target.value);
                     fetchSuggestionsDebounced(e.target.value);
                     setShowSuggestions(true);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleSearch();
+                    }
+                  }}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                  onFocus={() => searchTerm.trim() && setShowSuggestions(true)}
                   className="pl-12 pr-28 h-14 text-base rounded-2xl border-2 border-border/50 bg-background/80 backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-all"
                 />
                 <Button
