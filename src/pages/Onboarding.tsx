@@ -350,7 +350,7 @@ const Onboarding = () => {
                       <Label htmlFor="jobTitle">Current Role / Job Title</Label>
                       <Input
                         id="jobTitle"
-                        placeholder="e.g. Frontend Developer, Artist, Accountant, Student"
+                        placeholder="e.g. Frontend Developer, Artist, Accountant, Artist, Accountant, Student"
                         value={formData.jobTitle}
                         onChange={(e) =>
                           setFormData({ ...formData, jobTitle: e.target.value })
@@ -361,7 +361,7 @@ const Onboarding = () => {
                       <Label htmlFor="company">Company / Institution</Label>
                       <Input
                         id="company"
-                        placeholder="e.g. Google, MIT"
+                        placehold, Freelance, Studioer="e.g. Google, MIT"
                         value={formData.company}
                         onChange={(e) =>
                           setFormData({ ...formData, company: e.target.value })
