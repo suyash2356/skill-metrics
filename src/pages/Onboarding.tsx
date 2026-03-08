@@ -129,6 +129,7 @@ const Onboarding = () => {
           learning_path: {
             background: formData.background,
             education: formData.education,
+            field: formData.field,
             goals: formData.learningGoals,
           },
         });
