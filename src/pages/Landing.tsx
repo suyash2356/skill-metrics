@@ -5,7 +5,6 @@ import {
   BookOpen,
   Brain,
   Target,
-  Users,
   Sparkles,
   ArrowRight,
   CheckCircle,
@@ -34,32 +33,19 @@ const AnimatedSection = ({
   delay?: number;
 }) => {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const isInView = useInView(ref, { once: true, margin: "-60px" });
   return (
     <motion.section
       ref={ref}
       className={className}
-      initial={{ opacity: 0, y: 60 }}
+      initial={{ opacity: 0, y: 50 }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.section>
   );
 };
-
-/* ─── Floating particle decoration ─── */
-const FloatingParticle = ({ size, x, y, delay }: { size: number; x: string; y: string; delay: number }) => (
-  <motion.div
-    className="absolute rounded-full bg-primary/10 pointer-events-none"
-    style={{ width: size, height: size, left: x, top: y }}
-    animate={{
-      y: [0, -20, 0],
-      opacity: [0.3, 0.7, 0.3],
-    }}
-    transition={{ duration: 4, delay, repeat: Infinity, ease: "easeInOut" }}
-  />
-);
 
 /* ─── Counter animation ─── */
 const AnimatedCounter = ({ end, suffix = "" }: { end: number; suffix?: string }) => {
@@ -74,7 +60,8 @@ const AnimatedCounter = ({ end, suffix = "" }: { end: number; suffix?: string })
     const step = (ts: number) => {
       start = start || ts;
       const progress = Math.min((ts - start) / duration, 1);
-      setCount(Math.floor(progress * end));
+      const eased = 1 - Math.pow(1 - progress, 3); // easeOutCubic
+      setCount(Math.floor(eased * end));
       if (progress < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
@@ -94,7 +81,7 @@ const Landing = () => {
   const navigate = useNavigate();
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
+  const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "25%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   const go = (path: string) => {
@@ -148,7 +135,7 @@ const Landing = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background overflow-x-hidden">
+    <div className="min-h-screen bg-background overflow-x-hidden scroll-smooth">
       {/* ─── Sticky Header ─── */}
       <motion.header
         className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30"
@@ -156,32 +143,32 @@ const Landing = () => {
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="container mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2 group">
             <motion.div
-              className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow"
+              className="w-9 h-9 sm:w-10 sm:h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow"
               whileHover={{ scale: 1.1, rotate: 5 }}
               transition={{ type: "spring", stiffness: 400, damping: 15 }}
             >
-              <span className="text-primary-foreground font-bold text-sm">SM</span>
+              <span className="text-primary-foreground font-bold text-xs sm:text-sm">SM</span>
             </motion.div>
-            <span className="font-bold text-2xl bg-gradient-primary bg-clip-text text-transparent">
+            <span className="font-bold text-xl sm:text-2xl bg-gradient-primary bg-clip-text text-transparent">
               Skill-Metrics
             </span>
           </Link>
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2 sm:space-x-3">
             {user ? (
-              <Button onClick={() => navigate("/home")} className="shadow-glow">
-                Dashboard <ArrowRight className="ml-1 h-4 w-4" />
+              <Button size="sm" onClick={() => navigate("/home")} className="shadow-glow">
+                Dashboard <ArrowRight className="ml-1 h-4 w-4 hidden sm:inline" />
               </Button>
             ) : (
               <>
-                <Button variant="ghost" asChild className="hidden sm:inline-flex">
+                <Button variant="ghost" size="sm" asChild className="hidden sm:inline-flex">
                   <Link to="/login">Sign In</Link>
                 </Button>
-                <Button asChild className="shadow-glow">
+                <Button size="sm" asChild className="shadow-glow">
                   <Link to="/signup">
-                    Get Started <Sparkles className="ml-1 h-4 w-4" />
+                    Get Started <Sparkles className="ml-1 h-4 w-4 hidden xs:inline" />
                   </Link>
                 </Button>
               </>
@@ -191,70 +178,61 @@ const Landing = () => {
       </motion.header>
 
       {/* ─── Hero Section ─── */}
-      <section ref={heroRef} className="relative min-h-[100vh] flex items-center pt-16 overflow-hidden">
-        {/* Animated background particles */}
-        <FloatingParticle size={80} x="10%" y="20%" delay={0} />
-        <FloatingParticle size={50} x="80%" y="15%" delay={1} />
-        <FloatingParticle size={120} x="70%" y="60%" delay={2} />
-        <FloatingParticle size={40} x="20%" y="75%" delay={0.5} />
-        <FloatingParticle size={60} x="50%" y="10%" delay={1.5} />
-
+      <section ref={heroRef} className="relative min-h-[100svh] flex items-center pt-16 overflow-hidden">
         {/* Gradient orbs */}
-        <div className="absolute top-20 -left-40 w-96 h-96 bg-primary/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-20 -right-40 w-96 h-96 bg-accent/20 rounded-full blur-[120px] pointer-events-none" />
+        <div className="absolute top-20 -left-32 w-64 sm:w-96 h-64 sm:h-96 bg-primary/15 rounded-full blur-[100px] pointer-events-none" />
+        <div className="absolute bottom-20 -right-32 w-64 sm:w-96 h-64 sm:h-96 bg-accent/15 rounded-full blur-[100px] pointer-events-none" />
 
-        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <motion.div style={{ y: heroY, opacity: heroOpacity }} className="container mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
             {/* Left – Text */}
-            <div className="space-y-8">
+            <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
               <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-                className="space-y-6"
+                className="space-y-5 sm:space-y-6"
               >
                 <motion.div
-                  className="inline-flex items-center px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-sm text-primary"
+                  className="inline-flex items-center px-4 py-1.5 rounded-full border border-primary/30 bg-primary/5 text-xs sm:text-sm text-primary"
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3, duration: 0.5 }}
                 >
-                  <Sparkles className="h-3.5 w-3.5 mr-2" />
+                  <Sparkles className="h-3.5 w-3.5 mr-2 flex-shrink-0" />
                   Now with Smart Watch Queue — a first-of-its-kind feature
                 </motion.div>
 
-                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-[1.08] tracking-tight">
                   Master Any{" "}
                   <span className="relative inline-block">
-                    <span className="bg-gradient-primary bg-clip-text text-transparent">
-                      Skill
-                    </span>
+                    <span className="bg-gradient-primary bg-clip-text text-transparent">Skill</span>
                     <motion.span
-                      className="absolute -bottom-2 left-0 right-0 h-1.5 bg-gradient-primary rounded-full"
+                      className="absolute -bottom-1 sm:-bottom-2 left-0 right-0 h-1 sm:h-1.5 bg-gradient-primary rounded-full"
                       initial={{ scaleX: 0 }}
                       animate={{ scaleX: 1 }}
                       transition={{ delay: 0.8, duration: 0.6, ease: "easeOut" }}
                       style={{ originX: 0 }}
                     />
                   </span>
-                  <br />
+                  <br className="hidden sm:block" />{" "}
                   with AI-Powered Learning
                 </h1>
 
-                <p className="text-lg sm:text-xl text-muted-foreground max-w-lg leading-relaxed">
-                  Personalized roadmaps, curated resources, goal-based video queues, encrypted messaging, and a thriving learner community — all in one platform.
+                <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-lg mx-auto lg:mx-0 leading-relaxed">
+                  Personalized roadmaps, curated resources, goal-based video queues, encrypted messaging — all in one platform.
                 </p>
               </motion.div>
 
               <motion.div
-                className="flex flex-col sm:flex-row gap-4"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.6 }}
               >
                 <Button
                   size="lg"
-                  className="shadow-glow text-base h-13 px-8"
+                  className="shadow-glow text-base h-12 sm:h-13 px-6 sm:px-8 w-full sm:w-auto"
                   onClick={() => go("/home")}
                 >
                   Start Learning Free
@@ -263,7 +241,7 @@ const Landing = () => {
                 <Button
                   size="lg"
                   variant="outline"
-                  className="text-base h-13 px-8"
+                  className="text-base h-12 sm:h-13 px-6 sm:px-8 w-full sm:w-auto"
                   onClick={() => go("/new-videos")}
                 >
                   <Play className="mr-2 h-5 w-5" />
@@ -272,96 +250,65 @@ const Landing = () => {
               </motion.div>
 
               <motion.div
-                className="flex flex-wrap items-center gap-6 text-sm text-muted-foreground"
+                className="flex flex-wrap items-center gap-4 sm:gap-6 text-sm text-muted-foreground justify-center lg:justify-start"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
               >
                 {["Free to start", "AI-powered", "No credit card"].map((t, i) => (
-                  <div key={i} className="flex items-center space-x-2">
-                    <CheckCircle className="h-4 w-4 text-success" />
+                  <div key={i} className="flex items-center space-x-1.5 sm:space-x-2">
+                    <CheckCircle className="h-4 w-4 text-success flex-shrink-0" />
                     <span>{t}</span>
                   </div>
                 ))}
               </motion.div>
             </div>
 
-            {/* Right – Image */}
+            {/* Right – Image (clean, no floating cards) */}
             <motion.div
-              className="relative hidden lg:block"
-              initial={{ opacity: 0, scale: 0.9, x: 50 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
+              className="relative hidden md:block"
+              initial={{ opacity: 0, scale: 0.92 }}
+              animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="absolute inset-0 bg-gradient-primary opacity-20 rounded-3xl blur-3xl scale-110" />
+              <div className="absolute inset-0 bg-gradient-primary opacity-15 rounded-3xl blur-3xl scale-105" />
               <img
                 src={heroImage}
                 alt="Students learning with AI-powered education platform"
-                className="relative rounded-3xl shadow-elevated w-full h-auto"
+                className="relative rounded-3xl shadow-elevated w-full h-auto object-cover aspect-[4/3]"
                 loading="eager"
               />
-              {/* Floating stat cards */}
-              <motion.div
-                className="absolute -left-6 top-1/4 glass rounded-2xl p-4 shadow-elevated"
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-success/20 flex items-center justify-center">
-                    <TrendingUp className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Daily Streak</p>
-                    <p className="font-bold text-foreground">7 Days 🔥</p>
-                  </div>
-                </div>
-              </motion.div>
-              <motion.div
-                className="absolute -right-6 bottom-1/4 glass rounded-2xl p-4 shadow-elevated"
-                animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
-                    <Brain className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">AI Roadmap</p>
-                    <p className="font-bold text-foreground">85% Done</p>
-                  </div>
-                </div>
-              </motion.div>
             </motion.div>
           </div>
         </motion.div>
 
         {/* Scroll indicator */}
         <motion.div
-          className="absolute bottom-8 left-1/2 -translate-x-1/2"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
+          className="absolute bottom-6 sm:bottom-8 left-1/2 -translate-x-1/2"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
         >
-          <ChevronDown className="h-6 w-6 text-muted-foreground" />
+          <ChevronDown className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground/60" />
         </motion.div>
       </section>
 
       {/* ─── Stats Bar ─── */}
-      <AnimatedSection className="py-16 border-y border-border/50 bg-card/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+      <AnimatedSection className="py-12 sm:py-16 border-y border-border/50 bg-card/50">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8">
             {stats.map((stat, i) => (
               <motion.div
                 key={i}
                 className="text-center"
-                initial={{ opacity: 0, y: 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
               >
-                <div className="text-4xl sm:text-5xl font-extrabold bg-gradient-primary bg-clip-text text-transparent">
+                <div className="text-3xl sm:text-4xl md:text-5xl font-extrabold bg-gradient-primary bg-clip-text text-transparent">
                   <AnimatedCounter end={stat.value} suffix={stat.suffix} />
                 </div>
-                <p className="text-muted-foreground mt-2 text-sm">{stat.label}</p>
+                <p className="text-muted-foreground mt-1.5 sm:mt-2 text-xs sm:text-sm">{stat.label}</p>
               </motion.div>
             ))}
           </div>
@@ -369,10 +316,10 @@ const Landing = () => {
       </AnimatedSection>
 
       {/* ─── Features Grid ─── */}
-      <AnimatedSection className="container mx-auto px-4 py-24">
-        <div className="text-center space-y-4 mb-16">
+      <AnimatedSection className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center space-y-3 sm:space-y-4 mb-12 sm:mb-16">
           <motion.h2
-            className="text-4xl sm:text-5xl font-extrabold"
+            className="text-3xl sm:text-4xl md:text-5xl font-extrabold"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -381,30 +328,29 @@ const Landing = () => {
             Everything You Need to{" "}
             <span className="bg-gradient-primary bg-clip-text text-transparent">Excel</span>
           </motion.h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
             AI intelligence meets curated human expertise for the most effective learning experience.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
               <motion.div
                 key={index}
-                initial={{ opacity: 0, y: 40 }}
+                initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: index * 0.08, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                transition={{ delay: index * 0.07, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
               >
-                <Card className="group relative p-6 h-full border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-elevated overflow-hidden">
-                  {/* Hover glow */}
+                <Card className="group relative p-5 sm:p-6 h-full border-border/50 hover:border-primary/30 transition-all duration-500 hover:shadow-elevated overflow-hidden">
                   <div className="absolute inset-0 bg-gradient-primary opacity-0 group-hover:opacity-[0.03] transition-opacity duration-500" />
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-4 shadow-glow/50 group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className="h-6 w-6 text-primary-foreground" />
+                  <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-br ${feature.gradient} flex items-center justify-center mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-primary-foreground" />
                   </div>
-                  <h3 className="text-lg font-bold mb-2 text-foreground">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{feature.description}</p>
+                  <h3 className="text-base sm:text-lg font-bold mb-1.5 sm:mb-2 text-foreground">{feature.title}</h3>
+                  <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">{feature.description}</p>
                 </Card>
               </motion.div>
             );
@@ -413,10 +359,10 @@ const Landing = () => {
       </AnimatedSection>
 
       {/* ─── Smart Watch Queue Spotlight ─── */}
-      <AnimatedSection className="py-24 bg-card/50 border-y border-border/50">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div className="space-y-8">
+      <AnimatedSection className="py-16 sm:py-24 bg-card/50 border-y border-border/50">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+            <div className="space-y-6 sm:space-y-8 text-center lg:text-left">
               <motion.div
                 className="inline-flex items-center px-3 py-1 rounded-full bg-accent/10 text-accent text-xs font-semibold tracking-wide uppercase"
                 initial={{ opacity: 0 }}
@@ -427,7 +373,7 @@ const Landing = () => {
                 Unique Feature
               </motion.div>
               <motion.h2
-                className="text-4xl sm:text-5xl font-extrabold leading-tight"
+                className="text-3xl sm:text-4xl md:text-5xl font-extrabold leading-tight"
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -436,11 +382,11 @@ const Landing = () => {
                 Smart Watch{" "}
                 <span className="bg-gradient-primary bg-clip-text text-transparent">Queue</span>
               </motion.h2>
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-lg">
-                Set a learning goal like "Learn Python in 30 days" and our system auto-generates a daily 
+              <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0">
+                Set a learning goal like "Learn Python in 30 days" and our system auto-generates a daily
                 video schedule. Track what you've watched, see daily targets, and maintain your learning streak.
               </p>
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4 text-left max-w-lg mx-auto lg:mx-0">
                 {[
                   "Goal-based video scheduling with daily targets",
                   "Progress tracking with watch history & streaks",
@@ -456,14 +402,16 @@ const Landing = () => {
                     transition={{ delay: 0.1 * i, duration: 0.4 }}
                   >
                     <CheckCircle className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                    <span className="text-foreground">{item}</span>
+                    <span className="text-foreground text-sm sm:text-base">{item}</span>
                   </motion.div>
                 ))}
               </div>
-              <Button size="lg" className="shadow-glow" onClick={() => go("/new-videos")}>
-                Try Smart Watch Queue
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <div className="flex justify-center lg:justify-start">
+                <Button size="lg" className="shadow-glow w-full sm:w-auto" onClick={() => go("/new-videos")}>
+                  Try Smart Watch Queue
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
             </div>
 
             {/* Mock UI Preview */}
@@ -474,22 +422,22 @@ const Landing = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="absolute inset-0 bg-gradient-primary opacity-10 rounded-3xl blur-3xl scale-110" />
-              <div className="relative glass rounded-3xl p-6 space-y-4 shadow-elevated">
+              <div className="absolute inset-0 bg-gradient-primary opacity-10 rounded-3xl blur-3xl scale-105" />
+              <div className="relative glass rounded-2xl sm:rounded-3xl p-4 sm:p-6 space-y-3 sm:space-y-4 shadow-elevated">
                 {/* Mock goal card */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
-                      <Target className="h-5 w-5 text-primary-foreground" />
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-primary flex items-center justify-center">
+                      <Target className="h-4 w-4 sm:h-5 sm:w-5 text-primary-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground text-sm">Learn Python</p>
-                      <p className="text-xs text-muted-foreground">30-day goal</p>
+                      <p className="font-semibold text-foreground text-xs sm:text-sm">Learn Python</p>
+                      <p className="text-[10px] sm:text-xs text-muted-foreground">30-day goal</p>
                     </div>
                   </div>
-                  <span className="text-sm font-bold text-success">67%</span>
+                  <span className="text-xs sm:text-sm font-bold text-success">67%</span>
                 </div>
-                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                <div className="w-full h-1.5 sm:h-2 bg-muted rounded-full overflow-hidden">
                   <motion.div
                     className="h-full bg-gradient-primary rounded-full"
                     initial={{ width: 0 }}
@@ -506,27 +454,27 @@ const Landing = () => {
                 ].map((item, i) => (
                   <motion.div
                     key={i}
-                    className={`flex items-center justify-between p-3 rounded-xl ${item.done ? "bg-success/5 border border-success/20" : "bg-muted/50 border border-border/50"}`}
+                    className={`flex items-center justify-between p-2.5 sm:p-3 rounded-xl ${item.done ? "bg-success/5 border border-success/20" : "bg-muted/50 border border-border/50"}`}
                     initial={{ opacity: 0, y: 10 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.6 + i * 0.15, duration: 0.4 }}
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-2.5 sm:space-x-3">
                       {item.done ? (
-                        <CheckCircle className="h-5 w-5 text-success" />
+                        <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                       ) : (
-                        <Play className="h-5 w-5 text-primary" />
+                        <Play className="h-4 w-4 sm:h-5 sm:w-5 text-primary flex-shrink-0" />
                       )}
-                      <span className={`text-sm ${item.done ? "text-muted-foreground line-through" : "text-foreground font-medium"}`}>
+                      <span className={`text-xs sm:text-sm ${item.done ? "text-muted-foreground line-through" : "text-foreground font-medium"}`}>
                         {item.title}
                       </span>
                     </div>
-                    <span className="text-xs text-muted-foreground">{item.time}</span>
+                    <span className="text-[10px] sm:text-xs text-muted-foreground">{item.time}</span>
                   </motion.div>
                 ))}
-                <div className="text-center pt-2">
-                  <p className="text-xs text-muted-foreground">
+                <div className="text-center pt-1 sm:pt-2">
+                  <p className="text-[10px] sm:text-xs text-muted-foreground">
                     Today's target: <span className="text-primary font-semibold">25 min</span> remaining
                   </p>
                 </div>
@@ -537,23 +485,23 @@ const Landing = () => {
       </AnimatedSection>
 
       {/* ─── How It Works ─── */}
-      <AnimatedSection className="container mx-auto px-4 py-24">
-        <div className="text-center space-y-4 mb-16">
-          <h2 className="text-4xl sm:text-5xl font-extrabold">
+      <AnimatedSection className="container mx-auto px-4 sm:px-6 py-16 sm:py-24">
+        <div className="text-center space-y-3 sm:space-y-4 mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">
             Start Learning in{" "}
             <span className="bg-gradient-primary bg-clip-text text-transparent">3 Steps</span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-xl mx-auto">
+          <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-xl mx-auto">
             Get from zero to productive in minutes, not hours.
           </p>
         </div>
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+        <div className="grid sm:grid-cols-3 gap-8 sm:gap-6 lg:gap-8 max-w-4xl mx-auto">
           {[
             {
               step: "01",
               title: "Create Your Profile",
               desc: "Sign up free, set your learning goals, and tell us about your interests.",
-              icon: Users,
+              icon: TrendingUp,
             },
             {
               step: "02",
@@ -565,29 +513,29 @@ const Landing = () => {
               step: "03",
               title: "Learn & Track Progress",
               desc: "Follow your roadmap, watch videos, and track your streak as you level up.",
-              icon: TrendingUp,
+              icon: Target,
             },
           ].map((s, i) => (
             <motion.div
               key={i}
-              className="relative text-center space-y-4"
+              className="relative text-center space-y-3 sm:space-y-4"
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15, duration: 0.6 }}
             >
-              <div className="relative mx-auto w-20 h-20">
+              <div className="relative mx-auto w-16 h-16 sm:w-20 sm:h-20">
                 <div className="absolute inset-0 bg-gradient-primary opacity-10 rounded-2xl rotate-6" />
                 <div className="relative w-full h-full bg-card border border-border/50 rounded-2xl flex items-center justify-center shadow-card">
-                  <s.icon className="h-8 w-8 text-primary" />
+                  <s.icon className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                 </div>
               </div>
-              <span className="text-5xl font-black text-primary/10">{s.step}</span>
-              <h3 className="text-xl font-bold text-foreground -mt-6">{s.title}</h3>
-              <p className="text-muted-foreground text-sm">{s.desc}</p>
+              <span className="text-4xl sm:text-5xl font-black text-primary/10">{s.step}</span>
+              <h3 className="text-lg sm:text-xl font-bold text-foreground -mt-4 sm:-mt-6">{s.title}</h3>
+              <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed">{s.desc}</p>
               {i < 2 && (
-                <div className="hidden md:block absolute top-10 -right-4 w-8">
-                  <ArrowRight className="h-5 w-5 text-border" />
+                <div className="hidden sm:block absolute top-8 sm:top-10 -right-2 sm:-right-4 w-8">
+                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 text-border" />
                 </div>
               )}
             </motion.div>
@@ -596,13 +544,13 @@ const Landing = () => {
       </AnimatedSection>
 
       {/* ─── Testimonial / Social Proof ─── */}
-      <AnimatedSection className="py-24 bg-card/50 border-y border-border/50">
-        <div className="container mx-auto px-4 text-center space-y-8">
-          <h2 className="text-4xl sm:text-5xl font-extrabold">
+      <AnimatedSection className="py-16 sm:py-24 bg-card/50 border-y border-border/50">
+        <div className="container mx-auto px-4 sm:px-6 text-center space-y-6 sm:space-y-8">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold">
             Loved by{" "}
             <span className="bg-gradient-primary bg-clip-text text-transparent">Learners</span>
           </h2>
-          <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
             {[
               {
                 quote: "The Smart Watch Queue changed how I study. I set a 30-day Python goal and actually stuck with it!",
@@ -627,16 +575,16 @@ const Landing = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.5 }}
               >
-                <Card className="p-6 h-full text-left border-border/50 hover:shadow-elevated transition-shadow duration-300">
+                <Card className="p-5 sm:p-6 h-full text-left border-border/50 hover:shadow-elevated transition-all duration-300">
                   <div className="flex mb-3">
                     {Array.from({ length: 5 }).map((_, si) => (
-                      <Star key={si} className="h-4 w-4 text-primary fill-primary" />
+                      <Star key={si} className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary fill-primary" />
                     ))}
                   </div>
-                  <p className="text-foreground text-sm leading-relaxed mb-4 italic">"{t.quote}"</p>
+                  <p className="text-foreground text-xs sm:text-sm leading-relaxed mb-4 italic">"{t.quote}"</p>
                   <div>
-                    <p className="font-semibold text-foreground text-sm">{t.name}</p>
-                    <p className="text-xs text-muted-foreground">{t.role}</p>
+                    <p className="font-semibold text-foreground text-xs sm:text-sm">{t.name}</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground">{t.role}</p>
                   </div>
                 </Card>
               </motion.div>
@@ -646,40 +594,29 @@ const Landing = () => {
       </AnimatedSection>
 
       {/* ─── CTA Section ─── */}
-      <section className="relative py-28 overflow-hidden">
+      <section className="relative py-20 sm:py-28 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,transparent_20%,hsl(var(--background)/0.4))]" />
-        {/* Animated floating shapes */}
-        <motion.div
-          className="absolute top-10 left-10 w-40 h-40 border border-primary-foreground/10 rounded-full"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-        />
-        <motion.div
-          className="absolute bottom-10 right-10 w-60 h-60 border border-primary-foreground/10 rounded-full"
-          animate={{ rotate: -360 }}
-          transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-        />
 
-        <div className="relative container mx-auto px-4 text-center">
+        <div className="relative container mx-auto px-4 sm:px-6 text-center">
           <motion.div
-            className="max-w-3xl mx-auto space-y-8"
+            className="max-w-3xl mx-auto space-y-6 sm:space-y-8"
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <h2 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-primary-foreground leading-tight">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-foreground leading-tight">
               Ready to Transform Your Learning Journey?
             </h2>
-            <p className="text-xl text-primary-foreground/80 max-w-xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-primary-foreground/80 max-w-xl mx-auto">
               Join learners who are advancing their careers with personalized AI-powered education — completely free.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
               <Button
                 size="lg"
                 variant="secondary"
-                className="shadow-elevated text-base h-13 px-10"
+                className="shadow-elevated text-base h-12 sm:h-13 px-8 sm:px-10 w-full sm:w-auto"
                 asChild
               >
                 <Link to="/signup">
@@ -690,7 +627,7 @@ const Landing = () => {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-base h-13 px-10"
+                className="border-primary-foreground/30 text-primary-foreground hover:bg-primary-foreground/10 text-base h-12 sm:h-13 px-8 sm:px-10 w-full sm:w-auto"
                 onClick={() => go("/explore")}
               >
                 Explore Skills
@@ -701,9 +638,9 @@ const Landing = () => {
       </section>
 
       {/* ─── Footer ─── */}
-      <footer className="bg-card border-t border-border py-12">
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+      <footer className="bg-card border-t border-border py-8 sm:py-12">
+        <div className="container mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-6">
             <Link to="/" className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-xs">SM</span>
@@ -712,7 +649,7 @@ const Landing = () => {
                 Skill-Metrics
               </span>
             </Link>
-            <div className="flex items-center gap-6">
+            <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-6">
               <Link
                 to="/admin/login"
                 className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -726,7 +663,7 @@ const Landing = () => {
               >
                 Support
               </Link>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-muted-foreground text-xs sm:text-sm">
                 © {new Date().getFullYear()} Skill-Metrics. Empowering learners worldwide.
               </p>
             </div>
