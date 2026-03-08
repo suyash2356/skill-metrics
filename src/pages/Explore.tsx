@@ -593,6 +593,11 @@ function Explore() {
                   </p>
                 </div>
 
+                {personalizedData.isLoading ? (
+                  <CardGridSkeleton count={8} height="h-[160px]" />
+                ) : personalizedData.degrees.length === 0 ? (
+                  <EmptyState icon={GraduationCap} title="No degrees available" description="We're curating top university degrees. Check back soon!" />
+                ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {personalizedData.degrees.map((scoredDeg, i) => {
                     const deg = scoredDeg.item;
