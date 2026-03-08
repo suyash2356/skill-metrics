@@ -781,6 +781,11 @@ function Explore() {
                   </p>
                 </div>
 
+                {personalizedData.isLoading ? (
+                  <CardGridSkeleton count={6} height="h-[180px]" />
+                ) : personalizedData.certifications.length === 0 ? (
+                  <EmptyState icon={Award} title="No certifications available" description="Industry certifications will appear here once curated." />
+                ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {personalizedData.certifications.map((scoredCert, i) => {
                     const cert = scoredCert.item;
