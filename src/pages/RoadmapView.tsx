@@ -607,7 +607,7 @@ const RoadmapView = () => {
 
                 {/* Active Step Detail Panel */}
                 {activeStepId && (() => {
-                  const step = (steps || []).find((s: any) => s.id === activeStepId);
+                  const step: any = (steps || []).find((s: any) => s.id === activeStepId);
                   if (!step) return null;
                   return (
                     <Card className="border-2 border-primary/20 shadow-lg animate-fade-in">
