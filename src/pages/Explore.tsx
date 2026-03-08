@@ -1022,6 +1022,11 @@ function Explore() {
                   </p>
                 </div>
 
+                {personalizedData.isLoading ? (
+                  <CardGridSkeleton count={6} height="h-[180px]" />
+                ) : personalizedData.trendingResources.length === 0 ? (
+                  <EmptyState icon={BookOpen} title="No trending resources yet" description="Featured resources will appear here as they're curated." />
+                ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {personalizedData.trendingResources.map((scoredRes, i) => {
                     const res = scoredRes.item;
