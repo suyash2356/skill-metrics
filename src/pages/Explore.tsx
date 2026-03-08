@@ -86,11 +86,15 @@ function Explore() {
   // Animated rotating words
   const rotatingWords = [
     "AI & Machine Learning",
-    "Cybersecurity",
+    "Graphic Design & Arts",
+    "Finance & Investment",
     "Cloud Computing",
-    "Blockchain",
+    "Music & Creative Writing",
     "Data Science",
-    "Software Development",
+    "Photography & Filmmaking",
+    "Business & Marketing",
+    "Cybersecurity",
+    "Psychology & Leadership",
   ];
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
 
