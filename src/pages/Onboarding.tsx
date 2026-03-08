@@ -24,6 +24,7 @@ const Onboarding = () => {
     displayName: "",
     background: "",
     education: "",
+    field: "",
     jobTitle: "",
     company: "",
     experienceLevel: "",
