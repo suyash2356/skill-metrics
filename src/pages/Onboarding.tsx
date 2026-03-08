@@ -443,7 +443,7 @@ const Onboarding = () => {
                       <Label htmlFor="learningGoals">What are your learning goals?</Label>
                       <Textarea
                         id="learningGoals"
-                        placeholder="e.g. I want to become a full-stack developer and build my own startup"
+                        placeholder="e.g. I want to become a full-stack developer, master watercolor painting, or start my own finance consultancy"
                         value={formData.learningGoals}
                         onChange={(e) =>
                           setFormData({ ...formData, learningGoals: e.target.value })
