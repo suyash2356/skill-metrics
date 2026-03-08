@@ -42,6 +42,16 @@ const DOMAIN_CATEGORIES = [
   'Management',
   'Finance',
   'Communication',
+  'Fine Arts',
+  'Music',
+  'Film & Video',
+  'Photography',
+  'Creative Writing',
+  'Performing Arts',
+  'Graphic Design',
+  'Animation',
+  'Architecture',
+  'Fashion Design',
   'Other'
 ];
 
