@@ -362,7 +362,7 @@ const Onboarding = () => {
                       <Label htmlFor="company">Company / Institution</Label>
                       <Input
                         id="company"
-             , Freelance, Studio           placehold, Freelance, Studioer="e.g. Google, MIT"
+             placeholder="e.g. Google, MIT, Freelance, Studio"
                         value={formData.company}
                         onChange={(e) =>
                           setFormData({ ...formData, company: e.target.value })
