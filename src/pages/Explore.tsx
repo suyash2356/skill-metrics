@@ -639,6 +639,7 @@ function Explore() {
                     );
                   })}
                 </div>
+                )}
 
                 {/* Degree Modal */}
                 <AnimatePresence>
