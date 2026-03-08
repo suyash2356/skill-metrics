@@ -47,6 +47,7 @@ export const allowedTopics = [
 export type Suggestion =
   | { kind: "user"; id: string; name: string; avatar?: string }
   | { kind: "skill"; name: string; description?: string; link?: string }
+  | { kind: "domain"; name: string; description?: string; resourceCount?: number; category?: string }
   | { kind: "explore"; name: string; subtype?: "certification" | "category" | "path" | "resource" | "degree"; description?: string; link?: string };
 
 const suggestionCache: Record<string, Suggestion[]> = {};
