@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   BookOpen, TrendingUp, Award, GraduationCap, Search, FileText,
-  ExternalLink, Sparkles, Rocket, Users,
+  ExternalLink, Sparkles, Rocket, Users, Compass, ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchExploreSuggestions } from "@/api/searchAPI";
