@@ -82,15 +82,22 @@ export async function fetchExploreSuggestions(query: string, limit = 10): Promis
   const q = query.trim();
   if (!q) return [];
 
-  const perKind = Math.max(3, Math.floor(limit / 3));
+  const perKind = Math.max(2, Math.floor(limit / 4));
 
+  // Domain/skill matches from allowedTopics
   const skills: Suggestion[] = allowedTopics
     .filter((s) => s.toLowerCase().includes(q.toLowerCase()))
     .slice(0, perKind)
     .map((s) => ({ kind: "skill", name: s }));
 
-  // Fetch from both resources and user_resources in parallel
-  const [{ data: dbResources }, { data: communityResources }] = await Promise.all([
+  // Fetch domain categories, resources and community resources in parallel
+  const [{ data: categories }, { data: dbResources }, { data: communityResources }] = await Promise.all([
+    supabase
+      .from('categories')
+      .select('id, name, description, type, icon, color')
+      .eq('is_active', true)
+      .or(`name.ilike.%${q}%,description.ilike.%${q}%`)
+      .limit(perKind),
     supabase
       .from('resources')
       .select('id, category, title, link, description')
@@ -105,6 +112,30 @@ export async function fetchExploreSuggestions(query: string, limit = 10): Promis
       .eq('is_active', true)
       .limit(perKind),
   ]);
+
+  // Domain/category matches
+  const domainItems: Suggestion[] = (categories || []).map((c) => ({
+    kind: "domain" as const,
+    name: c.name,
+    description: c.description || `Explore ${c.name} resources`,
+    category: c.type,
+  }));
+
+  // Also add unique resource categories as domain suggestions
+  const resourceCategories = new Set<string>();
+  (dbResources || []).forEach((r) => {
+    if (r.category && r.category.toLowerCase().includes(q.toLowerCase())) {
+      resourceCategories.add(r.category);
+    }
+  });
+  const categoryDomains: Suggestion[] = [...resourceCategories]
+    .filter((cat) => !domainItems.some((d) => d.name.toLowerCase() === cat.toLowerCase()))
+    .slice(0, 2)
+    .map((cat) => ({
+      kind: "domain" as const,
+      name: cat,
+      description: `Browse all ${cat} resources`,
+    }));
 
   const exploreItems: Suggestion[] = (dbResources || []).map((r) => ({
     kind: "explore" as const,
@@ -122,7 +153,7 @@ export async function fetchExploreSuggestions(query: string, limit = 10): Promis
     description: r.description,
   }));
 
-  return [...skills, ...exploreItems, ...communityItems].slice(0, limit);
+  return [...skills, ...domainItems, ...categoryDomains, ...exploreItems, ...communityItems].slice(0, limit);
 }
 
 export async function fetchSearchSuggestions(query: string, limit = 10): Promise<Suggestion[]> {
