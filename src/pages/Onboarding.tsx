@@ -24,6 +24,7 @@ const Onboarding = () => {
     displayName: "",
     background: "",
     education: "",
+    field: "",
     jobTitle: "",
     company: "",
     experienceLevel: "",
@@ -52,7 +53,6 @@ const Onboarding = () => {
   };
 
   const handleNext = () => {
-    // Basic validation
     if (currentStep === 1 && !formData.displayName.trim()) {
       toast({
         title: "Name required",
@@ -61,7 +61,7 @@ const Onboarding = () => {
       });
       return;
     }
-    if (currentStep === 2 && (!formData.background || !formData.education)) {
+    if (currentStep === 2 && (!formData.background || !formData.education || !formData.field)) {
       toast({
         title: "Selection required",
         description: "Please complete all fields to continue",
@@ -102,7 +102,6 @@ const Onboarding = () => {
     setLoading(true);
 
     try {
-      // Update user_preferences
       const { error: prefsError } = await supabase
         .from("user_preferences")
         .upsert({
@@ -112,7 +111,6 @@ const Onboarding = () => {
 
       if (prefsError) throw prefsError;
 
-      // Update user_profile_details
       const { error: profileError } = await supabase
         .from("user_profile_details")
         .upsert({
@@ -128,13 +126,13 @@ const Onboarding = () => {
           learning_path: {
             background: formData.background,
             education: formData.education,
+            field: formData.field,
             goals: formData.learningGoals,
           },
         });
 
       if (profileError) throw profileError;
 
-      // Update profiles table with display name
       const { error: updateProfileError } = await supabase
         .from("profiles")
         .update({ full_name: formData.displayName })
@@ -239,9 +237,62 @@ const Onboarding = () => {
                 <div className="space-y-6">
                   <div className="text-center mb-6">
                     <h2 className="text-2xl font-bold mb-2">Tell us about yourself</h2>
-                    <p className="text-muted-foreground">What's your current situation?</p>
+                    <p className="text-muted-foreground">This helps us personalize everything for you</p>
                   </div>
                   <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="field">Your Field / Domain</Label>
+                      <select
+                        id="field"
+                        value={formData.field}
+                        onChange={(e) =>
+                          setFormData({ ...formData, field: e.target.value })
+                        }
+                        className="w-full p-3 border border-border rounded-lg bg-background focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select your field</option>
+                        <optgroup label="Technology">
+                          <option value="software-development">Software Development</option>
+                          <option value="data-science">Data Science &amp; AI</option>
+                          <option value="cybersecurity">Cybersecurity</option>
+                          <option value="cloud-devops">Cloud &amp; DevOps</option>
+                          <option value="web-mobile">Web &amp; Mobile Development</option>
+                        </optgroup>
+                        <optgroup label="Creative & Arts">
+                          <option value="visual-arts">Visual Arts &amp; Painting</option>
+                          <option value="graphic-design">Graphic Design &amp; UI/UX</option>
+                          <option value="music">Music &amp; Audio Production</option>
+                          <option value="film-photography">Film, Photography &amp; Video</option>
+                          <option value="writing">Creative Writing &amp; Literature</option>
+                          <option value="fashion">Fashion &amp; Textile Design</option>
+                          <option value="performing-arts">Performing Arts &amp; Dance</option>
+                        </optgroup>
+                        <optgroup label="Business & Finance">
+                          <option value="finance">Finance &amp; Accounting</option>
+                          <option value="marketing">Marketing &amp; Sales</option>
+                          <option value="entrepreneurship">Entrepreneurship</option>
+                          <option value="management">Management &amp; Strategy</option>
+                        </optgroup>
+                        <optgroup label="Science & Engineering">
+                          <option value="engineering">Engineering (Mech/Civil/Elec)</option>
+                          <option value="pure-science">Pure Sciences (Physics/Chem/Bio)</option>
+                          <option value="medicine-health">Medicine &amp; Healthcare</option>
+                          <option value="environmental">Environmental Science</option>
+                        </optgroup>
+                        <optgroup label="Humanities & Social Sciences">
+                          <option value="psychology">Psychology &amp; Counseling</option>
+                          <option value="education-teaching">Education &amp; Teaching</option>
+                          <option value="law">Law &amp; Political Science</option>
+                          <option value="languages">Languages &amp; Linguistics</option>
+                          <option value="philosophy-history">Philosophy &amp; History</option>
+                        </optgroup>
+                        <optgroup label="Other">
+                          <option value="fitness-wellness">Fitness &amp; Wellness</option>
+                          <option value="culinary">Culinary Arts &amp; Food</option>
+                          <option value="other">Other</option>
+                        </optgroup>
+                      </select>
+                    </div>
                     <div className="space-y-2">
                       <Label htmlFor="background">Background</Label>
                       <select
@@ -257,7 +308,8 @@ const Onboarding = () => {
                         <option value="professional">Working Professional</option>
                         <option value="self-learner">Self Learner</option>
                         <option value="career-switcher">Career Switcher</option>
-                        <option value="freelancer">Freelancer</option>
+                        <option value="freelancer">Freelancer / Creator</option>
+                        <option value="hobbyist">Hobbyist / Enthusiast</option>
                       </select>
                     </div>
                     <div className="space-y-2">
@@ -275,7 +327,8 @@ const Onboarding = () => {
                         <option value="bachelors">Bachelor's Degree</option>
                         <option value="masters">Master's Degree</option>
                         <option value="phd">PhD</option>
-                        <option value="bootcamp">Bootcamp</option>
+                        <option value="diploma">Diploma / Certificate</option>
+                        <option value="bootcamp">Bootcamp / Workshop</option>
                         <option value="self-taught">Self Taught</option>
                       </select>
                     </div>
@@ -294,7 +347,7 @@ const Onboarding = () => {
                       <Label htmlFor="jobTitle">Current Role / Job Title</Label>
                       <Input
                         id="jobTitle"
-                        placeholder="e.g. Frontend Developer, Student"
+                        placeholder="e.g. Frontend Developer, Artist, Accountant, Student"
                         value={formData.jobTitle}
                         onChange={(e) =>
                           setFormData({ ...formData, jobTitle: e.target.value })
@@ -305,7 +358,7 @@ const Onboarding = () => {
                       <Label htmlFor="company">Company / Institution</Label>
                       <Input
                         id="company"
-                        placeholder="e.g. Google, MIT"
+                        placeholder="e.g. Google, MIT, Freelance, Studio"
                         value={formData.company}
                         onChange={(e) =>
                           setFormData({ ...formData, company: e.target.value })
@@ -345,7 +398,7 @@ const Onboarding = () => {
                       <div className="flex gap-2">
                         <Input
                           id="skills"
-                          placeholder="e.g. React, Python, Machine Learning"
+                          placeholder="e.g. React, Oil Painting, Financial Analysis"
                           value={skillInput}
                           onChange={(e) => setSkillInput(e.target.value)}
                           onKeyPress={(e) => e.key === "Enter" && handleAddSkill()}
@@ -386,7 +439,7 @@ const Onboarding = () => {
                       <Label htmlFor="learningGoals">What are your learning goals?</Label>
                       <Textarea
                         id="learningGoals"
-                        placeholder="e.g. I want to become a full-stack developer and build my own startup"
+                        placeholder="e.g. I want to become a full-stack developer, master watercolor painting, or start my own finance consultancy"
                         value={formData.learningGoals}
                         onChange={(e) =>
                           setFormData({ ...formData, learningGoals: e.target.value })

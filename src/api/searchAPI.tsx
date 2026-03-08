@@ -20,25 +20,40 @@ export type Recommendation = {
 };
 
 export const allowedTopics = [
-  "ai",
-  "machine learning",
-  "data science",
-  "data analyst",
-  "cyber security",
-  "cloud computing",
-  "blockchain",
-  "software development",
-  "full stack development",
-  "devops",
-  "iot",
-  "ar/vr",
-  "communication",
-  "project management",
-  "digital marketing",
-  "financial management",
-  "emotional intelligence",
-  "design",
-  "education",
+  // Tech
+  "ai", "machine learning", "data science", "data analyst",
+  "cyber security", "cloud computing", "blockchain",
+  "software development", "full stack development", "devops",
+  "iot", "ar/vr", "web development", "mobile development",
+  "game development", "computer vision", "robotics",
+  // Creative & Arts
+  "graphic design", "ui/ux design", "illustration",
+  "photography", "video editing", "animation",
+  "music production", "creative writing", "fashion design",
+  "interior design", "fine arts", "painting", "sculpture",
+  "digital art", "filmmaking", "acting", "dance",
+  // Business & Finance
+  "financial management", "accounting", "investment",
+  "stock market", "personal finance", "entrepreneurship",
+  "business strategy", "marketing", "digital marketing",
+  "sales", "supply chain", "real estate",
+  // Communication & Leadership
+  "communication", "public speaking", "leadership",
+  "project management", "emotional intelligence",
+  "negotiation", "team management", "conflict resolution",
+  // Health & Wellness
+  "nutrition", "fitness", "mental health", "yoga",
+  "meditation", "healthcare management",
+  // Education & Language
+  "education", "teaching", "language learning",
+  "english", "spanish", "french", "german", "japanese",
+  // Science & Engineering
+  "physics", "chemistry", "biology", "mathematics",
+  "civil engineering", "mechanical engineering",
+  "electrical engineering", "environmental science",
+  // Law & Social Sciences
+  "law", "psychology", "sociology", "political science",
+  "economics", "philosophy", "history",
 ];
 
 // ------------------------------

@@ -74,6 +74,17 @@ export class PersonalizationEngine {
   }
 
   /**
+   * Get user's field/domain from learning_path object
+   */
+  private getUserField(): string | null {
+    const learningPath = this.context.profileDetails?.learning_path;
+    if (learningPath && !Array.isArray(learningPath) && typeof learningPath === 'object') {
+      return (learningPath as any).field || null;
+    }
+    return null;
+  }
+
+  /**
    * Get user's learning goals from bio, job title, and learning path
    */
   private getLearningGoals(): string[] {
@@ -310,6 +321,59 @@ export class PersonalizationEngine {
   }
 
   /**
+   * Score based on user's field/domain match
+   */
+  private scoreFieldMatch(itemTitle: string, itemDescription: string, itemSkills?: string[]): { score: number; reason?: string } {
+    const field = this.getUserField();
+    if (!field) return { score: 5 };
+
+    // Map field values to search keywords
+    const fieldKeywords: Record<string, string[]> = {
+      'software-development': ['software', 'coding', 'programming', 'developer'],
+      'data-science': ['data', 'analytics', 'machine learning', 'ai', 'statistics'],
+      'cybersecurity': ['security', 'cyber', 'hacking', 'network'],
+      'cloud-devops': ['cloud', 'devops', 'aws', 'azure', 'kubernetes'],
+      'web-mobile': ['web', 'mobile', 'frontend', 'backend', 'react', 'app'],
+      'visual-arts': ['art', 'painting', 'drawing', 'sculpture', 'illustration', 'visual'],
+      'graphic-design': ['design', 'ui', 'ux', 'graphic', 'branding', 'figma'],
+      'music': ['music', 'audio', 'production', 'instrument', 'composition'],
+      'film-photography': ['film', 'photo', 'video', 'cinema', 'editing', 'camera'],
+      'writing': ['writing', 'literature', 'author', 'storytelling', 'content'],
+      'fashion': ['fashion', 'textile', 'clothing', 'style', 'apparel'],
+      'performing-arts': ['dance', 'theater', 'acting', 'performance', 'choreography'],
+      'finance': ['finance', 'accounting', 'investment', 'banking', 'financial'],
+      'marketing': ['marketing', 'sales', 'advertising', 'brand', 'seo', 'social media'],
+      'entrepreneurship': ['startup', 'business', 'entrepreneur', 'venture'],
+      'management': ['management', 'leadership', 'strategy', 'operations', 'project'],
+      'engineering': ['engineering', 'mechanical', 'civil', 'electrical', 'structural'],
+      'pure-science': ['physics', 'chemistry', 'biology', 'mathematics', 'science'],
+      'medicine-health': ['medicine', 'health', 'medical', 'clinical', 'healthcare'],
+      'environmental': ['environment', 'sustainability', 'ecology', 'climate'],
+      'psychology': ['psychology', 'counseling', 'mental health', 'therapy'],
+      'education-teaching': ['education', 'teaching', 'pedagogy', 'learning'],
+      'law': ['law', 'legal', 'politics', 'policy', 'regulation'],
+      'languages': ['language', 'linguistics', 'translation', 'english', 'spanish'],
+      'philosophy-history': ['philosophy', 'history', 'ethics', 'sociology'],
+      'fitness-wellness': ['fitness', 'yoga', 'nutrition', 'wellness', 'exercise'],
+      'culinary': ['culinary', 'cooking', 'food', 'chef', 'baking'],
+    };
+
+    const keywords = fieldKeywords[field] || [];
+    if (keywords.length === 0) return { score: 5 };
+
+    const searchText = `${itemTitle} ${itemDescription} ${(itemSkills || []).join(' ')}`.toLowerCase();
+    const matches = keywords.filter(kw => searchText.includes(kw));
+
+    if (matches.length >= 2) {
+      return { score: 20, reason: 'Matches your field' };
+    }
+    if (matches.length >= 1) {
+      return { score: 12, reason: 'Related to your domain' };
+    }
+    return { score: 3 };
+  }
+
+  /**
    * Generic scoring function for any item
    */
   public scoreItem<T extends RatableItem>(item: T): ScoredItem<T> {
@@ -321,37 +385,42 @@ export class PersonalizationEngine {
     totalScore += ratingScore;
     if (ratingReason) reasons.push(ratingReason);
 
-    // 2. Difficulty match (weight: high)
+    // 2. Field/domain match (weight: HIGH - ensures field relevance)
+    const title = item.title || item.name || '';
+    const description = item.description || '';
+    const { score: fieldScore, reason: fieldReason } = this.scoreFieldMatch(title, description, item.relatedSkills);
+    totalScore += fieldScore;
+    if (fieldReason) reasons.push(fieldReason);
+
+    // 3. Difficulty match (weight: high)
     if (item.difficulty) {
       const { score, reason } = this.scoreDifficulty(item.difficulty);
       totalScore += score;
       if (reason) reasons.push(reason);
     }
 
-    // 3. Skill match (weight: high)
+    // 4. Skill match (weight: high)
     if (item.relatedSkills && item.relatedSkills.length > 0) {
       const { score, reason } = this.scoreSkillMatch(item.relatedSkills);
       totalScore += score;
       if (reason) reasons.push(reason);
     }
 
-    // 4. Background match (weight: medium)
+    // 5. Background match (weight: medium)
     if (item.relevantBackgrounds && item.relevantBackgrounds.length > 0) {
       const { score, reason } = this.scoreBackgroundMatch(item.relevantBackgrounds);
       totalScore += score;
       if (reason) reasons.push(reason);
     }
 
-    // 5. Learning path alignment (weight: high)
-    const title = item.title || item.name || '';
-    const description = item.description || '';
+    // 6. Learning path alignment (weight: high)
     if (title || description) {
       const { score, reason } = this.scoreLearningPathAlignment(title, description);
       totalScore += score;
       if (reason) reasons.push(reason);
     }
 
-    // 6. Recent activity match (weight: medium)
+    // 7. Recent activity match (weight: medium)
     const { score: activityScore, reason: activityReason } = this.scoreRecentActivityMatch(
       title, 
       description, 

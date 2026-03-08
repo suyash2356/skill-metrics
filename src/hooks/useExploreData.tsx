@@ -135,6 +135,17 @@ export function useCategories() {
   return useQuery({
     queryKey: ['categories'],
     queryFn: async () => {
+      // Fetch from categories table first for proper type mapping
+      const { data: catData } = await supabase
+        .from('categories')
+        .select('name, type')
+        .eq('is_active', true);
+
+      const categoryTypeMap = new Map<string, string>();
+      (catData || []).forEach((c: { name: string; type: string }) => {
+        categoryTypeMap.set(c.name.toLowerCase(), c.type);
+      });
+
       const { data, error } = await supabase
         .from('resources')
         .select('*')
@@ -144,16 +155,13 @@ export function useCategories() {
 
       if (error) throw error;
 
-      // Group by category to create category objects
       const categoryMap = new Map<string, Category>();
       
       (data || []).forEach((r: DBResource) => {
         if (!categoryMap.has(r.category)) {
-          const isTech = ['Artificial Intelligence', 'Data Science', 'Cloud Computing', 
-            'Cybersecurity', 'Blockchain', 'DevOps', 'Software Development', 
-            'Mobile Development', 'Game Development', 'IoT & Embedded Systems',
-            'Quantum Computing', 'Computer Vision', 'Natural Language Processing',
-            'Robotics', 'Web Development'].includes(r.category);
+          // Use categories table type if available, otherwise infer
+          const dbType = categoryTypeMap.get(r.category.toLowerCase());
+          const isTech = dbType === 'tech';
           
           categoryMap.set(r.category, {
             title: r.category,

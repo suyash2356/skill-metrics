@@ -210,8 +210,14 @@ Focus Areas: ${focusAreas.join(', ')}
 Create a comprehensive learning roadmap with 6-10 progressive steps that fits within the ${learningDuration || 'flexible'} timeframe. Each step should build upon the previous one with MAXIMUM DETAIL AND PRACTICAL VALUE.
 
 ${category === 'Exam Prep' ? 'IMPORTANT: This is for exam preparation. Focus on exam-specific study strategies, syllabus coverage, mock tests, previous year questions, time management techniques, and revision schedules. Include specific exam patterns and scoring strategies.' : ''}
-${category === 'Non-Tech' ? 'IMPORTANT: This is a non-technical skill. Focus on practical applications, real-world scenarios, portfolio building, and soft skills development. Include case studies and industry examples.' : ''}
-${category === 'Tech' ? 'IMPORTANT: This is a technical skill. Focus on hands-on coding projects, documentation reading, debugging skills, and building a technical portfolio. Include specific tools, frameworks, and best practices.' : ''}
+${category === 'Non-Tech' || ['visual-arts', 'graphic-design', 'music', 'film-photography', 'writing', 'fashion', 'performing-arts', 'finance', 'marketing', 'psychology', 'education-teaching', 'law', 'languages', 'philosophy-history', 'fitness-wellness', 'culinary'].includes(category || '') ? `IMPORTANT: This is a non-technical/creative/professional skill. Tailor the roadmap to this specific domain:
+- For ARTS & CREATIVE fields: Focus on technique development, portfolio building, exhibitions/showcases, finding mentorship, building an online presence (Behance, Instagram, DeviantArt), art communities, critique sessions, and selling/commissioning work.
+- For FINANCE & BUSINESS fields: Focus on certifications (CFA, CPA), case studies, market analysis projects, financial modeling, networking, and industry-specific tools (Bloomberg, Excel, Tally).
+- For HUMANITIES & SOCIAL SCIENCES: Focus on research methods, writing papers, critical thinking, fieldwork, reading lists, and academic/professional conferences.
+- For HEALTH & WELLNESS: Focus on certifications, practical training, client management, evidence-based approaches, and continuing education.
+- For LANGUAGES: Focus on immersion techniques, conversation practice, grammar drills, cultural context, and proficiency tests (TOEFL, DELF, JLPT).
+Include community building, showcase opportunities, and real-world application throughout.` : ''}
+${category === 'Tech' || ['software-development', 'data-science', 'cybersecurity', 'cloud-devops', 'web-mobile'].includes(category || '') ? 'IMPORTANT: This is a technical skill. Focus on hands-on coding projects, documentation reading, debugging skills, and building a technical portfolio. Include specific tools, frameworks, and best practices.' : ''}
 
 CRITICAL: DO NOT include any "resources" array in your response. Resources will be added separately from our curated database.
 
