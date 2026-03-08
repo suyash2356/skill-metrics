@@ -48,11 +48,14 @@
    const [isUploading, setIsUploading] = useState(false);
    const fileInputRef = useRef<HTMLInputElement | null>(null);
  
-   const categories = [
-     "Programming", "Design", "Data Science", "AI/ML", "DevOps",
-     "Cybersecurity", "Mobile Development", "Web Development",
-     "Cloud Computing", "Blockchain", "UI/UX", "Product Management"
-   ];
+    const categories = [
+      "Technology", "Programming", "Design", "Business", "Science",
+      "Web Development", "Education", "Career", "Resources",
+      "Arts", "Music", "Finance", "Photography", "Writing", "Film",
+      "Health", "Culinary", "Architecture", "Psychology", "Law", "Fashion",
+      "Animation", "Environment", "Journalism", "Philosophy",
+      "Discussion", "News", "Projects", "General", "Other"
+    ];
  
    const addTag = () => {
      if (newTag.trim() && !tags.includes(newTag.trim())) {
