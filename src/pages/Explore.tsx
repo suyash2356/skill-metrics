@@ -282,7 +282,7 @@ function Explore() {
 
           {/* Tabs for Explore Sections */}
           <Tabs defaultValue="popular" onValueChange={(v) => setActiveTab(v)} className="space-y-8">
-            <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg py-4 -mx-4 px-4 border-b border-border/50">
+            <div className="sticky top-[57px] z-30 bg-background/80 backdrop-blur-lg py-4 -mx-4 px-4 border-b border-border/50">
               <TabsList className="flex justify-start md:justify-center overflow-x-auto bg-muted/50 p-1.5 rounded-2xl gap-1 w-full max-w-fit mx-auto no-scrollbar">
                 <TabsTrigger 
                   value="popular" 
