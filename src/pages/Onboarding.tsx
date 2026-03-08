@@ -350,7 +350,7 @@ const Onboarding = () => {
                       <Label htmlFor="jobTitle">Current Role / Job Title</Label>
                       <Input
                         id="jobTitle"
-                        placeholder="e.g. Frontend Developer, Student"
+                        placeholder="e.g. Frontend Developer, Artist, Accountant, Student"
                         value={formData.jobTitle}
                         onChange={(e) =>
                           setFormData({ ...formData, jobTitle: e.target.value })
