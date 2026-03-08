@@ -73,7 +73,7 @@ export function FocusTimer({ roadmapId, steps, isOwner }: FocusTimerProps) {
     setTimeout(() => setShowXPAnimation(false), 3000);
 
     saveFocusSession.mutate(
-      { durationMinutes: duration, stepId: selectedStep || undefined, xpEarned: xp },
+      { durationMinutes: duration, stepId: selectedStep && selectedStep !== "none" ? selectedStep : undefined, xpEarned: xp },
       {
         onSuccess: () => {
           toast({
@@ -214,7 +214,7 @@ export function FocusTimer({ roadmapId, steps, isOwner }: FocusTimerProps) {
                 <SelectValue placeholder="Link to step..." />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No specific step</SelectItem>
+                <SelectItem value="none">No specific step</SelectItem>
                 {steps.map((s: any) => (
                   <SelectItem key={s.id} value={s.id}>
                     {s.title.slice(0, 30)}
