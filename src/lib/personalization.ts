@@ -74,6 +74,17 @@ export class PersonalizationEngine {
   }
 
   /**
+   * Get user's field/domain from learning_path object
+   */
+  private getUserField(): string | null {
+    const learningPath = this.context.profileDetails?.learning_path;
+    if (learningPath && !Array.isArray(learningPath) && typeof learningPath === 'object') {
+      return (learningPath as any).field || null;
+    }
+    return null;
+  }
+
+  /**
    * Get user's learning goals from bio, job title, and learning path
    */
   private getLearningGoals(): string[] {
