@@ -834,6 +834,7 @@ function Explore() {
                     );
                   })}
                 </div>
+                )}
               </section>
             </TabsContent>
 
