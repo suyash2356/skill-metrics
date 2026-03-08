@@ -575,6 +575,7 @@ function Explore() {
                   })}
                 </Swiper>
               </section>
+              </>)}
             </TabsContent>
 
             {/* === Degrees Section === */}
