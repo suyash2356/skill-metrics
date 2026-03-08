@@ -55,6 +55,47 @@ const queryClient = new QueryClient({
   },
 });
 
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
+        <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
+        <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
+        <Route path="/onboarding" element={<PageTransition><Onboarding /></PageTransition>} />
+        <Route path="/notifications" element={<ProtectedRoute><PageTransition><Notifications /></PageTransition></ProtectedRoute>} />
+        <Route path="/follow-requests" element={<ProtectedRoute><PageTransition><FollowRequests /></PageTransition></ProtectedRoute>} />
+        <Route path="/home" element={<ProtectedRoute><PageTransition><Home /></PageTransition></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
+        <Route path="/profile/:userId" element={<ProtectedRoute><PageTransition><Profile /></PageTransition></ProtectedRoute>} />
+        <Route path="/explore" element={<ProtectedRoute><PageTransition><Explore /></PageTransition></ProtectedRoute>} />
+        <Route path="/create-roadmap" element={<ProtectedRoute><PageTransition><CreateRoadmap /></PageTransition></ProtectedRoute>} />
+        <Route path="/search" element={<ProtectedRoute><PageTransition><SearchResults /></PageTransition></ProtectedRoute>} />
+        <Route path="/create-post" element={<ProtectedRoute><PageTransition><CreatePost /></PageTransition></ProtectedRoute>} />
+        <Route path="/roadmaps" element={<ProtectedRoute><PageTransition><MyRoadmaps /></PageTransition></ProtectedRoute>} />
+        <Route path="/roadmaps/:id" element={<ProtectedRoute><PageTransition><RoadmapView /></PageTransition></ProtectedRoute>} />
+        <Route path="/skills/:skill" element={<ProtectedRoute><PageTransition><SkillRecommendations /></PageTransition></ProtectedRoute>} />
+        <Route path="/new-videos" element={<ProtectedRoute><PageTransition><NewVideos /></PageTransition></ProtectedRoute>} />
+        <Route path="/my-posts" element={<ProtectedRoute><PageTransition><MyPosts /></PageTransition></ProtectedRoute>} />
+        <Route path="/share-resource" element={<ProtectedRoute><PageTransition><ShareResource /></PageTransition></ProtectedRoute>} />
+        <Route path="/resources/:id" element={<ProtectedRoute><PageTransition><ResourceView /></PageTransition></ProtectedRoute>} />
+        <Route path="/saved-posts" element={<ProtectedRoute><PageTransition><SavedPosts /></PageTransition></ProtectedRoute>} />
+        <Route path="/support" element={<ProtectedRoute><PageTransition><Support /></PageTransition></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><PageTransition><Settings /></PageTransition></ProtectedRoute>} />
+        <Route path="/my-communities" element={<ProtectedRoute><PageTransition><MyCommunities /></PageTransition></ProtectedRoute>} />
+        <Route path="/messages" element={<ProtectedRoute><PageTransition><Messages /></PageTransition></ProtectedRoute>} />
+        <Route path="/messages/:conversationId" element={<ProtectedRoute><PageTransition><Chat /></PageTransition></ProtectedRoute>} />
+        {/* Admin Routes */}
+        <Route path="/admin/login" element={<PageTransition><AdminLogin /></PageTransition>} />
+        <Route path="/admin/dashboard" element={<PageTransition><AdminDashboard /></PageTransition>} />
+        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+        <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
+      </Routes>
+    </AnimatePresence>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -65,39 +106,7 @@ const App = () => (
           <ChatEncryptionProvider>
           <VideoMuteProvider>
             <ErrorBoundary>
-              <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/onboarding" element={<Onboarding />} />
-                <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
-                <Route path="/follow-requests" element={<ProtectedRoute><FollowRequests /></ProtectedRoute>} />
-                <Route path="/home" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-                <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/profile/:userId" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
-                <Route path="/create-roadmap" element={<ProtectedRoute><CreateRoadmap /></ProtectedRoute>} />
-                <Route path="/search" element={<ProtectedRoute><SearchResults /></ProtectedRoute>} />
-                <Route path="/create-post" element={<ProtectedRoute><CreatePost /></ProtectedRoute>} />
-                <Route path="/roadmaps" element={<ProtectedRoute><MyRoadmaps /></ProtectedRoute>} />
-                <Route path="/roadmaps/:id" element={<ProtectedRoute><RoadmapView /></ProtectedRoute>} />
-                <Route path="/skills/:skill" element={<ProtectedRoute><SkillRecommendations /></ProtectedRoute>} />
-                <Route path="/new-videos" element={<ProtectedRoute><NewVideos /></ProtectedRoute>} />
-                <Route path="/my-posts" element={<ProtectedRoute><MyPosts /></ProtectedRoute>} />
-                <Route path="/share-resource" element={<ProtectedRoute><ShareResource /></ProtectedRoute>} />
-                <Route path="/resources/:id" element={<ProtectedRoute><ResourceView /></ProtectedRoute>} />
-                <Route path="/saved-posts" element={<ProtectedRoute><SavedPosts /></ProtectedRoute>} />
-                <Route path="/support" element={<ProtectedRoute><Support /></ProtectedRoute>} />
-                <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                <Route path="/my-communities" element={<ProtectedRoute><MyCommunities /></ProtectedRoute>} />
-                <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-                <Route path="/messages/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
-                {/* Admin Routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin/dashboard" element={<AdminDashboard />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AnimatedRoutes />
             </ErrorBoundary>
           </VideoMuteProvider>
           </ChatEncryptionProvider>
