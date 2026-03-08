@@ -7,10 +7,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchUniversalSearch, UniversalSearchResults } from "@/api/searchAPI";
+import { ResourcePreview } from "@/components/ResourcePreview";
 import {
   Search, Star, Users, BookOpen, Globe, Youtube, GraduationCap, Award,
   ExternalLink, ArrowLeft, Layers, FileText, PackagePlus, Eye,
+  ChevronDown, ChevronUp, Compass, ArrowRight,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 function StarDisplay({ rating, count }: { rating: number | null; count?: number | null }) {
   if (!rating) return null;
@@ -44,6 +47,7 @@ export default function SearchResults() {
   const [query, setQuery] = useState(initialQuery);
   const [results, setResults] = useState<UniversalSearchResults | null>(null);
   const [loading, setLoading] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = params.get("q") || "";
@@ -53,6 +57,7 @@ export default function SearchResults() {
 
   async function runSearch(q: string) {
     setLoading(true);
+    setPreviewId(null);
     try {
       const res = await fetchUniversalSearch(q, 40);
       setResults(res);
@@ -68,6 +73,20 @@ export default function SearchResults() {
     if (query.trim()) {
       navigate(`/search?q=${encodeURIComponent(query.trim())}&scope=all`);
     }
+  }
+
+  // Detect domain/category matches from results
+  const domainMatches: string[] = [];
+  if (results) {
+    const q = (params.get("q") || "").toLowerCase();
+    const cats = new Set<string>();
+    results.resources.forEach((r) => {
+      if (r.category && r.category.toLowerCase().includes(q)) cats.add(r.category);
+    });
+    results.communityResources.forEach((r) => {
+      if (r.category && r.category.toLowerCase().includes(q)) cats.add(r.category);
+    });
+    domainMatches.push(...cats);
   }
 
   const totalResults =
@@ -113,12 +132,44 @@ export default function SearchResults() {
         {/* Results */}
         {!loading && results && (
           <div className="space-y-8">
-            {totalResults === 0 && (
+            {totalResults === 0 && domainMatches.length === 0 && (
               <div className="text-center py-16">
                 <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h2 className="text-xl font-bold mb-2">No results found</h2>
                 <p className="text-muted-foreground">Try different keywords like "machine learning", "python", or "web development"</p>
               </div>
+            )}
+
+            {/* Domain Matches Section */}
+            {domainMatches.length > 0 && (
+              <section>
+                <h2 className="text-lg font-bold flex items-center gap-2 mb-4">
+                  <Compass className="h-5 w-5 text-primary" />
+                  Domains & Categories
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {domainMatches.map((domain) => (
+                    <Card
+                      key={domain}
+                      className="group cursor-pointer hover:border-primary/30 transition-all hover:shadow-md"
+                      onClick={() => navigate(`/skills/${encodeURIComponent(domain)}`)}
+                    >
+                      <CardContent className="p-5 flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-primary/10 text-primary shrink-0">
+                          <Compass className="h-6 w-6" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-base group-hover:text-primary transition-colors">{domain}</h3>
+                          <p className="text-sm text-muted-foreground">Browse all recommended resources</p>
+                        </div>
+                        <Button variant="outline" size="sm" className="shrink-0 gap-1">
+                          View Resources <ArrowRight className="h-3.5 w-3.5" />
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </section>
             )}
 
             {/* Resources Section */}
@@ -130,38 +181,86 @@ export default function SearchResults() {
                   <Badge variant="secondary" className="ml-1">{results.resources.length}</Badge>
                 </h2>
                 <div className="space-y-3">
-                  {results.resources.map((r) => (
-                    <Card
-                      key={r.id}
-                      className="group cursor-pointer hover:border-primary/30 transition-colors"
-                      onClick={() => navigate(`/resources/${r.id}?source=resources`)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 rounded-lg bg-primary/10 text-primary mt-0.5">
-                            {resourceTypeIcon(r.resource_type)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold group-hover:text-primary transition-colors line-clamp-1">{r.title}</h3>
-                              <Badge variant="outline" className="text-[10px] capitalize">{r.resource_type}</Badge>
-                              {r.difficulty && <Badge variant="secondary" className="text-[10px] capitalize">{r.difficulty}</Badge>}
-                              {r.is_free === false && <Badge className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">Paid</Badge>}
+                  {results.resources.map((r) => {
+                    const isPreviewOpen = previewId === `res-${r.id}`;
+                    return (
+                      <div key={r.id}>
+                        <Card
+                          className={`group transition-all ${isPreviewOpen ? 'border-primary/40 shadow-md' : 'hover:border-primary/30'}`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 rounded-lg bg-primary/10 text-primary mt-0.5">
+                                {resourceTypeIcon(r.resource_type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h3
+                                    className="font-semibold group-hover:text-primary transition-colors line-clamp-1 cursor-pointer"
+                                    onClick={() => navigate(`/resources/${r.id}?source=resources`)}
+                                  >
+                                    {r.title}
+                                  </h3>
+                                  <Badge variant="outline" className="text-[10px] capitalize">{r.resource_type}</Badge>
+                                  {r.difficulty && <Badge variant="secondary" className="text-[10px] capitalize">{r.difficulty}</Badge>}
+                                  {r.is_free === false && <Badge className="text-[10px] bg-amber-500/10 text-amber-600 border-amber-500/20">Paid</Badge>}
+                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{r.description}</p>
+                                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                                  {r.provider && <span>{r.provider}</span>}
+                                  <StarDisplay rating={r.avg_rating || r.weighted_rating} count={r.total_ratings} />
+                                  {r.duration && <span>{r.duration}</span>}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewId(isPreviewOpen ? null : `res-${r.id}`);
+                                  }}
+                                >
+                                  {isPreviewOpen ? <ChevronUp className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  {isPreviewOpen ? "Close" : "Preview"}
+                                </Button>
+                                <Button variant="ghost" size="icon" className="shrink-0" onClick={(e) => { e.stopPropagation(); window.open(r.link, '_blank'); }}>
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{r.description}</p>
-                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                              {r.provider && <span>{r.provider}</span>}
-                              <StarDisplay rating={r.avg_rating || r.weighted_rating} count={r.total_ratings} />
-                              {r.duration && <span>{r.duration}</span>}
-                            </div>
-                          </div>
-                          <Button variant="ghost" size="icon" className="shrink-0" onClick={(e) => { e.stopPropagation(); window.open(r.link, '_blank'); }}>
-                            <ExternalLink className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </CardContent>
+                        </Card>
+
+                        {/* Inline Preview */}
+                        <AnimatePresence>
+                          {isPreviewOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-1 mb-2 border rounded-xl p-3 bg-muted/20">
+                                <ResourcePreview
+                                  link={r.link}
+                                  resourceType={r.resource_type}
+                                  title={r.title}
+                                />
+                                <div className="flex justify-end mt-2">
+                                  <Button size="sm" onClick={() => navigate(`/resources/${r.id}?source=resources`)}>
+                                    View Full Details
+                                  </Button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
@@ -175,33 +274,83 @@ export default function SearchResults() {
                   <Badge variant="secondary" className="ml-1">{results.communityResources.length}</Badge>
                 </h2>
                 <div className="space-y-3">
-                  {results.communityResources.map((r) => (
-                    <Card
-                      key={r.id}
-                      className="group cursor-pointer hover:border-emerald-500/30 transition-colors"
-                      onClick={() => navigate(`/resources/${r.id}?source=user_resources`)}
-                    >
-                      <CardContent className="p-4">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 mt-0.5">
-                            {resourceTypeIcon(r.resource_type)}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <h3 className="font-semibold group-hover:text-emerald-500 transition-colors line-clamp-1">{r.title}</h3>
-                              <Badge variant="outline" className="text-[10px] capitalize">{r.resource_type}</Badge>
-                              <Badge variant="secondary" className="text-[10px] capitalize">{r.difficulty}</Badge>
+                  {results.communityResources.map((r) => {
+                    const isPreviewOpen = previewId === `com-${r.id}`;
+                    return (
+                      <div key={r.id}>
+                        <Card
+                          className={`group transition-all ${isPreviewOpen ? 'border-emerald-500/40 shadow-md' : 'hover:border-emerald-500/30'}`}
+                        >
+                          <CardContent className="p-4">
+                            <div className="flex items-start gap-3">
+                              <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-500 mt-0.5">
+                                {resourceTypeIcon(r.resource_type)}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <h3
+                                    className="font-semibold group-hover:text-emerald-500 transition-colors line-clamp-1 cursor-pointer"
+                                    onClick={() => navigate(`/resources/${r.id}?source=user_resources`)}
+                                  >
+                                    {r.title}
+                                  </h3>
+                                  <Badge variant="outline" className="text-[10px] capitalize">{r.resource_type}</Badge>
+                                  <Badge variant="secondary" className="text-[10px] capitalize">{r.difficulty}</Badge>
+                                </div>
+                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{r.description}</p>
+                                <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                                  <StarDisplay rating={r.avg_rating} count={r.total_ratings} />
+                                  <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {r.view_count}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 shrink-0">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="gap-1 text-xs"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setPreviewId(isPreviewOpen ? null : `com-${r.id}`);
+                                  }}
+                                >
+                                  {isPreviewOpen ? <ChevronUp className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                  {isPreviewOpen ? "Close" : "Preview"}
+                                </Button>
+                              </div>
                             </div>
-                            <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{r.description}</p>
-                            <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                              <StarDisplay rating={r.avg_rating} count={r.total_ratings} />
-                              <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {r.view_count}</span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                          </CardContent>
+                        </Card>
+
+                        {/* Inline Preview */}
+                        <AnimatePresence>
+                          {isPreviewOpen && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                              className="overflow-hidden"
+                            >
+                              <div className="mt-1 mb-2 border rounded-xl p-3 bg-muted/20">
+                                <ResourcePreview
+                                  link={r.link}
+                                  fileUrl={r.file_url}
+                                  fileType={r.file_type}
+                                  resourceType={r.resource_type}
+                                  title={r.title}
+                                />
+                                <div className="flex justify-end mt-2">
+                                  <Button size="sm" onClick={() => navigate(`/resources/${r.id}?source=user_resources`)}>
+                                    View Full Details
+                                  </Button>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+                    );
+                  })}
                 </div>
               </section>
             )}
