@@ -350,7 +350,7 @@ const Onboarding = () => {
                       <Label htmlFor="jobTitle">Current Role / Job Title</Label>
                       <Input
                         id="jobTitle"
-                        placeholder="e.g. Frontend Developer, Artist, Accountant, Artist, Accountant, Student"
+                        placeholder="e.g. Frontend Developer, Artist, Accountant, Artist, Accountant, Artist, Accountant, Student"
                         value={formData.jobTitle}
                         onChange={(e) =>
                           setFormData({ ...formData, jobTitle: e.target.value })
@@ -361,7 +361,7 @@ const Onboarding = () => {
                       <Label htmlFor="company">Company / Institution</Label>
                       <Input
                         id="company"
-                        placehold, Freelance, Studioer="e.g. Google, MIT"
+             , Freelance, Studio           placehold, Freelance, Studioer="e.g. Google, MIT"
                         value={formData.company}
                         onChange={(e) =>
                           setFormData({ ...formData, company: e.target.value })
@@ -401,7 +401,7 @@ const Onboarding = () => {
                       <div className="flex gap-2">
                         <Input
                           id="skills"
-                          placeholder="e.g. React, Python, Machine Learning"
+            Oil Painting, Financial Analysisr="e.g. React, Python, Machine Learning"
                           value={skillInput}
                           onChange={(e) => setSkillInput(e.target.value)}
                           onKeyPress={(e) => e.key === "Enter" && handleAddSkill()}
