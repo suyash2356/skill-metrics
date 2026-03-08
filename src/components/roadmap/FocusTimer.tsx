@@ -73,7 +73,7 @@ export function FocusTimer({ roadmapId, steps, isOwner }: FocusTimerProps) {
     setTimeout(() => setShowXPAnimation(false), 3000);
 
     saveFocusSession.mutate(
-      { durationMinutes: duration, stepId: selectedStep || undefined, xpEarned: xp },
+      { durationMinutes: duration, stepId: selectedStep && selectedStep !== "none" ? selectedStep : undefined, xpEarned: xp },
       {
         onSuccess: () => {
           toast({
