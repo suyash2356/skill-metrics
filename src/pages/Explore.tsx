@@ -1,11 +1,12 @@
 // src/pages/Explore.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -43,11 +44,52 @@ import "swiper/css/autoplay";
 import "swiper/css/free-mode";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchExploreSuggestions } from "@/api/searchAPI";
-import { debounce } from "lodash";
 import { usePersonalizedExplore } from "@/hooks/usePersonalizedExplore";
 import { useBlogsAndPapers } from "@/hooks/useBlogsAndPapers";
 import { useUserResources } from "@/hooks/useUserResources";
 import { PackagePlus, Users, Loader2, Eye } from "lucide-react";
+
+// Inline debounce to avoid importing full lodash
+function debounce<T extends (...args: any[]) => any>(fn: T, ms: number) {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+// Loading skeleton for card grids
+function CardGridSkeleton({ count = 6, height = "h-[200px]" }: { count?: number; height?: string }) {
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className={`${height} rounded-xl`} />
+      ))}
+    </div>
+  );
+}
+
+// Loading skeleton for swiper carousels
+function SwiperSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div className="flex gap-4 overflow-hidden pb-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className="h-[200px] min-w-[280px] rounded-xl flex-shrink-0" />
+      ))}
+    </div>
+  );
+}
+
+// Empty state component
+function EmptyState({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
+  return (
+    <div className="text-center py-16 bg-muted/30 rounded-2xl">
+      <Icon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-muted-foreground text-sm max-w-md mx-auto">{description}</p>
+    </div>
+  );
+}
 
 function Explore() {
   const navigate = useNavigate();
@@ -61,15 +103,19 @@ function Explore() {
   const { data: blogsAndPapers, isLoading: blogsLoading } = useBlogsAndPapers();
   const { approvedResources, isLoadingApproved } = useUserResources();
 
-  const fetchSuggestions = debounce(async (q: string) => {
-    if (!q) return setSuggestions([]);
-    try {
-      const res = await fetchExploreSuggestions(q, 8);
-      setSuggestions(res);
-    } catch (e) {
-      setSuggestions([]);
-    }
-  }, 200);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchSuggestions = useCallback(
+    debounce(async (q: string) => {
+      if (!q) return setSuggestions([]);
+      try {
+        const res = await fetchExploreSuggestions(q, 8);
+        setSuggestions(res);
+      } catch (e) {
+        setSuggestions([]);
+      }
+    }, 200),
+    []
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,7 +282,7 @@ function Explore() {
 
           {/* Tabs for Explore Sections */}
           <Tabs defaultValue="popular" onValueChange={(v) => setActiveTab(v)} className="space-y-8">
-            <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg py-4 -mx-4 px-4 border-b border-border/50">
+            <div className="sticky top-[57px] z-30 bg-background/80 backdrop-blur-lg py-4 -mx-4 px-4 border-b border-border/50">
               <TabsList className="flex justify-start md:justify-center overflow-x-auto bg-muted/50 p-1.5 rounded-2xl gap-1 w-full max-w-fit mx-auto no-scrollbar">
                 <TabsTrigger 
                   value="popular" 
@@ -285,6 +331,24 @@ function Explore() {
 
             {/* === Popular Categories Section === */}
             <TabsContent value="popular" className="space-y-10">
+              {personalizedData.isLoading ? (
+                <div className="space-y-10">
+                  <section>
+                    <Skeleton className="h-8 w-64 mb-6" />
+                    <SwiperSkeleton />
+                  </section>
+                  <section>
+                    <Skeleton className="h-8 w-64 mb-6" />
+                    <SwiperSkeleton />
+                  </section>
+                  <section>
+                    <Skeleton className="h-8 w-64 mb-6" />
+                    <SwiperSkeleton />
+                  </section>
+                </div>
+              ) : personalizedData.techCategories.length === 0 && personalizedData.nonTechCategories.length === 0 && personalizedData.exams.length === 0 ? (
+                <EmptyState icon={TrendingUp} title="No categories available" description="Check back soon — we're adding new learning categories regularly!" />
+              ) : (<>
               {/* Tech Categories */}
               <section>
                 <div className="flex items-center justify-between mb-6">
@@ -511,6 +575,7 @@ function Explore() {
                   })}
                 </Swiper>
               </section>
+              </>)}
             </TabsContent>
 
             {/* === Degrees Section === */}
@@ -528,6 +593,11 @@ function Explore() {
                   </p>
                 </div>
 
+                {personalizedData.isLoading ? (
+                  <CardGridSkeleton count={8} height="h-[160px]" />
+                ) : personalizedData.degrees.length === 0 ? (
+                  <EmptyState icon={GraduationCap} title="No degrees available" description="We're curating top university degrees. Check back soon!" />
+                ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {personalizedData.degrees.map((scoredDeg, i) => {
                     const deg = scoredDeg.item;
@@ -569,6 +639,7 @@ function Explore() {
                     );
                   })}
                 </div>
+                )}
 
                 {/* Degree Modal */}
                 <AnimatePresence>
@@ -710,6 +781,11 @@ function Explore() {
                   </p>
                 </div>
 
+                {personalizedData.isLoading ? (
+                  <CardGridSkeleton count={6} height="h-[180px]" />
+                ) : personalizedData.certifications.length === 0 ? (
+                  <EmptyState icon={Award} title="No certifications available" description="Industry certifications will appear here once curated." />
+                ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {personalizedData.certifications.map((scoredCert, i) => {
                     const cert = scoredCert.item;
@@ -758,6 +834,7 @@ function Explore() {
                     );
                   })}
                 </div>
+                )}
               </section>
             </TabsContent>
 
@@ -945,6 +1022,11 @@ function Explore() {
                   </p>
                 </div>
 
+                {personalizedData.isLoading ? (
+                  <CardGridSkeleton count={6} height="h-[180px]" />
+                ) : personalizedData.trendingResources.length === 0 ? (
+                  <EmptyState icon={BookOpen} title="No trending resources yet" description="Featured resources will appear here as they're curated." />
+                ) : (
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   {personalizedData.trendingResources.map((scoredRes, i) => {
                     const res = scoredRes.item;
@@ -985,6 +1067,7 @@ function Explore() {
                     );
                   })}
                 </div>
+                )}
               </section>
             </TabsContent>
 
