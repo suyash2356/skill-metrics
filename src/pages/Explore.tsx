@@ -103,15 +103,19 @@ function Explore() {
   const { data: blogsAndPapers, isLoading: blogsLoading } = useBlogsAndPapers();
   const { approvedResources, isLoadingApproved } = useUserResources();
 
-  const fetchSuggestions = debounce(async (q: string) => {
-    if (!q) return setSuggestions([]);
-    try {
-      const res = await fetchExploreSuggestions(q, 8);
-      setSuggestions(res);
-    } catch (e) {
-      setSuggestions([]);
-    }
-  }, 200);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const fetchSuggestions = useCallback(
+    debounce(async (q: string) => {
+      if (!q) return setSuggestions([]);
+      try {
+        const res = await fetchExploreSuggestions(q, 8);
+        setSuggestions(res);
+      } catch (e) {
+        setSuggestions([]);
+      }
+    }, 200),
+    []
+  );
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
