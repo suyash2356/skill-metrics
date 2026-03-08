@@ -1,11 +1,12 @@
 // src/pages/Explore.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useNavigate } from "react-router-dom";
 import {
   BookOpen,
@@ -43,11 +44,52 @@ import "swiper/css/autoplay";
 import "swiper/css/free-mode";
 import { motion, AnimatePresence } from "framer-motion";
 import { fetchExploreSuggestions } from "@/api/searchAPI";
-import { debounce } from "lodash";
 import { usePersonalizedExplore } from "@/hooks/usePersonalizedExplore";
 import { useBlogsAndPapers } from "@/hooks/useBlogsAndPapers";
 import { useUserResources } from "@/hooks/useUserResources";
 import { PackagePlus, Users, Loader2, Eye } from "lucide-react";
+
+// Inline debounce to avoid importing full lodash
+function debounce<T extends (...args: any[]) => any>(fn: T, ms: number) {
+  let timer: ReturnType<typeof setTimeout>;
+  return (...args: Parameters<T>) => {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn(...args), ms);
+  };
+}
+
+// Loading skeleton for card grids
+function CardGridSkeleton({ count = 6, height = "h-[200px]" }: { count?: number; height?: string }) {
+  return (
+    <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className={`${height} rounded-xl`} />
+      ))}
+    </div>
+  );
+}
+
+// Loading skeleton for swiper carousels
+function SwiperSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div className="flex gap-4 overflow-hidden pb-4">
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className="h-[200px] min-w-[280px] rounded-xl flex-shrink-0" />
+      ))}
+    </div>
+  );
+}
+
+// Empty state component
+function EmptyState({ icon: Icon, title, description }: { icon: React.ElementType; title: string; description: string }) {
+  return (
+    <div className="text-center py-16 bg-muted/30 rounded-2xl">
+      <Icon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+      <h3 className="text-lg font-semibold mb-2">{title}</h3>
+      <p className="text-muted-foreground text-sm max-w-md mx-auto">{description}</p>
+    </div>
+  );
+}
 
 function Explore() {
   const navigate = useNavigate();
