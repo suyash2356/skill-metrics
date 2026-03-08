@@ -14,6 +14,10 @@ import {
   BookOpen, Brain, Rocket, FlaskConical, Trophy, GraduationCap, Hourglass, ListChecks,
   Book, MonitorPlay, Youtube, Globe, Codepen, Users, Mail, Award, FolderOpen, ClipboardCheck, PenLine, CalendarCheck, Lightbulb, MessageCircle, Share2, Trash2, Eye, EyeOff
 } from "lucide-react";
+import { FocusTimer } from "@/components/roadmap/FocusTimer";
+import { LearningHeatmap } from "@/components/roadmap/LearningHeatmap";
+import { VisualTimeline } from "@/components/roadmap/VisualTimeline";
+import { DifficultyHeatmapETA } from "@/components/roadmap/DifficultyHeatmapETA";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,6 +76,7 @@ const RoadmapView = () => {
   const [editingStep, setEditingStep] = useState<string | null>(null);
   const [commentDialogOpen, setCommentDialogOpen] = useState(false);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [activeStepId, setActiveStepId] = useState<string | null>(null);
 
   const { data: roadmap, isLoading: isLoadingRoadmap } = useQuery<RoadmapWithUser | null>({
     queryKey: ['roadmap', id],
@@ -582,248 +587,262 @@ const RoadmapView = () => {
         <Tabs defaultValue="steps" className="space-y-6">
           <TabsList>
             <TabsTrigger value="steps">Roadmap Steps</TabsTrigger>
+            <TabsTrigger value="insights">Insights & Stats</TabsTrigger>
             <TabsTrigger value="template">My Template</TabsTrigger>
           </TabsList>
           <TabsContent value="steps">
-            {phaseOrder.map(phase => (
-              groupedSteps[phase] && (
-                <div key={phase} className="mb-8">
-                  <h2 className="text-2xl font-semibold mb-4 border-b pb-2">{phase}</h2>
-                  <Accordion type="single" collapsible className="w-full" defaultValue={phase === 'Introduction' ? `item-${groupedSteps[phase][0].id}` : undefined}>
-                    {(groupedSteps[phase] || []).map((step: any) => (
-                      <AccordionItem value={`item-${step.id}`} key={step.id}>
-                        <AccordionTrigger>
-                          <div className="flex items-center gap-4 w-full">
-                            {isOwner && <Checkbox checked={step.completed} onCheckedChange={(checked) => toggleStepCompletion(step.id, !!checked)} onClick={(e) => e.stopPropagation()} />}
-                            <span className={`flex-1 text-left ${step.completed ? 'line-through text-muted-foreground' : ''}`}>{step.title}</span>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left: Visual Timeline + Step Details */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Visual Timeline Navigation */}
+                <VisualTimeline
+                  steps={steps || []}
+                  groupedSteps={groupedSteps}
+                  phaseOrder={phaseOrder}
+                  isOwner={isOwner}
+                  onToggleStep={toggleStepCompletion}
+                  onSelectStep={(id) => setActiveStepId(activeStepId === id ? null : id)}
+                  activeStepId={activeStepId || undefined}
+                />
+
+                {/* Active Step Detail Panel */}
+                {activeStepId && (() => {
+                  const step: any = (steps || []).find((s: any) => s.id === activeStepId);
+                  if (!step) return null;
+                  return (
+                    <Card className="border-2 border-primary/20 shadow-lg animate-fade-in">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-xl">{step.title}</CardTitle>
+                          <div className="flex items-center gap-2">
                             <Badge variant="outline">{step.duration}</Badge>
+                            {step.completed && <Badge className="bg-green-500/10 text-green-600 border-0">Completed</Badge>}
                           </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="p-4 bg-muted/40 rounded-md">
-                          {editingStep === step.id ? (
-                            <div className="space-y-4">
-                              <Input defaultValue={step.title} onBlur={(e) => updateStepMutation.mutate({ id: step.id, title: e.target.value })} />
-                              <Textarea defaultValue={step.description} onBlur={(e) => updateStepMutation.mutate({ id: step.id, description: e.target.value })} />
-                              <div className="flex gap-2">
-                                <Button size="sm" onClick={() => setEditingStep(null)}><Save className="h-4 w-4 mr-2" />Done</Button>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-6">
+                        {editingStep === step.id ? (
+                          <div className="space-y-4">
+                            <Input defaultValue={step.title} onBlur={(e) => updateStepMutation.mutate({ id: step.id, title: e.target.value })} />
+                            <Textarea defaultValue={step.description} onBlur={(e) => updateStepMutation.mutate({ id: step.id, description: e.target.value })} />
+                            <Button size="sm" onClick={() => setEditingStep(null)}><Save className="h-4 w-4 mr-2" />Done</Button>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="text-base leading-relaxed">{step.description}</p>
+
+                            {step.estimated_hours && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Hourglass className="h-4 w-4" />
+                                <span>Estimated: {step.estimated_hours} hours</span>
                               </div>
-                            </div>
-                          ) : (
-                            <div className="space-y-6">
-                              {/* Description */}
-                              <p className="text-base leading-relaxed">{step.description}</p>
+                            )}
 
-                              {/* Time Estimate */}
-                              {step.estimated_hours && (
-                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                  <Hourglass className="h-4 w-4" />
-                                  <span>Estimated: {step.estimated_hours} hours</span>
-                                </div>
-                              )}
+                            {step.prerequisites && step.prerequisites.length > 0 && (
+                              <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg">
+                                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                  <FlaskConical className="h-4 w-4 text-amber-600" />
+                                  Prerequisites
+                                </h4>
+                                <ul className="list-disc list-inside space-y-1 text-sm">
+                                  {step.prerequisites.map((prereq: string, i: number) => <li key={i}>{prereq}</li>)}
+                                </ul>
+                              </div>
+                            )}
 
-                              {/* Prerequisites */}
-                              {step.prerequisites && step.prerequisites.length > 0 && (
-                                <div className="p-3 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                                    <FlaskConical className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
-                                    Prerequisites
-                                  </h4>
-                                  <ul className="list-disc list-inside space-y-1 text-sm">
-                                    {step.prerequisites.map((prereq: string, i: number) => <li key={i}>{prereq}</li>)}
-                                  </ul>
-                                </div>
-                              )}
+                            {step.learning_objectives && step.learning_objectives.length > 0 && (
+                              <div className="p-3 bg-sky-500/10 border border-sky-500/20 rounded-lg">
+                                <h4 className="font-semibold mb-2 flex items-center gap-2">
+                                  <Target className="h-4 w-4 text-sky-600" />
+                                  Learning Objectives
+                                </h4>
+                                <ul className="space-y-2">
+                                  {step.learning_objectives.map((obj: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm">
+                                      <CheckCircle className="h-4 w-4 text-sky-500 mt-0.5 flex-shrink-0" />
+                                      <span>{obj}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
 
-                              {/* Learning Objectives */}
-                              {step.learning_objectives && step.learning_objectives.length > 0 && (
-                                <div className="p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                                  <h4 className="font-semibold mb-2 flex items-center gap-2">
-                                    <Target className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                    Learning Objectives
-                                  </h4>
-                                  <ul className="space-y-2">
-                                    {step.learning_objectives.map((obj: string, i: number) => (
-                                      <li key={i} className="flex items-start gap-2 text-sm">
-                                        <CheckCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
-                                        <span>{obj}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Topics */}
-                              {step.topics && step.topics.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                                    <BookOpen className="h-4 w-4" />
-                                    Topics to Cover
-                                  </h4>
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                                    {step.topics.map((topic: string, i: number) => (
-                                      <div key={i} className="flex items-start gap-2 p-2 bg-background rounded border">
-                                        <div className="h-2 w-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
-                                        <span className="text-sm">{topic}</span>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Milestones */}
-                              {step.milestones && step.milestones.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                                    <Rocket className="h-4 w-4" />
-                                    Milestones
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {step.milestones.map((milestone: any, i: number) => (
-                                      <div key={i} className="p-3 bg-background rounded-lg border">
-                                        <div className="flex items-center justify-between mb-1">
-                                          <h5 className="font-medium text-sm">{milestone.title}</h5>
-                                          {milestone.estimatedHours && (
-                                            <Badge variant="secondary" className="text-xs">
-                                              <Clock className="h-3 w-3 mr-1" />
-                                              {milestone.estimatedHours}h
-                                            </Badge>
-                                          )}
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">{milestone.description}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Tasks */}
-                              {step.tasks && step.tasks.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                                    <Codepen className="h-4 w-4" />
-                                    Hands-on Tasks
-                                  </h4>
-                                  <div className="space-y-3">
-                                    {step.tasks.map((task: any, i: number) => (
-                                      <div key={i} className="p-4 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-800 rounded-lg">
-                                        <div className="flex items-center justify-between mb-2">
-                                          <h5 className="font-medium">{task.title}</h5>
-                                          {task.difficulty && (
-                                            <Badge variant={task.difficulty === 'beginner' ? 'secondary' : task.difficulty === 'intermediate' ? 'default' : 'destructive'}>
-                                              {task.difficulty}
-                                            </Badge>
-                                          )}
-                                        </div>
-                                        <p className="text-sm">{task.description}</p>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {/* Resources */}
+                            {step.topics && step.topics.length > 0 && (
                               <div>
                                 <h4 className="font-semibold mb-3 flex items-center gap-2">
-                                  <Book className="h-4 w-4" />
-                                  Resources
+                                  <BookOpen className="h-4 w-4" /> Topics to Cover
                                 </h4>
-                                <div className="space-y-2">
-                                  {(resourcesByStep?.[step.id] || []).map((res: any) => (
-                                    <div key={res.id} className="flex items-center justify-between gap-3 p-3 bg-background rounded-lg border hover:border-primary/50 transition-colors">
-                                      <a href={res.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:underline flex-1">
-                                        <img src={getFavicon(res.url)} alt="" className="h-5 w-5 flex-shrink-0" />
-                                        <div className="flex-1 min-w-0">
-                                          <div className="font-medium text-sm truncate">{res.title}</div>
-                                          <div className="flex items-center gap-2 mt-1">
-                                            <Badge variant="outline" className="text-xs">{res.type}</Badge>
-                                            {res.duration && <span className="text-xs text-muted-foreground">{res.duration}</span>}
-                                            {res.difficulty && <Badge variant="secondary" className="text-xs">{res.difficulty}</Badge>}
-                                          </div>
-                                        </div>
-                                      </a>
-                                      {isOwner && <Button size="icon" variant="ghost" onClick={() => deleteResourceMutation.mutate({ stepId: step.id, resourceId: res.id })}><Trash2 className="h-4 w-4" /></Button>}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  {step.topics.map((topic: string, i: number) => (
+                                    <div key={i} className="flex items-start gap-2 p-2 bg-muted/50 rounded border border-border/50">
+                                      <div className="h-2 w-2 rounded-full bg-primary mt-1.5 flex-shrink-0" />
+                                      <span className="text-sm">{topic}</span>
                                     </div>
                                   ))}
-                                  {isOwner && (
-                                    <Button size="sm" variant="outline" onClick={() => {
-                                      const title = prompt("Resource title:");
-                                      if (title) {
-                                        const url = prompt("Resource URL (optional):") || undefined;
-                                        const type = prompt("Resource type (e.g., video, article):") || undefined;
-                                        addResourceMutation.mutate({ stepId: step.id, title, url, type });
-                                      }
-                                    }}><Plus className="h-4 w-4 mr-2" />Add Resource</Button>
-                                  )}
                                 </div>
                               </div>
+                            )}
 
-                              {/* Common Pitfalls */}
-                              {step.common_pitfalls && step.common_pitfalls.length > 0 && (
-                                <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg">
-                                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-red-700 dark:text-red-400">
-                                    <Lightbulb className="h-4 w-4" />
-                                    Common Pitfalls & Tips
-                                  </h4>
-                                  <ul className="space-y-2">
-                                    {step.common_pitfalls.map((pitfall: string, i: number) => (
-                                      <li key={i} className="flex items-start gap-2 text-sm">
-                                        <span className="text-red-500 font-bold mt-0.5">⚠️</span>
-                                        <span>{pitfall}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Assessment Criteria */}
-                              {step.assessment_criteria && step.assessment_criteria.length > 0 && (
-                                <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg">
-                                  <h4 className="font-semibold mb-3 flex items-center gap-2 text-green-700 dark:text-green-400">
-                                    <Trophy className="h-4 w-4" />
-                                    How to Know You've Mastered This
-                                  </h4>
-                                  <ul className="space-y-2">
-                                    {step.assessment_criteria.map((criteria: string, i: number) => (
-                                      <li key={i} className="flex items-start gap-2 text-sm">
-                                        <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                                        <span>{criteria}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-
-                              {/* Real World Examples */}
-                              {step.real_world_examples && step.real_world_examples.length > 0 && (
-                                <div>
-                                  <h4 className="font-semibold mb-3 flex items-center gap-2">
-                                    <Globe className="h-4 w-4" />
-                                    Real-World Applications
-                                  </h4>
-                                  <div className="space-y-2">
-                                    {step.real_world_examples.map((example: string, i: number) => (
-                                      <div key={i} className="p-3 bg-background rounded-lg border">
-                                        <p className="text-sm">{example}</p>
+                            {step.milestones && step.milestones.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                  <Rocket className="h-4 w-4" /> Milestones
+                                </h4>
+                                <div className="space-y-3">
+                                  {step.milestones.map((milestone: any, i: number) => (
+                                    <div key={i} className="p-3 bg-muted/50 rounded-lg border border-border/50">
+                                      <div className="flex items-center justify-between mb-1">
+                                        <h5 className="font-medium text-sm">{milestone.title}</h5>
+                                        {milestone.estimatedHours && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            <Clock className="h-3 w-3 mr-1" />{milestone.estimatedHours}h
+                                          </Badge>
+                                        )}
                                       </div>
-                                    ))}
-                                  </div>
+                                      <p className="text-sm text-muted-foreground">{milestone.description}</p>
+                                    </div>
+                                  ))}
                                 </div>
-                              )}
+                              </div>
+                            )}
 
-                              {isOwner && (
-                                <Button size="sm" variant="ghost" onClick={() => setEditingStep(step.id)} className="mt-4">
-                                  <Edit3 className="h-4 w-4 mr-2" />Edit Step
-                                </Button>
-                              )}
+                            {step.tasks && step.tasks.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                  <Codepen className="h-4 w-4" /> Hands-on Tasks
+                                </h4>
+                                <div className="space-y-3">
+                                  {step.tasks.map((task: any, i: number) => (
+                                    <div key={i} className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+                                      <div className="flex items-center justify-between mb-2">
+                                        <h5 className="font-medium">{task.title}</h5>
+                                        {task.difficulty && (
+                                          <Badge variant={task.difficulty === 'beginner' ? 'secondary' : task.difficulty === 'intermediate' ? 'default' : 'destructive'}>
+                                            {task.difficulty}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <p className="text-sm">{task.description}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Resources */}
+                            <div>
+                              <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                <Book className="h-4 w-4" /> Resources
+                              </h4>
+                              <div className="space-y-2">
+                                {(resourcesByStep?.[step.id] || []).map((res: any) => (
+                                  <div key={res.id} className="flex items-center justify-between gap-3 p-3 bg-muted/30 rounded-lg border border-border/50 hover:border-primary/50 transition-colors">
+                                    <a href={res.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:underline flex-1">
+                                      <img src={getFavicon(res.url)} alt="" className="h-5 w-5 flex-shrink-0" />
+                                      <div className="flex-1 min-w-0">
+                                        <div className="font-medium text-sm truncate">{res.title}</div>
+                                        <div className="flex items-center gap-2 mt-1">
+                                          <Badge variant="outline" className="text-xs">{res.type}</Badge>
+                                          {res.duration && <span className="text-xs text-muted-foreground">{res.duration}</span>}
+                                          {res.difficulty && <Badge variant="secondary" className="text-xs">{res.difficulty}</Badge>}
+                                        </div>
+                                      </div>
+                                    </a>
+                                    {isOwner && <Button size="icon" variant="ghost" onClick={() => deleteResourceMutation.mutate({ stepId: step.id, resourceId: res.id })}><Trash2 className="h-4 w-4" /></Button>}
+                                  </div>
+                                ))}
+                                {isOwner && (
+                                  <Button size="sm" variant="outline" onClick={() => {
+                                    const title = prompt("Resource title:");
+                                    if (title) {
+                                      const url = prompt("Resource URL (optional):") || undefined;
+                                      const type = prompt("Resource type (e.g., video, article):") || undefined;
+                                      addResourceMutation.mutate({ stepId: step.id, title, url, type });
+                                    }
+                                  }}><Plus className="h-4 w-4 mr-2" />Add Resource</Button>
+                                )}
+                              </div>
                             </div>
-                          )}
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
+
+                            {step.common_pitfalls && step.common_pitfalls.length > 0 && (
+                              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                                <h4 className="font-semibold mb-3 flex items-center gap-2 text-destructive">
+                                  <Lightbulb className="h-4 w-4" /> Common Pitfalls & Tips
+                                </h4>
+                                <ul className="space-y-2">
+                                  {step.common_pitfalls.map((pitfall: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm">
+                                      <span className="font-bold mt-0.5">⚠️</span>
+                                      <span>{pitfall}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {step.assessment_criteria && step.assessment_criteria.length > 0 && (
+                              <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                <h4 className="font-semibold mb-3 flex items-center gap-2 text-green-700 dark:text-green-400">
+                                  <Trophy className="h-4 w-4" /> How to Know You've Mastered This
+                                </h4>
+                                <ul className="space-y-2">
+                                  {step.assessment_criteria.map((criteria: string, i: number) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm">
+                                      <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                                      <span>{criteria}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+
+                            {step.real_world_examples && step.real_world_examples.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold mb-3 flex items-center gap-2">
+                                  <Globe className="h-4 w-4" /> Real-World Applications
+                                </h4>
+                                <div className="space-y-2">
+                                  {step.real_world_examples.map((example: string, i: number) => (
+                                    <div key={i} className="p-3 bg-muted/50 rounded-lg border border-border/50">
+                                      <p className="text-sm">{example}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {isOwner && (
+                              <Button size="sm" variant="ghost" onClick={() => setEditingStep(step.id)} className="mt-4">
+                                <Edit3 className="h-4 w-4 mr-2" />Edit Step
+                              </Button>
+                            )}
+                          </>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })()}
+              </div>
+
+              {/* Right Sidebar: Focus Timer */}
+              {isOwner && (
+                <div className="space-y-4">
+                  <FocusTimer roadmapId={id!} steps={steps || []} isOwner={isOwner} />
                 </div>
-              )
-            ))}
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Insights & Stats Tab */}
+          <TabsContent value="insights">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <LearningHeatmap roadmapId={id} />
+              <DifficultyHeatmapETA
+                steps={steps || []}
+                roadmapId={id!}
+                createdAt={roadmap.created_at}
+              />
+            </div>
           </TabsContent>
           <TabsContent value="template" className="w-full">
             <div className="max-w-5xl mx-auto bg-white dark:bg-muted rounded-xl shadow-md p-6 md:p-10">
