@@ -587,10 +587,29 @@ const RoadmapView = () => {
         <Tabs defaultValue="steps" className="space-y-6">
           <TabsList>
             <TabsTrigger value="steps">Roadmap Steps</TabsTrigger>
+            <TabsTrigger value="insights">Insights & Stats</TabsTrigger>
             <TabsTrigger value="template">My Template</TabsTrigger>
           </TabsList>
           <TabsContent value="steps">
-            {phaseOrder.map(phase => (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left: Visual Timeline + Step Details */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Visual Timeline Navigation */}
+                <VisualTimeline
+                  steps={steps || []}
+                  groupedSteps={groupedSteps}
+                  phaseOrder={phaseOrder}
+                  isOwner={isOwner}
+                  onToggleStep={toggleStepCompletion}
+                  onSelectStep={(id) => setActiveStepId(id)}
+                  activeStepId={activeStepId || undefined}
+                />
+
+                {/* Active Step Detail (shown when a step is clicked) */}
+                {activeStepId && (() => {
+                  const step = (steps || []).find(s => s.id === activeStepId);
+                  if (!step) return null;
+                  return (
               groupedSteps[phase] && (
                 <div key={phase} className="mb-8">
                   <h2 className="text-2xl font-semibold mb-4 border-b pb-2">{phase}</h2>
