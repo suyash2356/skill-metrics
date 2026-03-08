@@ -331,6 +331,24 @@ function Explore() {
 
             {/* === Popular Categories Section === */}
             <TabsContent value="popular" className="space-y-10">
+              {personalizedData.isLoading ? (
+                <div className="space-y-10">
+                  <section>
+                    <Skeleton className="h-8 w-64 mb-6" />
+                    <SwiperSkeleton />
+                  </section>
+                  <section>
+                    <Skeleton className="h-8 w-64 mb-6" />
+                    <SwiperSkeleton />
+                  </section>
+                  <section>
+                    <Skeleton className="h-8 w-64 mb-6" />
+                    <SwiperSkeleton />
+                  </section>
+                </div>
+              ) : personalizedData.techCategories.length === 0 && personalizedData.nonTechCategories.length === 0 && personalizedData.exams.length === 0 ? (
+                <EmptyState icon={TrendingUp} title="No categories available" description="Check back soon — we're adding new learning categories regularly!" />
+              ) : (<>
               {/* Tech Categories */}
               <section>
                 <div className="flex items-center justify-between mb-6">
