@@ -236,11 +236,23 @@ export async function fetchRecommendations(query: string): Promise<Recommendatio
   const lowerQuery = query.toLowerCase();
   const recommendations: Recommendation[] = [];
 
-  const { data: dbResources, error } = await supabase
+  // First try exact category match to avoid cross-contamination (e.g. AWS resources for CAT exam)
+  let { data: dbResources, error } = await supabase
     .from('resources')
     .select('*')
     .eq('is_active', true)
-    .or(`category.ilike.%${lowerQuery}%,title.ilike.%${lowerQuery}%,related_skills.cs.{${query}}`);
+    .ilike('category', lowerQuery);
+
+  // If no exact match, try broader search but with tighter matching
+  if (!error && (!dbResources || dbResources.length === 0)) {
+    const result = await supabase
+      .from('resources')
+      .select('*')
+      .eq('is_active', true)
+      .or(`title.ilike.%${lowerQuery}%,related_skills.cs.{${query}}`);
+    dbResources = result.data;
+    error = result.error;
+  }
 
   if (!error && dbResources) {
     dbResources.forEach((resource) => {
