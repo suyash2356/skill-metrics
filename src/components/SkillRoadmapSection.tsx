@@ -22,7 +22,7 @@ import {
   Lightbulb,
   Users
 } from 'lucide-react';
-import { SkillRoadmap, LearningPhase } from '@/lib/skillRoadmaps';
+import { SkillRoadmap, LearningPhase, ExamInfo, NonTechFieldInfo } from '@/lib/skillRoadmaps';
 import { cn } from '@/lib/utils';
 
 interface SkillRoadmapSectionProps {
