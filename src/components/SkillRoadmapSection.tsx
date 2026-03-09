@@ -22,7 +22,7 @@ import {
   Lightbulb,
   Users
 } from 'lucide-react';
-import { SkillRoadmap, LearningPhase } from '@/lib/skillRoadmaps';
+import { SkillRoadmap, LearningPhase, ExamInfo, NonTechFieldInfo } from '@/lib/skillRoadmaps';
 import { cn } from '@/lib/utils';
 
 interface SkillRoadmapSectionProps {
@@ -126,6 +126,16 @@ export function SkillRoadmapSection({ roadmap }: SkillRoadmapSectionProps) {
         </CardContent>
       </Card>
 
+      {/* Exam Info Section */}
+      {roadmap.examInfo && (
+        <ExamInfoCard examInfo={roadmap.examInfo} />
+      )}
+
+      {/* Non-Tech Field Info */}
+      {roadmap.nonTechInfo && (
+        <NonTechInfoCard info={roadmap.nonTechInfo} />
+      )}
+
       {/* Real World Context */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-6">
@@ -134,7 +144,9 @@ export function SkillRoadmapSection({ roadmap }: SkillRoadmapSectionProps) {
               <Lightbulb className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-2">Real-World Applications</h3>
+              <h3 className="font-semibold text-lg mb-2">
+                {roadmap.contentType === 'exam' ? 'Why This Exam Matters' : 'Real-World Applications'}
+              </h3>
               <p className="text-muted-foreground leading-relaxed">{roadmap.realWorldContext}</p>
             </div>
           </div>
@@ -242,6 +254,80 @@ export function SkillRoadmapSection({ roadmap }: SkillRoadmapSectionProps) {
         )}
       </div>
     </div>
+  );
+}
+
+function ExamInfoCard({ examInfo }: { examInfo: ExamInfo }) {
+  return (
+    <Card className="border-amber-500/20 bg-amber-500/5">
+      <CardContent className="p-6 space-y-5">
+        <div className="flex items-center gap-3 mb-2">
+          <Award className="w-6 h-6 text-amber-600" />
+          <h3 className="font-bold text-lg">Exam Details</h3>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-4 text-sm">
+          <div><span className="font-medium text-foreground">Full Name:</span> <span className="text-muted-foreground">{examInfo.fullName}</span></div>
+          <div><span className="font-medium text-foreground">Conducted By:</span> <span className="text-muted-foreground">{examInfo.conductedBy}</span></div>
+          <div><span className="font-medium text-foreground">Frequency:</span> <span className="text-muted-foreground">{examInfo.frequency}</span></div>
+          {examInfo.registrationFee && <div><span className="font-medium text-foreground">Fee:</span> <span className="text-muted-foreground">{examInfo.registrationFee}</span></div>}
+          {examInfo.validityPeriod && <div><span className="font-medium text-foreground">Validity:</span> <span className="text-muted-foreground">{examInfo.validityPeriod}</span></div>}
+          {examInfo.scoringSystem && <div><span className="font-medium text-foreground">Scoring:</span> <span className="text-muted-foreground">{examInfo.scoringSystem}</span></div>}
+          {examInfo.countries && <div><span className="font-medium text-foreground">Countries:</span> <span className="text-muted-foreground">{examInfo.countries.join(', ')}</span></div>}
+          {examInfo.officialWebsite && <div><span className="font-medium text-foreground">Website:</span> <a href={examInfo.officialWebsite} target="_blank" rel="noreferrer" className="text-primary hover:underline">{examInfo.officialWebsite}</a></div>}
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><Target className="w-4 h-4 text-amber-600" />Eligibility</h4>
+          <ul className="space-y-1">{examInfo.eligibility.map((e, i) => <li key={i} className="text-sm text-muted-foreground flex items-start gap-2"><span className="text-amber-500 mt-1">•</span>{e}</li>)}</ul>
+        </div>
+
+        <div>
+          <h4 className="font-semibold text-sm mb-2 flex items-center gap-2"><BookOpen className="w-4 h-4 text-amber-600" />Exam Pattern</h4>
+          <ul className="space-y-1">{examInfo.examPattern.map((p, i) => <li key={i} className="text-sm text-muted-foreground flex items-start gap-2"><span className="text-amber-500 mt-1">•</span>{p}</li>)}</ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function NonTechInfoCard({ info }: { info: NonTechFieldInfo }) {
+  return (
+    <Card className="border-emerald-500/20 bg-emerald-500/5">
+      <CardContent className="p-6 space-y-4">
+        <div className="flex items-center gap-3">
+          <Users className="w-6 h-6 text-emerald-600" />
+          <h3 className="font-bold text-lg">Industry Overview</h3>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">{info.industryOverview}</p>
+
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <h4 className="font-semibold text-sm mb-2">Key Skill Areas</h4>
+            <div className="flex flex-wrap gap-1.5">{info.keySkillAreas.map((s, i) => <Badge key={i} variant="secondary" className="text-xs">{s}</Badge>)}</div>
+          </div>
+          {info.portfolioTips && (
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Portfolio Tips</h4>
+              <ul className="space-y-1">{info.portfolioTips.map((t, i) => <li key={i} className="text-xs text-muted-foreground flex gap-1.5"><span className="text-emerald-500">•</span>{t}</li>)}</ul>
+            </div>
+          )}
+        </div>
+
+        {info.freelanceOpportunities && (
+          <div>
+            <h4 className="font-semibold text-sm mb-1">Freelance Opportunities</h4>
+            <p className="text-xs text-muted-foreground">{info.freelanceOpportunities}</p>
+          </div>
+        )}
+        {info.growthOutlook && (
+          <div>
+            <h4 className="font-semibold text-sm mb-1">Growth Outlook</h4>
+            <p className="text-xs text-muted-foreground">{info.growthOutlook}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
