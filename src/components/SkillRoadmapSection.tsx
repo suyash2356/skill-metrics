@@ -126,6 +126,16 @@ export function SkillRoadmapSection({ roadmap }: SkillRoadmapSectionProps) {
         </CardContent>
       </Card>
 
+      {/* Exam Info Section */}
+      {roadmap.examInfo && (
+        <ExamInfoCard examInfo={roadmap.examInfo} />
+      )}
+
+      {/* Non-Tech Field Info */}
+      {roadmap.nonTechInfo && (
+        <NonTechInfoCard info={roadmap.nonTechInfo} />
+      )}
+
       {/* Real World Context */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-6">
@@ -134,7 +144,9 @@ export function SkillRoadmapSection({ roadmap }: SkillRoadmapSectionProps) {
               <Lightbulb className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg mb-2">Real-World Applications</h3>
+              <h3 className="font-semibold text-lg mb-2">
+                {roadmap.contentType === 'exam' ? 'Why This Exam Matters' : 'Real-World Applications'}
+              </h3>
               <p className="text-muted-foreground leading-relaxed">{roadmap.realWorldContext}</p>
             </div>
           </div>
