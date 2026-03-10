@@ -850,15 +850,20 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_free: boolean
+          learning_outcomes: string[] | null
           link: string
           prerequisites: string[] | null
           provider: string | null
+          quality_score: number | null
           rating: number | null
           recommend_percent: number | null
+          recommended_stage: string | null
           related_skills: string[] | null
           relevant_backgrounds: string[] | null
           resource_type: string
           section_type: string
+          skill_node_id: string | null
+          subdomain: string | null
           target_countries: string[] | null
           title: string
           total_ratings: number | null
@@ -882,15 +887,20 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean
+          learning_outcomes?: string[] | null
           link: string
           prerequisites?: string[] | null
           provider?: string | null
+          quality_score?: number | null
           rating?: number | null
           recommend_percent?: number | null
+          recommended_stage?: string | null
           related_skills?: string[] | null
           relevant_backgrounds?: string[] | null
           resource_type?: string
           section_type?: string
+          skill_node_id?: string | null
+          subdomain?: string | null
           target_countries?: string[] | null
           title: string
           total_ratings?: number | null
@@ -914,15 +924,20 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean
+          learning_outcomes?: string[] | null
           link?: string
           prerequisites?: string[] | null
           provider?: string | null
+          quality_score?: number | null
           rating?: number | null
           recommend_percent?: number | null
+          recommended_stage?: string | null
           related_skills?: string[] | null
           relevant_backgrounds?: string[] | null
           resource_type?: string
           section_type?: string
+          skill_node_id?: string | null
+          subdomain?: string | null
           target_countries?: string[] | null
           title?: string
           total_ratings?: number | null
@@ -931,7 +946,15 @@ export type Database = {
           updated_at?: string
           weighted_rating?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "resources_skill_node_id_fkey"
+            columns: ["skill_node_id"]
+            isOneToOne: false
+            referencedRelation: "skill_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       roadmap_skills: {
         Row: {
@@ -1250,6 +1273,93 @@ export type Database = {
           name?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      skill_dependencies: {
+        Row: {
+          created_at: string | null
+          dependency_type: string
+          id: string
+          prerequisite_id: string
+          skill_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          dependency_type?: string
+          id?: string
+          prerequisite_id: string
+          skill_id: string
+        }
+        Update: {
+          created_at?: string | null
+          dependency_type?: string
+          id?: string
+          prerequisite_id?: string
+          skill_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "skill_dependencies_prerequisite_id_fkey"
+            columns: ["prerequisite_id"]
+            isOneToOne: false
+            referencedRelation: "skill_nodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "skill_dependencies_skill_id_fkey"
+            columns: ["skill_id"]
+            isOneToOne: false
+            referencedRelation: "skill_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      skill_nodes: {
+        Row: {
+          content_type: string
+          created_at: string | null
+          description: string | null
+          difficulty_level: string
+          display_order: number | null
+          domain: string
+          estimated_hours: number | null
+          id: string
+          is_active: boolean | null
+          learning_outcomes: string[] | null
+          name: string
+          subdomain: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content_type?: string
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string
+          display_order?: number | null
+          domain: string
+          estimated_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          learning_outcomes?: string[] | null
+          name: string
+          subdomain?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content_type?: string
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string
+          display_order?: number | null
+          domain?: string
+          estimated_hours?: number | null
+          id?: string
+          is_active?: boolean | null
+          learning_outcomes?: string[] | null
+          name?: string
+          subdomain?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -1691,6 +1801,50 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_skill_progress: {
+        Row: {
+          completed_at: string | null
+          confidence_level: number | null
+          created_at: string | null
+          id: string
+          skill_node_id: string
+          started_at: string | null
+          status: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          confidence_level?: number | null
+          created_at?: string | null
+          id?: string
+          skill_node_id: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          confidence_level?: number | null
+          created_at?: string | null
+          id?: string
+          skill_node_id?: string
+          started_at?: string | null
+          status?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_skill_progress_skill_node_id_fkey"
+            columns: ["skill_node_id"]
+            isOneToOne: false
+            referencedRelation: "skill_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       videos: {
         Row: {

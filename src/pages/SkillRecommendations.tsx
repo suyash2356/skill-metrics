@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 import { fetchRecommendations, Recommendation } from "@/api/searchAPI";
-import { Book, Layers, Youtube, Globe, Brain, Star, Map, Library, ThumbsUp, ThumbsDown, MessageSquare, CheckCircle } from "lucide-react";
+import { Book, Layers, Youtube, Globe, Brain, Star, Map, Library, ThumbsUp, ThumbsDown, MessageSquare, CheckCircle, Lock, ArrowRight, AlertTriangle, Zap, Clock, Target, TrendingUp } from "lucide-react";
 import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
 import { getPersonalizedResources } from "@/lib/resourceMatcher";
 import { getSkillRoadmap, generateGenericRoadmap } from "@/lib/skillRoadmaps";
@@ -16,6 +17,9 @@ import { useResourceRatings } from "@/hooks/useResourceRatings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress } from "@/hooks/useSkillGraph";
+import { buildLearningPath, matchDomainToSkillGraph, filterResourcesBySkill, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
+import { cn } from "@/lib/utils";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -28,14 +32,45 @@ export default function SkillRecommendations() {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'roadmap' | 'resources'>('roadmap');
+  const [activeTab, setActiveTab] = useState<'graph' | 'roadmap' | 'resources'>('graph');
   const { profileDetails } = useUserProfileDetails();
 
-  // Get skill roadmap
+  // Skill Graph data
+  const graphDomain = useMemo(() => matchDomainToSkillGraph(decodeURIComponent(q)), [q]);
+  const { data: skillNodes = [] } = useSkillNodes(graphDomain || undefined);
+  const skillNodeIds = useMemo(() => skillNodes.map(n => n.id), [skillNodes]);
+  const { data: dependencies = [] } = useSkillDependencies(skillNodeIds);
+  const { data: userProgress = [] } = useUserSkillProgress();
+  const updateProgress = useUpdateSkillProgress();
+
+  const hasSkillGraph = graphDomain && skillNodes.length > 0;
+
+  // Build learning path
+  const learningPath = useMemo<LearningPathResult | null>(() => {
+    if (!hasSkillGraph) return null;
+    const userProfile = profileDetails ? {
+      experienceLevel: profileDetails.experience_level || 'beginner',
+      skills: (profileDetails.skills || []).map((s: any) => typeof s === 'string' ? s : s.name || ''),
+      learningGoals: (profileDetails.learning_path as any)?.goals || '',
+      background: (profileDetails.learning_path as any)?.background || '',
+    } : undefined;
+    return buildLearningPath(skillNodes, dependencies, userProgress, userProfile);
+  }, [hasSkillGraph, skillNodes, dependencies, userProgress, profileDetails]);
+
+  // Get skill roadmap (fallback for domains without graph)
   const skillRoadmap = useMemo(() => {
     if (!q) return null;
     return getSkillRoadmap(q) || generateGenericRoadmap(q);
   }, [q]);
+
+  // Default to 'graph' if we have a skill graph, else 'roadmap'
+  useEffect(() => {
+    if (hasSkillGraph && activeTab !== 'resources') {
+      setActiveTab('graph');
+    } else if (!hasSkillGraph && activeTab === 'graph') {
+      setActiveTab('roadmap');
+    }
+  }, [hasSkillGraph]);
 
   useEffect(() => {
     let mounted = true;
@@ -59,17 +94,14 @@ export default function SkillRecommendations() {
     return () => { mounted = false; };
   }, [q]);
 
-  // Personalize recommendations based on user profile
   const personalizedRecommendations = useMemo(() => {
     if (!profileDetails || recommendations.length === 0) return recommendations;
-    
     const userProfile = {
       experienceLevel: profileDetails.experience_level || 'beginner',
       skills: (profileDetails.skills || []).map((s: any) => s.name),
       learningGoals: profileDetails.bio?.toLowerCase().split(/\s+/) || [],
       prefersFree: !profileDetails.company,
     };
-
     return getPersonalizedResources(recommendations, userProfile);
   }, [recommendations, profileDetails]);
 
@@ -97,6 +129,16 @@ export default function SkillRecommendations() {
     }
   }
 
+  const handleSkillStatusChange = (skillNodeId: string, newStatus: 'not_started' | 'in_progress' | 'completed' | 'skipped') => {
+    updateProgress.mutate(
+      { skillNodeId, status: newStatus },
+      {
+        onSuccess: () => toast.success(`Skill status updated`),
+        onError: () => toast.error('Failed to update progress'),
+      }
+    );
+  };
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-6 md:py-10 max-w-6xl">
@@ -104,14 +146,41 @@ export default function SkillRecommendations() {
         <header className="mb-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-4xl font-extrabold">{q || "Skill"}</h1>
+              <h1 className="text-2xl md:text-4xl font-extrabold">{q ? decodeURIComponent(q) : "Skill"}</h1>
               {profileDetails && (
                 <Badge variant="secondary" className="mt-2">
                   Personalized for {profileDetails.experience_level || 'your'} level
                 </Badge>
               )}
+              {learningPath && (
+                <div className="flex items-center gap-4 mt-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Target className="w-4 h-4 text-primary" />
+                    <span>{learningPath.completedCount}/{learningPath.totalCount} skills</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <span>~{learningPath.totalEstimatedHours}h total</span>
+                  </div>
+                  <Progress 
+                    value={(learningPath.completedCount / learningPath.totalCount) * 100} 
+                    className="w-32 h-2" 
+                  />
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-2">
+              {hasSkillGraph && (
+                <Button
+                  variant={activeTab === 'graph' ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setActiveTab('graph')}
+                  className="gap-2"
+                >
+                  <TrendingUp className="w-4 h-4" />
+                  Skill Graph
+                </Button>
+              )}
               <Button
                 variant={activeTab === 'roadmap' ? 'default' : 'outline'}
                 size="sm"
@@ -135,6 +204,15 @@ export default function SkillRecommendations() {
         </header>
 
         <main>
+          {/* Skill Graph Tab */}
+          {activeTab === 'graph' && learningPath && (
+            <SkillGraphView 
+              learningPath={learningPath} 
+              onStatusChange={handleSkillStatusChange}
+              recommendations={personalizedRecommendations}
+            />
+          )}
+
           {/* Learning Path Tab */}
           {activeTab === 'roadmap' && skillRoadmap && (
             <SkillRoadmapSection roadmap={skillRoadmap} />
@@ -156,7 +234,6 @@ export default function SkillRecommendations() {
                     {!loading && personalizedRecommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).length === 0 && (
                       <div className="text-sm text-muted-foreground">No recommendations found for this category.</div>
                     )}
-
                     {!loading && personalizedRecommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).map((r, i) => (
                       <ResourceCard key={`${t.key}-${i}`} recommendation={r} typeIcon={typeIcon} />
                     ))}
@@ -171,7 +248,318 @@ export default function SkillRecommendations() {
   );
 }
 
-// Enhanced Resource Card with Rating Integration
+// ═══════════════════════════════════════════
+// SKILL GRAPH VIEW
+// ═══════════════════════════════════════════
+
+interface SkillGraphViewProps {
+  learningPath: LearningPathResult;
+  onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
+  recommendations: Recommendation[];
+}
+
+function SkillGraphView({ learningPath, onStatusChange, recommendations }: SkillGraphViewProps) {
+  const [selectedSkill, setSelectedSkill] = useState<SkillRecommendation | null>(
+    learningPath.nextSkill || learningPath.orderedSkills[0] || null
+  );
+
+  const getStatusColor = (status: SkillRecommendation['status']) => {
+    switch (status) {
+      case 'completed': return 'bg-green-500 text-white border-green-600';
+      case 'in_progress': return 'bg-blue-500 text-white border-blue-600';
+      case 'ready': return 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20';
+      case 'locked': return 'bg-muted text-muted-foreground border-border opacity-60';
+      case 'skipped': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+    }
+  };
+
+  const getStatusIcon = (status: SkillRecommendation['status']) => {
+    switch (status) {
+      case 'completed': return <CheckCircle className="w-4 h-4" />;
+      case 'in_progress': return <Zap className="w-4 h-4 animate-pulse" />;
+      case 'ready': return <ArrowRight className="w-4 h-4" />;
+      case 'locked': return <Lock className="w-4 h-4" />;
+      case 'skipped': return <AlertTriangle className="w-4 h-4" />;
+    }
+  };
+
+  const getDifficultyBadge = (level: string) => {
+    const colors: Record<string, string> = {
+      beginner: 'bg-green-500/10 text-green-600',
+      intermediate: 'bg-amber-500/10 text-amber-600',
+      advanced: 'bg-red-500/10 text-red-600',
+    };
+    return colors[level] || 'bg-muted text-muted-foreground';
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Next Recommended Skill Banner */}
+      {learningPath.nextSkill && (
+        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-full bg-primary/10">
+                <Zap className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-lg">Recommended Next: {learningPath.nextSkill.node.name}</h3>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {learningPath.nextSkill.recommendationReason || learningPath.nextSkill.node.description}
+                </p>
+                <div className="flex items-center gap-3 mt-2">
+                  <Badge className={getDifficultyBadge(learningPath.nextSkill.node.difficulty_level)}>
+                    {learningPath.nextSkill.node.difficulty_level}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> ~{learningPath.nextSkill.node.estimated_hours}h
+                  </span>
+                </div>
+              </div>
+              <Button onClick={() => {
+                setSelectedSkill(learningPath.nextSkill);
+                onStatusChange(learningPath.nextSkill!.node.id, 'in_progress');
+              }}>
+                Start Learning
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Skill Graph Visual */}
+        <div className="lg:col-span-2 space-y-3">
+          <h3 className="font-semibold text-lg flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-primary" />
+            Skill Dependency Graph — {learningPath.domain}
+          </h3>
+
+          <div className="relative space-y-2">
+            {/* Vertical connector line */}
+            <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-border hidden md:block" />
+
+            {learningPath.orderedSkills.map((skill, index) => (
+              <Card
+                key={skill.node.id}
+                className={cn(
+                  "cursor-pointer transition-all duration-200 hover:shadow-md",
+                  selectedSkill?.node.id === skill.node.id && "ring-2 ring-primary/40",
+                  skill.isRecommended && skill.status === 'ready' && "border-primary/30 shadow-sm"
+                )}
+                onClick={() => setSelectedSkill(skill)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    {/* Status indicator */}
+                    <div className={cn(
+                      "relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all",
+                      getStatusColor(skill.status)
+                    )}>
+                      {getStatusIcon(skill.status)}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold">{skill.node.name}</h4>
+                        {skill.isRecommended && skill.status === 'ready' && (
+                          <Badge variant="default" className="text-xs bg-primary/80">
+                            ★ Recommended
+                          </Badge>
+                        )}
+                        <Badge variant="outline" className={cn("text-xs", getDifficultyBadge(skill.node.difficulty_level))}>
+                          {skill.node.difficulty_level}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{skill.node.description}</p>
+                      
+                      {/* Missing prerequisites warning */}
+                      {skill.missingPrerequisites.length > 0 && skill.status === 'locked' && (
+                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-amber-600">
+                          <AlertTriangle className="w-3 h-3" />
+                          <span>Requires: {skill.missingPrerequisites.map(p => p.name).join(', ')}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Right: estimated time */}
+                    <div className="text-right flex-shrink-0">
+                      <span className="text-xs text-muted-foreground flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {skill.node.estimated_hours}h
+                      </span>
+                      {skill.confidenceLevel > 0 && skill.status !== 'locked' && (
+                        <div className="mt-1">
+                          <Progress value={skill.confidenceLevel} className="w-16 h-1.5" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* Skill Detail Sidebar */}
+        <div className="space-y-4">
+          {selectedSkill && (
+            <SkillDetailPanel
+              skill={selectedSkill}
+              onStatusChange={onStatusChange}
+              recommendations={recommendations}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+// SKILL DETAIL PANEL
+// ═══════════════════════════════════════════
+
+interface SkillDetailPanelProps {
+  skill: SkillRecommendation;
+  onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
+  recommendations: Recommendation[];
+}
+
+function SkillDetailPanel({ skill, onStatusChange, recommendations }: SkillDetailPanelProps) {
+  // Filter recommendations relevant to this skill
+  const relevantResources = useMemo(() => {
+    const keywords = [
+      skill.node.name.toLowerCase(),
+      ...(skill.node.subdomain ? [skill.node.subdomain.toLowerCase()] : []),
+    ];
+    return recommendations.filter(r => {
+      const text = `${r.title} ${r.description || ''} ${r.provider || ''}`.toLowerCase();
+      return keywords.some(k => text.includes(k));
+    }).slice(0, 5);
+  }, [skill, recommendations]);
+
+  return (
+    <div className="sticky top-6 space-y-4">
+      <Card>
+        <CardContent className="p-6 space-y-4">
+          <div>
+            <h3 className="font-bold text-xl">{skill.node.name}</h3>
+            {skill.node.subdomain && (
+              <Badge variant="outline" className="mt-1 text-xs">{skill.node.subdomain}</Badge>
+            )}
+          </div>
+
+          <p className="text-sm text-muted-foreground leading-relaxed">{skill.node.description}</p>
+
+          <div className="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <span className="text-muted-foreground">Difficulty</span>
+              <p className="font-medium capitalize">{skill.node.difficulty_level}</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Est. Time</span>
+              <p className="font-medium">{skill.node.estimated_hours} hours</p>
+            </div>
+          </div>
+
+          {/* Learning Outcomes */}
+          {skill.node.learning_outcomes.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
+                <Target className="w-4 h-4 text-primary" />
+                Learning Outcomes
+              </h4>
+              <ul className="space-y-1.5">
+                {skill.node.learning_outcomes.map((outcome, i) => (
+                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
+                    <CheckCircle className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
+                    {outcome}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Missing Prerequisites */}
+          {skill.missingPrerequisites.length > 0 && (
+            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+              <h4 className="text-sm font-semibold text-amber-600 flex items-center gap-1.5 mb-2">
+                <AlertTriangle className="w-4 h-4" />
+                Missing Prerequisites
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {skill.missingPrerequisites.map(p => (
+                  <Badge key={p.id} variant="outline" className="text-xs border-amber-500/30 text-amber-600">
+                    {p.name}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Status Actions */}
+          <div className="flex flex-wrap gap-2 pt-2 border-t">
+            {skill.status !== 'completed' && (
+              <Button size="sm" onClick={() => onStatusChange(skill.node.id, 'completed')} className="gap-1.5">
+                <CheckCircle className="w-4 h-4" /> Mark Complete
+              </Button>
+            )}
+            {skill.status !== 'in_progress' && skill.status !== 'completed' && (
+              <Button size="sm" variant="outline" onClick={() => onStatusChange(skill.node.id, 'in_progress')} className="gap-1.5">
+                <Zap className="w-4 h-4" /> Start
+              </Button>
+            )}
+            {skill.status !== 'skipped' && skill.status !== 'completed' && (
+              <Button size="sm" variant="ghost" onClick={() => onStatusChange(skill.node.id, 'skipped')} className="text-xs">
+                Skip
+              </Button>
+            )}
+            {(skill.status === 'completed' || skill.status === 'skipped') && (
+              <Button size="sm" variant="ghost" onClick={() => onStatusChange(skill.node.id, 'not_started')} className="text-xs">
+                Reset
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Relevant Resources */}
+      {relevantResources.length > 0 && (
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h4 className="font-semibold text-sm flex items-center gap-1.5">
+              <Library className="w-4 h-4 text-primary" />
+              Resources for {skill.node.name}
+            </h4>
+            {relevantResources.map((r, i) => (
+              <a
+                key={i}
+                href={r.url}
+                target="_blank"
+                rel="noreferrer"
+                className="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+              >
+                <h5 className="text-sm font-medium line-clamp-1">{r.title}</h5>
+                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="text-xs capitalize">{r.type}</Badge>
+                  {r.difficulty && <span className="capitalize">{r.difficulty}</span>}
+                  {r.provider && <span>{r.provider}</span>}
+                </div>
+              </a>
+            ))}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════
+// RESOURCE CARD (kept from original)
+// ═══════════════════════════════════════════
+
 interface ResourceCardProps {
   recommendation: Recommendation;
   typeIcon: (t: Recommendation["type"]) => React.ReactNode;
@@ -181,8 +569,7 @@ function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
   const { user } = useAuth();
   const [resourceId, setResourceId] = useState<string | null>(null);
   const [showRatingCard, setShowRatingCard] = useState(false);
-  
-  // Try to find matching resource in database by title
+
   useEffect(() => {
     async function findResource() {
       const { data } = await supabase
@@ -191,41 +578,25 @@ function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
         .ilike('title', r.title)
         .limit(1)
         .maybeSingle();
-      
-      if (data) {
-        setResourceId(data.id);
-      }
+      if (data) setResourceId(data.id);
     }
     findResource();
   }, [r.title]);
 
   const {
-    stats,
-    userVote,
-    hasEnoughRatings,
-    formatRatingCount,
-    submitVote,
-    isAuthenticated,
+    stats, userVote, hasEnoughRatings, formatRatingCount, submitVote, isAuthenticated,
   } = useResourceRatings(resourceId || undefined);
 
   const handleVote = (voteType: 'up' | 'down') => {
-    if (!isAuthenticated) {
-      toast.error('Please log in to vote');
-      return;
-    }
-    if (!resourceId) {
-      toast.error('Resource not found in database');
-      return;
-    }
+    if (!isAuthenticated) { toast.error('Please log in to vote'); return; }
+    if (!resourceId) { toast.error('Resource not found in database'); return; }
     submitVote(voteType);
   };
 
   return (
     <Card className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all">
       <CardHeader className="flex items-center gap-3 pb-2">
-        <div className="p-2 rounded bg-white/5">
-          {typeIcon(r.type)}
-        </div>
+        <div className="p-2 rounded bg-white/5">{typeIcon(r.type)}</div>
         <div className="flex-1">
           <div className="flex items-center justify-between gap-3">
             <h3 className="font-semibold">{r.title}</h3>
@@ -234,9 +605,8 @@ function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
           {r.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>}
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-3">
-        {/* Rating Display */}
         <div className="flex items-center justify-between text-sm">
           <div className="flex items-center gap-3">
             {resourceId && stats ? (
@@ -255,12 +625,9 @@ function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
                   )}
                 </>
               ) : (
-                <span className="text-muted-foreground text-xs">
-                  {stats.total_ratings}/10 ratings needed
-                </span>
+                <span className="text-muted-foreground text-xs">{stats.total_ratings}/10 ratings needed</span>
               )
             ) : (
-              // Fallback to API rating
               r.rating && (
                 <div className="flex items-center gap-1">
                   <Star className="w-3 h-3 text-yellow-400" />
@@ -273,53 +640,28 @@ function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
           </div>
         </div>
 
-        {/* Vote Buttons (compact) */}
         {resourceId && (
           <div className="flex items-center gap-2">
-            <Button
-              variant={userVote?.vote_type === 'up' ? 'default' : 'outline'}
-              size="sm"
-              className="h-7 px-2 gap-1 text-xs"
-              onClick={() => handleVote('up')}
-            >
-              <ThumbsUp className={`w-3 h-3 ${userVote?.vote_type === 'up' ? 'fill-current' : ''}`} />
-              Recommend
+            <Button variant={userVote?.vote_type === 'up' ? 'default' : 'outline'} size="sm" className="h-7 px-2 gap-1 text-xs" onClick={() => handleVote('up')}>
+              <ThumbsUp className={`w-3 h-3 ${userVote?.vote_type === 'up' ? 'fill-current' : ''}`} /> Recommend
             </Button>
-            <Button
-              variant={userVote?.vote_type === 'down' ? 'destructive' : 'outline'}
-              size="sm"
-              className="h-7 px-2 gap-1 text-xs"
-              onClick={() => handleVote('down')}
-            >
+            <Button variant={userVote?.vote_type === 'down' ? 'destructive' : 'outline'} size="sm" className="h-7 px-2 gap-1 text-xs" onClick={() => handleVote('down')}>
               <ThumbsDown className={`w-3 h-3 ${userVote?.vote_type === 'down' ? 'fill-current' : ''}`} />
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 gap-1 text-xs ml-auto"
-              onClick={() => setShowRatingCard(!showRatingCard)}
-            >
-              <MessageSquare className="w-3 h-3" />
-              Rate & Review
+            <Button variant="ghost" size="sm" className="h-7 px-2 gap-1 text-xs ml-auto" onClick={() => setShowRatingCard(!showRatingCard)}>
+              <MessageSquare className="w-3 h-3" /> Rate & Review
             </Button>
           </div>
         )}
 
-        {/* Expandable Rating Card */}
         {showRatingCard && resourceId && (
           <div className="pt-2 border-t">
-            <ResourceRatingCard
-              resourceId={resourceId}
-              resourceTitle={r.title}
-            />
+            <ResourceRatingCard resourceId={resourceId} resourceTitle={r.title} />
           </div>
         )}
 
-        {/* Open Resource Link */}
         <div className="flex items-center justify-between pt-2 border-t">
-          <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">
-            Open resource →
-          </a>
+          <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Open resource →</a>
           {r.views && <span className="text-xs text-muted-foreground">{r.views}</span>}
         </div>
       </CardContent>
