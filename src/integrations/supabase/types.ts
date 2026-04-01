@@ -177,27 +177,33 @@ export type Database = {
       }
       conversation_participants: {
         Row: {
+          added_by: string | null
           conversation_id: string
           id: string
           is_muted: boolean
           joined_at: string
           last_read_at: string | null
+          role: string
           user_id: string
         }
         Insert: {
+          added_by?: string | null
           conversation_id: string
           id?: string
           is_muted?: boolean
           joined_at?: string
           last_read_at?: string | null
+          role?: string
           user_id: string
         }
         Update: {
+          added_by?: string | null
           conversation_id?: string
           id?: string
           is_muted?: boolean
           joined_at?: string
           last_read_at?: string | null
+          role?: string
           user_id?: string
         }
         Relationships: [
@@ -213,17 +219,35 @@ export type Database = {
       conversations: {
         Row: {
           created_at: string
+          created_by: string | null
+          description: string | null
+          group_avatar_url: string | null
+          group_name: string | null
           id: string
+          is_group: boolean
+          max_members: number
           updated_at: string
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
+          description?: string | null
+          group_avatar_url?: string | null
+          group_name?: string | null
           id?: string
+          is_group?: boolean
+          max_members?: number
           updated_at?: string
         }
         Update: {
           created_at?: string
+          created_by?: string | null
+          description?: string | null
+          group_avatar_url?: string | null
+          group_name?: string | null
           id?: string
+          is_group?: boolean
+          max_members?: number
           updated_at?: string
         }
         Relationships: []
@@ -1890,6 +1914,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_group_member: {
+        Args: { _conversation_id: string; _new_member_id: string }
+        Returns: undefined
+      }
       calculate_weighted_rating: {
         Args: { p_resource_id: string }
         Returns: number
@@ -1911,6 +1939,10 @@ export type Database = {
       create_default_preferences_for_existing_users: {
         Args: never
         Returns: undefined
+      }
+      create_group_conversation: {
+        Args: { _description?: string; _member_ids: string[]; _name: string }
+        Returns: string
       }
       delete_user_account: {
         Args: { user_id_to_delete: string }
@@ -1959,11 +1991,16 @@ export type Database = {
         Args: { _conversation_id: string; _user_id: string }
         Returns: boolean
       }
+      leave_group: { Args: { _conversation_id: string }; Returns: undefined }
       mask_ip_address: { Args: { ip: unknown }; Returns: string }
       migrate_profile_data: { Args: never; Returns: undefined }
       register_first_admin: {
         Args: { admin_email: string; admin_user_id: string }
         Returns: boolean
+      }
+      remove_group_member: {
+        Args: { _conversation_id: string; _member_id: string }
+        Returns: undefined
       }
       search_profiles: {
         Args: { result_limit?: number; search_query: string }
@@ -1999,6 +2036,19 @@ export type Database = {
           p_post_id: string
           p_post_owner_id: string
           p_post_title: string
+        }
+        Returns: undefined
+      }
+      toggle_group_admin: {
+        Args: { _conversation_id: string; _member_id: string }
+        Returns: undefined
+      }
+      update_group_settings: {
+        Args: {
+          _avatar_url?: string
+          _conversation_id: string
+          _description?: string
+          _name?: string
         }
         Returns: undefined
       }

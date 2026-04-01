@@ -1,15 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useMessages, Message } from '@/hooks/useMessages';
 import { useAuth } from '@/hooks/useAuth';
 import { useChatEncryption } from '@/context/ChatEncryptionContext';
+import { useGroupChat, GroupInfo } from '@/hooks/useGroupChat';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
   ArrowLeft, Send, Smile, MoreVertical, Reply, Pencil, Trash2,
-  Check, CheckCheck, Shield, X, Lock
+  Check, CheckCheck, Shield, X, Lock, Users
 } from 'lucide-react';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -22,6 +23,7 @@ import { format, isToday, isYesterday } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { SharedPostPreview } from '@/components/chat/SharedPostPreview';
 import { ChatEncryptionGate } from '@/components/chat/ChatEncryptionGate';
+import { GroupInfoSheet } from '@/components/chat/GroupInfoSheet';
 
 const QUICK_EMOJIS = ['❤️', '👍', '😂', '😮', '😢', '🔥', '👏', '🙏'];
 
@@ -30,6 +32,7 @@ function ChatContent() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { privateKey, publicKey, getUserPublicKey } = useChatEncryption();
+  const { getGroupInfo } = useGroupChat();
 
   const {
     messages, isLoading, isSending,
@@ -42,34 +45,72 @@ function ChatContent() {
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [otherUser, setOtherUser] = useState<{ full_name: string | null; avatar_url: string | null; user_id: string } | null>(null);
   const [recipientPublicKey, setRecipientPublicKey] = useState<JsonWebKey | null>(null);
+  const [groupInfo, setGroupInfo] = useState<GroupInfo | null>(null);
+  const [isGroup, setIsGroup] = useState(false);
+  const [allMemberKeys, setAllMemberKeys] = useState<Map<string, JsonWebKey>>(new Map());
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch other participant info + their public key
+  const refreshGroupInfo = useCallback(async () => {
+    if (!conversationId) return;
+    const info = await getGroupInfo(conversationId);
+    if (info) {
+      setGroupInfo(info);
+      setIsGroup(info.is_group);
+    }
+  }, [conversationId, getGroupInfo]);
+
+  // Fetch conversation info
   useEffect(() => {
     if (!conversationId || !user) return;
     (async () => {
-      const { data: participants } = await supabase
-        .from('conversation_participants')
-        .select('user_id')
-        .eq('conversation_id', conversationId)
-        .neq('user_id', user.id);
+      // First check if it's a group
+      const { data: conv } = await supabase
+        .from('conversations')
+        .select('is_group')
+        .eq('id', conversationId)
+        .maybeSingle();
 
-      if (participants?.[0]) {
-        const otherUserId = participants[0].user_id;
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_id, full_name, avatar_url')
-          .eq('user_id', otherUserId)
-          .maybeSingle();
-        if (profile) setOtherUser(profile);
+      if (conv?.is_group) {
+        setIsGroup(true);
+        const info = await getGroupInfo(conversationId);
+        setGroupInfo(info);
 
-        // Fetch recipient's public key
-        const pubKey = await getUserPublicKey(otherUserId);
-        setRecipientPublicKey(pubKey);
+        // Fetch public keys for all group members for encryption
+        if (info) {
+          const keyMap = new Map<string, JsonWebKey>();
+          for (const member of info.members) {
+            const key = await getUserPublicKey(member.user_id);
+            if (key) keyMap.set(member.user_id, key);
+          }
+          // Also add own key
+          if (publicKey) keyMap.set(user.id, publicKey);
+          setAllMemberKeys(keyMap);
+        }
+      } else {
+        setIsGroup(false);
+        // 1:1 conversation
+        const { data: participants } = await supabase
+          .from('conversation_participants')
+          .select('user_id')
+          .eq('conversation_id', conversationId)
+          .neq('user_id', user.id);
+
+        if (participants?.[0]) {
+          const otherUserId = participants[0].user_id;
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('user_id, full_name, avatar_url')
+            .eq('user_id', otherUserId)
+            .maybeSingle();
+          if (profile) setOtherUser(profile);
+
+          const pubKey = await getUserPublicKey(otherUserId);
+          setRecipientPublicKey(pubKey);
+        }
       }
     })();
-  }, [conversationId, user, getUserPublicKey]);
+  }, [conversationId, user, getUserPublicKey, publicKey, getGroupInfo]);
 
   // Auto-scroll
   useEffect(() => {
@@ -77,6 +118,11 @@ function ChatContent() {
   }, [messages]);
 
   const getEncryptionKeys = () => {
+    if (isGroup) {
+      // For groups, we won't do E2EE for simplicity (multi-party encryption is complex)
+      // Messages are stored in plaintext but protected by RLS
+      return undefined;
+    }
     if (!publicKey || !recipientPublicKey || !user || !otherUser) return undefined;
     return {
       senderPublicKey: publicKey,
@@ -146,6 +192,17 @@ function ChatContent() {
     return groups;
   }, []);
 
+  const headerTitle = isGroup ? (groupInfo?.group_name || 'Group') : (otherUser?.full_name || 'Unknown');
+  const headerSubtitle = isGroup
+    ? `${groupInfo?.members.length || 0} members`
+    : undefined;
+
+  const getReplyAuthorName = (msg: Message) => {
+    if (msg.sender_id === user?.id) return 'yourself';
+    if (isGroup) return msg.sender_profile?.full_name || 'them';
+    return otherUser?.full_name || 'them';
+  };
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
@@ -153,38 +210,61 @@ function ChatContent() {
         <Button variant="ghost" size="icon" onClick={() => navigate('/messages')}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        {otherUser && (
-          <button
-            className="flex items-center gap-3 flex-1 min-w-0"
-            onClick={() => navigate(`/profile/${otherUser.user_id}`)}
-          >
-            <Avatar className="h-9 w-9">
-              <AvatarImage src={otherUser.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                {(otherUser.full_name || 'U').charAt(0).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="text-left min-w-0">
-              <p className="font-semibold text-sm truncate">{otherUser.full_name || 'Unknown'}</p>
+
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <Avatar className="h-9 w-9">
+            <AvatarImage src={isGroup ? (groupInfo?.group_avatar_url || undefined) : (otherUser?.avatar_url || undefined)} />
+            <AvatarFallback className={`text-sm font-semibold ${isGroup ? 'bg-secondary text-secondary-foreground' : 'bg-primary/10 text-primary'}`}>
+              {isGroup ? <Users className="h-4 w-4" /> : (otherUser?.full_name || 'U').charAt(0).toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-left min-w-0">
+            <p className="font-semibold text-sm truncate">{headerTitle}</p>
+            {isGroup ? (
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                {headerSubtitle}
+              </p>
+            ) : (
               <p className="text-xs text-green-600 flex items-center gap-1">
                 <Lock className="h-3 w-3" />
                 <Shield className="h-3 w-3" />
                 End-to-end encrypted
               </p>
-            </div>
-          </button>
+            )}
+          </div>
+        </div>
+
+        {isGroup && (
+          <GroupInfoSheet
+            conversationId={conversationId!}
+            groupInfo={groupInfo}
+            onRefresh={refreshGroupInfo}
+          />
         )}
       </header>
 
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-        {/* E2EE notice */}
-        <div className="flex justify-center">
-          <div className="bg-muted/50 text-muted-foreground text-xs px-4 py-2 rounded-full flex items-center gap-1.5">
-            <Lock className="h-3 w-3" />
-            Messages are end-to-end encrypted. Only you and {otherUser?.full_name || 'the recipient'} can read them.
+        {/* E2EE notice for 1:1 chats */}
+        {!isGroup && (
+          <div className="flex justify-center">
+            <div className="bg-muted/50 text-muted-foreground text-xs px-4 py-2 rounded-full flex items-center gap-1.5">
+              <Lock className="h-3 w-3" />
+              Messages are end-to-end encrypted. Only you and {otherUser?.full_name || 'the recipient'} can read them.
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Group notice */}
+        {isGroup && (
+          <div className="flex justify-center">
+            <div className="bg-muted/50 text-muted-foreground text-xs px-4 py-2 rounded-full flex items-center gap-1.5">
+              <Users className="h-3 w-3" />
+              Group messages are secured by access controls. Only group members can see messages.
+            </div>
+          </div>
+        )}
 
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -194,7 +274,7 @@ function ChatContent() {
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Shield className="h-12 w-12 text-primary/30 mb-4" />
             <p className="text-muted-foreground text-sm">
-              Start your encrypted conversation!
+              {isGroup ? 'Start the group conversation!' : 'Start your encrypted conversation!'}
             </p>
           </div>
         ) : (
@@ -206,23 +286,32 @@ function ChatContent() {
                 </span>
               </div>
               <div className="space-y-1">
-                {group.messages.map((msg) => (
-                  <MessageBubble
-                    key={msg.id}
-                    message={msg}
-                    isOwn={msg.sender_id === user?.id}
-                    onReply={() => { setReplyTo(msg); inputRef.current?.focus(); }}
-                    onEdit={() => startEdit(msg)}
-                    onDelete={() => handleDelete(msg.id)}
-                    onReaction={(emoji) => toggleReaction(msg.id, emoji)}
-                    currentUserId={user?.id}
-                    editingId={editingId}
-                    editText={editText}
-                    onEditChange={setEditText}
-                    onEditSave={handleEdit}
-                    onEditCancel={cancelEdit}
-                  />
-                ))}
+                {group.messages.map((msg, idx) => {
+                  const prevMsg = idx > 0 ? group.messages[idx - 1] : null;
+                  const showAvatar = isGroup && msg.sender_id !== user?.id && (!prevMsg || prevMsg.sender_id !== msg.sender_id);
+                  const showName = isGroup && msg.sender_id !== user?.id && (!prevMsg || prevMsg.sender_id !== msg.sender_id);
+
+                  return (
+                    <MessageBubble
+                      key={msg.id}
+                      message={msg}
+                      isOwn={msg.sender_id === user?.id}
+                      isGroup={isGroup}
+                      showSenderAvatar={showAvatar}
+                      showSenderName={showName}
+                      onReply={() => { setReplyTo(msg); inputRef.current?.focus(); }}
+                      onEdit={() => startEdit(msg)}
+                      onDelete={() => handleDelete(msg.id)}
+                      onReaction={(emoji) => toggleReaction(msg.id, emoji)}
+                      currentUserId={user?.id}
+                      editingId={editingId}
+                      editText={editText}
+                      onEditChange={setEditText}
+                      onEditSave={handleEdit}
+                      onEditCancel={cancelEdit}
+                    />
+                  );
+                })}
               </div>
             </div>
           ))
@@ -236,7 +325,7 @@ function ChatContent() {
           <Reply className="h-4 w-4 text-primary flex-shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-primary font-medium">
-              Replying to {replyTo.sender_id === user?.id ? 'yourself' : otherUser?.full_name || 'them'}
+              Replying to {getReplyAuthorName(replyTo)}
             </p>
             <p className="text-xs text-muted-foreground truncate">
               {replyTo.is_deleted ? 'Deleted message' : replyTo.content}
@@ -279,6 +368,9 @@ function ChatContent() {
 interface MessageBubbleProps {
   message: Message;
   isOwn: boolean;
+  isGroup?: boolean;
+  showSenderAvatar?: boolean;
+  showSenderName?: boolean;
   onReply: () => void;
   onEdit: () => void;
   onDelete: () => void;
@@ -292,7 +384,8 @@ interface MessageBubbleProps {
 }
 
 function MessageBubble({
-  message, isOwn, onReply, onEdit, onDelete, onReaction,
+  message, isOwn, isGroup, showSenderAvatar, showSenderName,
+  onReply, onEdit, onDelete, onReaction,
   currentUserId, editingId, editText, onEditChange, onEditSave, onEditCancel
 }: MessageBubbleProps) {
   const isEditing = editingId === message.id;
@@ -300,6 +393,7 @@ function MessageBubble({
   if (message.is_deleted) {
     return (
       <div className={cn('flex mb-1', isOwn ? 'justify-end' : 'justify-start')}>
+        {isGroup && !isOwn && <div className="w-8 mr-1.5" />}
         <div className="px-4 py-2 rounded-2xl bg-muted/50 italic text-muted-foreground text-sm max-w-[75%]">
           This message was deleted
         </div>
@@ -315,8 +409,29 @@ function MessageBubble({
   }, {});
 
   return (
-    <div className={cn('flex gap-2 mb-1 group', isOwn ? 'justify-end' : 'justify-start')}>
-      <div className={cn('max-w-[75%] relative', isOwn ? 'order-1' : 'order-1')}>
+    <div className={cn('flex gap-1.5 mb-1 group', isOwn ? 'justify-end' : 'justify-start')}>
+      {/* Sender avatar in group chats */}
+      {isGroup && !isOwn && (
+        <div className="w-8 flex-shrink-0">
+          {showSenderAvatar && (
+            <Avatar className="h-7 w-7">
+              <AvatarImage src={message.sender_profile?.avatar_url || undefined} />
+              <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
+                {(message.sender_profile?.full_name || 'U').charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
+      )}
+
+      <div className={cn('max-w-[75%] relative')}>
+        {/* Sender name in groups */}
+        {isGroup && showSenderName && !isOwn && (
+          <p className="text-xs font-medium text-primary ml-3 mb-0.5">
+            {message.sender_profile?.full_name || 'Unknown'}
+          </p>
+        )}
+
         {/* Reply preview */}
         {message.reply_to && (
           <div className={cn(
@@ -324,7 +439,7 @@ function MessageBubble({
             isOwn ? 'bg-primary/20 text-primary-foreground/70' : 'bg-muted text-muted-foreground'
           )}>
             <span className="font-medium">
-              {message.reply_to.sender_id === currentUserId ? 'You' : 'Them'}
+              {message.reply_to.sender_id === currentUserId ? 'You' : (message.reply_to as any)?.sender_name || 'Them'}
             </span>
             <p className="truncate">{message.reply_to.is_deleted ? 'Deleted' : message.reply_to.content}</p>
           </div>
