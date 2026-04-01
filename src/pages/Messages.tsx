@@ -4,13 +4,14 @@ import { useConversations } from '@/hooks/useConversations';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Search, MessageSquare, ArrowLeft, Shield, Lock } from 'lucide-react';
+import { Search, MessageSquare, ArrowLeft, Shield, Lock, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { useAuth } from '@/hooks/useAuth';
 import { ChatEncryptionGate } from '@/components/chat/ChatEncryptionGate';
 import { useChatEncryption } from '@/context/ChatEncryptionContext';
 import { isEncryptedMessage } from '@/lib/chatCrypto';
+import { CreateGroupDialog } from '@/components/chat/CreateGroupDialog';
 
 function MessagesContent() {
   const { conversations, isLoading } = useConversations();
@@ -19,9 +20,37 @@ function MessagesContent() {
   const { user } = useAuth();
   const { isUnlocked } = useChatEncryption();
 
-  const filtered = conversations.filter(c =>
-    (c.other_user.full_name || '').toLowerCase().includes(searchFilter.toLowerCase())
-  );
+  const filtered = conversations.filter(c => {
+    const searchTerm = searchFilter.toLowerCase();
+    if (c.is_group) {
+      return (c.group_name || '').toLowerCase().includes(searchTerm);
+    }
+    return (c.other_user.full_name || '').toLowerCase().includes(searchTerm);
+  });
+
+  const getDisplayName = (conv: typeof conversations[0]) => {
+    if (conv.is_group) return conv.group_name || 'Group';
+    return conv.other_user.full_name || 'Unknown';
+  };
+
+  const getDisplayAvatar = (conv: typeof conversations[0]) => {
+    if (conv.is_group) return conv.group_avatar_url || undefined;
+    return conv.other_user.avatar_url || undefined;
+  };
+
+  const getAvatarFallback = (conv: typeof conversations[0]) => {
+    const name = conv.is_group ? conv.group_name : conv.other_user.full_name;
+    return (name || 'U').charAt(0).toUpperCase();
+  };
+
+  const getSubtitle = (conv: typeof conversations[0]) => {
+    if (conv.is_group && conv.group_members) {
+      const names = conv.group_members.slice(0, 3).map(m => m.full_name || 'Unknown');
+      const extra = conv.group_members.length - 3;
+      return names.join(', ') + (extra > 0 ? ` +${extra}` : '');
+    }
+    return null;
+  };
 
   const getLastMessagePreview = (conv: typeof conversations[0]) => {
     if (!conv.last_message) return 'No messages yet';
@@ -34,7 +63,12 @@ function MessagesContent() {
       return '🔒 Encrypted message';
     }
 
-    const prefix = conv.last_message.sender_id === user?.id ? 'You: ' : '';
+    let prefix = '';
+    if (conv.is_group && conv.last_message.sender_name) {
+      prefix = conv.last_message.sender_name + ': ';
+    } else if (!conv.is_group && conv.last_message.sender_id === user?.id) {
+      prefix = 'You: ';
+    }
     return prefix + content.slice(0, 50);
   };
 
@@ -53,6 +87,7 @@ function MessagesContent() {
             End-to-end encrypted
           </p>
         </div>
+        <CreateGroupDialog />
       </div>
 
       {/* Search */}
@@ -83,8 +118,8 @@ function MessagesContent() {
             <MessageSquare className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
             <h3 className="text-lg font-semibold mb-1">No conversations yet</h3>
             <p className="text-sm text-muted-foreground max-w-sm mx-auto">
-              Start a conversation by visiting someone's profile and clicking the Message button.
-              You need to be mutual followers to chat.
+              Start a conversation by visiting someone's profile and clicking the Message button,
+              or create a group chat.
             </p>
           </div>
         ) : (
@@ -96,9 +131,9 @@ function MessagesContent() {
             >
               <div className="relative">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage src={conv.other_user.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                    {(conv.other_user.full_name || 'U').charAt(0).toUpperCase()}
+                  <AvatarImage src={getDisplayAvatar(conv)} />
+                  <AvatarFallback className={`font-semibold ${conv.is_group ? 'bg-secondary text-secondary-foreground' : 'bg-primary/10 text-primary'}`}>
+                    {conv.is_group ? <Users className="h-5 w-5" /> : getAvatarFallback(conv)}
                   </AvatarFallback>
                 </Avatar>
                 {conv.unread_count > 0 && (
@@ -110,15 +145,23 @@ function MessagesContent() {
 
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <span className={`font-semibold text-sm truncate ${conv.unread_count > 0 ? 'text-foreground' : ''}`}>
-                    {conv.other_user.full_name || 'Unknown'}
-                  </span>
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className={`font-semibold text-sm truncate ${conv.unread_count > 0 ? 'text-foreground' : ''}`}>
+                      {getDisplayName(conv)}
+                    </span>
+                    {conv.is_group && (
+                      <Users className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                    )}
+                  </div>
                   {conv.last_message && (
                     <span className="text-xs text-muted-foreground flex-shrink-0 ml-2">
                       {formatDistanceToNow(new Date(conv.last_message.created_at), { addSuffix: false })}
                     </span>
                   )}
                 </div>
+                {conv.is_group && getSubtitle(conv) && (
+                  <p className="text-xs text-muted-foreground truncate">{getSubtitle(conv)}</p>
+                )}
                 <p className={`text-sm truncate ${conv.unread_count > 0 ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>
                   {getLastMessagePreview(conv)}
                 </p>

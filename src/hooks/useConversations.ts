@@ -5,17 +5,25 @@ import { useAuth } from '@/hooks/useAuth';
 export interface ConversationWithDetails {
   id: string;
   updated_at: string;
+  is_group: boolean;
+  group_name: string | null;
+  group_avatar_url: string | null;
   other_user: {
     user_id: string;
     full_name: string | null;
     avatar_url: string | null;
   };
+  group_members?: {
+    user_id: string;
+    full_name: string | null;
+  }[];
   last_message?: {
     content: string | null;
     sender_id: string;
     created_at: string;
     message_type: string;
     is_deleted: boolean;
+    sender_name?: string | null;
   };
   unread_count: number;
 }
@@ -45,10 +53,10 @@ export function useConversations() {
       const convIds = participations.map(p => p.conversation_id);
       const lastReadMap = Object.fromEntries(participations.map(p => [p.conversation_id, p.last_read_at]));
 
-      // Get conversation details
+      // Get conversation details including group fields
       const { data: convData } = await supabase
         .from('conversations')
-        .select('id, updated_at')
+        .select('id, updated_at, is_group, group_name, group_avatar_url')
         .in('id', convIds)
         .order('updated_at', { ascending: false });
 
@@ -58,32 +66,47 @@ export function useConversations() {
         return;
       }
 
-      // Get other participants
+      // Get ALL participants for these conversations
       const { data: allParticipants } = await supabase
         .from('conversation_participants')
         .select('conversation_id, user_id')
-        .in('conversation_id', convIds)
-        .neq('user_id', user.id);
+        .in('conversation_id', convIds);
 
-      const otherUserIds = [...new Set((allParticipants || []).map(p => p.user_id))];
-      const otherUserMap = Object.fromEntries((allParticipants || []).map(p => [p.conversation_id, p.user_id]));
+      // Collect all other user IDs
+      const otherUserIds = [...new Set(
+        (allParticipants || [])
+          .filter(p => p.user_id !== user.id)
+          .map(p => p.user_id)
+      )];
 
-      // Get profiles
+      // Get profiles for all users
       const { data: profiles } = await supabase
         .from('profiles')
         .select('user_id, full_name, avatar_url')
-        .in('user_id', otherUserIds);
+        .in('user_id', otherUserIds.length > 0 ? otherUserIds : ['00000000-0000-0000-0000-000000000000']);
 
       const profileMap = Object.fromEntries((profiles || []).map(p => [p.user_id, p]));
+
+      // Group participants by conversation
+      const convParticipantsMap: Record<string, string[]> = {};
+      (allParticipants || []).forEach(p => {
+        if (p.user_id !== user.id) {
+          if (!convParticipantsMap[p.conversation_id]) convParticipantsMap[p.conversation_id] = [];
+          convParticipantsMap[p.conversation_id].push(p.user_id);
+        }
+      });
 
       // Get last messages
       const convResults: ConversationWithDetails[] = [];
 
       for (const conv of convData) {
-        const otherUserId = otherUserMap[conv.id];
-        if (!otherUserId) continue;
+        const otherIds = convParticipantsMap[conv.id] || [];
+        const firstOtherId = otherIds[0];
 
-        const profile = profileMap[otherUserId] || { user_id: otherUserId, full_name: 'Unknown', avatar_url: null };
+        // For 1:1, get the other user. For groups, we use group info.
+        const otherProfile = firstOtherId
+          ? profileMap[firstOtherId] || { user_id: firstOtherId, full_name: 'Unknown', avatar_url: null }
+          : { user_id: '', full_name: 'Unknown', avatar_url: null };
 
         const { data: lastMsg } = await supabase
           .from('messages')
@@ -106,11 +129,32 @@ export function useConversations() {
           unread = count || 0;
         }
 
+        // For groups, get sender name on last message
+        let senderName: string | null = null;
+        if (conv.is_group && lastMsg) {
+          if (lastMsg.sender_id === user.id) {
+            senderName = 'You';
+          } else {
+            senderName = profileMap[lastMsg.sender_id]?.full_name || 'Someone';
+          }
+        }
+
         convResults.push({
           id: conv.id,
           updated_at: conv.updated_at,
-          other_user: profile,
-          last_message: lastMsg || undefined,
+          is_group: conv.is_group || false,
+          group_name: conv.group_name,
+          group_avatar_url: conv.group_avatar_url,
+          other_user: otherProfile,
+          group_members: conv.is_group
+            ? otherIds.map(id => ({
+                user_id: id,
+                full_name: profileMap[id]?.full_name || 'Unknown',
+              }))
+            : undefined,
+          last_message: lastMsg
+            ? { ...lastMsg, sender_name: senderName }
+            : undefined,
           unread_count: unread,
         });
       }
