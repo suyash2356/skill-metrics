@@ -1,163 +1,63 @@
 
 
-# End-to-End Encrypted Messaging with Chat Password
+## Automated Daily Tech News System
 
-## Overview
+### Overview
+A scheduled edge function runs daily at 6:00 AM IST, fetches tech news from a free News API, uses Gemini AI to process and format the news into an engaging post, and publishes it under a dedicated "SkillGram News" bot account.
 
-This plan adds client-side encryption to the existing messaging system. All messages will be encrypted in the browser before being sent to the database. Only the sender and receiver can read them. Even the database admin sees only scrambled text.
-
-Users must set a "Chat Password" (custom text, minimum 6 characters) before they can use messaging. A recovery flow via email OTP allows resetting the password if forgotten (old messages become unreadable).
-
----
-
-## How It Works (User Flow)
-
-1. **First time visiting Messages**: User sees a setup screen asking them to create a Chat Password
-2. **Sending a message**: Browser fetches recipient's public key, encrypts the message locally, sends encrypted text to the database
-3. **Reading messages**: Browser downloads the user's encrypted private key, decrypts it using the Chat Password (held in session memory), then decrypts each message
-4. **Forgot password**: User clicks "Forgot Password" on the PIN entry screen, receives an email OTP, verifies it, then sets a new Chat Password. A new key pair is generated -- old messages become unreadable (shown as "[Cannot decrypt - password was reset]")
-
----
-
-## Technical Implementation
-
-### Step 1: Database Changes (Migration)
-
-Add a new table for encryption keys:
+### Architecture
 
 ```text
-Table: user_encryption_keys
-- id (uuid, PK)
-- user_id (uuid, unique, not null)
-- public_key (text, not null)          -- RSA-OAEP public key in JWK format
-- encrypted_private_key (text, not null) -- AES-GCM encrypted private key
-- key_salt (text, not null)            -- Salt for PBKDF2 key derivation
-- key_version (integer, default 1)     -- Incremented on password reset
-- created_at, updated_at
+pg_cron (6:00 AM IST / 0:30 UTC)
+  → HTTP call to Edge Function: "daily-tech-news"
+      → Fetch news from GNews API (last 24h)
+      → Send to Gemini AI for summarization
+      → Insert formatted post into `posts` table
+      → Post appears in everyone's feed automatically
 ```
 
-RLS policies:
-- SELECT: Anyone authenticated can read `public_key` (needed for encryption)
-- INSERT/UPDATE: Only own `user_id = auth.uid()`
-- A security definer function `get_public_key(target_user_id)` to fetch public keys without recursion
+### Step 1: Set Up News API Key
 
-### Step 2: Edge Function for Password Recovery OTP
+We'll use **GNews.io** (free tier: 100 requests/day, sufficient for 1 daily call). You'll need to:
+1. Sign up at [gnews.io](https://gnews.io)
+2. Get your free API key
+3. We'll store it as a Supabase secret (`GNEWS_API_KEY`)
 
-Create `supabase/functions/send-chat-otp/index.ts`:
-- Accepts `{ email }` in the request body
-- Generates a 6-digit OTP, stores it in a `chat_password_otps` table (with 10-minute expiry)
-- Sends it via Resend to the user's email
-- Rate-limited to 3 requests per hour per user
+### Step 2: Create System Bot Account
 
-New table `chat_password_otps`:
-```text
-- id, user_id, otp_hash (text), expires_at (timestamptz), used (boolean)
-```
+- Create a dedicated Supabase auth user for the bot (e.g., "SkillGram News")
+- Store the bot's `user_id` as a secret (`NEWS_BOT_USER_ID`) so the edge function can post under it
+- Add a profile entry with name "SkillGram News" and a news-themed avatar
 
-### Step 3: Crypto Utility Module
+### Step 3: Build the Edge Function (`daily-tech-news`)
 
-Create `src/lib/chatCrypto.ts`:
+The function will:
+1. Call GNews API for top 10 tech news from last 24 hours
+2. Send headlines + descriptions to Gemini AI with a prompt to create an engaging, well-formatted post summarizing the day's tech news
+3. Insert the result into the `posts` table with `user_id = NEWS_BOT_USER_ID`, category "Tech News", and relevant tags
+4. Include a deduplication check (skip if a news post already exists for today)
 
-- **generateKeyPair()**: Uses Web Crypto API (`window.crypto.subtle`) to generate RSA-OAEP 2048-bit key pair
-- **deriveKeyFromPassword(password, salt)**: PBKDF2 with 100,000 iterations to derive an AES-256-GCM key from the user's password
-- **encryptPrivateKey(privateKey, password)**: Encrypts the private key JWK with the derived AES key
-- **decryptPrivateKey(encryptedBlob, password, salt)**: Reverses the above
-- **encryptMessage(plaintext, recipientPublicKey)**: Generates a random AES-256-GCM session key, encrypts the message with it, then encrypts the session key with the recipient's RSA public key. Returns a JSON blob containing both encrypted parts
-- **decryptMessage(encryptedBlob, privateKey)**: Reverses the above
+### Step 4: Schedule with pg_cron
 
-All using the native Web Crypto API (no external libraries needed).
+- Enable `pg_cron` and `pg_net` extensions
+- Create a cron job: `'30 0 * * *'` (0:30 UTC = 6:00 AM IST)
+- The job calls the edge function via `net.http_post`
 
-### Step 4: Encryption Context & Session Management
+### Step 5: UI Enhancements (Minor)
 
-Create `src/context/ChatEncryptionContext.tsx`:
+- Add a "News" badge/icon on posts from the bot account so users can visually distinguish news posts
+- The posts will appear in the regular feed — no special page needed
 
-- Stores the decrypted private key in React state (memory only, never persisted)
-- Provides `isSetup` (has user created keys?), `isUnlocked` (has user entered password this session?)
-- Methods: `setupEncryption(password)`, `unlockWithPassword(password)`, `lockChat()`, `resetPassword(newPassword, otp)`
-- On app load, checks if `user_encryption_keys` row exists for the user
-- Auto-locks when the tab is closed (keys wiped from memory)
+### What You'll Need To Provide
 
-### Step 5: UI Components
+1. **GNews API Key** — free from [gnews.io](https://gnews.io)
+2. **Bot account creation** — we'll create this via Supabase auth or you can create it manually in the dashboard
 
-**New components:**
+### Technical Details
 
-1. **`ChatPasswordSetup.tsx`** -- Full-screen modal shown on first visit to /messages
-   - Password input (min 6 chars) with confirmation field
-   - Strength indicator
-   - "Create Password" button that generates keys and saves them
-
-2. **`ChatPasswordUnlock.tsx`** -- Shown when user visits messages but hasn't entered password this session
-   - Password input field
-   - "Unlock" button
-   - "Forgot Password?" link leading to OTP recovery flow
-
-3. **`ChatPasswordReset.tsx`** -- OTP verification + new password creation
-   - Step 1: Enter email, request OTP
-   - Step 2: Enter OTP code
-   - Step 3: Create new password (generates new key pair, old messages become unreadable)
-
-### Step 6: Modify Existing Messaging Code
-
-**`useMessages.ts` changes:**
-- `sendMessage()`: Before inserting, encrypt the content using recipient's public key AND sender's public key (store two copies or use a shared session key approach). Actually, the standard approach is: generate a random AES key for the message, encrypt the message with it, then encrypt the AES key twice (once with sender's public key, once with recipient's public key). Store all as a JSON blob in the `content` column.
-- `fetchMessages()`: After fetching, decrypt each message's content using the private key from context. If decryption fails (old messages after reset), show "[Message cannot be decrypted]"
-
-**`Chat.tsx` changes:**
-- Wrap the chat view with encryption context checks
-- If not setup: show `ChatPasswordSetup`
-- If not unlocked: show `ChatPasswordUnlock`
-- If unlocked: show normal chat (messages auto-decrypted)
-- Display a green lock icon in the header indicating encryption is active
-
-**`Messages.tsx` changes:**
-- Last message preview: decrypt if possible, show "[Encrypted message]" if not unlocked
-- Add lock icon indicator
-
-**`useConversations.ts` changes:**
-- Last message content will be encrypted -- show "[Encrypted message]" in conversation list when password isn't entered yet, or decrypt preview when unlocked
-
-### Step 7: Message Format
-
-The encrypted content stored in the `messages.content` column will be a JSON string:
-
-```json
-{
-  "v": 1,
-  "type": "e2ee",
-  "keys": {
-    "<sender_user_id>": "<base64 RSA-encrypted AES key>",
-    "<recipient_user_id>": "<base64 RSA-encrypted AES key>"
-  },
-  "iv": "<base64 AES-GCM IV>",
-  "ct": "<base64 AES-GCM ciphertext>"
-}
-```
-
-This way both sender and recipient can decrypt using their own private key.
-
----
-
-## Files to Create
-- `src/lib/chatCrypto.ts` -- Core encryption/decryption utilities
-- `src/context/ChatEncryptionContext.tsx` -- React context for key management
-- `src/components/chat/ChatPasswordSetup.tsx` -- First-time setup UI
-- `src/components/chat/ChatPasswordUnlock.tsx` -- Session unlock UI
-- `src/components/chat/ChatPasswordReset.tsx` -- Forgot password recovery
-- `supabase/functions/send-chat-otp/index.ts` -- OTP email sender
-- Migration SQL for `user_encryption_keys` and `chat_password_otps` tables
-
-## Files to Modify
-- `src/hooks/useMessages.ts` -- Add encrypt/decrypt logic
-- `src/hooks/useConversations.ts` -- Handle encrypted previews
-- `src/pages/Chat.tsx` -- Add encryption gate screens
-- `src/pages/Messages.tsx` -- Show encrypted preview indicators
-- `src/App.tsx` -- Wrap with ChatEncryptionProvider
-- `supabase/config.toml` -- Add edge function config
-
-## Important Considerations
-- No existing functionality will break -- unencrypted old messages will display normally (backward compatible)
-- The Web Crypto API is available in all modern browsers natively
-- Private keys never leave the browser in decrypted form
-- The database only ever stores encrypted content
-- Password reset means new key pair = old messages unreadable (by design, this is the security tradeoff)
+- **Edge Function**: `supabase/functions/daily-tech-news/index.ts`
+- **Database**: Migration to enable `pg_cron` + `pg_net` extensions
+- **Secrets needed**: `GNEWS_API_KEY`, `NEWS_BOT_USER_ID`
+- **Existing secrets used**: `GEMINI_API_KEY` (for summarization)
+- **Cron schedule**: Daily at 0:30 UTC (6:00 AM IST)
 
