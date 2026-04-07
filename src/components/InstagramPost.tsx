@@ -11,6 +11,7 @@ import {
   Eye,
   EyeOff,
   Flag,
+  Newspaper,
   FileText,
   Download,
   Star,
@@ -427,6 +428,12 @@ export const InstagramPost = ({
             </div>
           </Link>
           <div className="flex items-center gap-1">
+            {post.category === "Tech News" && (
+              <div className="bg-blue-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1" title="Daily Tech News">
+                <Newspaper className="h-3 w-3" />
+                <span className="text-[10px] font-semibold">NEWS</span>
+              </div>
+            )}
             {isRecommended && (
               <div className="bg-primary text-primary-foreground p-1.5 rounded-full" title="AI Recommended">
                 <Star className="h-3.5 w-3.5 fill-current" />
