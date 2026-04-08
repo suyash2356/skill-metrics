@@ -33,7 +33,7 @@ serve(async (req) => {
       .from("posts")
       .select("id")
       .eq("user_id", NEWS_BOT_USER_ID)
-      .eq("category", "Tech News")
+      .eq("category", "News")
       .gte("created_at", todayStart.toISOString())
       .limit(1);
 
@@ -144,7 +144,7 @@ Requirements:
     }
 
     // Generate tags from article topics
-    const tags = ["Tech News", "Daily Digest"];
+    const tags = ["News", "Daily Digest"];
     const tagKeywords = ["AI", "Google", "Apple", "Microsoft", "Meta", "Samsung", "Tesla", "SpaceX", "OpenAI", "Startup", "Cybersecurity", "Cloud", "Mobile", "Web"];
     const contentLower = (generatedContent + " " + articlesList).toLowerCase();
     for (const kw of tagKeywords) {
@@ -160,7 +160,7 @@ Requirements:
         user_id: NEWS_BOT_USER_ID,
         title: title,
         content: content,
-        category: "Tech News",
+        category: "News",
         tags: tags,
       })
       .select("id")
