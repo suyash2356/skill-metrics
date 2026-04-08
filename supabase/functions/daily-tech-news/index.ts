@@ -46,11 +46,8 @@ serve(async (req) => {
     }
 
     // Step 1: Fetch tech news from GNews API
-    console.log("GNEWS_API_KEY length:", GNEWS_API_KEY?.length, "first 4 chars:", GNEWS_API_KEY?.substring(0, 4));
     const gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&max=10&apikey=${GNEWS_API_KEY}`;
-    
     console.log("Fetching news from GNews...");
-    console.log("URL (without key):", gnewsUrl.replace(GNEWS_API_KEY, "***"));
     const newsResponse = await fetch(gnewsUrl);
     
     if (!newsResponse.ok) {
