@@ -14,13 +14,13 @@ serve(async (req) => {
 
   try {
     const GNEWS_API_KEY = Deno.env.get("GNEWS_API_KEY");
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const NEWS_BOT_USER_ID = Deno.env.get("NEWS_BOT_USER_ID");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!GNEWS_API_KEY) throw new Error("GNEWS_API_KEY not configured");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!NEWS_BOT_USER_ID) throw new Error("NEWS_BOT_USER_ID not configured");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -33,7 +33,7 @@ serve(async (req) => {
       .from("posts")
       .select("id")
       .eq("user_id", NEWS_BOT_USER_ID)
-      .eq("category", "Tech News")
+      .eq("category", "News")
       .gte("created_at", todayStart.toISOString())
       .limit(1);
 
@@ -46,9 +46,7 @@ serve(async (req) => {
     }
 
     // Step 1: Fetch tech news from GNews API
-    const fromDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split(".")[0] + "Z";
-    const gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&max=10&from=${fromDate}&apitoken=${GNEWS_API_KEY}`;
-    
+    const gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&max=10&apikey=${GNEWS_API_KEY}`;
     console.log("Fetching news from GNews...");
     const newsResponse = await fetch(gnewsUrl);
     
@@ -101,32 +99,33 @@ Requirements:
 - Do NOT include any links or URLs
 - Format for readability with line breaks between sections`;
 
-    console.log("Sending to Gemini for summarization...");
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    console.log("Sending to Lovable AI for summarization...");
 
-    const geminiResponse = await fetch(geminiUrl, {
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024,
-        },
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: "You are SkillGram News, a tech news summarizer for a learning community." },
+          { role: "user", content: prompt },
+        ],
       }),
     });
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      throw new Error(`Gemini API error [${geminiResponse.status}]: ${errText}`);
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      throw new Error(`AI gateway error [${aiResponse.status}]: ${errText}`);
     }
 
-    const geminiData = await geminiResponse.json();
-    const generatedContent =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    const aiData = await aiResponse.json();
+    const generatedContent = aiData.choices?.[0]?.message?.content;
 
     if (!generatedContent) {
-      throw new Error("Gemini returned empty content");
+      throw new Error("AI returned empty content");
     }
 
     // Step 3: Extract title and content
@@ -142,7 +141,7 @@ Requirements:
     }
 
     // Generate tags from article topics
-    const tags = ["Tech News", "Daily Digest"];
+    const tags = ["News", "Daily Digest"];
     const tagKeywords = ["AI", "Google", "Apple", "Microsoft", "Meta", "Samsung", "Tesla", "SpaceX", "OpenAI", "Startup", "Cybersecurity", "Cloud", "Mobile", "Web"];
     const contentLower = (generatedContent + " " + articlesList).toLowerCase();
     for (const kw of tagKeywords) {
@@ -158,7 +157,7 @@ Requirements:
         user_id: NEWS_BOT_USER_ID,
         title: title,
         content: content,
-        category: "Tech News",
+        category: "News",
         tags: tags,
       })
       .select("id")
