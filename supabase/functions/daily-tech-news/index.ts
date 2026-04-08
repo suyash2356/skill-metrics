@@ -46,10 +46,11 @@ serve(async (req) => {
     }
 
     // Step 1: Fetch tech news from GNews API
-    const fromDate = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split(".")[0] + "Z";
-    const gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&max=10&from=${fromDate}&apitoken=${GNEWS_API_KEY}`;
+    console.log("GNEWS_API_KEY length:", GNEWS_API_KEY?.length, "first 4 chars:", GNEWS_API_KEY?.substring(0, 4));
+    const gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&max=10&apitoken=${GNEWS_API_KEY}`;
     
     console.log("Fetching news from GNews...");
+    console.log("URL (without key):", gnewsUrl.replace(GNEWS_API_KEY, "***"));
     const newsResponse = await fetch(gnewsUrl);
     
     if (!newsResponse.ok) {
