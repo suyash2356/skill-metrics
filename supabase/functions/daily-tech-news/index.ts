@@ -14,13 +14,13 @@ serve(async (req) => {
 
   try {
     const GNEWS_API_KEY = Deno.env.get("GNEWS_API_KEY");
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const NEWS_BOT_USER_ID = Deno.env.get("NEWS_BOT_USER_ID");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!GNEWS_API_KEY) throw new Error("GNEWS_API_KEY not configured");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
     if (!NEWS_BOT_USER_ID) throw new Error("NEWS_BOT_USER_ID not configured");
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
