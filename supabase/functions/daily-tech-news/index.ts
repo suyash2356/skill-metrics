@@ -102,32 +102,33 @@ Requirements:
 - Do NOT include any links or URLs
 - Format for readability with line breaks between sections`;
 
-    console.log("Sending to Gemini for summarization...");
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+    console.log("Sending to Lovable AI for summarization...");
 
-    const geminiResponse = await fetch(geminiUrl, {
+    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 1024,
-        },
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: "You are SkillGram News, a tech news summarizer for a learning community." },
+          { role: "user", content: prompt },
+        ],
       }),
     });
 
-    if (!geminiResponse.ok) {
-      const errText = await geminiResponse.text();
-      throw new Error(`Gemini API error [${geminiResponse.status}]: ${errText}`);
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      throw new Error(`AI gateway error [${aiResponse.status}]: ${errText}`);
     }
 
-    const geminiData = await geminiResponse.json();
-    const generatedContent =
-      geminiData.candidates?.[0]?.content?.parts?.[0]?.text;
+    const aiData = await aiResponse.json();
+    const generatedContent = aiData.choices?.[0]?.message?.content;
 
     if (!generatedContent) {
-      throw new Error("Gemini returned empty content");
+      throw new Error("AI returned empty content");
     }
 
     // Step 3: Extract title and content
