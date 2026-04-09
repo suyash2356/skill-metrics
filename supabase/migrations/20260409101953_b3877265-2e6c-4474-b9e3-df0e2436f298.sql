@@ -1,0 +1,1 @@
+DELETE FROM posts WHERE id = '4d459d12-110d-47fe-8608-e00853800bef';

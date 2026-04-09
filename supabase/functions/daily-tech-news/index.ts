@@ -25,11 +25,11 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Deduplication: check if a news post was already created today
+    // Deduplication: check if news posts were already created today
     const todayStart = new Date();
     todayStart.setUTCHours(0, 0, 0, 0);
 
-    const { data: existingPost } = await supabase
+    const { data: existingPosts } = await supabase
       .from("posts")
       .select("id")
       .eq("user_id", NEWS_BOT_USER_ID)
@@ -37,8 +37,8 @@ serve(async (req) => {
       .gte("created_at", todayStart.toISOString())
       .limit(1);
 
-    if (existingPost && existingPost.length > 0) {
-      console.log("News post already exists for today, skipping.");
+    if (existingPosts && existingPosts.length > 0) {
+      console.log("News posts already exist for today, skipping.");
       return new Response(
         JSON.stringify({ message: "Already posted today" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -46,10 +46,10 @@ serve(async (req) => {
     }
 
     // Step 1: Fetch tech news from GNews API
-    const gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&max=10&apikey=${GNEWS_API_KEY}`;
+    const gnewsUrl = `https://gnews.io/api/v4/top-headlines?category=technology&lang=en&max=5&apikey=${GNEWS_API_KEY}`;
     console.log("Fetching news from GNews...");
     const newsResponse = await fetch(gnewsUrl);
-    
+
     if (!newsResponse.ok) {
       const errText = await newsResponse.text();
       throw new Error(`GNews API error [${newsResponse.status}]: ${errText}`);
@@ -59,20 +59,12 @@ serve(async (req) => {
     const articles = newsData.articles || [];
 
     if (articles.length === 0) {
-      console.log("No articles found, skipping post.");
+      console.log("No articles found, skipping.");
       return new Response(
         JSON.stringify({ message: "No articles found" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // Step 2: Build a summary prompt for Gemini
-    const articlesList = articles
-      .map(
-        (a: any, i: number) =>
-          `${i + 1}. **${a.title}** — ${a.description || "No description"} (Source: ${a.source?.name || "Unknown"})`
-      )
-      .join("\n");
 
     const today = new Date().toLocaleDateString("en-IN", {
       weekday: "long",
@@ -81,100 +73,129 @@ serve(async (req) => {
       day: "numeric",
     });
 
-    const prompt = `You are SkillGram News, a tech news summarizer. Create an engaging, well-formatted post summarizing today's top tech news for a learning community.
+    // Step 2: For each article, generate a unique summary post with AI
+    const createdPosts: string[] = [];
 
+    for (const article of articles) {
+      try {
+        const articleTitle = article.title || "Untitled";
+        const articleDesc = article.description || "";
+        const articleSource = article.source?.name || "Unknown";
+        const articleImage = article.image || null;
+        const articleUrl = article.url || "";
+
+        const prompt = `You are SkillGram News, a tech news writer for a learning community. Write an engaging post about this news story.
+
+Headline: ${articleTitle}
+Description: ${articleDesc}
+Source: ${articleSource}
 Date: ${today}
 
-Here are today's top tech headlines:
-${articlesList}
-
 Requirements:
-- Start with a catchy title like "🗞️ Daily Tech Digest — ${today}"
-- Write a brief 1-2 line intro
-- Summarize each major story in 2-3 sentences, highlighting why it matters for tech learners and professionals
-- Group related stories if applicable
-- End with a brief takeaway or thought-provoking question for the community
-- Use emojis sparingly for visual appeal (🔥, 💡, 🚀, 📱, 🤖, etc.)
-- Keep the total post under 1500 characters
+- Write a compelling 2-4 sentence summary explaining what happened and why it matters for tech learners/professionals
+- Include your own analysis or takeaway (1-2 sentences)
+- Use 1-2 relevant emojis for visual appeal
+- Keep total post under 600 characters
 - Do NOT include any links or URLs
-- Format for readability with line breaks between sections`;
+- Do NOT repeat the headline verbatim as the first line
+- Write in an informative but conversational tone`;
 
-    console.log("Sending to Lovable AI for summarization...");
+        const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${LOVABLE_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "google/gemini-2.5-flash",
+            messages: [
+              { role: "system", content: "You are SkillGram News, a concise tech news writer." },
+              { role: "user", content: prompt },
+            ],
+          }),
+        });
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: "You are SkillGram News, a tech news summarizer for a learning community." },
-          { role: "user", content: prompt },
-        ],
-      }),
-    });
+        if (!aiResponse.ok) {
+          console.error(`AI error for article "${articleTitle}": ${aiResponse.status}`);
+          continue;
+        }
 
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      throw new Error(`AI gateway error [${aiResponse.status}]: ${errText}`);
-    }
+        const aiData = await aiResponse.json();
+        const summary = aiData.choices?.[0]?.message?.content?.trim();
 
-    const aiData = await aiResponse.json();
-    const generatedContent = aiData.choices?.[0]?.message?.content;
+        if (!summary) {
+          console.error(`Empty AI response for article "${articleTitle}"`);
+          continue;
+        }
 
-    if (!generatedContent) {
-      throw new Error("AI returned empty content");
-    }
+        // Build content with image using JSON block format
+        const blocks: any[] = [];
 
-    // Step 3: Extract title and content
-    const lines = generatedContent.trim().split("\n");
-    let title = `🗞️ Daily Tech Digest — ${today}`;
-    let content = generatedContent;
+        // Add text block
+        blocks.push({ type: "paragraph", content: summary });
 
-    // Try to extract the first line as a title if it looks like one
-    const firstLine = lines[0].replace(/^#+\s*/, "").replace(/\*\*/g, "").trim();
-    if (firstLine.length > 10 && firstLine.length < 120) {
-      title = firstLine;
-      content = lines.slice(1).join("\n").trim();
-    }
+        // Add image block if available
+        if (articleImage) {
+          blocks.push({ type: "image", imageUrl: articleImage });
+        }
 
-    // Generate tags from article topics
-    const tags = ["News", "Daily Digest"];
-    const tagKeywords = ["AI", "Google", "Apple", "Microsoft", "Meta", "Samsung", "Tesla", "SpaceX", "OpenAI", "Startup", "Cybersecurity", "Cloud", "Mobile", "Web"];
-    const contentLower = (generatedContent + " " + articlesList).toLowerCase();
-    for (const kw of tagKeywords) {
-      if (contentLower.includes(kw.toLowerCase()) && tags.length < 6) {
-        tags.push(kw);
+        // Add source attribution
+        blocks.push({ type: "paragraph", content: `📰 Source: ${articleSource}` });
+
+        const content = JSON.stringify({
+          type: "post",
+          blocks,
+        });
+
+        // Generate tags from article content
+        const tags = ["News"];
+        const tagKeywords = ["AI", "Google", "Apple", "Microsoft", "Meta", "Samsung", "Tesla", "SpaceX", "OpenAI", "Startup", "Cybersecurity", "Cloud", "Mobile", "Web", "Chip", "Quantum", "Robotics", "EV"];
+        const combinedLower = `${articleTitle} ${articleDesc}`.toLowerCase();
+        for (const kw of tagKeywords) {
+          if (combinedLower.includes(kw.toLowerCase()) && tags.length < 5) {
+            tags.push(kw);
+          }
+        }
+
+        // Clean up the title - use the original headline
+        const postTitle = `📰 ${articleTitle}`;
+
+        // Insert post
+        const { data: post, error: postError } = await supabase
+          .from("posts")
+          .insert({
+            user_id: NEWS_BOT_USER_ID,
+            title: postTitle.length > 200 ? postTitle.slice(0, 197) + "..." : postTitle,
+            content,
+            category: "News",
+            tags,
+          })
+          .select("id")
+          .single();
+
+        if (postError) {
+          console.error(`Failed to insert post for "${articleTitle}": ${postError.message}`);
+          continue;
+        }
+
+        createdPosts.push(post.id);
+        console.log(`Created news post: ${post.id} - ${articleTitle}`);
+
+        // Small delay between posts to space them out in the feed
+        await new Promise((r) => setTimeout(r, 2000));
+      } catch (articleError) {
+        console.error(`Error processing article: ${articleError}`);
+        continue;
       }
     }
 
-    // Step 4: Insert post
-    const { data: post, error: postError } = await supabase
-      .from("posts")
-      .insert({
-        user_id: NEWS_BOT_USER_ID,
-        title: title,
-        content: content,
-        category: "News",
-        tags: tags,
-      })
-      .select("id")
-      .single();
-
-    if (postError) {
-      throw new Error(`Failed to insert post: ${postError.message}`);
-    }
-
-    console.log(`News post created successfully: ${post.id}`);
+    console.log(`Created ${createdPosts.length} news posts successfully`);
 
     return new Response(
       JSON.stringify({
         success: true,
-        post_id: post.id,
-        title: title,
-        article_count: articles.length,
+        posts_created: createdPosts.length,
+        post_ids: createdPosts,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

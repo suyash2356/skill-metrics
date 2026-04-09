@@ -315,18 +315,25 @@ const Home = () => {
   // New videos (right sidebar) - Top 4 by views from NewVideos page
   const topVideos = useMemo(() => getTopVideosByViews(3), []);
 
-  // Show personalized feed if available, otherwise show default feed
+  // NEWS_BOT_USER_ID for high-visibility bot posts
+  const NEWS_BOT_USER_ID = "3ddf7a50-1d20-4f8f-90f1-2e923be1820e";
+
+  // Merge recommendation scores into the chronological feed
+  // Feed is already sorted by created_at desc (newest first) from the query
+  // Bot (SkillGram News) posts get a recommendation badge boost
   const displayFeed = useMemo(() => {
-    if (personalizedData && personalizedData.posts.length > 0) {
-      // Add default values for counts if not present
-      return personalizedData.posts.map(post => ({
-        ...post,
-        likes_count: post.likes_count || 0,
-        comments_count: post.comments_count || 0,
-        profiles: post.profiles || { full_name: 'Anonymous', avatar_url: null, title: null },
-      }));
+    const recommendedPostIds = new Map<string, number>();
+    if (personalizedData?.posts) {
+      personalizedData.posts.forEach(p => {
+        recommendedPostIds.set(p.id, p.score || 0);
+      });
     }
-    return feed;
+
+    // Use the chronological feed, enriching with recommendation scores
+    return feed.map(post => ({
+      ...post,
+      score: post.user_id === NEWS_BOT_USER_ID ? 100 : (recommendedPostIds.get(post.id) || 0),
+    }));
   }, [personalizedData, feed]);
 
 
