@@ -25,6 +25,42 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
+    // Step 0: Clean up news posts older than 48 hours
+    const cutoff48h = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+    const { data: oldPosts, error: cleanupQueryError } = await supabase
+      .from("posts")
+      .select("id")
+      .eq("user_id", NEWS_BOT_USER_ID)
+      .eq("category", "News")
+      .lt("created_at", cutoff48h);
+
+    if (!cleanupQueryError && oldPosts && oldPosts.length > 0) {
+      const oldIds = oldPosts.map((p: any) => p.id);
+      
+      // Delete related data first (likes, comments, bookmarks, saved_posts)
+      for (const id of oldIds) {
+        await supabase.from("likes").delete().eq("post_id", id);
+        await supabase.from("comments").delete().eq("post_id", id);
+        await supabase.from("bookmarks").delete().eq("post_id", id);
+        await supabase.from("saved_posts").delete().eq("post_id", id);
+        await supabase.from("post_preferences").delete().eq("post_id", id);
+        await supabase.from("post_reports").delete().eq("post_id", id);
+      }
+
+      const { error: deleteError } = await supabase
+        .from("posts")
+        .delete()
+        .in("id", oldIds);
+
+      if (deleteError) {
+        console.error("Failed to cleanup old news posts:", deleteError.message);
+      } else {
+        console.log(`Cleaned up ${oldIds.length} news posts older than 48 hours`);
+      }
+    } else {
+      console.log("No old news posts to clean up");
+    }
+
     // Deduplication: check if news posts were already created today
     const todayStart = new Date();
     todayStart.setUTCHours(0, 0, 0, 0);
