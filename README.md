@@ -1,109 +1,126 @@
-# Skill-Metric: Your Personalized Learning Companion.
-
+# 🚀 Skill-Metrics: Your AI-Powered Learning Ecosystem
 
 <p align="center">
-  <strong>Your Personalized AI-Powered Learning Recommendation Platform.</strong><br/>
-  Empowering learners with tailored learning paths, smart recommendations, and collaborative communities — all in one place.
+  <img src="https://github.com/suyash2356/skill-metrics/blob/main/Screen%20Recording%202025-11-13%20224524.gif" alt="Skill-Metrics Preview" width="850">
+</p>
+
+<p align="center">
+  <strong>The world's first learning platform that combines AI-driven roadmaps with a social learning feed and smart video scheduling.</strong><br/>
+  Stop searching for resources. Start following a path.
 </p>
 
 ---
 
-## 📸 Preview
-* **(Build using AI, guided and shaped by a me).**
-<p align="center">
-  <img src="https://github.com/suyash2356/skill-metrics/blob/main/Screen%20Recording%202025-11-13%20224524.gif" alt="Skill-Metric Preview" width="800">
-</p>
+## 🎯 The Problem
+In the age of information overload, learners face three massive hurdles:
+1.  **Resource Overwhelm:** Millions of tutorials, but no way to know which ones are actually good.
+2.  **Lack of Structure:** Having resources is one thing; knowing the *order* to learn them is another.
+3.  **The "Lone Learner" Syndrome:** Learning in isolation leads to burnout. Most platforms are passive delivery systems, not communities.
 
-<p align="center">
-  <em>Experience personalized learning, intelligent recommendations, and community collaboration — all in one seamless platform.</em>
-</p>
-
----
-
-## 🎥 Demo Video
-
-<p align="center">
-  <!-- Replace VIDEO_ID with your YouTube video ID -->
-  <a href="https://www.youtube.com/watch?v=VIDEO_ID" target="_blank">
-    <img src="https://img.youtube.com/vi/VIDEO_ID/0.jpg" alt="Skill-Metric Demo Video" width="700">
-  </a>
-  <br>
-  <em>🎬 Click the image above to watch the Skill-Metric demo on YouTube</em>
-</p>
+## ✨ How Skill-Metrics Solves It
+Skill-Metrics bridges the gap between **passive content** and **active mastery**. We don't just give you a list of links; we build you a dynamic, AI-powered ecosystem that adapts to your schedule, tracks your proficiency, and connects you with a community of like-minded builders.
 
 ---
 
-## 🎯 The Problem It Solves
+## 🌟 Key Features & Highlights
 
-In today’s world, learners are overwhelmed by the sheer number of available resources — courses, tutorials, and tools.  
-Most struggle to find **personalized learning paths**, lack a **structured roadmap**, and miss out on **community-driven growth** opportunities.  
-Traditional platforms focus on content delivery, not learner experience or personalization.
+### 🧠 1. AI Roadmap Generator
+Simply enter a goal (e.g., "Master Backend in 3 months"), and our AI constructs a multi-phase learning path.
+*   **Tailored Phases:** Breaks down complex skills into manageable milestones.
+*   **Resource Integration:** Automatically suggests top-rated articles and videos for every step.
+*   **Progress Tracking:** Visualize your completion percentage in real-time.
 
----
+### 🎥 2. First-of-its-Kind: Smart Watch Queue
+The ultimate solution for video learners. 
+*   **Goal-Based Scheduling:** Set a deadline, and the system auto-calculates how many videos you need to watch daily.
+*   **Learning Streaks:** Gamify your education with daily targets and watch history.
+*   **Curated Library:** Access 45+ high-quality videos across 16+ skill categories.
 
-## ✨ Our Solution
+### 🏠 3. Social Learning Hub (Feed)
+Inspired by Instagram and LinkedIn, our Home Feed allows you to:
+*   **Share Insights:** Post your progress, share resources, or celebrate wins.
+*   **Discover:** See what others in your community are learning and find trending resources.
+*   **Engage:** Like, comment, and save posts to your personal collection.
 
-**Skill-Metric** bridges this gap by offering a **personalized AI-driven recommendation platform** that adapts to each learner’s interests, goals, and progress.  
-From generating **custom skill roadmaps** to **recommending curated resources**, and from **social-style feeds** to **community learning groups**, Skill-Metric brings together everything a learner needs to grow — intelligently and collaboratively.
+### 💼 4. Premium Profile Dashboard
+A visual representation of your professional growth.
+*   **Skill Proficiency:** Visual progress bars for every skill you're mastering.
+*   **Achievements & Awards:** Showcase your milestones and certifications.
+*   **Mutual Connections:** See who you and your fellow learners have in common.
 
-Our mission is to create a dynamic ecosystem that **measures, visualizes, and enhances learning progress**, helping individuals and teams achieve their goals faster.
-
----
-
-## 🚀 Key Features
-
-Skill-Metric offers an integrated suite of tools for personalized and collaborative learning:
-
-* **🧠 Personalized AI Recommendations:**  
-  Get curated learning resources (videos, articles, courses, etc.) based on your learning goals, preferences, and current skills.
-
-* **📈 AI Roadmap Generator:**  
-  Automatically generate a customized learning roadmap that integrates your recommended resources directly into the roadmap flow.
-
-* **🏠 Home Feed (Social Learning Hub):**  
-  A community-driven feed where users can post updates, share insights, publish resources, or post learning news — inspired by Instagram’s simplicity and engagement.
-
-* **🔍 Explore Page:**  
-  Discover trending and top-rated learning resources across various domains for easy access and exploration.
-
-* **💼 Smart Profile Dashboard:**  
-  Showcase your skills visually with percentage-based progress indicators, add achievements, current work, and learning milestones — inspired by LinkedIn & Instagram-style profiles.
-
-* **👥 Community Learning Spaces:**  
-  Join or create communities for group learning. Collaborate like on Discord — chat, ask questions, share notes, track collective progress, and even work on projects together.
-
-* **⚡ Integrated Skill Tracking:**  
-  Monitor your skill growth and learning journey through analytics-driven insights and progress graphs.
-
-* **🔐 Secure Authentication:**  
-  Sign in easily and securely using modern authentication methods (email, OAuth, etc.).
-
-> **Note:** This project uses free-tier tools (Supabase, Vercel, etc.), so some features may have storage or upload limits.
+### 💬 5. Secure Collaborative Spaces
+*   **Encrypted Messaging:** Private, secure chat for 1-on-1 collaboration.
+*   **Community Groups:** Join specialized learning circles (similar to Discord) to work on projects together.
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Tech Stack
 
-* **Framework:** [Vite](https://vitejs.dev/) + [React](https://react.dev/)
-* **Language:** [TypeScript](https://www.typescriptlang.org/)
-* **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
-* **Styling:** [Tailwind CSS](https://tailwindcss.com/)
-* **State Management:** React Hooks & Context API
-* **AI Integration:** Custom AI models for resource recommendation and roadmap generation
-* **Backend & Database:** [Supabase](https://supabase.com/) for real-time data and storage
-* **Community & Chat:** WebSocket (planned)
+| Category | Technology |
+| :--- | :--- |
+| **Frontend** | React 18, Vite, TypeScript |
+| **Styling** | Tailwind CSS, shadcn/ui, Framer Motion |
+| **Backend/DB** | Supabase (PostgreSQL, Auth, Storage) |
+| **AI Layer** | Supabase Edge Functions + AI LLM Models |
+| **State/Data** | TanStack Query (React Query), Context API |
+| **Real-time** | Supabase Real-time Subscriptions |
 
 ---
 
-## ⚙️ Getting Started (Local Setup)
+## ⚙️ How It Works (Under the Hood)
+
+1.  **AI Orchestration:** When you request a roadmap, a **Supabase Edge Function** triggers an AI model that processes your current skill level, time commitment, and goal. It returns a structured JSON object which is then parsed into a multi-table schema (Roadmaps -> Steps -> Resources).
+2.  **Social Graph:** We built a custom follower/following system using **PostgreSQL RLS (Row Level Security)** policies, ensuring that private profiles stay private while allowing public discovery.
+3.  **Real-Time Sync:** Notifications and messaging use **Supabase Real-time**, providing a seamless "app-like" experience without manual page refreshes.
+4.  **Content Curation:** A hybrid model where AI initially suggests resources, but the community "votes" them up or down through likes and shares.
+
+---
+
+## 🚧 Challenges Faced
+
+*   **Complex RLS Architecting:** Designing a secure yet flexible privacy system for profiles (Private vs. Public) required deep-diving into complex SQL policies and mutual-follower logic.
+*   **Responsive Dashboard Logic:** Managing a high-density dashboard with video queues, roadmaps, and feeds across mobile and desktop required significant CSS optimization.
+*   **AI Consistency:** Ensuring the AI consistently generates valid, high-quality learning steps required rigorous prompt engineering and error-handling on the Edge Function side.
+
+---
+
+## ⚖️ Why Skill-Metrics is Different?
+
+| Feature | Skill-Metrics | Traditional LMS (Coursera/Udemy) |
+| :--- | :--- | :--- |
+| **Personalization** | **High** (AI-generated for *you*) | **Low** (Fixed curriculum) |
+| **Social** | **Integrated Feed & Chat** | **Static Forums** |
+| **Video Learning** | **Smart Watch Queue** | **Linear Playlists** |
+| **Structure** | **Dynamic Roadmaps** | **Single Courses** |
+| **Price** | **100% Free** | **Paid/Subscription** |
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
-* [Node.js](https://nodejs.org/en/) (v18+)
-* npm, yarn, or pnpm
-* (Optional) AI API access or backend instance
+*   Node.js (v18+)
+*   Supabase Account
 
-### Installation
-```bash
-git clone https://github.com/your-username/skill-metric.git
-cd skill-metric
-npm install
+### Local Setup
+1.  **Clone the repo:**
+    ```bash
+    git clone https://github.com/suyash2356/skill-metrics.git
+    cd skill-metrics
+    ```
+2.  **Install dependencies:**
+    ```bash
+    npm install
+    ```
+3.  **Environment Variables:**
+    Create a `.env` file and add your Supabase URL and Anon Key.
+4.  **Run Dev Server:**
+    ```bash
+    npm run dev
+    ```
+
+---
+
+<p align="center">
+  Built with ❤️ by Suyash and the AI-Education Community.
+</p>
