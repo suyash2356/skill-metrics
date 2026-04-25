@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,10 +24,12 @@ const Signup = () => {
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Track when signup just completed to prevent redirect to /home
+  const justSignedUp = useRef(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in (but not if we just signed up — onboarding takes priority)
   useEffect(() => {
-    if (user) {
+    if (user && !justSignedUp.current) {
       const redirectTo = searchParams.get('redirect') || '/home';
       navigate(redirectTo);
     }
@@ -55,11 +57,14 @@ const Signup = () => {
     }
 
     setIsLoading(true);
+    // Flag to prevent the redirect useEffect from firing before onboarding navigation
+    justSignedUp.current = true;
 
     try {
       const { error } = await signUp(formData.email, formData.password, formData.fullName);
 
       if (error) {
+        justSignedUp.current = false;
         // Generic message to prevent user enumeration
         toast({
           title: "Registration Error",
@@ -75,6 +80,7 @@ const Signup = () => {
         navigate('/onboarding');
       }
     } catch (error) {
+      justSignedUp.current = false;
       toast({
         title: "Signup Failed",
         description: "An unexpected error occurred. Please try again.",

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 export interface Category {
   id: string;
   name: string;
-  type: 'domain' | 'exam';
+  type: 'domain' | 'exam' | 'tech' | 'non-tech';
   description: string | null;
   icon: string | null;
   color: string | null;
@@ -18,7 +18,7 @@ export interface Category {
 export type CategoryInsert = Omit<Category, 'id' | 'created_at' | 'updated_at'>;
 export type CategoryUpdate = Partial<CategoryInsert>;
 
-export const useCategories = (type?: 'domain' | 'exam') => {
+export const useCategories = (type?: 'domain' | 'exam' | 'tech' | 'non-tech') => {
   return useQuery({
     queryKey: ['categories', type],
     queryFn: async () => {
@@ -29,7 +29,11 @@ export const useCategories = (type?: 'domain' | 'exam') => {
         .order('name');
 
       if (type) {
-        query = query.eq('type', type);
+        if (type === 'domain') {
+          query = query.in('type', ['domain', 'tech', 'non-tech']);
+        } else {
+          query = query.eq('type', type);
+        }
       }
 
       const { data, error } = await query;

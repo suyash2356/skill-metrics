@@ -17,6 +17,7 @@ import { useResourceRatings } from "@/hooks/useResourceRatings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useRecommendations } from "@/hooks/useRecommendations";
 import { useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress } from "@/hooks/useSkillGraph";
 import { buildLearningPath, matchDomainToSkillGraph, filterResourcesBySkill, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,8 @@ export default function SkillRecommendations() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'graph' | 'roadmap' | 'resources'>('graph');
   const { profileDetails } = useUserProfileDetails();
-
+  const { user } = useAuth();
+  
   // Skill Graph data
   const graphDomain = useMemo(() => matchDomainToSkillGraph(decodeURIComponent(q)), [q]);
   const { data: skillNodes = [] } = useSkillNodes(graphDomain || undefined);
@@ -42,6 +44,9 @@ export default function SkillRecommendations() {
   const { data: dependencies = [] } = useSkillDependencies(skillNodeIds);
   const { data: userProgress = [] } = useUserSkillProgress();
   const updateProgress = useUpdateSkillProgress();
+
+  // Get ML Recommendations strictly for this domain
+  const { data: mlRecommendations } = useRecommendations(user?.id, graphDomain || undefined);
 
   const hasSkillGraph = graphDomain && skillNodes.length > 0;
 
@@ -210,6 +215,7 @@ export default function SkillRecommendations() {
               learningPath={learningPath} 
               onStatusChange={handleSkillStatusChange}
               recommendations={personalizedRecommendations}
+              mlRecommendations={mlRecommendations || []}
             />
           )}
 
@@ -227,14 +233,50 @@ export default function SkillRecommendations() {
                 ))}
               </TabsList>
 
-              {resourceTabs.map((t) => (
+              {/* Show ML Recommendations at the top of 'all' tab */}
+              <TabsContent value="all" className="space-y-6">
+                {mlRecommendations && mlRecommendations.length > 0 && (
+                  <div className="mb-8">
+                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                      Recommended for You
+                    </h3>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      {mlRecommendations.map((mlRec) => {
+                        // Map MLRecommendation to the UI Recommendation type format for ResourceCard
+                        const mockRec: Recommendation = {
+                          title: mlRec.title,
+                          type: 'course', // Default fallback
+                          url: '#',
+                          description: `Personalized match (Score: ${mlRec.score})`
+                        };
+                        return <ResourceCard key={`ml-${mlRec.id}`} recommendation={mockRec} typeIcon={typeIcon} />;
+                      })}
+                    </div>
+                  </div>
+                )}
+                
+                <h3 className="text-xl font-bold mb-4">All Resources</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                  {loading && <div className="text-sm text-muted-foreground">Loading resources…</div>}
+                  {!loading && personalizedRecommendations.length === 0 && (
+                    <div className="text-sm text-muted-foreground">No recommendations found for this category.</div>
+                  )}
+                  {!loading && personalizedRecommendations.map((r, i) => (
+                    <ResourceCard key={`all-${i}`} recommendation={r} typeIcon={typeIcon} />
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Other specific resource type tabs */}
+              {resourceTabs.filter(t => t.key !== 'all').map((t) => (
                 <TabsContent key={t.key} value={t.key}>
                   <div className="grid md:grid-cols-2 gap-4">
-                    {loading && <div className="text-sm text-muted-foreground">Loading recommendations…</div>}
-                    {!loading && personalizedRecommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).length === 0 && (
-                      <div className="text-sm text-muted-foreground">No recommendations found for this category.</div>
+                    {loading && <div className="text-sm text-muted-foreground">Loading resources…</div>}
+                    {!loading && personalizedRecommendations.filter((r) => r.type === t.key).length === 0 && (
+                      <div className="text-sm text-muted-foreground">No resources found for this category.</div>
                     )}
-                    {!loading && personalizedRecommendations.filter((r) => t.key === 'all' ? true : (r.type === t.key)).map((r, i) => (
+                    {!loading && personalizedRecommendations.filter((r) => r.type === t.key).map((r, i) => (
                       <ResourceCard key={`${t.key}-${i}`} recommendation={r} typeIcon={typeIcon} />
                     ))}
                   </div>
@@ -256,9 +298,10 @@ interface SkillGraphViewProps {
   learningPath: LearningPathResult;
   onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
   recommendations: Recommendation[];
+  mlRecommendations: import('@/hooks/useRecommendations').MLRecommendation[];
 }
 
-function SkillGraphView({ learningPath, onStatusChange, recommendations }: SkillGraphViewProps) {
+function SkillGraphView({ learningPath, onStatusChange, recommendations, mlRecommendations }: SkillGraphViewProps) {
   const [selectedSkill, setSelectedSkill] = useState<SkillRecommendation | null>(
     learningPath.nextSkill || learningPath.orderedSkills[0] || null
   );
@@ -409,6 +452,7 @@ function SkillGraphView({ learningPath, onStatusChange, recommendations }: Skill
               skill={selectedSkill}
               onStatusChange={onStatusChange}
               recommendations={recommendations}
+              mlRecommendations={mlRecommendations}
             />
           )}
         </div>
@@ -425,9 +469,10 @@ interface SkillDetailPanelProps {
   skill: SkillRecommendation;
   onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
   recommendations: Recommendation[];
+  mlRecommendations: import('@/hooks/useRecommendations').MLRecommendation[];
 }
 
-function SkillDetailPanel({ skill, onStatusChange, recommendations }: SkillDetailPanelProps) {
+function SkillDetailPanel({ skill, onStatusChange, recommendations, mlRecommendations }: SkillDetailPanelProps) {
   // Filter recommendations relevant to this skill
   const relevantResources = useMemo(() => {
     const keywords = [
@@ -439,6 +484,19 @@ function SkillDetailPanel({ skill, onStatusChange, recommendations }: SkillDetai
       return keywords.some(k => text.includes(k));
     }).slice(0, 5);
   }, [skill, recommendations]);
+
+  // Dynamically ordered ML resources based on this skill
+  const dynamicResources = useMemo(() => {
+    if (!mlRecommendations.length) return [];
+    const keywords = [
+      skill.node.name.toLowerCase(),
+      ...(skill.node.subdomain ? [skill.node.subdomain.toLowerCase()] : []),
+    ];
+    return mlRecommendations.filter(r => {
+      const text = `${r.title}`.toLowerCase();
+      return keywords.some(k => text.includes(k));
+    }).slice(0, 5);
+  }, [skill, mlRecommendations]);
 
   return (
     <div className="sticky top-6 space-y-4">
@@ -526,14 +584,34 @@ function SkillDetailPanel({ skill, onStatusChange, recommendations }: SkillDetai
       </Card>
 
       {/* Relevant Resources */}
-      {relevantResources.length > 0 && (
+      {(dynamicResources.length > 0 || relevantResources.length > 0) && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-1.5">
-              <Library className="w-4 h-4 text-primary" />
-              Resources for {skill.node.name}
+              {dynamicResources.length > 0 ? (
+                <><Star className="w-4 h-4 text-yellow-400 fill-yellow-400" /> Recommended Resources</>
+              ) : (
+                <><Library className="w-4 h-4 text-primary" /> Resources for {skill.node.name}</>
+              )}
             </h4>
-            {relevantResources.map((r, i) => (
+            
+            {/* Show Dynamic Resources from ML if available */}
+            {dynamicResources.length > 0 ? dynamicResources.map((r, i) => (
+              <div
+                key={i}
+                className="block p-3 rounded-lg bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Badge variant="default" className="text-[10px] uppercase tracking-wider bg-yellow-500/90 hover:bg-yellow-500 text-white border-0 shadow-sm">
+                    ★ Top Match
+                  </Badge>
+                  <span className="text-[10px] text-muted-foreground font-medium">Score: {r.score}</span>
+                </div>
+                <h5 className="text-sm font-semibold text-primary">{r.title}</h5>
+              </div>
+            )) : 
+            /* Fallback to normal Relevant Resources */
+            relevantResources.map((r, i) => (
               <a
                 key={i}
                 href={r.url}

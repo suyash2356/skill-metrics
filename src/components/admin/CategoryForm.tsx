@@ -41,7 +41,7 @@ const COLORS = [
 
 const formSchema = z.object({
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
-  type: z.enum(['domain', 'exam']),
+  type: z.enum(['domain', 'exam', 'tech', 'non-tech']),
   description: z.string().max(500, 'Description is too long').optional(),
   icon: z.string().optional(),
   color: z.string().optional(),
@@ -51,21 +51,24 @@ const formSchema = z.object({
 
 interface CategoryFormProps {
   category?: Category | null;
-  defaultType?: 'domain' | 'exam';
+  defaultType?: 'domain' | 'exam' | 'tech' | 'non-tech';
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-const CategoryForm = ({ category, defaultType = 'domain', onSuccess, onCancel }: CategoryFormProps) => {
+const CategoryForm = ({ category, defaultType = 'tech', onSuccess, onCancel }: CategoryFormProps) => {
   const createCategory = useCreateCategory();
   const updateCategory = useUpdateCategory();
   const isEditing = !!category?.id;
+
+  // Convert legacy 'domain' to 'tech' for the form select if needed
+  const initialType = category?.type === 'domain' ? 'tech' : (category?.type || (defaultType === 'domain' ? 'tech' : defaultType));
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: category?.name || '',
-      type: category?.type || defaultType,
+      type: initialType,
       description: category?.description || '',
       icon: category?.icon || '',
       color: category?.color || '',
@@ -126,7 +129,8 @@ const CategoryForm = ({ category, defaultType = 'domain', onSuccess, onCancel }:
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="domain">Domain</SelectItem>
+                    <SelectItem value="tech">Tech Domain</SelectItem>
+                    <SelectItem value="non-tech">Non-Tech Domain</SelectItem>
                     <SelectItem value="exam">Exam</SelectItem>
                   </SelectContent>
                 </Select>

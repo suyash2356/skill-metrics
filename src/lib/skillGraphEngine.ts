@@ -230,7 +230,20 @@ export function matchDomainToSkillGraph(skillName: string): string | null {
   const normalized = skillName.toLowerCase().trim();
 
   for (const [domain, keywords] of Object.entries(domainMappings)) {
-    if (keywords.some(k => normalized === k || normalized.includes(k) || k.includes(normalized))) {
+    if (keywords.some(k => {
+      if (normalized === k) return true;
+      
+      // Escape special characters in k for regex
+      const escapedK = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      // Match k as a distinct word (handles spaces, boundaries, hyphens)
+      const regex = new RegExp(`(^|\\b|\\s|_|-)${escapedK}(\\b|\\s|_|-|$)`, 'i');
+      
+      // Also check if user search is a significant substring of the keyword 
+      // (e.g. searching "machine" matches "machine learning")
+      const isSubMatch = normalized.length >= 4 && k.includes(normalized);
+      
+      return regex.test(normalized) || isSubMatch;
+    })) {
       return domain;
     }
   }
