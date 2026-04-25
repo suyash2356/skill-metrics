@@ -251,6 +251,23 @@ export function matchDomainToSkillGraph(skillName: string): string | null {
   return null;
 }
 
+function matchesKeyword(text: string, keyword: string): boolean {
+  if (!text || !keyword) return false;
+  const normalizedText = text.toLowerCase();
+  const normalizedKeyword = keyword.toLowerCase();
+  
+  if (normalizedText === normalizedKeyword) return true;
+  
+  // If keyword is long enough, substring match is usually safe and desirable 
+  // (e.g. "machine" matching "machine learning")
+  if (normalizedKeyword.length > 4 && normalizedText.includes(normalizedKeyword)) return true;
+  
+  // For short keywords or exact word matching, use regex word boundaries
+  const escapedK = normalizedKeyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const regex = new RegExp(`(^|\\b|\\s|_|-)${escapedK}(\\b|\\s|_|-|$)`, 'i');
+  return regex.test(normalizedText);
+}
+
 /**
  * Filter resources by skill node relevance
  */
@@ -259,27 +276,35 @@ export function filterResourcesBySkill(
   skillNode: SkillNode,
   userLevel: string = 'beginner'
 ): any[] {
+  // Extract key words from learning outcomes instead of full sentences
+  const outcomeWords = (skillNode.learning_outcomes || [])
+    .flatMap(o => o.toLowerCase().split(/[\s,.-]+/))
+    .filter(w => w.length > 3); // Only significant words
+
   const skillKeywords = [
     skillNode.name.toLowerCase(),
     skillNode.domain.toLowerCase(),
     ...(skillNode.subdomain ? [skillNode.subdomain.toLowerCase()] : []),
-    ...(skillNode.learning_outcomes || []).map(o => o.toLowerCase()),
+    ...outcomeWords,
   ];
+
+  // Remove duplicates
+  const uniqueKeywords = [...new Set(skillKeywords)];
 
   return resources
     .map(resource => {
-      const title = (resource.title || '').toLowerCase();
-      const description = (resource.description || '').toLowerCase();
-      const category = (resource.category || '').toLowerCase();
-      const skills = (resource.related_skills || []).map((s: string) => s.toLowerCase());
+      const title = (resource.title || '');
+      const description = (resource.description || '');
+      const category = (resource.category || '');
+      const skills = (resource.related_skills || []);
 
       // Calculate relevance score
       let relevance = 0;
-      skillKeywords.forEach(keyword => {
-        if (title.includes(keyword)) relevance += 3;
-        if (description.includes(keyword)) relevance += 1;
-        if (category.includes(keyword)) relevance += 2;
-        if (skills.some((s: string) => s.includes(keyword))) relevance += 2;
+      uniqueKeywords.forEach(keyword => {
+        if (matchesKeyword(title, keyword)) relevance += 3;
+        if (matchesKeyword(description, keyword)) relevance += 1;
+        if (matchesKeyword(category, keyword)) relevance += 2;
+        if (skills.some((s: string) => matchesKeyword(s, keyword))) relevance += 2;
       });
 
       // Difficulty matching bonus

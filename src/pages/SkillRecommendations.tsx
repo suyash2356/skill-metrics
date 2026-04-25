@@ -475,28 +475,26 @@ interface SkillDetailPanelProps {
 function SkillDetailPanel({ skill, onStatusChange, recommendations, mlRecommendations }: SkillDetailPanelProps) {
   // Filter recommendations relevant to this skill
   const relevantResources = useMemo(() => {
-    const keywords = [
-      skill.node.name.toLowerCase(),
-      ...(skill.node.subdomain ? [skill.node.subdomain.toLowerCase()] : []),
-    ];
-    return recommendations.filter(r => {
-      const text = `${r.title} ${r.description || ''} ${r.provider || ''}`.toLowerCase();
-      return keywords.some(k => text.includes(k));
-    }).slice(0, 5);
+    return filterResourcesBySkill(recommendations, skill.node).slice(0, 5);
   }, [skill, recommendations]);
 
   // Dynamically ordered ML resources based on this skill
   const dynamicResources = useMemo(() => {
     if (!mlRecommendations.length) return [];
-    const keywords = [
-      skill.node.name.toLowerCase(),
-      ...(skill.node.subdomain ? [skill.node.subdomain.toLowerCase()] : []),
-    ];
-    return mlRecommendations.filter(r => {
-      const text = `${r.title}`.toLowerCase();
-      return keywords.some(k => text.includes(k));
-    }).slice(0, 5);
+    
+    // Map ML recommendations to the standard Recommendation shape for filtering
+    const mappedMl = mlRecommendations.map(r => ({
+      title: r.title,
+      type: 'course',
+      url: '#',
+      description: '',
+      score: r.score
+    })) as Recommendation[];
+    
+    return filterResourcesBySkill(mappedMl, skill.node).slice(0, 5);
   }, [skill, mlRecommendations]);
+
+
 
   return (
     <div className="sticky top-6 space-y-4">
