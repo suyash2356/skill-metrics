@@ -13,7 +13,7 @@ export const useRecommendations = (userId: string | undefined, domain?: string) 
     queryFn: async () => {
       if (!userId) return [];
 
-      const { data, error } = await supabase.rpc('get_recommendations', {
+      const { data, error } = await supabase.rpc('get_recommendations' as any, {
         user_id_input: userId,
         domain_input: domain || null,
       });
@@ -23,7 +23,7 @@ export const useRecommendations = (userId: string | undefined, domain?: string) 
         throw error;
       }
 
-      return (data || []) as MLRecommendation[];
+      return (data || []) as unknown as MLRecommendation[];
     },
     enabled: !!userId,
   });
