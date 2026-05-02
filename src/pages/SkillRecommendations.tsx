@@ -17,7 +17,7 @@ import { useResourceRatings } from "@/hooks/useResourceRatings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { useRecommendations } from "@/hooks/useRecommendations";
+import { useRecommendations, useLogImpressions } from "@/hooks/useRecommendations";
 import { useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress } from "@/hooks/useSkillGraph";
 import { buildLearningPath, matchDomainToSkillGraph, filterResourcesBySkill, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
 import { cn } from "@/lib/utils";
@@ -47,6 +47,7 @@ export default function SkillRecommendations() {
 
   // Get ML Recommendations strictly for this domain
   const { data: mlRecommendations } = useRecommendations(user?.id, graphDomain || undefined);
+  useLogImpressions(user?.id, mlRecommendations);
 
   const hasSkillGraph = graphDomain && skillNodes.length > 0;
 
