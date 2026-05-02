@@ -167,14 +167,12 @@ export function ChatEncryptionProvider({ children }: { children: React.ReactNode
 
   const getUserPublicKey = useCallback(async (userId: string): Promise<JsonWebKey | null> => {
     try {
-      const { data, error } = await supabase
-        .from('user_encryption_keys')
-        .select('public_key')
-        .eq('user_id', userId)
-        .maybeSingle();
-
+      // Use SECURITY DEFINER RPC since direct table SELECT is owner-only
+      const { data, error } = await supabase.rpc('get_user_public_key', {
+        target_user_id: userId,
+      });
       if (error || !data) return null;
-      return JSON.parse(data.public_key);
+      return JSON.parse(data as string);
     } catch {
       return null;
     }

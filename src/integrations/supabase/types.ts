@@ -387,6 +387,39 @@ export type Database = {
         }
         Relationships: []
       }
+      interactions_ml: {
+        Row: {
+          created_at: string | null
+          id: string
+          interaction_type: string
+          item_id: string
+          item_type: string
+          metadata: Json | null
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          interaction_type: string
+          item_id: string
+          item_type: string
+          metadata?: Json | null
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          interaction_type?: string
+          item_id?: string
+          item_type?: string
+          metadata?: Json | null
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       learning_streaks: {
         Row: {
           current_streak: number
@@ -866,6 +899,7 @@ export type Database = {
           created_at: string
           description: string
           difficulty: string
+          domain: string | null
           duration: string | null
           education_levels: string[] | null
           estimated_time: string | null
@@ -903,6 +937,7 @@ export type Database = {
           created_at?: string
           description: string
           difficulty?: string
+          domain?: string | null
           duration?: string | null
           education_levels?: string[] | null
           estimated_time?: string | null
@@ -940,6 +975,7 @@ export type Database = {
           created_at?: string
           description?: string
           difficulty?: string
+          domain?: string | null
           duration?: string | null
           education_levels?: string[] | null
           estimated_time?: string | null
@@ -1766,6 +1802,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_seen_resources: {
+        Row: {
+          id: string
+          resource_id: string
+          seen_at: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          resource_id: string
+          seen_at?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          resource_id?: string
+          seen_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_seen_resources_resource_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_sessions: {
         Row: {
           browser: string | null
@@ -1911,7 +1976,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      interactions_training_view: {
+        Row: {
+          interaction_count: number | null
+          item_id: string | null
+          item_type: string | null
+          total_score: number | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_group_member: {
@@ -1974,6 +2048,23 @@ export type Database = {
         Returns: Json
       }
       get_profile_stats: { Args: { target_user_id: string }; Returns: Json }
+      get_recommendations:
+        | {
+            Args: { user_id_input: string }
+            Returns: {
+              id: string
+              score: number
+              title: string
+            }[]
+          }
+        | {
+            Args: { domain_input?: string; user_id_input: string }
+            Returns: {
+              id: string
+              score: number
+              title: string
+            }[]
+          }
       get_site_average_rating: { Args: never; Returns: number }
       get_user_public_key: { Args: { target_user_id: string }; Returns: string }
       has_community_role: {
