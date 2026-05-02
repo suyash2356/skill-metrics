@@ -754,6 +754,39 @@ export type Database = {
         }
         Relationships: []
       }
+      recommendation_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          model_version: string | null
+          rank_position: number | null
+          reason: string | null
+          resource_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          model_version?: string | null
+          rank_position?: number | null
+          reason?: string | null
+          resource_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          model_version?: string | null
+          rank_position?: number | null
+          reason?: string | null
+          resource_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       resource_ratings: {
         Row: {
           created_at: string
@@ -2048,23 +2081,15 @@ export type Database = {
         Returns: Json
       }
       get_profile_stats: { Args: { target_user_id: string }; Returns: Json }
-      get_recommendations:
-        | {
-            Args: { user_id_input: string }
-            Returns: {
-              id: string
-              score: number
-              title: string
-            }[]
-          }
-        | {
-            Args: { domain_input?: string; user_id_input: string }
-            Returns: {
-              id: string
-              score: number
-              title: string
-            }[]
-          }
+      get_recommendations: {
+        Args: { domain_input?: string; user_id_input: string }
+        Returns: {
+          id: string
+          reason: string
+          score: number
+          title: string
+        }[]
+      }
       get_site_average_rating: { Args: never; Returns: number }
       get_user_public_key: { Args: { target_user_id: string }; Returns: string }
       has_community_role: {
