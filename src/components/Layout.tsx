@@ -101,7 +101,7 @@ export const Layout = ({ children }: LayoutProps) => {
 
   useEffect(() => {
     fetchSuggestions(searchQuery);
-    return () => fetchSuggestions.cancel();
+    return;
   }, [searchQuery]);
 
   useEffect(() => {
