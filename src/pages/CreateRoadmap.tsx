@@ -27,7 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TypedSupabaseClient } from "@/integrations/supabase/client";
 import { TablesInsert, Database } from "@/integrations/supabase/types";
 import { generateAIPrompt, callAIGenerator, generateMockRoadmap } from "@/lib/aiRoadmapGenerator";
-import { FunctionsClient } from '@supabase/functions-js';
+
 
 const supabase = rawSupabase as TypedSupabaseClient;
 
