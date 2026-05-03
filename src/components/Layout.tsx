@@ -4,7 +4,14 @@ import logoImg from '@/logo.jpg';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchPeopleCommunitySuggestions, fetchRecommendations, Suggestion, Recommendation } from "@/api/searchAPI";
-import { debounce } from "lodash";
+// Lightweight debounce (avoids lodash dependency)
+function debounce<T extends (...args: any[]) => any>(fn: T, wait: number) {
+  let t: ReturnType<typeof setTimeout> | null = null;
+  return ((...args: Parameters<T>) => {
+    if (t) clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  }) as T;
+}
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations"; // Added hook
 import {
