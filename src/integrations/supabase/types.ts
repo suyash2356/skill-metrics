@@ -1583,9 +1583,11 @@ export type Database = {
           display_name: string | null
           email_notifications: boolean | null
           id: string
+          interests: string[] | null
           language: string | null
           login_notifications: boolean | null
           marketing_emails: boolean | null
+          primary_domain: string | null
           profile_visibility: string | null
           push_notifications: boolean | null
           show_online_status: boolean | null
@@ -1602,9 +1604,11 @@ export type Database = {
           display_name?: string | null
           email_notifications?: boolean | null
           id?: string
+          interests?: string[] | null
           language?: string | null
           login_notifications?: boolean | null
           marketing_emails?: boolean | null
+          primary_domain?: string | null
           profile_visibility?: string | null
           push_notifications?: boolean | null
           show_online_status?: boolean | null
@@ -1621,9 +1625,11 @@ export type Database = {
           display_name?: string | null
           email_notifications?: boolean | null
           id?: string
+          interests?: string[] | null
           language?: string | null
           login_notifications?: boolean | null
           marketing_emails?: boolean | null
+          primary_domain?: string | null
           profile_visibility?: string | null
           push_notifications?: boolean | null
           show_online_status?: boolean | null
