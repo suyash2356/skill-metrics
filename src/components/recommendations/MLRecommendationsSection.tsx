@@ -21,6 +21,8 @@ interface MLRecommendationsSectionProps {
   subtitle?: string;
   /** When true, hide the section entirely if no recommendations are returned. */
   hideIfEmpty?: boolean;
+  /** Filter results to a specific resource_type (e.g. 'certification', 'degree'). */
+  resourceType?: string | null;
 }
 
 export function MLRecommendationsSection({
@@ -31,6 +33,7 @@ export function MLRecommendationsSection({
   title = "Recommended for you",
   subtitle = "Hybrid ML ranking blending your activity, interests, and community ratings",
   hideIfEmpty = false,
+  resourceType = null,
 }: MLRecommendationsSectionProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -39,6 +42,7 @@ export function MLRecommendationsSection({
     domain,
     query,
     limit,
+    resourceType,
   });
 
   const items = data?.items ?? [];

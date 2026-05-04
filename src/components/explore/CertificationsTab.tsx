@@ -7,6 +7,7 @@ import { Award, Clock, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { iconMap, cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
 import type { PersonalizedExploreData } from "@/hooks/usePersonalizedExplore";
+import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
 
 interface CertificationsTabProps {
   personalizedData: PersonalizedExploreData;
@@ -24,7 +25,16 @@ export function CertificationsTab({ personalizedData }: CertificationsTabProps) 
   });
 
   return (
-    <section>
+    <section className="space-y-10">
+      <MLRecommendationsSection
+        surface="explore"
+        limit={6}
+        title="Recommended Certifications"
+        subtitle="Personalized via hybrid ML ranking — your activity + interests + community ratings"
+        hideIfEmpty
+        resourceType="certification"
+      />
+
       <div className="mb-8">
         <h2 className="text-2xl font-bold flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-amber-500/10">

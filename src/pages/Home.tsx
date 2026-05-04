@@ -19,7 +19,7 @@ import { getTopVideosByViews } from "@/lib/videosData";
 import { usePersonalizedFeed } from "@/hooks/usePersonalizedFeed";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePostInteractions } from "@/hooks/usePostInteractions";
-import { useHybridRecommendations, useLogImpressions, logRecommendationClick } from "@/hooks/useRecommendations";
+
 
 import type { Database } from '@/integrations/supabase/types';
 type Post = Database['public']['Tables']['posts']['Row'];
@@ -29,57 +29,6 @@ type PostWithProfile = Post & {
   likes_count: number;
   comments_count: number;
 };
-
-/** Compact ML-powered resource recommendations for the Home sidebar. */
-function MLResourcesCompact() {
-  const { user } = useAuth();
-  const { data, isLoading } = useHybridRecommendations(user?.id, { surface: 'home', limit: 4 });
-  const items = data?.items ?? [];
-  useLogImpressions(user?.id, items, 'home');
-
-  if (!user) return null;
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold">ML picks for you</h3>
-        </div>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-14 rounded-lg bg-muted animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-  if (items.length === 0) return null;
-
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-primary" />
-        <h3 className="font-semibold">ML picks for you</h3>
-        <Badge variant="secondary" className="text-[10px] ml-auto">
-          {data?.fallback ? 'fallback' : 'hybrid'}
-        </Badge>
-      </div>
-      <div className="space-y-2">
-        {items.map((rec, i) => (
-          <button
-            key={rec.id}
-            onClick={() => {
-              if (user.id) logRecommendationClick(user.id, rec, i + 1, 'home');
-              if (rec.link) window.open(rec.link, '_blank');
-            }}
-            className="w-full text-left p-3 rounded-lg hover:bg-accent/50 transition-colors border border-border"
-          >
-            <h4 className="font-medium text-sm line-clamp-1">{rec.title}</h4>
-            <p className="text-xs text-primary italic mt-0.5">💡 {rec.reason}</p>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 const Home = () => {
   const [commentDialogOpen, setCommentDialogOpen] = useState<{ open: boolean; postId: string | null }>({ open: false, postId: null });
@@ -547,12 +496,7 @@ const Home = () => {
 
           {/* Right Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
-            {/* ML Resource Recommendations */}
-            <Card className="border-primary/20">
-              <CardContent className="p-4">
-                <MLResourcesCompact />
-              </CardContent>
-            </Card>
+
 
             {/* Recommended Roadmaps */}
             {personalizedData && personalizedData.roadmaps.length > 0 && (

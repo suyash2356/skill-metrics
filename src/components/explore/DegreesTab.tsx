@@ -7,6 +7,7 @@ import { GraduationCap, Star, Clock, Globe, Zap, Award, ExternalLink, ChevronRig
 import { motion, AnimatePresence } from "framer-motion";
 import { cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
 import type { PersonalizedExploreData } from "@/hooks/usePersonalizedExplore";
+import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
 
 interface DegreesTabProps {
   personalizedData: PersonalizedExploreData;
@@ -25,7 +26,16 @@ export function DegreesTab({ personalizedData }: DegreesTabProps) {
   });
 
   return (
-    <section>
+    <section className="space-y-10">
+      <MLRecommendationsSection
+        surface="explore"
+        limit={6}
+        title="Recommended Degrees"
+        subtitle="Personalized via hybrid ML ranking — your activity + interests + community ratings"
+        hideIfEmpty
+        resourceType="degree"
+      />
+
       <div className="mb-8">
         <h2 className="text-2xl font-bold flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-sky-500/10">
