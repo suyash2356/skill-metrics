@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchUniversalSearch, UniversalSearchResults } from "@/api/searchAPI";
 import { ResourcePreview } from "@/components/ResourcePreview";
+import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
 import {
   Search, Star, Users, BookOpen, Globe, Youtube, GraduationCap, Award,
   ExternalLink, ArrowLeft, Layers, FileText, PackagePlus, Eye,
