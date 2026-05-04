@@ -7,6 +7,7 @@ import { BookOpen, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { iconMap, cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
 import type { PersonalizedExploreData } from "@/hooks/usePersonalizedExplore";
+import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
 
 interface ResourcesTabProps {
   personalizedData: PersonalizedExploreData;
@@ -21,7 +22,16 @@ export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
   });
 
   return (
-    <section>
+    <section className="space-y-10">
+      <MLRecommendationsSection
+        surface="explore"
+        limit={6}
+        title="Recommended for you"
+        subtitle="Personalized via hybrid ML ranking — your activity + interests + community ratings"
+        hideIfEmpty
+      />
+
+      <div>
       <div className="mb-8">
         <h2 className="text-2xl font-bold flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-orange-500/10">
@@ -101,6 +111,7 @@ export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
           })}
         </div>
       )}
+      </div>
     </section>
   );
 }

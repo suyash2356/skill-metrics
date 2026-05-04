@@ -763,6 +763,7 @@ export type Database = {
           rank_position: number | null
           reason: string | null
           resource_id: string
+          surface: string | null
           user_id: string
         }
         Insert: {
@@ -773,6 +774,7 @@ export type Database = {
           rank_position?: number | null
           reason?: string | null
           resource_id: string
+          surface?: string | null
           user_id: string
         }
         Update: {
@@ -783,6 +785,7 @@ export type Database = {
           rank_position?: number | null
           reason?: string | null
           resource_id?: string
+          surface?: string | null
           user_id?: string
         }
         Relationships: []
