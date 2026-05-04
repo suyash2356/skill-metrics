@@ -495,6 +495,13 @@ const Home = () => {
 
           {/* Right Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
+            {/* ML Resource Recommendations */}
+            <Card className="border-primary/20">
+              <CardContent className="p-4">
+                <MLResourcesCompact />
+              </CardContent>
+            </Card>
+
             {/* Recommended Roadmaps */}
             {personalizedData && personalizedData.roadmaps.length > 0 && (
               <Card className="border-primary/20">
