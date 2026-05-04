@@ -19,6 +19,7 @@ import { getTopVideosByViews } from "@/lib/videosData";
 import { usePersonalizedFeed } from "@/hooks/usePersonalizedFeed";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { usePostInteractions } from "@/hooks/usePostInteractions";
+import { useHybridRecommendations, useLogImpressions, logRecommendationClick } from "@/hooks/useRecommendations";
 
 import type { Database } from '@/integrations/supabase/types';
 type Post = Database['public']['Tables']['posts']['Row'];
