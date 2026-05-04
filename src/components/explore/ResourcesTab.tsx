@@ -7,6 +7,7 @@ import { BookOpen, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { iconMap, cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
 import type { PersonalizedExploreData } from "@/hooks/usePersonalizedExplore";
+import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
 
 interface ResourcesTabProps {
   personalizedData: PersonalizedExploreData;
