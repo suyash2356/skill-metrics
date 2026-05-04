@@ -111,6 +111,7 @@ export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
           })}
         </div>
       )}
+      </div>
     </section>
   );
 }
