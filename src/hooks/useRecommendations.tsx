@@ -45,7 +45,7 @@ async function fetchHybridRecommendations(
 ): Promise<{ items: MLRecommendation[]; meta?: MLRecommendMeta; fallback: boolean }> {
   const limit = opts.limit ?? 12;
   // When filtering by resource type, fetch a larger batch so we have enough after filtering
-  const fetchLimit = opts.resourceType ? Math.max(limit * 5, 50) : limit;
+  const fetchLimit = opts.resourceType ? Math.max(limit * 20, 200) : limit;
 
   // ── 1. Try local FastAPI ML model ──────────────────────────────────────
   try {
@@ -65,11 +65,15 @@ async function fetchHybridRecommendations(
     // Grab the recommended titles so we can look up full resource details
     const titles = json.recommendations.map((r) => r.title);
 
-    // Query Supabase resources table for matching titles
-    const { data: resources } = await supabase
+    // Query Supabase resources table for matching titles, optionally filtered by type
+    let resourceQuery = supabase
       .from('resources')
       .select('id, title, description, link, domain, category, difficulty, resource_type, weighted_rating, total_ratings')
       .in('title', titles);
+    if (opts.resourceType) {
+      resourceQuery = resourceQuery.ilike('resource_type', opts.resourceType);
+    }
+    const { data: resources } = await resourceQuery;
 
     // Build a lookup map: title -> resource row
     const resourceMap = new Map<string, any>();
@@ -77,39 +81,67 @@ async function fetchHybridRecommendations(
       resourceMap.set(r.title, r);
     });
 
-    // Merge: keep FastAPI ordering, enrich with Supabase details
-    const items: MLRecommendation[] = json.recommendations.map((rec, idx) => {
-      const dbRow = resourceMap.get(rec.title);
-      return {
-        id: dbRow?.id ?? `fastapi-${idx}`,
-        title: rec.title,
-        score: 100 - idx, // higher rank = higher score
-        reason: `Recommended in ${rec.domain}`,
-        description: dbRow?.description ?? null,
-        link: dbRow?.link ?? null,
-        category: dbRow?.category ?? null,
-        domain: rec.domain,
-        difficulty: dbRow?.difficulty ?? null,
-        weighted_rating: dbRow?.weighted_rating ?? null,
-        total_ratings: dbRow?.total_ratings ?? null,
-      };
-    });
+    // Merge: keep FastAPI ordering, enrich with Supabase details.
+    // When resourceType filter is set, drop items not matching that type.
+    const items: MLRecommendation[] = json.recommendations
+      .map((rec, idx) => {
+        const dbRow = resourceMap.get(rec.title);
+        if (opts.resourceType && !dbRow) return null; // strict filter
+        return {
+          id: dbRow?.id ?? `fastapi-${idx}`,
+          title: rec.title,
+          score: 100 - idx,
+          reason: `Recommended in ${rec.domain}`,
+          description: dbRow?.description ?? null,
+          link: dbRow?.link ?? null,
+          category: dbRow?.category ?? null,
+          domain: rec.domain,
+          difficulty: dbRow?.difficulty ?? null,
+          weighted_rating: dbRow?.weighted_rating ?? null,
+          total_ratings: dbRow?.total_ratings ?? null,
+        } as MLRecommendation;
+      })
+      .filter((x): x is MLRecommendation => x !== null);
 
-    // Apply filters: resource type first, then domain
+    // Domain filter (soft — only apply if it leaves results)
     let filtered = items;
-    if (opts.resourceType) {
-      filtered = filtered.filter((i) => {
-        const dbRow = resourceMap.get(i.title);
-        return dbRow?.resource_type?.toLowerCase() === opts.resourceType!.toLowerCase();
-      });
-    }
     if (opts.domain) {
       const domainFiltered = filtered.filter((i) => i.domain?.toLowerCase() === opts.domain!.toLowerCase());
       if (domainFiltered.length > 0) filtered = domainFiltered;
     }
 
+    // If resourceType filter wiped out everything, top up from Supabase
+    // (popular items of that type) so the section isn't empty.
+    if (opts.resourceType && filtered.length < limit) {
+      const { data: topup } = await supabase
+        .from('resources')
+        .select('id, title, description, link, domain, category, difficulty, resource_type, weighted_rating, total_ratings')
+        .eq('is_active', true)
+        .ilike('resource_type', opts.resourceType)
+        .order('weighted_rating', { ascending: false, nullsFirst: false })
+        .limit(limit * 2);
+      const seen = new Set(filtered.map((f) => f.id));
+      (topup || []).forEach((r: any) => {
+        if (seen.has(r.id) || filtered.length >= limit) return;
+        filtered.push({
+          id: r.id,
+          title: r.title,
+          score: 0,
+          reason: 'Popular in community',
+          description: r.description,
+          link: r.link,
+          category: r.category,
+          domain: r.domain,
+          difficulty: r.difficulty,
+          weighted_rating: r.weighted_rating,
+          total_ratings: r.total_ratings,
+        });
+        seen.add(r.id);
+      });
+    }
+
     return {
-      items: (filtered.length > 0 ? filtered : items).slice(0, limit),
+      items: filtered.slice(0, limit),
       meta: {
         surface: opts.surface ?? 'explore',
         mode: 'hybrid',
