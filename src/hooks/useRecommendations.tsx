@@ -163,13 +163,23 @@ async function fetchHybridRecommendations(
           domain: opts.domain ?? null,
           surface: opts.surface ?? 'home',
           query: opts.query ?? null,
-          limit,
+          limit: opts.resourceType ? Math.max(limit * 5, 30) : limit,
         },
       },
     );
 
     if (error || !data?.items) throw error ?? new Error('Empty response');
-    return { items: data.items, meta: data.meta, fallback: false };
+    let items = data.items;
+    if (opts.resourceType && items.length) {
+      const { data: typed } = await supabase
+        .from('resources')
+        .select('id')
+        .in('id', items.map((i) => i.id))
+        .ilike('resource_type', opts.resourceType);
+      const allowed = new Set((typed || []).map((r: any) => r.id));
+      items = items.filter((i) => allowed.has(i.id));
+    }
+    return { items: items.slice(0, limit), meta: data.meta, fallback: false };
   } catch (edgeFnErr) {
     console.warn('[ml-recommend] edge fn failed, trying RPC:', edgeFnErr);
   }
