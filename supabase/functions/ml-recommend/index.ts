@@ -129,16 +129,18 @@ Deno.serve(async (req: Request) => {
     if (resErr) throw resErr;
     let resources = (rawResources ?? []) as ResourceRow[];
 
-    // Cold-start fallback: pull global popular if domain filter returned <8
+    // Cold-start fallback: pull global popular if filter returned <8
     if (resources.length < 8) {
-      const { data: extra } = await supabase
+      let extraQ = supabase
         .from("resources")
         .select(
-          "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link",
+          "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link, resource_type, section_type",
         )
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
         .limit(50);
+      if (resourceType) extraQ = extraQ.ilike("resource_type", resourceType);
+      const { data: extra } = await extraQ;
       const seen = new Set(resources.map((r) => r.id));
       (extra ?? []).forEach((r: any) => {
         if (!seen.has(r.id)) resources.push(r as ResourceRow);
