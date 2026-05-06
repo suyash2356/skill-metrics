@@ -23,6 +23,12 @@ interface MLRecommendationsSectionProps {
   hideIfEmpty?: boolean;
   /** Filter results to a specific resource_type (e.g. 'certification', 'degree'). */
   resourceType?: string | null;
+  /**
+   * If true, the model is fed admin resources from ALL domains (used for
+   * explore page tabs). If false/undefined, results are scoped to the
+   * given/user's domain (used for skill-graph).
+   */
+  ignoreDomain?: boolean;
 }
 
 export function MLRecommendationsSection({
@@ -34,15 +40,19 @@ export function MLRecommendationsSection({
   subtitle = "Hybrid ML ranking blending your activity, interests, and community ratings",
   hideIfEmpty = false,
   resourceType = null,
+  ignoreDomain,
 }: MLRecommendationsSectionProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  // Default behavior: explore surface feeds ALL admin domains together.
+  const effectiveIgnoreDomain = ignoreDomain ?? (surface === "explore");
   const { data, isLoading } = useHybridRecommendations(user?.id, {
     surface,
     domain,
     query,
     limit,
     resourceType,
+    ignoreDomain: effectiveIgnoreDomain,
   });
 
   const items = data?.items ?? [];

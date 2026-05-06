@@ -18,6 +18,9 @@ interface ReqBody {
   surface?: "home" | "explore" | "search" | "skill";
   query?: string | null;
   limit?: number;
+  resource_type?: string | null;
+  /** When true, do NOT filter by domain — feed model all admin resources. */
+  ignore_domain?: boolean;
 }
 
 interface ResourceRow {
@@ -69,6 +72,8 @@ Deno.serve(async (req: Request) => {
     const surface = body.surface ?? "home";
     const query = (body.query ?? "").trim().toLowerCase();
     const limit = Math.min(Math.max(body.limit ?? 12, 1), 50);
+    const resourceType = (body.resource_type ?? "").trim().toLowerCase() || null;
+    const ignoreDomain = !!body.ignore_domain;
 
     // 1) User context: preferences + interactions
     const [{ data: prefs }, { data: interactions }] = await Promise.all([
@@ -93,24 +98,28 @@ Deno.serve(async (req: Request) => {
     });
     const hasInteractions = interactionMap.size > 0;
 
-    const userDomain =
-      domain || (prefs as any)?.primary_domain || null;
+    const userDomain = ignoreDomain
+      ? null
+      : (domain || (prefs as any)?.primary_domain || null);
     const interests: string[] =
       ((prefs as any)?.interests as string[] | null) ?? [];
 
-    // 2) Candidate resources
+    // 2) Candidate resources (sourced from admin-managed `resources` table)
     let q = supabase
       .from("resources")
       .select(
-        "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link",
+        "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link, resource_type, section_type",
       )
       .eq("is_active", true)
-      .limit(400);
+      .limit(800);
 
     if (userDomain) {
       q = q.or(
         `domain.ilike.%${userDomain}%,category.ilike.%${userDomain}%`,
       );
+    }
+    if (resourceType) {
+      q = q.ilike("resource_type", resourceType);
     }
     if (query) {
       q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
@@ -120,16 +129,18 @@ Deno.serve(async (req: Request) => {
     if (resErr) throw resErr;
     let resources = (rawResources ?? []) as ResourceRow[];
 
-    // Cold-start fallback: pull global popular if domain filter returned <8
+    // Cold-start fallback: pull global popular if filter returned <8
     if (resources.length < 8) {
-      const { data: extra } = await supabase
+      let extraQ = supabase
         .from("resources")
         .select(
-          "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link",
+          "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link, resource_type, section_type",
         )
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
         .limit(50);
+      if (resourceType) extraQ = extraQ.ilike("resource_type", resourceType);
+      const { data: extra } = await extraQ;
       const seen = new Set(resources.map((r) => r.id));
       (extra ?? []).forEach((r: any) => {
         if (!seen.has(r.id)) resources.push(r as ResourceRow);

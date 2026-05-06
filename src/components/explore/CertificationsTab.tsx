@@ -28,7 +28,7 @@ export function CertificationsTab({ personalizedData }: CertificationsTabProps) 
     <section className="space-y-10">
       <MLRecommendationsSection
         surface="explore"
-        limit={6}
+        limit={12}
         title="Recommended Certifications"
         subtitle="Personalized via hybrid ML ranking — your activity + interests + community ratings"
         hideIfEmpty
