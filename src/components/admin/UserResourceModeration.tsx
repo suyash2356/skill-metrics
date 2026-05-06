@@ -31,7 +31,11 @@ interface UserResource {
   created_at: string;
 }
 
-const UserResourceModeration = () => {
+interface UserResourceModerationProps {
+  search?: string;
+}
+
+const UserResourceModeration = ({ search = '' }: UserResourceModerationProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState('pending');
@@ -50,6 +54,19 @@ const UserResourceModeration = () => {
       return data as UserResource[];
     },
   });
+
+  const filteredResources = search.trim()
+    ? resources.filter((r) => {
+        const q = search.toLowerCase();
+        return (
+          r.title.toLowerCase().includes(q) ||
+          (r.description || '').toLowerCase().includes(q) ||
+          (r.category || '').toLowerCase().includes(q) ||
+          (r.resource_type || '').toLowerCase().includes(q) ||
+          (r.tags || []).some((t) => t.toLowerCase().includes(q))
+        );
+      })
+    : resources;
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status, note }: { id: string; status: string; note?: string }) => {
