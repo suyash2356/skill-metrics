@@ -8,8 +8,9 @@ import { useIsAdmin, useResources, Resource } from '@/hooks/useAdmin';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Shield, LogOut, Loader2, BookOpen, Database, Eye, Star,
-  Layers, GraduationCap, Download, ArrowLeft, Users
+  Layers, GraduationCap, Download, ArrowLeft, Users, Search
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import EnhancedResourceForm from '@/components/admin/EnhancedResourceForm';
 import ImportExportDialog from '@/components/admin/ImportExportDialog';
 import CategoryManager from '@/components/admin/CategoryManager';
