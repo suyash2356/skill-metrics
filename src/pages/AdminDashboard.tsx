@@ -31,6 +31,7 @@ const AdminDashboard = () => {
   const [selectedSection, setSelectedSection] = useState<'domain' | 'exam' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('domains');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Redirect if not admin
   if (!adminLoading && !isAdmin) {
