@@ -8,8 +8,9 @@ import { useIsAdmin, useResources, Resource } from '@/hooks/useAdmin';
 import { useAuth } from '@/hooks/useAuth';
 import { 
   Shield, LogOut, Loader2, BookOpen, Database, Eye, Star,
-  Layers, GraduationCap, Download, ArrowLeft, Users
+  Layers, GraduationCap, Download, ArrowLeft, Users, Search
 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import EnhancedResourceForm from '@/components/admin/EnhancedResourceForm';
 import ImportExportDialog from '@/components/admin/ImportExportDialog';
 import CategoryManager from '@/components/admin/CategoryManager';
@@ -30,6 +31,7 @@ const AdminDashboard = () => {
   const [selectedSection, setSelectedSection] = useState<'domain' | 'exam' | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<string>('domains');
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Redirect if not admin
   if (!adminLoading && !isAdmin) {
@@ -53,6 +55,19 @@ const AdminDashboard = () => {
     domains: [...new Set(resources.filter(r => r.section_type === 'domain').map(r => r.category))].length,
     exams: [...new Set(resources.filter(r => r.section_type === 'exam').map(r => r.category))].length,
   };
+
+  const domainCounts = resources.reduce<Record<string, number>>((acc, r) => {
+    if (r.section_type === 'domain' || !r.section_type) {
+      acc[r.category] = (acc[r.category] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const examCounts = resources.reduce<Record<string, number>>((acc, r) => {
+    if (r.section_type === 'exam') {
+      acc[r.category] = (acc[r.category] || 0) + 1;
+    }
+    return acc;
+  }, {});
 
   const handleLogout = async () => {
     await signOut();
@@ -235,8 +250,8 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3 mb-6">
+              <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchQuery(''); }}>
+                <TabsList className="grid w-full grid-cols-3 mb-4">
                   <TabsTrigger value="domains" className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     Domains
@@ -251,10 +266,26 @@ const AdminDashboard = () => {
                   </TabsTrigger>
                 </TabsList>
 
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={
+                      activeTab === 'domains' ? 'Search domains by name or description...' :
+                      activeTab === 'exams' ? 'Search exams by name or description...' :
+                      'Search user resources by title, description, category, or tags...'
+                    }
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
                 <TabsContent value="domains">
                   <CategoryManager 
                     type="domain"
                     onCategorySelect={handleDomainSelect}
+                    search={searchQuery}
+                    resourceCounts={domainCounts}
                   />
                 </TabsContent>
 
@@ -262,11 +293,13 @@ const AdminDashboard = () => {
                   <CategoryManager 
                     type="exam"
                     onCategorySelect={handleExamSelect}
+                    search={searchQuery}
+                    resourceCounts={examCounts}
                   />
                 </TabsContent>
 
                 <TabsContent value="user-resources">
-                  <UserResourceModeration />
+                  <UserResourceModeration search={searchQuery} />
                 </TabsContent>
               </Tabs>
             </CardContent>
