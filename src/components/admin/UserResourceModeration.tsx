@@ -111,13 +111,13 @@ const UserResourceModeration = ({ search = '' }: UserResourceModerationProps) =>
         </TabsList>
       </Tabs>
 
-      {resources.length === 0 ? (
+      {filteredResources.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">
-          <p>No {tab === 'all' ? '' : tab} resources found</p>
+          <p>No {tab === 'all' ? '' : tab} resources {search ? `match "${search}"` : 'found'}</p>
         </div>
       ) : (
         <div className="space-y-3">
-          {resources.map(resource => (
+          {filteredResources.map(resource => (
             <Card key={resource.id} className="hover:border-primary/30 transition-colors">
               <CardContent className="p-4">
                 <div className="flex items-start justify-between gap-4">
