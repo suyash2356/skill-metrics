@@ -18,6 +18,9 @@ interface ReqBody {
   surface?: "home" | "explore" | "search" | "skill";
   query?: string | null;
   limit?: number;
+  resource_type?: string | null;
+  /** When true, do NOT filter by domain — feed model all admin resources. */
+  ignore_domain?: boolean;
 }
 
 interface ResourceRow {
