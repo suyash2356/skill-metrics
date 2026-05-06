@@ -56,6 +56,19 @@ const AdminDashboard = () => {
     exams: [...new Set(resources.filter(r => r.section_type === 'exam').map(r => r.category))].length,
   };
 
+  const domainCounts = resources.reduce<Record<string, number>>((acc, r) => {
+    if (r.section_type === 'domain' || !r.section_type) {
+      acc[r.category] = (acc[r.category] || 0) + 1;
+    }
+    return acc;
+  }, {});
+  const examCounts = resources.reduce<Record<string, number>>((acc, r) => {
+    if (r.section_type === 'exam') {
+      acc[r.category] = (acc[r.category] || 0) + 1;
+    }
+    return acc;
+  }, {});
+
   const handleLogout = async () => {
     await signOut();
     navigate('/');
