@@ -72,6 +72,8 @@ Deno.serve(async (req: Request) => {
     const surface = body.surface ?? "home";
     const query = (body.query ?? "").trim().toLowerCase();
     const limit = Math.min(Math.max(body.limit ?? 12, 1), 50);
+    const resourceType = (body.resource_type ?? "").trim().toLowerCase() || null;
+    const ignoreDomain = !!body.ignore_domain;
 
     // 1) User context: preferences + interactions
     const [{ data: prefs }, { data: interactions }] = await Promise.all([
