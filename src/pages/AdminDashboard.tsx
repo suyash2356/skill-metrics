@@ -250,8 +250,8 @@ const AdminDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="grid w-full grid-cols-3 mb-6">
+              <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchQuery(''); }}>
+                <TabsList className="grid w-full grid-cols-3 mb-4">
                   <TabsTrigger value="domains" className="flex items-center gap-2">
                     <Layers className="h-4 w-4" />
                     Domains
@@ -266,10 +266,26 @@ const AdminDashboard = () => {
                   </TabsTrigger>
                 </TabsList>
 
+                <div className="relative mb-6">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder={
+                      activeTab === 'domains' ? 'Search domains by name or description...' :
+                      activeTab === 'exams' ? 'Search exams by name or description...' :
+                      'Search user resources by title, description, category, or tags...'
+                    }
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
+
                 <TabsContent value="domains">
                   <CategoryManager 
                     type="domain"
                     onCategorySelect={handleDomainSelect}
+                    search={searchQuery}
+                    resourceCounts={domainCounts}
                   />
                 </TabsContent>
 
@@ -277,11 +293,13 @@ const AdminDashboard = () => {
                   <CategoryManager 
                     type="exam"
                     onCategorySelect={handleExamSelect}
+                    search={searchQuery}
+                    resourceCounts={examCounts}
                   />
                 </TabsContent>
 
                 <TabsContent value="user-resources">
-                  <UserResourceModeration />
+                  <UserResourceModeration search={searchQuery} />
                 </TabsContent>
               </Tabs>
             </CardContent>
