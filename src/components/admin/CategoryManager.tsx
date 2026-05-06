@@ -91,11 +91,18 @@ const CategoryManager = ({ type, onCategorySelect, search = '', resourceCounts =
 
   const typeLabel = type === 'domain' ? 'Domain' : 'Exam';
 
+  const filteredCategories = search.trim()
+    ? categories.filter((c) =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        (c.description || '').toLowerCase().includes(search.toLowerCase())
+      )
+    : categories;
+
   return (
     <div>
       <div className="flex justify-between items-center mb-4">
         <p className="text-sm text-muted-foreground">
-          {categories.length} {typeLabel.toLowerCase()}(s) available
+          {filteredCategories.length} of {categories.length} {typeLabel.toLowerCase()}(s)
         </p>
         <Button onClick={handleAdd}>
           <Plus className="mr-2 h-4 w-4" />
@@ -103,21 +110,23 @@ const CategoryManager = ({ type, onCategorySelect, search = '', resourceCounts =
         </Button>
       </div>
 
-      {categories.length === 0 ? (
+      {filteredCategories.length === 0 ? (
         <div className="text-center py-12">
           <Package className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-          <h3 className="text-lg font-semibold mb-2">No {typeLabel}s Yet</h3>
+          <h3 className="text-lg font-semibold mb-2">No {typeLabel}s {search ? 'Match' : 'Yet'}</h3>
           <p className="text-muted-foreground mb-4">
-            Create your first {typeLabel.toLowerCase()} to start organizing resources.
+            {search ? `No ${typeLabel.toLowerCase()}s match "${search}".` : `Create your first ${typeLabel.toLowerCase()} to start organizing resources.`}
           </p>
-          <Button onClick={handleAdd}>
-            <Plus className="mr-2 h-4 w-4" />
-            Add {typeLabel}
-          </Button>
+          {!search && (
+            <Button onClick={handleAdd}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add {typeLabel}
+            </Button>
+          )}
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => {
+          {filteredCategories.map((category) => {
             const IconComponent = ICON_MAP[category.icon || ''] || (type === 'domain' ? Layers : GraduationCap);
             const gradient = category.color || (type === 'domain' ? 'from-indigo-500 to-purple-500' : 'from-green-500 to-emerald-500');
 
