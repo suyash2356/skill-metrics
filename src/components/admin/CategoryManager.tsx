@@ -162,7 +162,10 @@ const CategoryManager = ({ type, onCategorySelect, search = '', resourceCounts =
                   )}
                   
                   <div className="flex items-center justify-between">
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 flex-wrap">
+                      <Badge variant="secondary" className="text-xs">
+                        {resourceCounts[category.name] ?? 0} resources
+                      </Badge>
                       <Badge variant="outline" className="text-xs">
                         Order: {category.display_order}
                       </Badge>
