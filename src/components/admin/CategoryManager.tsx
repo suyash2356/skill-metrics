@@ -41,9 +41,11 @@ const ICON_MAP: Record<string, React.ElementType> = {
 interface CategoryManagerProps {
   type: 'domain' | 'exam';
   onCategorySelect: (category: string) => void;
+  search?: string;
+  resourceCounts?: Record<string, number>;
 }
 
-const CategoryManager = ({ type, onCategorySelect }: CategoryManagerProps) => {
+const CategoryManager = ({ type, onCategorySelect, search = '', resourceCounts = {} }: CategoryManagerProps) => {
   const { data: categories = [], isLoading } = useCategories(type);
   const deleteCategory = useDeleteCategory();
   
