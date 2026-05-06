@@ -98,24 +98,28 @@ Deno.serve(async (req: Request) => {
     });
     const hasInteractions = interactionMap.size > 0;
 
-    const userDomain =
-      domain || (prefs as any)?.primary_domain || null;
+    const userDomain = ignoreDomain
+      ? null
+      : (domain || (prefs as any)?.primary_domain || null);
     const interests: string[] =
       ((prefs as any)?.interests as string[] | null) ?? [];
 
-    // 2) Candidate resources
+    // 2) Candidate resources (sourced from admin-managed `resources` table)
     let q = supabase
       .from("resources")
       .select(
-        "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link",
+        "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link, resource_type, section_type",
       )
       .eq("is_active", true)
-      .limit(400);
+      .limit(800);
 
     if (userDomain) {
       q = q.or(
         `domain.ilike.%${userDomain}%,category.ilike.%${userDomain}%`,
       );
+    }
+    if (resourceType) {
+      q = q.ilike("resource_type", resourceType);
     }
     if (query) {
       q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
