@@ -29,7 +29,7 @@ export function DegreesTab({ personalizedData }: DegreesTabProps) {
     <section className="space-y-10">
       <MLRecommendationsSection
         surface="explore"
-        limit={6}
+        limit={12}
         title="Recommended Degrees"
         subtitle="Personalized via hybrid ML ranking — your activity + interests + community ratings"
         hideIfEmpty
