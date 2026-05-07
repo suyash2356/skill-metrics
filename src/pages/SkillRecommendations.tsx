@@ -234,29 +234,7 @@ export default function SkillRecommendations() {
                 ))}
               </TabsList>
 
-              {/* Show ML Recommendations at the top of 'all' tab */}
               <TabsContent value="all" className="space-y-6">
-                {mlRecommendations && mlRecommendations.length > 0 && (
-                  <div className="mb-8">
-                    <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                      <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
-                      Recommended for You
-                    </h3>
-                    <div className="grid md:grid-cols-2 gap-4">
-                      {mlRecommendations.map((mlRec) => {
-                        // Map MLRecommendation to the UI Recommendation type format for ResourceCard
-                        const mockRec: Recommendation = {
-                          title: mlRec.title,
-                          type: 'course', // Default fallback
-                          url: '#',
-                          description: `Personalized match (Score: ${mlRec.score})`
-                        };
-                        return <ResourceCard key={`ml-${mlRec.id}`} recommendation={mockRec} typeIcon={typeIcon} />;
-                      })}
-                    </div>
-                  </div>
-                )}
-                
                 <h3 className="text-xl font-bold mb-4">All Resources</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   {loading && <div className="text-sm text-muted-foreground">Loading resources…</div>}
