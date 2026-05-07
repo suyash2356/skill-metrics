@@ -1,7 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Sparkles, ExternalLink, Star } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Sparkles, ExternalLink, Star, AlertTriangle, Database, Globe2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
