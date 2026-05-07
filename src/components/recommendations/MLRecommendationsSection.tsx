@@ -74,16 +74,47 @@ export function MLRecommendationsSection({
         <div className="p-2 rounded-xl bg-primary/10 text-primary">
           <Sparkles className="h-5 w-5" />
         </div>
-        <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
+        <div className="flex-1">
+          <h2 className="text-xl font-bold flex items-center gap-2 flex-wrap">
             {title}
             <Badge variant="secondary" className="text-[10px]">
               {data?.fallback ? "fallback" : "ML"}
             </Badge>
+            <Badge variant="outline" className="text-[10px] gap-1">
+              <Database className="h-3 w-3" /> Admin resources
+            </Badge>
+            <Badge variant="outline" className="text-[10px] gap-1">
+              {effectiveIgnoreDomain ? (
+                <><Globe2 className="h-3 w-3" /> All domains</>
+              ) : (
+                <>Domain-scoped{data?.meta?.domain ? `: ${data.meta.domain}` : ""}</>
+              )}
+            </Badge>
+            {typeof data?.meta?.candidate_count === "number" && (
+              <Badge variant="outline" className="text-[10px]">
+                {data.meta.candidate_count} candidates
+              </Badge>
+            )}
+            {resourceType && (
+              <Badge variant="outline" className="text-[10px] capitalize">
+                type: {resourceType}
+              </Badge>
+            )}
           </h2>
           <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
         </div>
       </div>
+
+      {!isLoading && items.length > 0 && items.length < 10 && (
+        <Alert className="mb-3 border-amber-500/40 bg-amber-500/5">
+          <AlertTriangle className="h-4 w-4 text-amber-600" />
+          <AlertDescription className="text-xs">
+            Low resource pool — only {items.length} {resourceType ? `${resourceType}(s)` : "items"} available
+            {effectiveIgnoreDomain ? " across admin domains" : data?.meta?.domain ? ` for "${data.meta.domain}"` : ""}.
+            Add more in the admin panel for richer recommendations.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {isLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
