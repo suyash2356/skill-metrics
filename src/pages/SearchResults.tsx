@@ -134,19 +134,12 @@ export default function SearchResults() {
         {!loading && results && (
           <div className="space-y-8">
             {totalResults === 0 && domainMatches.length === 0 && (
-              <div className="space-y-8">
-                <div className="text-center py-10">
-                  <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <h2 className="text-xl font-bold mb-2">No direct matches</h2>
-                  <p className="text-muted-foreground">Here are some ML-picked resources you might like instead</p>
-                </div>
-                <MLRecommendationsSection
-                  surface="search"
-                  query={params.get("q")}
-                  limit={9}
-                  title="You might like these"
-                  subtitle="Hybrid ML ranking based on your profile and community signals"
-                />
+              <div className="text-center py-10">
+                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h2 className="text-xl font-bold mb-2">No matches found</h2>
+                <p className="text-muted-foreground">
+                  Try a different search term, or browse curated resources by domain in Explore.
+                </p>
               </div>
             )}
 
