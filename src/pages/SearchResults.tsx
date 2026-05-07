@@ -390,16 +390,6 @@ export default function SearchResults() {
                 </div>
               </section>
             )}
-            {totalResults > 0 && (
-              <MLRecommendationsSection
-                surface="search"
-                query={params.get("q")}
-                limit={6}
-                title="More you might like"
-                subtitle="Hybrid ML picks beyond the keyword match"
-                hideIfEmpty
-              />
-            )}
           </div>
         )}
       </div>
