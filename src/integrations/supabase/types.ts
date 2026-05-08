@@ -944,6 +944,7 @@ export type Database = {
           is_active: boolean | null
           is_featured: boolean | null
           is_free: boolean
+          language: string
           learning_outcomes: string[] | null
           link: string
           prerequisites: string[] | null
@@ -982,6 +983,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean
+          language?: string
           learning_outcomes?: string[] | null
           link: string
           prerequisites?: string[] | null
@@ -1020,6 +1022,7 @@ export type Database = {
           is_active?: boolean | null
           is_featured?: boolean | null
           is_free?: boolean
+          language?: string
           learning_outcomes?: string[] | null
           link?: string
           prerequisites?: string[] | null
