@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Layout } from "@/components/Layout";
+import { PageSEO } from "@/components/PageSEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -340,13 +341,19 @@ const Home = () => {
 
   return (
     <Layout>
+      <PageSEO
+        title="Your Learning Feed"
+        description="A personalized learning feed with posts, roadmaps, trending topics, and curated videos tailored to your interests on Skill-Metrics."
+        path="/home"
+      />
       <div className="w-full max-w-7xl mx-auto">
+        <h1 className="sr-only">Your Learning Feed</h1>
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-6">
           {/* Left Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
             <Card>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-4">My Roadmaps</h3>
+                <h2 className="font-semibold mb-4 text-base">My Roadmaps</h2>
                 <div className="space-y-2">
                   {isLoadingMyRoadmaps ? (
                     <div className="text-sm text-muted-foreground">Loading...</div>
@@ -368,7 +375,7 @@ const Home = () => {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-4">My Communities</h3>
+                <h2 className="font-semibold mb-4 text-base">My Communities</h2>
                 <div className="space-y-2">
                   {isLoadingMyCommunityLinks ? (
                     <div className="text-sm text-muted-foreground">Loading...</div>
@@ -504,7 +511,7 @@ const Home = () => {
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="h-5 w-5 text-primary" />
-                    <h3 className="font-semibold">Recommended for You</h3>
+                    <h2 className="font-semibold text-base">Recommended for You</h2>
                   </div>
                   <div className="space-y-3">
                     {personalizedData.roadmaps.slice(0, 3).map((roadmap) => (
@@ -534,7 +541,7 @@ const Home = () => {
 
             <Card>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-4">Trending Topics</h3>
+                <h2 className="font-semibold mb-4 text-base">Trending Topics</h2>
                 <div className="space-y-2">
                   {isLoadingTrending ? (
                     <div className="text-sm text-muted-foreground">Loading...</div>
@@ -550,7 +557,7 @@ const Home = () => {
             </Card>
             <Card>
               <CardContent className="p-4">
-                <h3 className="font-semibold mb-4">New Videos</h3>
+                <h2 className="font-semibold mb-4 text-base">New Videos</h2>
                 <div className="space-y-3">
                   {topVideos.length === 0 ? (
                     <div className="text-sm text-muted-foreground">No videos found</div>
