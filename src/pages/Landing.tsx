@@ -20,6 +20,7 @@ import {
 import heroImage from "@/assets/hero-education.jpg";
 import { useAuth } from "@/hooks/useAuth";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
+import { PageSEO } from "@/components/PageSEO";
 import { useRef, useEffect, useState } from "react";
 
 /* ─── Animated Section wrapper ─── */
@@ -136,6 +137,11 @@ const Landing = () => {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden scroll-smooth">
+      <PageSEO
+        title="Skill-Metrics — AI-Powered Learning Platform"
+        description="Master any skill with AI-generated learning roadmaps and curated resources across tech, arts, finance, and sciences. Join thousands advancing their careers."
+        path="/"
+      />
       {/* ─── Sticky Header ─── */}
       <motion.header
         className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/30"

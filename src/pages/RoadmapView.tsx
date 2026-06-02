@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Layout } from "@/components/Layout";
+import { PageSEO } from "@/components/PageSEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -461,8 +462,24 @@ const RoadmapView = () => {
 
   const phaseOrder = ['Introduction', 'Beginner', 'Intermediate', 'Advanced', 'Milestone', 'Final Outcome', 'General'];
 
+  const courseSchema = roadmap ? {
+    "@context": "https://schema.org",
+    "@type": "Course",
+    name: roadmap.title,
+    description: roadmap.description || `Personalized learning roadmap: ${roadmap.title}`,
+    provider: { "@type": "Organization", name: "Skill-Metrics", sameAs: "https://skills-metrics.lovable.app/" },
+  } : undefined;
+
   return (
     <Layout>
+      {roadmap && (
+        <PageSEO
+          title={`${roadmap.title} — Learning Roadmap`}
+          description={(roadmap.description || `Step-by-step learning roadmap for ${roadmap.title} with curated resources and progress tracking.`).slice(0, 160)}
+          path={`/roadmaps/${roadmap.id}`}
+          jsonLd={courseSchema}
+        />
+      )}
       <div className="container mx-auto px-4 py-6 max-w-6xl">
         <div className="flex justify-between items-center mb-4">
           <Button variant="ghost" onClick={() => navigate(-1)} className="pl-0">

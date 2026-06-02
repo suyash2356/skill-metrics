@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
+import { PageSEO } from "@/components/PageSEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -111,6 +112,11 @@ const MyRoadmaps = () => {
 
   return (
     <Layout>
+      <PageSEO
+        title="My Learning Roadmaps"
+        description="Track progress and manage your personalized AI-generated learning roadmaps on Skill-Metrics."
+        path="/roadmaps"
+      />
       <div className="container mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 gap-4">
