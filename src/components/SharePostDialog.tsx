@@ -8,7 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Send, X, Check } from "lucide-react";
+import { Search, Send, Check, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -19,16 +19,25 @@ interface SharePostDialogProps {
     postId: string;
 }
 
-interface Profile {
-    user_id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-}
+type Target =
+    | {
+        kind: "user";
+        id: string; // user_id
+        name: string;
+        avatar_url: string | null;
+    }
+    | {
+        kind: "group";
+        id: string; // conversation_id
+        name: string;
+        avatar_url: string | null;
+        memberCount: number;
+    };
 
 export const SharePostDialog = ({ open, onOpenChange, postId }: SharePostDialogProps) => {
     const [query, setQuery] = useState("");
-    const [friends, setFriends] = useState<Profile[]>([]);
-    const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+    const [targets, setTargets] = useState<Target[]>([]);
+    const [selected, setSelected] = useState<Set<string>>(new Set()); // key = `${kind}:${id}`
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
     const { user } = useAuth();
@@ -36,110 +45,147 @@ export const SharePostDialog = ({ open, onOpenChange, postId }: SharePostDialogP
 
     useEffect(() => {
         if (open && user) {
-            fetchMutualFriends();
+            fetchTargets();
         } else {
-            // Reset state when closed
             setQuery("");
-            setSelectedUsers(new Set());
+            setSelected(new Set());
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, user]);
 
-    const fetchMutualFriends = async () => {
+    const fetchTargets = async () => {
         if (!user) return;
         setIsLoading(true);
         try {
-            // 1. Get people I follow
+            // ---- Mutual followers (1:1 targets) ----
             const { data: following } = await supabase
-                .from("followers") // Changed from 'follows'
+                .from("followers")
                 .select("following_id")
                 .eq("follower_id", user.id);
-
             const followingIds = (following || []).map((f) => f.following_id);
 
-            if (followingIds.length === 0) {
-                setFriends([]);
-                return;
+            let mutualProfiles: { user_id: string; full_name: string | null; avatar_url: string | null }[] = [];
+            if (followingIds.length > 0) {
+                const { data: mutuals } = await supabase
+                    .from("followers")
+                    .select("follower_id")
+                    .eq("following_id", user.id)
+                    .in("follower_id", followingIds);
+                const mutualIds = (mutuals || []).map((m) => m.follower_id);
+                if (mutualIds.length > 0) {
+                    const { data: profiles } = await supabase
+                        .from("profiles")
+                        .select("user_id, full_name, avatar_url")
+                        .in("user_id", mutualIds);
+                    mutualProfiles = profiles || [];
+                }
             }
 
-            // 2. Get people who follow me back (from the list of people I follow)
-            const { data: mutuals } = await supabase
-                .from("followers") // Changed from 'follows'
-                .select("follower_id")
-                .eq("following_id", user.id)
-                .in("follower_id", followingIds);
+            // ---- Group conversations the user is in ----
+            const { data: myParts } = await supabase
+                .from("conversation_participants")
+                .select("conversation_id")
+                .eq("user_id", user.id);
+            const convIds = (myParts || []).map((p) => p.conversation_id);
 
-            const mutualIds = (mutuals || []).map((m) => m.follower_id);
+            let groups: Target[] = [];
+            if (convIds.length > 0) {
+                const { data: convs } = await supabase
+                    .from("conversations")
+                    .select("id, is_group, group_name, group_avatar_url")
+                    .in("id", convIds)
+                    .eq("is_group", true);
 
-            if (mutualIds.length === 0) {
-                setFriends([]);
-                return;
+                const groupIds = (convs || []).map((c) => c.id);
+                const countMap: Record<string, number> = {};
+                if (groupIds.length > 0) {
+                    const { data: allParts } = await supabase
+                        .from("conversation_participants")
+                        .select("conversation_id")
+                        .in("conversation_id", groupIds);
+                    (allParts || []).forEach((p) => {
+                        countMap[p.conversation_id] = (countMap[p.conversation_id] || 0) + 1;
+                    });
+                }
+
+                groups = (convs || []).map((c) => ({
+                    kind: "group" as const,
+                    id: c.id,
+                    name: c.group_name || "Group",
+                    avatar_url: c.group_avatar_url,
+                    memberCount: countMap[c.id] || 0,
+                }));
             }
 
-            // 3. Get profile details
-            const { data: profiles } = await supabase
-                .from("profiles")
-                .select("user_id, full_name, avatar_url")
-                .in("user_id", mutualIds);
+            const users: Target[] = mutualProfiles.map((p) => ({
+                kind: "user" as const,
+                id: p.user_id,
+                name: p.full_name || "Unknown",
+                avatar_url: p.avatar_url,
+            }));
 
-            setFriends(profiles || []);
+            // Groups first, then mutuals
+            setTargets([...groups, ...users]);
         } catch (error) {
-            console.error("Error fetching friends:", error);
+            console.error("Error fetching share targets:", error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleSelect = (userId: string) => {
-        const newSelected = new Set(selectedUsers);
-        if (newSelected.has(userId)) {
-            newSelected.delete(userId);
-        } else {
-            newSelected.add(userId);
-        }
-        setSelectedUsers(newSelected);
+    const keyOf = (t: Target) => `${t.kind}:${t.id}`;
+
+    const handleSelect = (t: Target) => {
+        const k = keyOf(t);
+        const next = new Set(selected);
+        if (next.has(k)) next.delete(k);
+        else next.add(k);
+        setSelected(next);
     };
 
     const handleSend = async () => {
-        if (!user || selectedUsers.size === 0) return;
+        if (!user || selected.size === 0) return;
         setIsSending(true);
 
         try {
-            const selectedIds = Array.from(selectedUsers);
+            const chosen = targets.filter((t) => selected.has(keyOf(t)));
 
-            // Process each selected user
-            const promises = selectedIds.map(async (recipientId) => {
-                // 1. Find or create conversation
-                const { data: conversationId, error: convError } = await supabase.rpc(
-                    'find_or_create_conversation',
-                    { _user1: user.id, _user2: recipientId }
-                );
+            await Promise.all(
+                chosen.map(async (t) => {
+                    let conversationId: string;
 
-                if (convError) throw convError;
+                    if (t.kind === "group") {
+                        conversationId = t.id;
+                    } else {
+                        const { data: convId, error: convError } = await supabase.rpc(
+                            "find_or_create_conversation",
+                            { _user1: user.id, _user2: t.id }
+                        );
+                        if (convError) throw convError;
+                        conversationId = convId as string;
+                    }
 
-                // 2. Send the shared post message
-                const { error: msgError } = await supabase.from('messages').insert({
-                    conversation_id: conversationId,
-                    sender_id: user.id,
-                    content: '', // Empty content for post share type
-                    message_type: 'post_share',
-                    shared_post_id: postId,
-                });
-
-                if (msgError) throw msgError;
-            });
-
-            await Promise.all(promises);
+                    const { error: msgError } = await supabase.from("messages").insert({
+                        conversation_id: conversationId,
+                        sender_id: user.id,
+                        content: "",
+                        message_type: "post_share",
+                        shared_post_id: postId,
+                    });
+                    if (msgError) throw msgError;
+                })
+            );
 
             toast({
                 title: "Sent!",
-                description: `Post shared with ${selectedUsers.size} friend${selectedUsers.size > 1 ? 's' : ''}`,
+                description: `Post shared with ${selected.size} chat${selected.size > 1 ? "s" : ""}`,
             });
             onOpenChange(false);
         } catch (error: any) {
             console.error("Error sharing post:", error);
             toast({
                 title: "Error",
-                description: "Failed to share post. Please try again.",
+                description: error?.message || "Failed to share post. Please try again.",
                 variant: "destructive",
             });
         } finally {
@@ -147,8 +193,8 @@ export const SharePostDialog = ({ open, onOpenChange, postId }: SharePostDialogP
         }
     };
 
-    const filteredFriends = friends.filter((friend) =>
-        (friend.full_name || "").toLowerCase().includes(query.toLowerCase())
+    const filtered = targets.filter((t) =>
+        t.name.toLowerCase().includes(query.toLowerCase())
     );
 
     return (
@@ -158,12 +204,11 @@ export const SharePostDialog = ({ open, onOpenChange, postId }: SharePostDialogP
                     <DialogTitle className="text-center font-semibold text-lg">Share</DialogTitle>
                 </DialogHeader>
 
-                {/* Search */}
                 <div className="p-3 border-b">
                     <div className="relative">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Search"
+                            placeholder="Search people or groups"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             className="pl-9 bg-muted/50 border-none focus-visible:ring-1"
@@ -171,42 +216,46 @@ export const SharePostDialog = ({ open, onOpenChange, postId }: SharePostDialogP
                     </div>
                 </div>
 
-                {/* User List */}
-                <div className="max-h-[300px] overflow-y-auto px-2 py-2">
+                <div className="max-h-[320px] overflow-y-auto px-2 py-2">
                     {isLoading ? (
-                        <div className="p-4 text-center text-sm text-muted-foreground">Loading friends...</div>
-                    ) : filteredFriends.length === 0 ? (
+                        <div className="p-4 text-center text-sm text-muted-foreground">Loading chats...</div>
+                    ) : filtered.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                            <p className="text-sm">No mutual friends found.</p>
-                            <p className="text-xs opacity-70 mt-1">Follow people who follow you back to chat!</p>
+                            <p className="text-sm">No chats found.</p>
+                            <p className="text-xs opacity-70 mt-1">Follow mutuals or join a group to share.</p>
                         </div>
                     ) : (
                         <div className="space-y-1">
-                            {filteredFriends.map((friend) => {
-                                const isSelected = selectedUsers.has(friend.user_id);
+                            {filtered.map((t) => {
+                                const k = keyOf(t);
+                                const isSelected = selected.has(k);
                                 return (
                                     <div
-                                        key={friend.user_id}
+                                        key={k}
                                         className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-                                        onClick={() => handleSelect(friend.user_id)}
+                                        onClick={() => handleSelect(t)}
                                     >
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-10 w-10">
-                                                <AvatarImage src={friend.avatar_url || undefined} />
-                                                <AvatarFallback className="bg-primary/10 text-primary">
-                                                    {(friend.full_name || "U").charAt(0).toUpperCase()}
+                                                <AvatarImage src={t.avatar_url || undefined} />
+                                                <AvatarFallback className={t.kind === "group" ? "bg-secondary text-secondary-foreground" : "bg-primary/10 text-primary"}>
+                                                    {t.kind === "group" ? <Users className="h-5 w-5" /> : t.name.charAt(0).toUpperCase()}
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div className="flex flex-col">
-                                                <span className="font-medium text-sm">{friend.full_name || "Unknown"}</span>
-                                                <span className="text-xs text-muted-foreground">@{friend.full_name?.replace(/\s/g, '').toLowerCase()}</span>
+                                                <span className="font-medium text-sm flex items-center gap-1.5">
+                                                    {t.name}
+                                                    {t.kind === "group" && <Users className="h-3 w-3 text-muted-foreground" />}
+                                                </span>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {t.kind === "group"
+                                                        ? `${t.memberCount} member${t.memberCount === 1 ? "" : "s"}`
+                                                        : `@${t.name.replace(/\s/g, "").toLowerCase()}`}
+                                                </span>
                                             </div>
                                         </div>
 
-                                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected
-                                            ? "bg-primary border-primary"
-                                            : "border-muted-foreground/30"
-                                            }`}>
+                                        <div className={`h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "bg-primary border-primary" : "border-muted-foreground/30"}`}>
                                             {isSelected && <Check className="h-3.5 w-3.5 text-primary-foreground" />}
                                         </div>
                                     </div>
@@ -216,11 +265,10 @@ export const SharePostDialog = ({ open, onOpenChange, postId }: SharePostDialogP
                     )}
                 </div>
 
-                {/* Footer */}
                 <div className="p-4 border-t bg-muted/20">
                     <Button
                         className="w-full"
-                        disabled={selectedUsers.size === 0 || isSending}
+                        disabled={selected.size === 0 || isSending}
                         onClick={handleSend}
                     >
                         {isSending ? (
@@ -228,7 +276,7 @@ export const SharePostDialog = ({ open, onOpenChange, postId }: SharePostDialogP
                         ) : (
                             <>
                                 <Send className="mr-2 h-4 w-4" />
-                                Send {selectedUsers.size > 0 ? `(${selectedUsers.size})` : ''}
+                                Send {selected.size > 0 ? `(${selected.size})` : ""}
                             </>
                         )}
                     </Button>
