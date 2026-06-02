@@ -177,15 +177,19 @@ export const Layout = ({ children }: LayoutProps) => {
 
           {/* Search Bar */}
           <div className="flex-1 max-w-md mx-2 md:mx-4" ref={searchRef}>
-            <form onSubmit={handleSearch} className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <form onSubmit={handleSearch} className="relative" role="search" aria-label="Site search">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              <label htmlFor="site-search" className="sr-only">Search skills, domains, exams</label>
               <Input
+                id="site-search"
+                aria-label="Search skills, domains, exams"
                 placeholder="Search skills, domains, exams..."
                 className="pl-10 h-9"
                 value={searchQuery}
                 onChange={(e) => { setSearchQuery(e.target.value); setShowSuggestions(true); }}
                 onFocus={() => setShowSuggestions(true)}
               />
+
 
               {showSuggestions && suggestions.length > 0 && (
                 <div className="absolute left-0 right-0 mt-2 bg-popover border border-border rounded-lg shadow-elevated z-50 overflow-hidden backdrop-blur-sm">
@@ -248,9 +252,9 @@ export const Layout = ({ children }: LayoutProps) => {
 
           {/* Right Side Actions */}
           <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon" asChild className="hidden md:flex relative">
-              <Link to="/messages">
-                <MessageCircle className="h-5 w-5 text-muted-foreground" />
+            <Button variant="ghost" size="icon" asChild className="hidden md:flex relative" aria-label={`Messages${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}>
+              <Link to="/messages" aria-label={`Messages${unreadCount > 0 ? ` (${unreadCount} unread)` : ''}`}>
+                <MessageCircle className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium text-destructive-foreground animate-in zoom-in">
                     {unreadCount > 99 ? '99+' : unreadCount}
@@ -262,9 +266,9 @@ export const Layout = ({ children }: LayoutProps) => {
             {/* Settings Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="flex items-center space-x-1">
-                  <Settings className="h-4 w-4" />
-                  <ChevronDown className="h-3 w-3" />
+                <Button variant="ghost" size="sm" className="flex items-center space-x-1" aria-label="Settings menu">
+                  <Settings className="h-4 w-4" aria-hidden="true" />
+                  <ChevronDown className="h-3 w-3" aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56 bg-popover backdrop-blur-sm z-50">

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Layout } from "@/components/Layout";
+import { PageSEO } from "@/components/PageSEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -134,8 +135,24 @@ const Support = () => {
     });
   }, [query, activeCategory]);
 
+  const faqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: ALL_FAQS.map((f) => ({
+      "@type": "Question",
+      name: f.question,
+      acceptedAnswer: { "@type": "Answer", text: f.answer },
+    })),
+  };
+
   return (
     <Layout>
+      <PageSEO
+        title="Support Center — Help & FAQs"
+        description="Browse FAQs, guides, and troubleshooting tips for Skill-Metrics. Find answers about roadmaps, posts, account settings, and more."
+        path="/support"
+        jsonLd={faqSchema}
+      />
       <div className="container mx-auto px-4 py-6 max-w-5xl">
         <div className="flex items-start justify-between gap-4 mb-6">
           <div>

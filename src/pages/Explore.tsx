@@ -23,6 +23,7 @@ import { CertificationsTab } from "@/components/explore/CertificationsTab";
 import { BlogsTab } from "@/components/explore/BlogsTab";
 import { ResourcesTab } from "@/components/explore/ResourcesTab";
 import { CommunityTab } from "@/components/explore/CommunityTab";
+import { PageSEO } from "@/components/PageSEO";
 
 // Inline debounce
 function debounce<T extends (...args: any[]) => any>(fn: T, ms: number) {
@@ -107,6 +108,11 @@ function Explore() {
 
   return (
     <Layout>
+      <PageSEO
+        title="Explore Skills, Courses & Roadmaps"
+        description="Discover curated courses, certifications, degrees, blogs, and learning paths across tech, arts, finance, and more on Skill-Metrics."
+        path="/explore"
+      />
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
         <div className="container mx-auto px-4 py-8 max-w-7xl">
           {/* Hero Section */}
