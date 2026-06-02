@@ -1,0 +1,18 @@
+# Skill-Metrics
+
+> AI-powered learning platform that generates personalized roadmaps and curates the best resources for any skill — tech, arts, finance, sciences, and more.
+
+Skill-Metrics helps learners pick a domain, generate a structured learning roadmap with AI, and discover vetted resources (courses, videos, books, certifications, degrees) ranked for relevance and quality.
+
+## Pages
+
+- [Home](/): Product overview and entry point to the learning platform.
+- [Explore](/explore): Browse curated resources, certifications, degrees, blogs, and learning paths across domains.
+- [Roadmaps](/roadmaps): View and manage personalized AI-generated learning roadmaps.
+- [New Videos](/new-videos): Recently added video learning content ranked by views.
+- [Support](/support): Frequently asked questions and help guides.
+
+## Optional
+
+- [Sign in](/login): User authentication.
+- [Sign up](/signup): Create a new account.
