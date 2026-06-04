@@ -36,7 +36,7 @@ export default function SkillRecommendations() {
   const [loading, setLoading] = useState(false);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'graph' | 'roadmap' | 'resources'>('graph');
+  const [activeTab, setActiveTab] = useState<'graph' | 'roadmap' | 'resources'>('roadmap');
   const { profileDetails } = useUserProfileDetails();
   const { user } = useAuth();
   
@@ -184,6 +184,15 @@ export default function SkillRecommendations() {
               )}
             </div>
             <div className="flex items-center gap-2">
+              <Button
+                variant={activeTab === 'roadmap' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setActiveTab('roadmap')}
+                className="gap-2"
+              >
+                <Map className="w-4 h-4" />
+                Learning Path
+              </Button>
               {hasSkillGraph && (
                 <Button
                   variant={activeTab === 'graph' ? 'default' : 'outline'}
@@ -195,15 +204,6 @@ export default function SkillRecommendations() {
                   Skill Graph
                 </Button>
               )}
-              <Button
-                variant={activeTab === 'roadmap' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveTab('roadmap')}
-                className="gap-2"
-              >
-                <Map className="w-4 h-4" />
-                Learning Path
-              </Button>
               <Button
                 variant={activeTab === 'resources' ? 'default' : 'outline'}
                 size="sm"

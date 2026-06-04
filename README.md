@@ -25,9 +25,9 @@ Skill-Metrics bridges the gap between **passive content** and **active mastery**
 ## 🌟 Key Features & Highlights
 
 ### 🧠 1. AI Roadmap Generator
-Simply enter a goal (e.g., "Master Backend in 3 months"), and our AI constructs a multi-phase learning path.
-*   **Tailored Phases:** Breaks down complex skills into manageable milestones.
-*   **Resource Integration:** Automatically suggests top-rated articles and videos for every step.
+Simply enter a goal (e.g., "Master Backend in 3 months") or type a custom skill, and our system constructs a multi-phase learning path.
+*   **Tailored Phases:** Breaks down complex skills into manageable milestones using AI.
+*   **Curated Resource Integration:** Replaces AI hallucinations with top-rated, community-vetted articles and videos from our internal database for every step.
 *   **Progress Tracking:** Visualize your completion percentage in real-time.
 
 ### 🎥 2. First-of-its-Kind: Smart Watch Queue
@@ -37,9 +37,10 @@ The ultimate solution for video learners.
 *   **Curated Library:** Access 45+ high-quality videos across 16+ skill categories.
 
 ### 🏠 3. Social Learning Hub (Feed)
-Inspired by Instagram and LinkedIn, our Home Feed allows you to:
+Inspired by Instagram and LinkedIn, our infinite-scroll Home Feed allows you to:
 *   **Share Insights:** Post your progress, share resources, or celebrate wins.
-*   **Discover:** See what others in your community are learning and find trending resources.
+*   **Personalized Recommendation Algorithm:** Posts are dynamically scored and sorted based on mutual friends (followers), your interested domains, and content types (tech/news).
+*   **Fresh Content Always:** Seen posts are automatically tracked in your session and penalized in scoring to ensure you always interact with new posts. An algorithmic session shuffle keeps the feed dynamic on every reload.
 *   **Engage:** Like, comment, and save posts to your personal collection.
 
 ### 💼 4. Premium Profile Dashboard
@@ -70,9 +71,9 @@ A visual representation of your professional growth.
 ## ⚙️ How It Works (Under the Hood)
 
 1.  **AI Orchestration:** When you request a roadmap, a **Supabase Edge Function** triggers an AI model that processes your current skill level, time commitment, and goal. It returns a structured JSON object which is then parsed into a multi-table schema (Roadmaps -> Steps -> Resources).
-2.  **Social Graph:** We built a custom follower/following system using **PostgreSQL RLS (Row Level Security)** policies, ensuring that private profiles stay private while allowing public discovery.
+2.  **Social Graph & Feed:** We built a custom follower/following system using **PostgreSQL RLS (Row Level Security)** policies. The personalized feed uses a client-side algorithmic shuffle and scoring system, boosting posts from mutual friends and your skill domains while gracefully pushing seen posts to the bottom using browser storage.
 3.  **Real-Time Sync:** Notifications and messaging use **Supabase Real-time**, providing a seamless "app-like" experience without manual page refreshes.
-4.  **Content Curation:** A hybrid model where AI initially suggests resources, but the community "votes" them up or down through likes and shares.
+4.  **Content Curation (Skill Graphs):** Explore pages feature predefined Skill Graphs with dynamic fallback to AI generation. Resources mapped to roadmaps are rigorously filtered by our internal popularity metrics to prevent AI-generated inaccuracies.
 
 ---
 
