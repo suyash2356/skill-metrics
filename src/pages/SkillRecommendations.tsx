@@ -484,7 +484,6 @@ function SkillGraphView({ learningPath, onStatusChange, recommendations, mlRecom
               skill={selectedSkill}
               onStatusChange={onStatusChange}
               recommendations={recommendations}
-              mlRecommendations={mlRecommendations}
             />
           )}
         </div>
@@ -501,32 +500,14 @@ interface SkillDetailPanelProps {
   skill: SkillRecommendation;
   onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
   recommendations: Recommendation[];
-  mlRecommendations: import('@/hooks/useRecommendations').MLRecommendation[];
 }
 
-function SkillDetailPanel({ skill, onStatusChange, recommendations, mlRecommendations }: SkillDetailPanelProps) {
-  // Filter recommendations relevant to this skill
+function SkillDetailPanel({ skill, onStatusChange, recommendations }: SkillDetailPanelProps) {
+  // Filter recommendations relevant to this skill using the algorithmic filter (Option B)
   const relevantResources = useMemo(() => {
+    // filterResourcesBySkill strictly filters by the skill node's keywords and sorts by popularity score
     return filterResourcesBySkill(recommendations, skill.node).slice(0, 5);
   }, [skill, recommendations]);
-
-  // Dynamically ordered ML resources based on this skill
-  const dynamicResources = useMemo(() => {
-    if (!mlRecommendations.length) return [];
-    
-    // Map ML recommendations to the standard Recommendation shape for filtering
-    const mappedMl = mlRecommendations.map(r => ({
-      title: r.title,
-      type: 'course',
-      url: '#',
-      description: '',
-      score: r.score
-    })) as Recommendation[];
-    
-    return filterResourcesBySkill(mappedMl, skill.node).slice(0, 5);
-  }, [skill, mlRecommendations]);
-
-
 
   return (
     <div className="sticky top-6 space-y-4">
@@ -614,46 +595,35 @@ function SkillDetailPanel({ skill, onStatusChange, recommendations, mlRecommenda
       </Card>
 
       {/* Relevant Resources */}
-      {(dynamicResources.length > 0 || relevantResources.length > 0) && (
+      {relevantResources.length > 0 && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <h4 className="font-semibold text-sm flex items-center gap-1.5">
-              {dynamicResources.length > 0 ? (
-                <><Star className="w-4 h-4 text-yellow-400 fill-yellow-400" /> Recommended Resources</>
-              ) : (
-                <><Library className="w-4 h-4 text-primary" /> Resources for {skill.node.name}</>
-              )}
+              <Library className="w-4 h-4 text-primary" /> Resources for {skill.node.name}
             </h4>
             
-            {/* Show Dynamic Resources from ML if available */}
-            {dynamicResources.length > 0 ? dynamicResources.map((r, i) => (
-              <div
-                key={i}
-                className="block p-3 rounded-lg bg-primary/5 hover:bg-primary/10 border border-primary/20 transition-colors"
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="default" className="text-[10px] uppercase tracking-wider bg-yellow-500/90 hover:bg-yellow-500 text-white border-0 shadow-sm">
-                    ★ Top Match
-                  </Badge>
-                  <span className="text-[10px] text-muted-foreground font-medium">Score: {r.score}</span>
-                </div>
-                <h5 className="text-sm font-semibold text-primary">{r.title}</h5>
-              </div>
-            )) : 
-            /* Fallback to normal Relevant Resources */
-            relevantResources.map((r, i) => (
+            {relevantResources.map((r, i) => (
               <a
                 key={i}
                 href={r.url}
                 target="_blank"
                 rel="noreferrer"
-                className="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                className="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border"
               >
                 <h5 className="text-sm font-medium line-clamp-1">{r.title}</h5>
-                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                  <Badge variant="outline" className="text-xs capitalize">{r.type}</Badge>
-                  {r.difficulty && <span className="capitalize">{r.difficulty}</span>}
-                  {r.provider && <span>{r.provider}</span>}
+                <div className="flex items-center justify-between mt-1.5">
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary hover:bg-primary/20 border-0">
+                      {r.type}
+                    </Badge>
+                    {r.difficulty && <span>• {r.difficulty}</span>}
+                    {r.provider && <span>• {r.provider}</span>}
+                  </div>
+                  {r.score && r.score > 0 && (
+                    <Badge variant="default" className="text-[10px] bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm">
+                      Score: {r.score}
+                    </Badge>
+                  )}
                 </div>
               </a>
             ))}

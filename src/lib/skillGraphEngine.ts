@@ -283,7 +283,6 @@ export function filterResourcesBySkill(
 
   const skillKeywords = [
     skillNode.name.toLowerCase(),
-    skillNode.domain.toLowerCase(),
     ...(skillNode.subdomain ? [skillNode.subdomain.toLowerCase()] : []),
     ...outcomeWords,
   ];
@@ -311,13 +310,17 @@ export function filterResourcesBySkill(
       const difficultyMatch = resource.difficulty?.toLowerCase() === skillNode.difficulty_level;
       if (difficultyMatch) relevance += 2;
 
-      return { ...resource, _relevance: relevance };
+      // Scale popularity score to a 0-100 format
+      const popularityRaw = resource.weighted_rating || 0; // usually 0-5
+      const scaledScore = Math.min(100, Math.round((popularityRaw / 5) * 100));
+
+      return { ...resource, _relevance: relevance, score: scaledScore };
     })
     .filter(r => r._relevance > 0)
     .sort((a, b) => {
-      // Primary: relevance score
-      if (b._relevance !== a._relevance) return b._relevance - a._relevance;
-      // Secondary: weighted rating
-      return (b.weighted_rating || 0) - (a.weighted_rating || 0);
+      // Primary: Popularity Score (weighted_rating scaled to score)
+      if (b.score !== a.score) return (b.score || 0) - (a.score || 0);
+      // Secondary: relevance score
+      return b._relevance - a._relevance;
     });
 }

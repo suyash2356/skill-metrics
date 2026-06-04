@@ -17,6 +17,10 @@ export type Recommendation = {
   views?: string;
   difficulty?: "beginner" | "intermediate" | "advanced";
   isPaid?: boolean;
+  score?: number; // Added for ML or Popularity score rendering
+  weighted_rating?: number;
+  category?: string;
+  related_skills?: string[];
 };
 
 export const allowedTopics = [
@@ -264,6 +268,9 @@ export async function fetchRecommendations(query: string): Promise<Recommendatio
         difficulty: resource.difficulty as Recommendation['difficulty'],
         isPaid: !resource.is_free,
         duration: resource.duration || undefined,
+        weighted_rating: resource.weighted_rating || undefined,
+        category: resource.category || undefined,
+        related_skills: resource.related_skills || [],
       });
     });
   }
