@@ -1,144 +1,69 @@
+## Complete List of Recommendation & Rule-Based Filtering (per page)
 
-# SkillGram ML/DL Integration — Audit Report & Roadmap
+### 1. Home (`/`) — `src/pages/Home.tsx`
+- **Feed posts**: chronological (newest-first) from `posts` table, enriched with relevance scores from `recommend-content` edge function (Gemini AI scoring per `usePersonalizedFeed`). News-bot posts pinned to score 100. Followed-users boost. Posts with score > 70 flagged "Recommended".
+- **Suggested roadmaps sidebar**: AI relevance score from `recommend-content` (filtered > 30, sorted desc).
+- **Top videos section**: `videosData` ranked by view count (top 3–4).
+- **Rule filters**: RLS privacy (`can_view_profile`), follower-only visibility.
 
-## Part 1 — Audit of your current recommendation model
+### 2. Explore (`/explore`) — `src/pages/Explore.tsx` + tabs
+- **All tabs use `usePersonalizedExplore`** → `PersonalizationEngine` (`src/lib/personalization.ts`):
+  - Rule-based weighted scoring on user `experience_level`, `skills`, `background`, `education`, `learning_path`, plus IMDb weighted_rating and recommend_percent.
+- **ResourcesTab / CertificationsTab / DegreesTab / PopularTab**: `MLRecommendationsSection` → `ml-recommend` edge function (hybrid: CF z-score from `interactions_ml` + content match + popularity), `ignoreDomain: true` (all admin domains).
+- **PopularTab**: `useTrendingResources` sorted by `weighted_rating`.
+- **BlogsTab**: `useBlogsAndPapers` — rule-based filter by user onboarding (skills, background, education, experience).
 
-### What you already built (verified against the live database)
+### 3. Skill View / Skill Recommendations (`/skill/:id`, `/skill-recommendations`)
+- **`MLRecommendationsSection`** → `ml-recommend` edge function, `ignoreDomain: false` (domain-scoped admin resources).
+- **`fetchRecommendations`** (`src/api/searchAPI.tsx`) → topic-allowlist filter + `scoreResource` (rule-based) from `src/lib/resourceMatcher.ts` (skill match +8, goal match +6, free preference +5, beginner/expert boosts).
 
-- Table `interactions_ml` — 1,050 rows, 16 users, 330 unique items. Interaction types: `view` (500), `complete` (200), `like` (200), `skip` (150).
-- Table `user_seen_resources` — used to filter out already-seen items.
-- View `interactions_training_view` — aggregates `total_score` and `interaction_count` per (user, item).
-- RPC `get_recommendations(user_id, [domain])` — returns top-10 unseen resources sorted by summed interaction score.
-- Hook `src/hooks/useRecommendations.tsx` — wraps the RPC via React Query.
-- Used in `src/pages/SkillRecommendations.tsx` (line 49, passed down to children at lines 301/472).
+### 4. Search Results (`/search`) — `src/pages/SearchResults.tsx`
+- `fetchUniversalSearch` — parallel DB queries (profiles, resources, posts, roadmaps), category-partitioned, rule-based ranking by trigram similarity + `is_free` badges.
 
-### Verdict — Is it working?
+### 5. Layout search bar (global) — `src/components/Layout.tsx`
+- `fetchPeopleCommunitySuggestions` + `fetchExploreSuggestions` — autocomplete via `search_profiles` RPC + skills/domain allowlist.
 
-**Partially.** It returns results, but it is not really an ML model — it is a weighted SQL aggregation (popularity per user). Concretely:
+### 6. New Videos (`/new-videos`)
+- Pure rule-based: category filter + sort by views / newest / shortest / longest (local `videosData`).
 
-1. **Bug — duplicate function signature.** Two `get_recommendations` overloads exist (1-arg and 2-arg). Calling `get_recommendations(uuid)` fails with `function is not unique`. The hook always passes the 2nd arg so the UI works, but the 1-arg version should be dropped.
-2. **No collaborative signal.** It only sums *your own* interactions. A user who has never interacted gets nothing. It cannot recommend items similar users liked.
-3. **No content signal.** It ignores `resources.domain`, `subdomain`, `difficulty`, `related_skills`, `learning_outcomes`, `prerequisites` — all of which are populated.
-4. **Weak ranking.** Pure `SUM(score)` ties are broken arbitrarily — your test query returned 10 items all tied at score 5.
-5. **No evaluation loop.** No precision@k / recall / CTR tracking, so you cannot prove the model works for a resume.
-6. **Cold start ignored.** New users see nothing until they interact.
-7. **Resume-wise it is too thin** to call a "recommendation system" — it is closer to "personalized SQL".
+### 7. Watch Hub / Watch Queue
+- `useWatchQueue` — localStorage queue, daily target rule, like-based reordering. No ML.
 
-### Quick wins to make the existing model defensible
+### 8. My Roadmaps (`/my-roadmaps`)
+- Rule-based status filter (in-progress / completed / not-started), ordered by `created_at` desc.
 
-- Drop the duplicate overload.
-- Add tie-breakers: `weighted_rating DESC, total_ratings DESC`.
-- Add a content-based fallback for cold-start users (match `domain` + `difficulty` from `profiles` / `user_preferences`).
-- Track `recommendation_impressions` and `recommendation_clicks` to compute CTR.
+### 9. Create Roadmap / AI Roadmap (`/create-roadmap`)
+- `generate-roadmap` edge function (Lovable AI / Gemini) generates structure; admin-verified `resources` table joined by rule-based matching on domain + difficulty.
 
----
+### 10. Profile — Suggested follows / Resources tab
+- `fetchPeopleCommunitySuggestions` (mutual followers + trigram similarity).
+- `ProfileResourcesTab` — rule-based filter by user_id + section_type.
 
-## Part 2 — Where ML/DL genuinely fits in SkillGram
+### 11. Chat / Share Post target list
+- Mutual followers (rule: must follow each other) + groups user is in. No ranking model.
 
-The platform has 8 high-leverage surfaces. For each: what to build, which model, where the training data already exists, and resume framing.
+### 12. Notifications
+- Chronological, type-filtered (rule-based), via SECURITY DEFINER RPCs.
 
-### 1. Resource recommender (the one you started)
-- **Models**: Hybrid of (a) Matrix Factorization / ALS on `interactions_ml` for collaborative filtering, (b) a content-based encoder using Sentence-Transformers on `title + description + learning_outcomes`, (c) a re-ranker that blends the two with `weighted_rating` and freshness.
-- **Why hybrid**: solves cold-start (content) + personalization (CF).
-- **Resume line**: "Built hybrid recommender (ALS + sentence-transformer embeddings) serving 500+ resources, improved CTR by X%."
+### 13. Saved Posts / My Posts / Comments
+- Pure SQL filter + chronological (newest-first). No recommendation.
 
-### 2. Feed ranking (Home page)
-- Currently rule-based with bot-pinning + AI scoring. Replace the score with a **learning-to-rank** model (LightGBM ranker) trained on `likes`, `bookmarks`, dwell time, `post_preferences` (Not Interested), and viewer/author affinity.
-- Features: author similarity, tag overlap with user skills, post age, engagement velocity.
-- **Resume line**: "Implemented LambdaMART learning-to-rank for feed, replaced heuristic baseline."
-
-### 3. Skill graph next-step prediction
-- You already have 500+ skill nodes and `user_skill_progress`. Train a **sequence model** (GRU or Transformer) that, given the user's completion sequence, predicts the most likely successful next node — like Duolingo's HLR.
-- **Resume line**: "Sequence model for adaptive learning-path prediction over 500-node skill graph."
-
-### 4. Roadmap auto-generation
-- Today `generate-roadmap` calls Gemini. Add an ML layer that picks **which resources** to slot into each step using your hybrid recommender + difficulty-fit (predicted from the user's `learning_streaks` and prior `focus_sessions` outcomes).
-- **Resume line**: "ML-driven curriculum generator combining LLM structure with embedding-based resource retrieval."
-
-### 5. Semantic search (Explore + global search)
-- Replace `ILIKE` queries in `searchAPI.tsx` with **vector search**. Embed every resource/post/roadmap once with `sentence-transformers/all-MiniLM-L6-v2`, store in `pgvector`, query with cosine similarity.
-- **Resume line**: "Semantic search over 5 entity types using pgvector + MiniLM embeddings."
-
-### 6. Content moderation (posts, user_resources, comments)
-- `check_user_resource_content` uses a hard-coded blocklist. Replace with a fine-tuned **DistilBERT classifier** (toxic / spam / off-topic). Run as an edge function on insert.
-- **Resume line**: "Deployed DistilBERT moderation classifier reducing manual review by Y%."
-
-### 7. Duplicate / similar resource detection
-- 750+ resources with overlap. Use embedding clustering (HDBSCAN on MiniLM vectors) to flag near-duplicates for the admin panel.
-- **Resume line**: "Deduplication pipeline using HDBSCAN over sentence embeddings."
-
-### 8. Engagement / churn prediction
-- Train an **XGBoost** model on `user_activity`, `learning_streaks`, `focus_sessions` to predict 7-day churn. Surface "at risk" users to a re-engagement campaign (notification or news-bot DM).
-- **Resume line**: "Churn-prediction model (XGBoost, AUC 0.8X) driving retention notifications."
+### 14. Daily Tech News (background)
+- `daily-tech-news` edge function — GNews API + Gemini summarization; rule-based dedup; 48-hour auto-cleanup.
 
 ---
 
-## Part 3 — Recommended architecture (works on free tiers)
-
-```text
-            ┌─────────────────────────────────────────┐
-            │  React app (Lovable)                    │
-            │   • useRecommendations                  │
-            │   • useFeedRanking                      │
-            │   • useSemanticSearch                   │
-            └──────────────┬──────────────────────────┘
-                           │ supabase.functions.invoke
-                           ▼
-            ┌─────────────────────────────────────────┐
-            │  Supabase Edge Functions (Deno)         │
-            │   • ml-recommend     (hybrid recsys)    │
-            │   • ml-rank-feed     (LTR scoring)      │
-            │   • ml-semantic-search (pgvector query) │
-            │   • ml-moderate      (text classifier)  │
-            └──────┬─────────────────────────┬────────┘
-                   │ HF Inference API        │ pgvector
-                   ▼                         ▼
-            ┌──────────────┐       ┌────────────────────┐
-            │ Hugging Face │       │ Postgres           │
-            │ hosted model │       │ • interactions_ml  │
-            │ (your repo)  │       │ • resource_embed   │
-            └──────────────┘       │ • user_embed       │
-                                   └────────────────────┘
-                   ▲
-                   │ nightly retrain (GitHub Action / Colab)
-            ┌──────┴───────┐
-            │ Python repo  │
-            │ • train.py   │  (ALS, LightGBM, embeddings)
-            │ • eval.py    │
-            │ • push to HF │
-            └──────────────┘
-```
-
-Why this works: training stays in **your own Python repo** (real ML code for the resume), serving stays in edge functions you already have, and Hugging Face Inference API is free for low traffic.
-
----
-
-## Part 4 — Suggested build order (so you have a real portfolio piece)
-
-1. **Fix the existing recommender** — drop duplicate RPC, add tie-break, add cold-start fallback, add impression/click logging. *(1 file + 1 migration)*
-2. **Add `pgvector` + embeddings** for resources and posts (one-time backfill edge function).
-3. **Build `ml-recommend` edge function** that calls a Python model on Hugging Face (your repo) and returns hybrid scores.
-4. **Build the Python training repo** (separate GitHub repo you control) with ALS + content encoder, eval script, README — this is the actual resume artifact.
-5. **Replace feed AI scoring with LTR model** trained on real interaction logs.
-6. **Add semantic search**, then moderation classifier, then churn model in that order.
-
----
-
-## Technical notes
-
-- All models can be hosted free on Hugging Face Hub; the edge function calls `https://api-inference.huggingface.co/...` using the existing `HUGGING_FACE_ACCESS_TOKEN` secret.
-- `pgvector` requires `CREATE EXTENSION vector;` — done via migration.
-- Training data export: the `interactions_training_view` already exists and is a clean training set.
-- For resume credibility, keep the Python repo **separate from Lovable**, with notebooks, metrics, and a model card — recruiters will look at that, not the React code.
-
----
-
-## What I would do first if you approve
-
-Concrete next coding step (one focused PR):
-
-1. Migration: drop the 1-arg `get_recommendations`, rewrite the 2-arg version with tie-breakers + content fallback, create `recommendation_events` table for impressions/clicks.
-2. Update `useRecommendations` to log impressions.
-3. Add a small "Why recommended" badge in `SkillRecommendations.tsx` so the personalization is visible.
-
-After you approve, I will switch to build mode and start with step 1. Tell me if you want to begin there, or jump straight to pgvector + embeddings, or scaffold the Python training repo structure first.
+### Recommendation engines summary
+| Engine | Type | Where used |
+|---|---|---|
+| `ml-recommend` (Deno edge) | Hybrid: ALS-like CF (z-score on `interactions_ml`) + content + weighted_rating | Explore tabs, Skill pages |
+| `recommend-content` (Gemini) | LLM relevance scoring | Home feed + sidebar roadmaps |
+| `PersonalizationEngine` (`personalization.ts`) | Rule-based weighted scoring | Explore page entirely |
+| `resourceMatcher.ts` (`scoreResource`) | Rule-based skill/goal/level matching | Skill pages, search results |
+| `useBlogsAndPapers` | Rule-based onboarding filter | Explore Blogs tab |
+| `useTrendingResources` | Popularity sort (`weighted_rating`) | Explore Popular tab |
+| `fetchUniversalSearch` | Trigram + category partition | Search results |
+| `videosData` sort | Rule-based (views/date/duration) | New Videos |
+| `useWatchQueue` | Rule-based goals/streaks | Video Learning Hub |
+| `daily-tech-news` (Gemini) | LLM summarization + dedup | News bot |
+| `generate-roadmap` (Gemini) | LLM generation + DB rule-join | Roadmap creation |
