@@ -52,6 +52,7 @@ async function fetchHybridRecommendations(
     query?: string | null;
     limit?: number;
     resourceType?: string | null;
+    resourceTypes?: string[] | null;
     ignoreDomain?: boolean;
   },
 ): Promise<{ items: MLRecommendation[]; meta?: MLRecommendMeta; fallback: boolean }> {
@@ -68,6 +69,7 @@ async function fetchHybridRecommendations(
           query: opts.query ?? null,
           limit,
           resource_type: opts.resourceType ?? null,
+          resource_types: opts.resourceTypes ?? null,
           ignore_domain: !!opts.ignoreDomain,
         },
       },
@@ -132,6 +134,7 @@ export const useHybridRecommendations = (
     query?: string | null;
     limit?: number;
     resourceType?: string | null;
+    resourceTypes?: string[] | null;
     ignoreDomain?: boolean;
   } = { surface: 'home' },
 ) => {
@@ -144,6 +147,7 @@ export const useHybridRecommendations = (
       opts.query,
       opts.limit,
       opts.resourceType,
+      (opts.resourceTypes ?? []).join(','),
       opts.ignoreDomain,
     ],
     queryFn: async () => {

@@ -24,6 +24,8 @@ interface MLRecommendationsSectionProps {
   hideIfEmpty?: boolean;
   /** Filter results to a specific resource_type (e.g. 'certification', 'degree'). */
   resourceType?: string | null;
+  /** Filter results to multiple resource_types (e.g. ['blog', 'research_paper']). */
+  resourceTypes?: string[] | null;
   /**
    * If true, the model is fed admin resources from ALL domains (used for
    * explore page tabs). If false/undefined, results are scoped to the
@@ -41,6 +43,7 @@ export function MLRecommendationsSection({
   subtitle = "Hybrid ML ranking blending your activity, interests, and community ratings",
   hideIfEmpty = false,
   resourceType = null,
+  resourceTypes = null,
   ignoreDomain,
 }: MLRecommendationsSectionProps) {
   const { user } = useAuth();
@@ -53,6 +56,7 @@ export function MLRecommendationsSection({
     query,
     limit,
     resourceType,
+    resourceTypes,
     ignoreDomain: effectiveIgnoreDomain,
   });
 
