@@ -75,6 +75,9 @@ Deno.serve(async (req: Request) => {
     const query = (body.query ?? "").trim().toLowerCase();
     const limit = Math.min(Math.max(body.limit ?? 12, 1), 50);
     const resourceType = (body.resource_type ?? "").trim().toLowerCase() || null;
+    const resourceTypes: string[] | null = Array.isArray((body as any).resource_types) && (body as any).resource_types.length
+      ? (body as any).resource_types.map((s: string) => String(s).trim().toLowerCase()).filter(Boolean)
+      : null;
     const ignoreDomain = !!body.ignore_domain;
 
     // 1) User context: preferences + interactions
@@ -120,7 +123,9 @@ Deno.serve(async (req: Request) => {
         `domain.ilike.%${userDomain}%,category.ilike.%${userDomain}%`,
       );
     }
-    if (resourceType) {
+    if (resourceTypes && resourceTypes.length) {
+      q = q.in("resource_type", resourceTypes);
+    } else if (resourceType) {
       q = q.ilike("resource_type", resourceType);
     }
     if (query) {
@@ -141,7 +146,8 @@ Deno.serve(async (req: Request) => {
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
         .limit(50);
-      if (resourceType) extraQ = extraQ.ilike("resource_type", resourceType);
+      if (resourceTypes && resourceTypes.length) extraQ = extraQ.in("resource_type", resourceTypes);
+      else if (resourceType) extraQ = extraQ.ilike("resource_type", resourceType);
       const { data: extra } = await extraQ;
       const seen = new Set(resources.map((r) => r.id));
       (extra ?? []).forEach((r: any) => {
