@@ -21,6 +21,9 @@ import { useRecommendations, useLogImpressions } from "@/hooks/useRecommendation
 import { useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress } from "@/hooks/useSkillGraph";
 import { buildLearningPath, matchDomainToSkillGraph, filterResourcesBySkill, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
 import { cn } from "@/lib/utils";
+import { useContentRecommendations, type ContentRecommendation } from "@/hooks/useContentRecommendations";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ExternalLink, Flame } from "lucide-react";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -48,6 +51,11 @@ export default function SkillRecommendations() {
   // Get ML Recommendations strictly for this domain
   const { data: mlRecommendations } = useRecommendations(user?.id, graphDomain || undefined);
   useLogImpressions(user?.id, mlRecommendations);
+
+  // Content-based TF-IDF + Popularity recommendations for Resources tab
+  const { data: contentRecommendations, isLoading: contentRecsLoading } = useContentRecommendations(
+    decodeURIComponent(q)
+  );
 
   const hasSkillGraph = graphDomain && skillNodes.length > 0;
 
@@ -235,6 +243,51 @@ export default function SkillRecommendations() {
               </TabsList>
 
               <TabsContent value="all" className="space-y-6">
+
+                {/* ═══ Recommended for You (TF-IDF + Popularity) ═══ */}
+                {contentRecsLoading && (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-6 w-48" />
+                    </div>
+                    <div className="flex gap-4 overflow-hidden">
+                      {[...Array(4)].map((_, i) => (
+                        <Skeleton key={i} className="h-44 w-64 rounded-xl flex-shrink-0" />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {!contentRecsLoading && contentRecommendations && contentRecommendations.length > 0 && (
+                  <div className="space-y-4">
+                    {/* Section Header */}
+                    <div className="mb-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 shadow-sm">
+                          <Flame className="w-4 h-4 text-white" />
+                        </div>
+                        <h2 className="text-2xl font-black tracking-tight bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">Recommended for You</h2>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-sm border border-orange-500/20">Top Picks</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground mt-1 ml-10">
+                        Specially curated resources tailored to your interest in <span className="font-semibold text-foreground">{decodeURIComponent(q)}</span>. Based on high content similarity and popularity, these are resources you shouldn't ignore!
+                      </p>
+                    </div>
+
+                    {/* Horizontal Scroll Carousel */}
+                    <div
+                      className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
+                      style={{ scrollbarWidth: 'thin' }}
+                    >
+                      {contentRecommendations.map((rec, i) => (
+                        <ContentRecCard key={`content-rec-${i}`} rec={rec} index={i} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* ═══ All Resources (original, unchanged) ═══ */}
                 <h3 className="text-xl font-bold mb-4">All Resources</h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   {loading && <div className="text-sm text-muted-foreground">Loading resources…</div>}
@@ -721,5 +774,67 @@ function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// ═══════════════════════════════════════════
+// CONTENT REC CARD (TF-IDF + Popularity)
+// ═══════════════════════════════════════════
+function ContentRecCard({ rec, index }: { rec: ContentRecommendation; index: number }) {
+  const matchPercent = Math.round(rec.hybrid_score * 100);
+  
+  return (
+    <a 
+      href={rec.link || '#'} 
+      target="_blank" 
+      rel="noreferrer"
+      className="group relative flex-shrink-0 w-64 h-44 rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 hover:border-slate-500 transition-all hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
+    >
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent pointer-events-none" />
+      
+      {/* Netflix-style Top 10 / Top Pick badge if it's the very first item, else normal badge */}
+      {index === 0 && (
+        <div className="absolute top-0 right-0">
+          <div className="bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-bl-lg shadow-lg">
+            #1 Top Pick
+          </div>
+        </div>
+      )}
+      
+      <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+        <div className="text-[10px] font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border border-green-400/20">
+          {matchPercent}% Match
+        </div>
+        <div className="flex gap-1.5 flex-wrap max-w-[80%]">
+          <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm">
+            {rec.difficulty || 'All Levels'}
+          </Badge>
+          {rec.resource_type && (
+            <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm capitalize">
+              {rec.resource_type}
+            </Badge>
+          )}
+        </div>
+      </div>
+      
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 pt-6 flex flex-col gap-1.5">
+        <h4 className="text-white font-medium text-sm leading-tight line-clamp-2 group-hover:text-primary-foreground transition-colors">
+          {rec.title}
+        </h4>
+        
+        <div className="flex items-center justify-between mt-1">
+          <div className="text-[10px] text-slate-400 flex items-center gap-1.5 line-clamp-1">
+            <span className="truncate">{rec.provider || rec.domain}</span>
+            {rec.avg_rating && (
+              <span className="flex items-center gap-0.5">
+                <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" /> 
+                {rec.avg_rating.toFixed(1)}
+              </span>
+            )}
+          </div>
+          <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition-colors flex-shrink-0" />
+        </div>
+      </div>
+    </a>
   );
 }
