@@ -158,9 +158,13 @@ export function useCategories() {
       const categoryMap = new Map<string, Category>();
       
       (data || []).forEach((r: DBResource) => {
+        // STRICT CHECK: The category MUST exist in the categories table as tech or non-tech
+        const dbType = categoryTypeMap.get(r.category.toLowerCase());
+        if (!dbType || (dbType !== 'tech' && dbType !== 'non-tech' && dbType !== 'domain')) {
+          return; // Skip if it's not registered as a domain in admin panel
+        }
+
         if (!categoryMap.has(r.category)) {
-          // Use categories table type if available, otherwise infer
-          const dbType = categoryTypeMap.get(r.category.toLowerCase());
           const isTech = dbType === 'tech';
           
           categoryMap.set(r.category, {
@@ -189,11 +193,21 @@ export function useExams() {
   return useQuery({
     queryKey: ['exams'],
     queryFn: async () => {
+      // Fetch from categories table first for proper type mapping
+      const { data: catData } = await supabase
+        .from('categories')
+        .select('name, type')
+        .eq('is_active', true);
+
+      const categoryTypeMap = new Map<string, string>();
+      (catData || []).forEach((c: { name: string; type: string }) => {
+        categoryTypeMap.set(c.name.toLowerCase(), c.type);
+      });
+
       const { data, error } = await supabase
         .from('resources')
         .select('*')
         .eq('is_active', true)
-        .eq('section_type', 'exam')
         .eq('resource_type', 'exam_prep')
         .order('category');
 
@@ -203,6 +217,12 @@ export function useExams() {
       const examMap = new Map<string, Exam>();
       
       (data || []).forEach((r: DBResource) => {
+        // STRICT CHECK: The category MUST exist in the categories table as exam
+        const dbType = categoryTypeMap.get(r.category.toLowerCase());
+        if (dbType !== 'exam') {
+          return; // Skip if it's not explicitly registered as an exam in admin panel
+        }
+
         if (!examMap.has(r.category)) {
           examMap.set(r.category, {
             id: r.id,

@@ -11,6 +11,7 @@ import {
   Layers, GraduationCap, Download, ArrowLeft, Users, Search
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { useCategories } from '@/hooks/useCategories';
 import EnhancedResourceForm from '@/components/admin/EnhancedResourceForm';
 import ImportExportDialog from '@/components/admin/ImportExportDialog';
 import CategoryManager from '@/components/admin/CategoryManager';
@@ -22,6 +23,7 @@ const AdminDashboard = () => {
   const { user, signOut } = useAuth();
   const { data: isAdmin, isLoading: adminLoading } = useIsAdmin();
   const { data: resources = [], isLoading: resourcesLoading } = useResources();
+  const { data: categories = [], isLoading: categoriesLoading } = useCategories();
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
@@ -39,7 +41,7 @@ const AdminDashboard = () => {
     return null;
   }
 
-  if (adminLoading || resourcesLoading) {
+  if (adminLoading || resourcesLoading || categoriesLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -52,8 +54,8 @@ const AdminDashboard = () => {
     active: resources.filter(r => r.is_active).length,
     free: resources.filter(r => r.is_free).length,
     featured: resources.filter(r => r.is_featured).length,
-    domains: [...new Set(resources.filter(r => r.section_type === 'domain').map(r => r.category))].length,
-    exams: [...new Set(resources.filter(r => r.section_type === 'exam').map(r => r.category))].length,
+    domains: categories.filter(c => c.type === 'domain' || c.type === 'tech' || c.type === 'non-tech').length,
+    exams: categories.filter(c => c.type === 'exam').length,
   };
 
   const domainCounts = resources.reduce<Record<string, number>>((acc, r) => {
