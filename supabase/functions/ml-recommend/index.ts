@@ -30,10 +30,12 @@ interface ResourceRow {
   category: string | null;
   domain: string | null;
   difficulty: string | null;
-  tags: string[] | null;
+  related_skills: string[] | null;
   weighted_rating: number | null;
   total_ratings: number | null;
   link: string | null;
+  resource_type: string | null;
+  section_type: string | null;
 }
 
 function zscore(values: number[]): Map<number, number> {
