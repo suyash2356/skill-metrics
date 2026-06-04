@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { FileText, BookOpen, Star, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
+import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
 
 interface BlogsTabProps {
   blogsAndPapers: any[] | undefined;
@@ -11,8 +12,8 @@ interface BlogsTabProps {
 
 export function BlogsTab({ blogsAndPapers, blogsLoading }: BlogsTabProps) {
   return (
-    <section>
-      <div className="mb-8">
+    <section className="space-y-10">
+      <div>
         <h2 className="text-2xl font-bold flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-violet-500/10">
             <FileText className="h-6 w-6 text-violet-500" />
@@ -23,6 +24,17 @@ export function BlogsTab({ blogsAndPapers, blogsLoading }: BlogsTabProps) {
           Curated research papers and blog posts personalized to your interests and learning goals
         </p>
       </div>
+
+      {/* Hybrid ML recommendations — strictly blogs & papers */}
+      <MLRecommendationsSection
+        surface="explore"
+        resourceTypes={["blog", "research_paper", "article", "paper"]}
+        ignoreDomain
+        limit={6}
+        title="Recommended Blogs & Papers"
+        subtitle="Hybrid model picks blogs and research papers tailored to your interests"
+        hideIfEmpty
+      />
 
       {blogsLoading ? (
         <CardGridSkeleton count={6} height="h-[220px]" />
