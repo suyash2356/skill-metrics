@@ -30,10 +30,12 @@ interface ResourceRow {
   category: string | null;
   domain: string | null;
   difficulty: string | null;
-  tags: string[] | null;
+  related_skills: string[] | null;
   weighted_rating: number | null;
   total_ratings: number | null;
   link: string | null;
+  resource_type: string | null;
+  section_type: string | null;
 }
 
 function zscore(values: number[]): Map<number, number> {
@@ -108,7 +110,7 @@ Deno.serve(async (req: Request) => {
     let q = supabase
       .from("resources")
       .select(
-        "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link, resource_type, section_type",
+        "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type",
       )
       .eq("is_active", true)
       .limit(800);
@@ -134,7 +136,7 @@ Deno.serve(async (req: Request) => {
       let extraQ = supabase
         .from("resources")
         .select(
-          "id, title, description, category, domain, difficulty, tags, weighted_rating, total_ratings, link, resource_type, section_type",
+          "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type",
         )
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
@@ -159,7 +161,7 @@ Deno.serve(async (req: Request) => {
     const popRaw = resources.map((r) => Number(r.weighted_rating ?? 0));
     const contentRaw = resources.map((r) => {
       let s = 0;
-      const text = `${r.title} ${r.description ?? ""} ${(r.tags ?? []).join(" ")}`.toLowerCase();
+      const text = `${r.title} ${r.description ?? ""} ${(r.related_skills ?? []).join(" ")}`.toLowerCase();
       interests.forEach((it) => {
         if (it && text.includes(it.toLowerCase())) s += 1;
       });
