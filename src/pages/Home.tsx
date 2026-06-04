@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Layout } from "@/components/Layout";
 import { PageSEO } from "@/components/PageSEO";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,17 @@ const Home = () => {
     const shown = sessionStorage.getItem('aiPopupShown');
     return !shown;
   });
+
+  const [initialSeenPosts] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem('seenPosts');
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  const [sessionSeed] = useState(() => Math.floor(Math.random() * 1000));
 
   const { toast } = useToast();
   const { user } = useAuth();
@@ -92,7 +103,20 @@ const Home = () => {
     enabled: !!user,
   });
 
-
+  // Fetch users that the current user follows
+  const { data: followingIds = new Set<string>() } = useQuery({
+    queryKey: ['followingUsers', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return new Set<string>();
+      const { data, error } = await supabase
+        .from('followers')
+        .select('following_id')
+        .eq('follower_id', user.id);
+      if (error) throw error;
+      return new Set((data || []).map((r) => r.following_id));
+    },
+    enabled: !!user,
+  });
   const pageSize = 10;
 
   const fetchPosts = async ({ pageParam = 0 }) => {
@@ -188,6 +212,38 @@ const Home = () => {
       !hiddenPosts.has(post.id)
     );
   }, [data, notInterestedPosts, hiddenPosts]);
+
+  // Track seen posts in localStorage
+  useEffect(() => {
+    if (feed.length === 0) return;
+    try {
+      const stored = localStorage.getItem('seenPosts');
+      let seen = stored ? new Set<string>(JSON.parse(stored)) : new Set<string>();
+      feed.forEach(post => seen.add(post.id));
+      // keep only last 200 to prevent unbounded growth
+      if (seen.size > 200) {
+        seen = new Set(Array.from(seen).slice(-200));
+      }
+      localStorage.setItem('seenPosts', JSON.stringify(Array.from(seen)));
+    } catch (e) {
+      console.error('Failed to save seen posts', e);
+    }
+  }, [feed]);
+
+  const observer = useRef<IntersectionObserver | null>(null);
+  
+  const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (isFetchingNextPage) return;
+    if (observer.current) observer.current.disconnect();
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasNextPage) {
+        fetchNextPage();
+      }
+    }, { rootMargin: '200px' });
+    
+    if (node) observer.current.observe(node);
+  }, [isFetchingNextPage, hasNextPage, fetchNextPage]);
 
   const likeMutation = useMutation({
     mutationFn: async ({ postId, hasLiked, postOwnerId, postTitle }: { postId: string, hasLiked: boolean, postOwnerId: string, postTitle: string }) => {
@@ -320,9 +376,7 @@ const Home = () => {
   // NEWS_BOT_USER_ID for high-visibility bot posts
   const NEWS_BOT_USER_ID = "3ddf7a50-1d20-4f8f-90f1-2e923be1820e";
 
-  // Merge recommendation scores into the chronological feed
-  // Feed is already sorted by created_at desc (newest first) from the query
-  // Bot (SkillGram News) posts get a recommendation badge boost
+  // Merge recommendation scores into the feed and sort by customized scoring algorithm
   const displayFeed = useMemo(() => {
     const recommendedPostIds = new Map<string, number>();
     if (personalizedData?.posts) {
@@ -331,14 +385,59 @@ const Home = () => {
       });
     }
 
-    // Use the chronological feed, enriching with recommendation scores
-    return feed.map(post => ({
-      ...post,
-      score: post.user_id === NEWS_BOT_USER_ID ? 100 : (recommendedPostIds.get(post.id) || 0),
-    }));
-  }, [personalizedData, feed]);
+    const userSkills = new Set(
+      (personalizedData?.userProfile?.skills || []).map(s => String(s).toLowerCase())
+    );
+    const userGoals = (personalizedData?.userProfile?.learningGoals || "").toLowerCase();
 
+    // Simple hash function for deterministic shuffle
+    const hashStr = (str: string) => {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    };
 
+    const scoredPosts = feed.map(post => {
+      let score = recommendedPostIds.get(post.id) || 0;
+      
+      // Mutual Friend / Following Boost
+      if (followingIds.has(post.user_id)) {
+        score += 30; // High boost for mutual friend / following
+      }
+      
+      // Domain / Tag match boost
+      if (post.tags) {
+        const hasTech = post.tags.some(t => t.toLowerCase() === 'tech');
+        if (hasTech) score += 5;
+        
+        const hasNews = post.tags.some(t => ['news', 'announcement'].includes(t.toLowerCase()));
+        if (hasNews) score += 10;
+        
+        const hasMatch = post.tags.some(t => userSkills.has(t.toLowerCase()) || userGoals.includes(t.toLowerCase()));
+        if (hasMatch) score += 15;
+      }
+      
+      // Shuffle value
+      const shuffleVal = (hashStr(post.id) + sessionSeed) % 15;
+      score += shuffleVal;
+      
+      // Seen penalty
+      if (initialSeenPosts.has(post.id)) {
+        score -= 200; // Drastically reduce score for seen posts to put them at bottom
+      }
+
+      return {
+        ...post,
+        score
+      };
+    });
+
+    // Sort by computed score descending
+    return scoredPosts.sort((a, b) => b.score - a.score);
+  }, [personalizedData, feed, followingIds, initialSeenPosts, sessionSeed]);
   return (
     <Layout>
       <PageSEO
@@ -469,32 +568,31 @@ const Home = () => {
               </Card>
             ) : (
               <>
-                {displayFeed.map((post: any) => (
-                  <div key={post.id} className="relative">
-                    <InstagramPost
-                      post={post}
-                      isLiked={likedPosts.has(post.id)}
-                      isBookmarked={bookmarkedPosts.has(post.id)}
-                      isRecommended={post.score && post.score > 70}
-                      onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id), postOwnerId: post.user_id, postTitle: post.title })}
-                      onBookmark={() => bookmarkMutation.mutate(post.id)}
-                      onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
-                      onShare={() => setShareDialogOpen({ open: true, post })}
-                      onHide={() => setHiddenPosts(prev => new Set(prev).add(post.id))}
-                    />
-
-                  </div>
-                ))}
-                {hasNextPage && (
-                  <div className="flex justify-center py-6 px-4">
-                    <Button
-                      onClick={() => fetchNextPage()}
-                      disabled={isFetchingNextPage}
-                      variant="outline"
-                      className="w-full max-w-md"
+                {displayFeed.map((post: any, index: number) => {
+                  const isLast = index === displayFeed.length - 1;
+                  return (
+                    <div 
+                      key={post.id} 
+                      className="relative"
+                      ref={isLast ? lastPostElementRef : null}
                     >
-                      {isFetchingNextPage ? 'Loading more...' : 'Load More Posts'}
-                    </Button>
+                      <InstagramPost
+                        post={post}
+                        isLiked={likedPosts.has(post.id)}
+                        isBookmarked={bookmarkedPosts.has(post.id)}
+                        isRecommended={post.score && post.score > 70}
+                        onLike={() => likeMutation.mutate({ postId: post.id, hasLiked: likedPosts.has(post.id), postOwnerId: post.user_id, postTitle: post.title })}
+                        onBookmark={() => bookmarkMutation.mutate(post.id)}
+                        onComment={() => setCommentDialogOpen({ open: true, postId: post.id })}
+                        onShare={() => setShareDialogOpen({ open: true, post })}
+                        onHide={() => setHiddenPosts(prev => new Set(prev).add(post.id))}
+                      />
+                    </div>
+                  );
+                })}
+                {isFetchingNextPage && (
+                  <div className="flex justify-center py-6 px-4">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                   </div>
                 )}
               </>

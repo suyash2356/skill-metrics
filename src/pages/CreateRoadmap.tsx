@@ -27,6 +27,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { TypedSupabaseClient } from "@/integrations/supabase/client";
 import { TablesInsert, Database } from "@/integrations/supabase/types";
 import { generateAIPrompt, callAIGenerator, generateMockRoadmap } from "@/lib/aiRoadmapGenerator";
+import { filterResourcesBySkill } from "@/lib/skillGraphEngine";
 
 
 const supabase = rawSupabase as TypedSupabaseClient;
@@ -61,6 +62,18 @@ const CreateRoadmap = () => {
     learningDuration: "", // Duration in months/years
     durationType: "months" // months or years
   });
+
+  const [customSkill, setCustomSkill] = useState("");
+
+  const handleAddCustomSkill = () => {
+    if (customSkill.trim() && !formData.focusAreas.includes(customSkill.trim())) {
+      setFormData(prev => ({
+        ...prev,
+        focusAreas: [...prev.focusAreas, customSkill.trim()]
+      }));
+      setCustomSkill("");
+    }
+  };
 
   useEffect(() => {
     const topic = searchParams.get('topic');
@@ -207,6 +220,64 @@ const CreateRoadmap = () => {
       }
 
       console.log(`AI generated ${aiResponse.steps.length} steps`);
+
+      // === INTERCEPT AI RESOURCES ===
+      // Fetch domain resources from DB to overwrite the AI's hallucinated resources
+      const mainDomain = formData.category || formData.targetRole || formData.title || "";
+      let { data: dbResources } = await getTypedTable('resources')
+        .select('*')
+        .eq('is_active', true)
+        .ilike('category', `%${mainDomain}%`);
+
+      if (!dbResources || dbResources.length === 0) {
+        // Fallback: broaden search if exact category misses
+        const { data } = await getTypedTable('resources')
+          .select('*')
+          .eq('is_active', true)
+          .or(`title.ilike.%${mainDomain}%,related_skills.cs.{${mainDomain}}`);
+        dbResources = data;
+      }
+      const resourcesPool = dbResources || [];
+
+      // Process each step and replace AI resources with our algorithmic DB matches
+      for (let i = 0; i < aiResponse.steps.length; i++) {
+        const step = aiResponse.steps[i];
+        if (resourcesPool.length > 0) {
+           const mockSkillNode = {
+             id: `mock-${i}`,
+             name: step.title,
+             domain: mainDomain,
+             subdomain: step.topics && step.topics.length > 0 ? step.topics[0] : '',
+             description: step.description || '',
+             difficulty_level: formData.skillLevel,
+             estimated_hours: step.estimatedHours || 1,
+             learning_outcomes: step.learningObjectives || step.topics || [],
+           };
+           
+           const matchedResources = filterResourcesBySkill(resourcesPool, mockSkillNode as any);
+           
+           // ALWAYS overwrite step.resources to completely remove the AI's hallucinated resources
+           // Take top 5 most popular & relevant resources from our database
+           step.resources = matchedResources.slice(0, 5).map(r => {
+             // Assign a type based on the link or provider
+             let type = 'website';
+             const providerLower = (r.provider || '').toLowerCase();
+             const linkLower = (r.link || '').toLowerCase();
+             if (linkLower.includes('youtube.com') || providerLower.includes('youtube')) type = 'youtube';
+             else if (providerLower.includes('coursera') || providerLower.includes('udemy') || providerLower.includes('edx')) type = 'course';
+             else if (providerLower.includes('o\'reilly') || linkLower.includes('book') || providerLower.includes('author')) type = 'book';
+
+             return {
+               title: r.title,
+               url: r.link,
+               type: type,
+               duration: r.duration || null,
+               difficulty: r.difficulty || null,
+             };
+           });
+        }
+      }
+      // ===================================
 
       // Insert the main roadmap entry
       const insertedRoadmapData: TablesInsert<'roadmaps'> = {
@@ -573,6 +644,21 @@ const CreateRoadmap = () => {
                           </div>
                         ))}
                       </div>
+
+                      <div className="flex items-center gap-2 mt-4 pt-4 border-t">
+                        <Input
+                          placeholder="Add custom skill or topic..."
+                          value={customSkill}
+                          onChange={(e) => setCustomSkill(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddCustomSkill())}
+                          className="max-w-xs"
+                        />
+                        <Button type="button" variant="outline" onClick={handleAddCustomSkill}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Custom Skill
+                        </Button>
+                      </div>
+
                       {formData.focusAreas.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-4">
                           {formData.focusAreas.map((area) => (
