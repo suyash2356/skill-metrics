@@ -5,9 +5,25 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 import { Resource, ResourceInsert, useBulkCreateResources } from '@/hooks/useAdmin';
 import { Download, Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
+
+const RESOURCE_TYPES = [
+  { value: 'course', label: '📚 Course' },
+  { value: 'video', label: '🎬 Video' },
+  { value: 'book', label: '📖 Book' },
+  { value: 'blog', label: '📝 Blog/Article' },
+  { value: 'research_paper', label: '🔬 Research Paper' },
+  { value: 'website', label: '🌐 Website' },
+  { value: 'certification', label: '🏆 Certification' },
+  { value: 'degree', label: '🎓 Degree Program' },
+  { value: 'learning_path', label: '🗺️ Learning Path' },
+  { value: 'coaching', label: '👨‍🏫 Coaching/Tutorial' },
+  { value: 'exam_prep', label: '📋 Exam Prep' },
+];
 
 interface ImportExportDialogProps {
   open: boolean;
@@ -29,6 +45,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
   const [importData, setImportData] = useState('');
   const [importFormat, setImportFormat] = useState<'json' | 'csv'>('json');
+  const [defaultResourceType, setDefaultResourceType] = useState<string>('course');
   const [isImporting, setIsImporting] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
   const [importResult, setImportResult] = useState<{ success: number; failed: number; errors: string[]; skipped?: number } | null>(null);
@@ -176,7 +193,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
   };
 
   // Pre-import validation
-  const validateResources = (data: Partial<ResourceInsert>[]): { valid: ResourceInsert[]; errors: string[] } => {
+  const validateResources = (data: Partial<ResourceInsert>[], fallbackResourceType: string): { valid: ResourceInsert[]; errors: string[] } => {
     const valid: ResourceInsert[] = [];
     const errors: string[] = [];
 
@@ -204,6 +221,8 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
         errors.push(`Row ${rowNum}: ${rowErrors.join(', ')}`);
       } else {
         // Build valid resource with defaults
+        // Use the per-row resource_type if provided, otherwise fall back to
+        // the batch-level default selected by the admin in the UI.
         valid.push({
           title: item.title!.trim(),
           description: item.description?.trim() || '',
@@ -220,7 +239,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
           rating: item.rating || null,
           is_featured: item.is_featured ?? false,
           is_active: item.is_active ?? true,
-          resource_type: item.resource_type || 'course',
+          resource_type: item.resource_type || fallbackResourceType,
           section_type: item.section_type || 'domain',
           target_countries: item.target_countries || [],
           estimated_time: item.estimated_time || null,
@@ -278,7 +297,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     setImportProgress(10);
 
     // Validate all resources before importing
-    const { valid, errors: validationErrs } = validateResources(dataToImport);
+    const { valid, errors: validationErrs } = validateResources(dataToImport, defaultResourceType);
     
     if (validationErrs.length > 0) {
       setValidationErrors(validationErrs.slice(0, 10)); // Show first 10 errors
@@ -370,6 +389,7 @@ Example Resource,Description here,https://example.com,Web Development,beginner,t
     setImportResult(null);
     setValidationErrors([]);
     setImportProgress(0);
+    setDefaultResourceType('course');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -440,6 +460,25 @@ Example Resource,Description here,https://example.com,Web Development,beginner,t
                   Reset
                 </Button>
               )}
+            </div>
+
+            {/* Default resource type for this batch */}
+            <div className="space-y-1.5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+              <Label className="text-sm font-medium">Default Resource Type for this batch</Label>
+              <p className="text-xs text-muted-foreground">
+                Applied to rows that don't have a <code className="bg-muted px-1 rounded">resource_type</code> field.
+                Choose the correct type so resources appear in the right explore tab.
+              </p>
+              <Select value={defaultResourceType} onValueChange={setDefaultResourceType}>
+                <SelectTrigger className="w-[240px] h-9 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {RESOURCE_TYPES.map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex gap-2">

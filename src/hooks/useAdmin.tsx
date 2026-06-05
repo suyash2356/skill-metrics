@@ -1,7 +1,21 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+
+/** Invalidate every cache that reads from the `resources` table */
+function invalidateAllResourceCaches(queryClient: QueryClient) {
+  queryClient.invalidateQueries({ queryKey: ['adminResources'] });
+  queryClient.invalidateQueries({ queryKey: ['degrees'] });
+  queryClient.invalidateQueries({ queryKey: ['certifications'] });
+  queryClient.invalidateQueries({ queryKey: ['categories'] });
+  queryClient.invalidateQueries({ queryKey: ['exams'] });
+  queryClient.invalidateQueries({ queryKey: ['learningPaths'] });
+  queryClient.invalidateQueries({ queryKey: ['trendingResources'] });
+  queryClient.invalidateQueries({ queryKey: ['blogs-papers'] });
+  queryClient.invalidateQueries({ queryKey: ['ml_recommendations'] });
+  queryClient.invalidateQueries({ queryKey: ['resources'] });
+}
 
 export interface Resource {
   id: string;
@@ -139,7 +153,7 @@ export const useCreateResource = () => {
     },
     onSuccess: () => {
       toast.success('Resource created successfully!');
-      queryClient.invalidateQueries({ queryKey: ['adminResources'] });
+      invalidateAllResourceCaches(queryClient);
     },
     onError: (error: Error) => {
       console.error('Error creating resource:', error);
@@ -193,7 +207,7 @@ export const useBulkCreateResources = () => {
       return { inserted: results, errors, skipped: skippedCount };
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['adminResources'] });
+      invalidateAllResourceCaches(queryClient);
       if (result.errors.length > 0) {
         console.error('Bulk insert errors:', result.errors);
       }
@@ -221,7 +235,7 @@ export const useUpdateResource = () => {
     },
     onSuccess: () => {
       toast.success('Resource updated successfully!');
-      queryClient.invalidateQueries({ queryKey: ['adminResources'] });
+      invalidateAllResourceCaches(queryClient);
     },
     onError: (error) => {
       console.error('Error updating resource:', error);
@@ -244,7 +258,7 @@ export const useDeleteResource = () => {
     },
     onSuccess: () => {
       toast.success('Resource deleted successfully!');
-      queryClient.invalidateQueries({ queryKey: ['adminResources'] });
+      invalidateAllResourceCaches(queryClient);
     },
     onError: (error) => {
       console.error('Error deleting resource:', error);
