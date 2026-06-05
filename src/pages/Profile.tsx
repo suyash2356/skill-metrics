@@ -330,15 +330,37 @@ const Profile = () => {
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6">
-        <Card className="mb-6 shadow-sm">
-          <CardContent className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+      {/* Aesthetic gradient backdrop — sits behind everything but stays in theme */}
+      <div className="relative">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 h-[420px] overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,hsl(var(--primary)/0.25),transparent_55%),radial-gradient(circle_at_85%_15%,hsl(var(--accent)/0.3),transparent_60%),radial-gradient(circle_at_50%_90%,hsl(var(--primary)/0.18),transparent_65%)]" />
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,transparent,hsl(var(--background)))]" />
+        </div>
+
+        <div className="container relative mx-auto px-4 py-6">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut' }}
+        >
+        <Card className="mb-6 overflow-hidden border-border/60 bg-card/70 backdrop-blur-xl shadow-xl">
+          {/* Decorative gradient banner */}
+          <div className="relative h-28 sm:h-36 w-full bg-[linear-gradient(120deg,hsl(var(--primary)/0.9),hsl(var(--accent)/0.85),hsl(var(--primary)/0.7))]">
+            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_50%,white,transparent_45%)]" />
+            <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,transparent_45%,white_50%,transparent_55%)]" />
+          </div>
+          <CardContent className="p-4 sm:p-6 -mt-16 sm:-mt-20">
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6">
               <div className="relative text-center">
-                <Avatar className="h-24 w-24 sm:h-32 sm:w-32 mx-auto">
-                  <AvatarImage src={formData.avatar} />
-                  <AvatarFallback className="text-3xl sm:text-4xl">{initials}</AvatarFallback>
-                </Avatar>
+                <div className="rounded-full p-1 bg-gradient-to-tr from-primary via-accent to-primary shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6)]">
+                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 mx-auto ring-4 ring-background">
+                    <AvatarImage src={formData.avatar} />
+                    <AvatarFallback className="text-3xl sm:text-4xl bg-muted">{initials}</AvatarFallback>
+                  </Avatar>
+                </div>
                 {currentUser?.id === targetUserId && editMode && (
                   <div className="absolute -bottom-1 right-0 flex gap-1">
                     <label htmlFor="avatar-upload" className="cursor-pointer">
@@ -521,9 +543,10 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-6 pt-6 border-t">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mt-6 pt-6 border-t border-border/50">
+              {/* stat tiles wrapped in subtle gradient cards via classes below */}
               <div
-                className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
+                className={`rounded-xl p-3 border border-border/50 bg-gradient-to-br from-primary/10 to-primary/0 transition-all ${isOwnProfile ? 'cursor-pointer hover:from-primary/20 hover:scale-[1.02]' : ''}`}
                 onClick={() => {
                   if (isOwnProfile) {
                     setFollowersDialogTab("followers");
@@ -531,11 +554,11 @@ const Profile = () => {
                   }
                 }}
               >
-                <div className="text-xl sm:text-2xl font-bold text-primary">{stats?.follower_count ?? followerCount ?? 0}</div>
-                <div className="text-xs text-muted-foreground">Followers</div>
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stats?.follower_count ?? followerCount ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Followers</div>
               </div>
               <div
-                className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
+                className={`rounded-xl p-3 border border-border/50 bg-gradient-to-br from-accent/10 to-accent/0 transition-all ${isOwnProfile ? 'cursor-pointer hover:from-accent/20 hover:scale-[1.02]' : ''}`}
                 onClick={() => {
                   if (isOwnProfile) {
                     setFollowersDialogTab("following");
@@ -543,11 +566,17 @@ const Profile = () => {
                   }
                 }}
               >
-                <div className="text-xl sm:text-2xl font-bold text-primary">{stats?.following_count ?? followingCount ?? 0}</div>
-                <div className="text-xs text-muted-foreground">Following</div>
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">{stats?.following_count ?? followingCount ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Following</div>
               </div>
-              <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.post_count ?? 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
-              <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.roadmap_count ?? 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
+              <div className="rounded-xl p-3 border border-border/50 bg-gradient-to-br from-primary/10 to-accent/5">
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stats?.post_count ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Posts</div>
+              </div>
+              <div className="rounded-xl p-3 border border-border/50 bg-gradient-to-br from-accent/10 to-primary/5">
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">{stats?.roadmap_count ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Roadmaps</div>
+              </div>
             </div>
 
             {/* Mutual followers indicator - only show when viewing another user's profile */}
@@ -574,6 +603,7 @@ const Profile = () => {
             )}
           </CardContent>
         </Card>
+        </motion.div>
 
         {(!canViewProfile && isPrivateAccount) ? (
           <Card className="text-center py-12">
@@ -591,7 +621,7 @@ const Profile = () => {
           </Card>
         ) : (
           <Tabs defaultValue="roadmaps" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1.5 bg-card/70 backdrop-blur-md border border-border/60 shadow-sm rounded-xl">
               <TabsTrigger value="roadmaps">Roadmaps</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="achievements">Achievements</TabsTrigger>
@@ -894,6 +924,7 @@ const Profile = () => {
         />
       )}
 
+      </div>
     </Layout>
   );
 };

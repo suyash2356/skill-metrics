@@ -103,9 +103,10 @@ Deno.serve(async (req: Request) => {
     });
     const hasInteractions = interactionMap.size > 0;
 
+    const userPrimaryDomain: string | null = ((prefs as any)?.primary_domain as string | null) ?? null;
     const userDomain = ignoreDomain
       ? null
-      : (domain || (prefs as any)?.primary_domain || null);
+      : (domain || userPrimaryDomain || null);
     const interests: string[] =
       ((prefs as any)?.interests as string[] | null) ?? [];
 
@@ -168,10 +169,21 @@ Deno.serve(async (req: Request) => {
     const contentRaw = resources.map((r) => {
       let s = 0;
       const text = `${r.title} ${r.description ?? ""} ${(r.related_skills ?? []).join(" ")}`.toLowerCase();
+      const rDomain = (r.domain ?? "").toLowerCase();
+      const rCat = (r.category ?? "").toLowerCase();
       interests.forEach((it) => {
         if (it && text.includes(it.toLowerCase())) s += 1;
       });
-      if (userDomain && (r.domain ?? "").toLowerCase().includes(userDomain.toLowerCase())) s += 1.5;
+      // Always weight the user's onboarding primary_domain heavily — even
+      // when ignore_domain is true (explore tabs). Cross-domain results
+      // still appear, but same-domain items dominate.
+      if (userPrimaryDomain) {
+        const pd = userPrimaryDomain.toLowerCase();
+        if (rDomain.includes(pd) || rCat.includes(pd) || text.includes(pd)) {
+          s += 4; // strong boost
+        }
+      }
+      if (userDomain && rDomain.includes(userDomain.toLowerCase())) s += 1.5;
       if (query && text.includes(query)) s += 2;
       return s;
     });
