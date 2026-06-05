@@ -543,7 +543,8 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center mt-6 pt-6 border-t">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mt-6 pt-6 border-t border-border/50">
+              {/* stat tiles wrapped in subtle gradient cards via classes below */}
               <div
                 className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
                 onClick={() => {
@@ -614,7 +615,7 @@ const Profile = () => {
           </Card>
         ) : (
           <Tabs defaultValue="roadmaps" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 h-auto p-1.5 bg-card/70 backdrop-blur-md border border-border/60 shadow-sm rounded-xl">
               <TabsTrigger value="roadmaps">Roadmaps</TabsTrigger>
               <TabsTrigger value="skills">Skills</TabsTrigger>
               <TabsTrigger value="achievements">Achievements</TabsTrigger>
