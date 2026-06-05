@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import * as fs from 'fs';
 import { CATEGORY_MAPPING } from './src/utils/categoryMapping';
 
