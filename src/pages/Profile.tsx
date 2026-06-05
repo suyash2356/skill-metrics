@@ -596,6 +596,7 @@ const Profile = () => {
             )}
           </CardContent>
         </Card>
+        </motion.div>
 
         {(!canViewProfile && isPrivateAccount) ? (
           <Card className="text-center py-12">
@@ -916,6 +917,7 @@ const Profile = () => {
         />
       )}
 
+      </div>
     </Layout>
   );
 };
