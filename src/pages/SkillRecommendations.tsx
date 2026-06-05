@@ -19,7 +19,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useRecommendations, useLogImpressions } from "@/hooks/useRecommendations";
 import { useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress } from "@/hooks/useSkillGraph";
-import { buildLearningPath, matchDomainToSkillGraph, filterResourcesBySkill, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
+import { buildLearningPath, matchDomainToSkillGraph, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
+import { useStepResources } from "@/hooks/useStepResources";
 import { cn } from "@/lib/utils";
 import { useContentRecommendations, type ContentRecommendation } from "@/hooks/useContentRecommendations";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -483,7 +484,6 @@ function SkillGraphView({ learningPath, onStatusChange, recommendations, mlRecom
             <SkillDetailPanel
               skill={selectedSkill}
               onStatusChange={onStatusChange}
-              recommendations={recommendations}
             />
           )}
         </div>
@@ -499,15 +499,21 @@ function SkillGraphView({ learningPath, onStatusChange, recommendations, mlRecom
 interface SkillDetailPanelProps {
   skill: SkillRecommendation;
   onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
-  recommendations: Recommendation[];
 }
 
-function SkillDetailPanel({ skill, onStatusChange, recommendations }: SkillDetailPanelProps) {
-  // Filter recommendations relevant to this skill using the algorithmic filter (Option B)
-  const relevantResources = useMemo(() => {
-    // filterResourcesBySkill strictly filters by the skill node's keywords and sorts by popularity score
-    return filterResourcesBySkill(recommendations, skill.node).slice(0, 5);
-  }, [skill, recommendations]);
+function SkillDetailPanel({ skill, onStatusChange }: SkillDetailPanelProps) {
+  // Fetch admin-curated resources matching this step's title & skills
+  const { data: stepResources = [], isLoading: stepResourcesLoading } = useStepResources(skill.node);
+
+  const getDifficultyColor = (level: string) => {
+    const colors: Record<string, string> = {
+      beginner: 'bg-green-500/10 text-green-600 border-green-500/20',
+      intermediate: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+      advanced: 'bg-red-500/10 text-red-600 border-red-500/20',
+      expert: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+    };
+    return colors[level?.toLowerCase()] || 'bg-muted text-muted-foreground';
+  };
 
   return (
     <div className="sticky top-6 space-y-4">
@@ -594,42 +600,65 @@ function SkillDetailPanel({ skill, onStatusChange, recommendations }: SkillDetai
         </CardContent>
       </Card>
 
-      {/* Relevant Resources */}
-      {relevantResources.length > 0 && (
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <h4 className="font-semibold text-sm flex items-center gap-1.5">
-              <Library className="w-4 h-4 text-primary" /> Resources for {skill.node.name}
-            </h4>
-            
-            {relevantResources.map((r, i) => (
+      {/* Resources for this step — from admin-curated resources table */}
+      <Card>
+        <CardContent className="p-4 space-y-3">
+          <h4 className="font-semibold text-sm flex items-center gap-1.5">
+            <Library className="w-4 h-4 text-primary" /> Resources for {skill.node.name}
+          </h4>
+
+          {stepResourcesLoading ? (
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-16 rounded-lg" />
+              ))}
+            </div>
+          ) : stepResources.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-4 text-center">
+              No resources found for this step yet.
+            </p>
+          ) : (
+            stepResources.slice(0, 8).map((r, i) => (
               <a
-                key={i}
-                href={r.url}
+                key={r.id || i}
+                href={r.link}
                 target="_blank"
                 rel="noreferrer"
                 className="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border"
               >
                 <h5 className="text-sm font-medium line-clamp-1">{r.title}</h5>
+                {r.description && (
+                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{r.description}</p>
+                )}
                 <div className="flex items-center justify-between mt-1.5">
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
                     <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary hover:bg-primary/20 border-0">
-                      {r.type}
+                      {r.resource_type}
                     </Badge>
-                    {r.difficulty && <span>• {r.difficulty}</span>}
+                    {r.difficulty && (
+                      <Badge variant="outline" className={cn("text-[10px] capitalize", getDifficultyColor(r.difficulty))}>
+                        {r.difficulty}
+                      </Badge>
+                    )}
                     {r.provider && <span>• {r.provider}</span>}
+                    {r.is_free && (
+                      <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 border-green-500/20">
+                        Free
+                      </Badge>
+                    )}
                   </div>
-                  {r.score && r.score > 0 && (
-                    <Badge variant="default" className="text-[10px] bg-amber-500 hover:bg-amber-600 text-white border-0 shadow-sm">
-                      Score: {r.score}
-                    </Badge>
+                  {r.avg_rating && r.avg_rating > 0 && (
+                    <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
+                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                      {r.avg_rating.toFixed(1)}
+                    </div>
                   )}
                 </div>
               </a>
-            ))}
-          </CardContent>
-        </Card>
-      )}
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

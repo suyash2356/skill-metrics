@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, QueryClient } from '@tanstack/re
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { CATEGORY_MAPPING } from '@/utils/categoryMapping';
 
 /** Invalidate every cache that reads from the `resources` table */
 function invalidateAllResourceCaches(queryClient: QueryClient) {
@@ -43,6 +44,8 @@ export interface Resource {
   estimated_time: string | null;
   prerequisites: string[] | null;
   education_levels: string[] | null;
+  domain?: string | null;
+  subdomain?: string | null;
 }
 
 export type ResourceInsert = Omit<Resource, 'id' | 'created_at' | 'updated_at'>;
@@ -132,10 +135,21 @@ export const useCreateResource = () => {
 
   return useMutation({
     mutationFn: async (resource: ResourceInsert) => {
+      const mapping = CATEGORY_MAPPING[resource.category];
+      if (!mapping) {
+        throw new Error(`Category mapping not found for category: ${resource.category}. Please contact administrator.`);
+      }
+
+      const resourceToInsert = {
+        ...resource,
+        domain: mapping.domain,
+        subdomain: mapping.subdomain
+      };
+
       // Use upsert to handle duplicates - skip if already exists
       const { data, error } = await supabase
         .from('resources')
-        .upsert(resource, { 
+        .upsert(resourceToInsert, { 
           onConflict: 'title,link,category',
           ignoreDuplicates: true 
         })
@@ -179,7 +193,24 @@ export const useBulkCreateResources = () => {
 
       // Process in batches to avoid timeouts
       for (let i = 0; i < resources.length; i += BATCH_SIZE) {
-        const batch = resources.slice(i, i + BATCH_SIZE);
+        const rawBatch = resources.slice(i, i + BATCH_SIZE);
+        const batch = [];
+        
+        for (const res of rawBatch) {
+          const mapping = CATEGORY_MAPPING[res.category];
+          if (!mapping) {
+            errors.push(`Category mapping not found for category: ${res.category}`);
+            skippedCount++;
+            continue;
+          }
+          batch.push({
+            ...res,
+            domain: mapping.domain,
+            subdomain: mapping.subdomain
+          });
+        }
+
+        if (batch.length === 0) continue;
         
         // Use upsert with ignoreDuplicates to skip existing resources
         const { data, error } = await supabase
@@ -223,9 +254,20 @@ export const useUpdateResource = () => {
 
   return useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: ResourceUpdate }) => {
+      const finalUpdates = { ...updates };
+      
+      if (updates.category) {
+        const mapping = CATEGORY_MAPPING[updates.category];
+        if (!mapping) {
+          throw new Error(`Category mapping not found for category: ${updates.category}. Please contact administrator.`);
+        }
+        finalUpdates.domain = mapping.domain;
+        finalUpdates.subdomain = mapping.subdomain;
+      }
+
       const { data, error } = await supabase
         .from('resources')
-        .update(updates)
+        .update(finalUpdates)
         .eq('id', id)
         .select()
         .single();
