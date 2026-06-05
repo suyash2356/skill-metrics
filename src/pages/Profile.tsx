@@ -546,7 +546,7 @@ const Profile = () => {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center mt-6 pt-6 border-t border-border/50">
               {/* stat tiles wrapped in subtle gradient cards via classes below */}
               <div
-                className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
+                className={`rounded-xl p-3 border border-border/50 bg-gradient-to-br from-primary/10 to-primary/0 transition-all ${isOwnProfile ? 'cursor-pointer hover:from-primary/20 hover:scale-[1.02]' : ''}`}
                 onClick={() => {
                   if (isOwnProfile) {
                     setFollowersDialogTab("followers");
@@ -554,11 +554,11 @@ const Profile = () => {
                   }
                 }}
               >
-                <div className="text-xl sm:text-2xl font-bold text-primary">{stats?.follower_count ?? followerCount ?? 0}</div>
-                <div className="text-xs text-muted-foreground">Followers</div>
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stats?.follower_count ?? followerCount ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Followers</div>
               </div>
               <div
-                className={isOwnProfile ? "cursor-pointer hover:bg-accent/50 rounded-lg p-2 transition-colors" : "p-2"}
+                className={`rounded-xl p-3 border border-border/50 bg-gradient-to-br from-accent/10 to-accent/0 transition-all ${isOwnProfile ? 'cursor-pointer hover:from-accent/20 hover:scale-[1.02]' : ''}`}
                 onClick={() => {
                   if (isOwnProfile) {
                     setFollowersDialogTab("following");
@@ -566,11 +566,17 @@ const Profile = () => {
                   }
                 }}
               >
-                <div className="text-xl sm:text-2xl font-bold text-primary">{stats?.following_count ?? followingCount ?? 0}</div>
-                <div className="text-xs text-muted-foreground">Following</div>
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">{stats?.following_count ?? followingCount ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Following</div>
               </div>
-              <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.post_count ?? 0}</div><div className="text-xs text-muted-foreground">Posts</div></div>
-              <div className="p-2"><div className="text-xl sm:text-2xl font-bold text-primary">{stats?.roadmap_count ?? 0}</div><div className="text-xs text-muted-foreground">Roadmaps</div></div>
+              <div className="rounded-xl p-3 border border-border/50 bg-gradient-to-br from-primary/10 to-accent/5">
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{stats?.post_count ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Posts</div>
+              </div>
+              <div className="rounded-xl p-3 border border-border/50 bg-gradient-to-br from-accent/10 to-primary/5">
+                <div className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">{stats?.roadmap_count ?? 0}</div>
+                <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Roadmaps</div>
+              </div>
             </div>
 
             {/* Mutual followers indicator - only show when viewing another user's profile */}
