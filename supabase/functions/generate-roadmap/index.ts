@@ -43,71 +43,84 @@ function getDifficultyLevels(skillLevel: string): string[] {
   return ['beginner', 'intermediate', 'advanced'];
 }
 
-// Find matching resources from database based on step context
+// Tokenize a string into meaningful lowercase keywords
+const STOPWORDS = new Set([
+  'the','a','an','and','or','of','to','for','in','on','with','your','you','from','at','by',
+  'be','is','are','this','that','these','those','as','it','its','into','using','use','will',
+  'week','weeks','intro','introduction','basics','basic','fundamental','fundamentals',
+  'beginner','intermediate','advanced','learn','learning','understand','understanding',
+  'getting','started','step','phase','module','project','build','create','complete','overview'
+]);
+function tokenize(s: string): string[] {
+  return (s || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9+#.\s-]/g, ' ')
+    .split(/\s+/)
+    .map(t => t.trim())
+    .filter(t => t.length >= 3 && !STOPWORDS.has(t));
+}
+
+// Find matching resources from database based on step context.
+// Strictly relevance-gated: a resource must share meaningful keywords
+// with the step's title/topics/skills (category/difficulty alone are
+// NOT enough — they only act as bonuses).
 function findMatchingResources(
   allResources: DBResource[],
   stepTitle: string,
   stepTopics: string[],
   category: string,
+  domainKeywords: string[],
   difficultyLevels: string[],
   learningStyle: string,
   maxResources: number = 6
 ): any[] {
-  const searchTerms = [
-    stepTitle.toLowerCase(),
-    ...stepTopics.map(t => t.toLowerCase())
-  ];
-  
-  // Score each resource based on relevance
-  const scoredResources = allResources.map(resource => {
-    let score = 0;
-    const resourceTitle = resource.title.toLowerCase();
-    const resourceCategory = resource.category?.toLowerCase() || '';
+  const stepTokens = new Set<string>([
+    ...tokenize(stepTitle),
+    ...stepTopics.flatMap(t => tokenize(t)),
+  ]);
+  const domainTokens = new Set<string>(domainKeywords.flatMap(k => tokenize(k)));
+
+  const scored = allResources.map(resource => {
+    const resourceTitle = (resource.title || '').toLowerCase();
+    const resourceCategory = (resource.category || '').toLowerCase();
     const resourceSkills = (resource.related_skills || []).map(s => s.toLowerCase());
-    const resourceDifficulty = resource.difficulty?.toLowerCase() || '';
-    
-    // Category match (high priority)
-    if (category && resourceCategory.includes(category.toLowerCase())) {
-      score += 50;
+    const resourceDifficulty = (resource.difficulty || '').toLowerCase();
+    const resourceType = (resource.resource_type || '').toLowerCase();
+
+    const resourceTokens = new Set<string>([
+      ...tokenize(resource.title),
+      ...tokenize(resource.description || ''),
+      ...resourceSkills.flatMap(s => tokenize(s)),
+    ]);
+
+    // Semantic relevance to THIS step (hard requirement)
+    let relevance = 0;
+    for (const t of stepTokens) {
+      if (resourceTokens.has(t)) relevance += 10;
+      else if (resourceTitle.includes(t)) relevance += 6;
+      else if (resourceSkills.some(s => s === t || s.includes(t))) relevance += 8;
     }
-    
-    // Difficulty match
-    if (difficultyLevels.includes(resourceDifficulty)) {
-      score += 20;
+    if (relevance < 8) return { resource, score: -1 };
+
+    // Domain alignment bonus
+    let domainBonus = 0;
+    for (const t of domainTokens) {
+      if (resourceTokens.has(t) || resourceCategory.includes(t)) domainBonus += 4;
     }
-    
-    // Title/topic matches
-    for (const term of searchTerms) {
-      if (resourceTitle.includes(term)) {
-        score += 30;
-      }
-      for (const skill of resourceSkills) {
-        if (skill.includes(term) || term.includes(skill)) {
-          score += 15;
-        }
-      }
-    }
-    
-    // Learning style preference
-    const resourceType = resource.resource_type?.toLowerCase() || '';
-    if (learningStyle.toLowerCase().includes('visual') && 
-        (resourceType.includes('video') || resourceType.includes('course'))) {
-      score += 10;
-    }
-    if (learningStyle.toLowerCase().includes('reading') && 
-        (resourceType.includes('article') || resourceType.includes('book') || resourceType.includes('documentation'))) {
-      score += 10;
-    }
-    if (learningStyle.toLowerCase().includes('hands-on') && 
-        (resourceType.includes('project') || resourceType.includes('tutorial') || resourceType.includes('practice'))) {
-      score += 10;
-    }
-    
-    return { resource, score };
+    if (category && resourceCategory.includes(category.toLowerCase())) domainBonus += 12;
+
+    const diffBonus = difficultyLevels.includes(resourceDifficulty) ? 6 : 0;
+
+    let styleBonus = 0;
+    const ls = (learningStyle || '').toLowerCase();
+    if (ls.includes('visual') && (resourceType.includes('video') || resourceType.includes('course'))) styleBonus += 4;
+    if (ls.includes('reading') && (resourceType.includes('article') || resourceType.includes('book') || resourceType.includes('documentation'))) styleBonus += 4;
+    if (ls.includes('hands') && (resourceType.includes('project') || resourceType.includes('tutorial') || resourceType.includes('practice'))) styleBonus += 4;
+
+    return { resource, score: relevance + domainBonus + diffBonus + styleBonus };
   });
-  
-  // Sort by score and take top matches
-  const topResources = scoredResources
+
+  return scored
     .filter(r => r.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, maxResources)
@@ -119,8 +132,6 @@ function findMatchingResources(
       difficulty: r.resource.difficulty || 'intermediate',
       provider: r.resource.provider || null,
     }));
-  
-  return topResources;
 }
 
 // Map database resource types to display types
@@ -390,6 +401,13 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
 
     console.log(`AI generated ${roadmapData.steps.length} steps, now adding resources from database...`);
 
+    // Domain keywords used to keep recommendations on-topic across steps
+    const domainKeywords = [
+      ...(focusAreas || []),
+      title,
+      category || '',
+    ].filter(Boolean);
+
     // Add matching resources from database to each step
     for (const step of roadmapData.steps) {
       const stepTopics = step.topics || [];
@@ -398,11 +416,12 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
         step.title,
         stepTopics,
         category || title,
+        domainKeywords,
         difficultyLevels,
         learningStyle,
-        6 // Max 6 resources per step
+        6
       );
-      
+
       step.resources = matchedResources;
       console.log(`Step "${step.title}": Added ${matchedResources.length} resources from database`);
     }
