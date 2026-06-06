@@ -115,7 +115,7 @@ Deno.serve(async (req: Request) => {
     let q = supabase
       .from("resources")
       .select(
-        "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type",
+        "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
       )
       .eq("is_active", true)
       .limit(800);
@@ -143,7 +143,7 @@ Deno.serve(async (req: Request) => {
       let extraQ = supabase
         .from("resources")
         .select(
-          "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type",
+          "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
         )
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
