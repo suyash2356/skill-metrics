@@ -321,6 +321,44 @@ export class PersonalizationEngine {
   }
 
   /**
+   * NEW: Score based on explicitly selected onboarding domains and subdomains
+   * This provides a massive boost for cold-start users.
+   */
+  private scoreExplicitInterests(itemTitle: string, itemDescription: string, itemSkills?: string[]): { score: number; reason?: string } {
+    const domains = this.context.profileDetails?.interested_domains || [];
+    const subdomains = this.context.profileDetails?.interested_subdomains || [];
+    
+    if (domains.length === 0 && subdomains.length === 0) return { score: 0 };
+
+    const searchText = `${itemTitle} ${itemDescription} ${(itemSkills || []).join(' ')}`.toLowerCase();
+    
+    // Check if user has less interactions (cold start)
+    const hasFewInteractions = (this.context.recentActivity || []).length < 5;
+    
+    // Base weight multiplier: Higher for cold-start users
+    const weightMultiplier = hasFewInteractions ? 3.0 : 1.5;
+
+    let score = 0;
+    let reason = '';
+
+    // Check subdomains first (more specific)
+    const matchedSubdomains = subdomains.filter(sub => searchText.includes(sub.toLowerCase()));
+    if (matchedSubdomains.length > 0) {
+      score += 15 * weightMultiplier;
+      reason = `Matches your interest in ${matchedSubdomains[0]}`;
+    }
+
+    // Check domains
+    const matchedDomains = domains.filter(dom => searchText.includes(dom.toLowerCase()));
+    if (matchedDomains.length > 0) {
+      score += 10 * weightMultiplier;
+      if (!reason) reason = `In your interested domain (${matchedDomains[0]})`;
+    }
+
+    return { score: Math.round(score), reason: score > 0 ? reason : undefined };
+  }
+
+  /**
    * Score based on user's field/domain match
    */
   private scoreFieldMatch(itemTitle: string, itemDescription: string, itemSkills?: string[]): { score: number; reason?: string } {
@@ -385,12 +423,18 @@ export class PersonalizationEngine {
     totalScore += ratingScore;
     if (ratingReason) reasons.push(ratingReason);
 
-    // 2. Field/domain match (weight: HIGH - ensures field relevance)
+    // 2. Explicit Interests Match (weight: MAXIMUM - supercedes generic field matching)
     const title = item.title || item.name || '';
     const description = item.description || '';
+    
+    const { score: interestScore, reason: interestReason } = this.scoreExplicitInterests(title, description, item.relatedSkills);
+    totalScore += interestScore;
+    if (interestReason) reasons.push(interestReason);
+
+    // 3. Field/domain match (weight: HIGH - ensures field relevance)
     const { score: fieldScore, reason: fieldReason } = this.scoreFieldMatch(title, description, item.relatedSkills);
     totalScore += fieldScore;
-    if (fieldReason) reasons.push(fieldReason);
+    if (fieldReason && !interestReason) reasons.push(fieldReason); // Prefer explicit interest reason
 
     // 3. Difficulty match (weight: high)
     if (item.difficulty) {

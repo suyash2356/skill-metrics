@@ -81,8 +81,8 @@ Deno.serve(async (req: Request) => {
       : null;
     const ignoreDomain = !!body.ignore_domain;
 
-    // 1) User context: preferences + interactions
-    const [{ data: prefs }, { data: interactions }] = await Promise.all([
+    // 1) User context: preferences + interactions + profile
+    const [{ data: prefs }, { data: interactions }, { data: profile }] = await Promise.all([
       supabase
         .from("user_preferences")
         .select("primary_domain, interests")
@@ -93,6 +93,11 @@ Deno.serve(async (req: Request) => {
         .select("item_id, score")
         .eq("user_id", user.id)
         .limit(2000),
+      supabase
+        .from("user_profile_details")
+        .select("experience_level, skills, interested_domains, interested_subdomains")
+        .eq("user_id", user.id)
+        .maybeSingle(),
     ]);
 
     const interactionMap = new Map<string, number>();
@@ -110,6 +115,28 @@ Deno.serve(async (req: Request) => {
       : (domain || userPrimaryDomain || null);
     const interests: string[] =
       ((prefs as any)?.interests as string[] | null) ?? [];
+
+    const userKeywords = new Set<string>();
+    interests.forEach(i => i && userKeywords.add(i.toLowerCase()));
+
+    const userInterestedDomains = new Set<string>();
+    const userInterestedSubdomains = new Set<string>();
+
+    if (profile) {
+      if (profile.interested_domains && Array.isArray(profile.interested_domains)) {
+        profile.interested_domains.forEach((d: string) => userInterestedDomains.add(d.toLowerCase()));
+      }
+      if (profile.interested_subdomains && Array.isArray(profile.interested_subdomains)) {
+        profile.interested_subdomains.forEach((sd: string) => userInterestedSubdomains.add(sd.toLowerCase()));
+      }
+      if (profile.skills && Array.isArray(profile.skills)) {
+        profile.skills.forEach((s: any) => {
+          if (s.name) userKeywords.add(s.name.toLowerCase());
+        });
+      }
+    }
+    const hasRichProfile = userInterestedDomains.size > 0 || userInterestedSubdomains.size > 0 || !!profile?.experience_level;
+    const userExperienceLevel = profile?.experience_level?.toLowerCase() || null;
 
     // 2) Candidate resources (sourced from admin-managed `resources` table)
     let q = supabase
@@ -181,9 +208,33 @@ Deno.serve(async (req: Request) => {
       const text = `${r.title} ${r.description ?? ""} ${(r.related_skills ?? []).join(" ")}`.toLowerCase();
       const rDomain = (r.domain ?? "").toLowerCase();
       const rCat = (r.category ?? "").toLowerCase();
-      interests.forEach((it) => {
-        if (it && text.includes(it.toLowerCase())) s += 1;
+      
+      // Bonus for exact experience level match
+      if (userExperienceLevel && r.difficulty) {
+        if (userExperienceLevel === r.difficulty.toLowerCase()) {
+          s += 3; // strong boost for exact difficulty match
+        }
+      }
+
+      // Strong boost for matching explicit interested domains/subdomains
+      if (userInterestedDomains.has(rDomain)) {
+        s += 6; // massive boost for primary domain match
+      }
+      
+      let subdomainMatch = false;
+      userInterestedSubdomains.forEach((sub) => {
+        if (rCat.includes(sub) || (r.related_skills && r.related_skills.some((sk: string) => sk.toLowerCase().includes(sub))) || text.includes(sub)) {
+          s += 4; // strong boost
+          subdomainMatch = true;
+        }
       });
+
+      userKeywords.forEach((kw) => {
+        if (text.includes(kw) || rDomain.includes(kw) || rCat.includes(kw)) {
+          s += 1.5;
+        }
+      });
+
       // Always weight the user's onboarding primary_domain heavily — even
       // when ignore_domain is true (explore tabs). Cross-domain results
       // still appear, but same-domain items dominate.
@@ -208,8 +259,11 @@ Deno.serve(async (req: Request) => {
     // surface in recommendations instead of being drowned out by older items
     // that already have ratings or user interactions.
     const wCF = hasInteractions ? 0.45 : 0.0;
-    const wContent = hasInteractions ? 0.25 : 0.45;
-    const wPop = hasInteractions ? 0.15 : 0.35;
+    
+    // If the user has a rich profile from onboarding but no interactions, we heavily weigh content matching
+    // instead of defaulting to popularity. This solves the cold-start problem by deeply personalizing.
+    const wContent = hasInteractions ? 0.25 : (hasRichProfile ? 0.55 : 0.45);
+    const wPop = hasInteractions ? 0.15 : (hasRichProfile ? 0.25 : 0.35);
     const wFresh = hasInteractions ? 0.15 : 0.2;
 
     const scored = resources.map((r, i) => {
@@ -223,7 +277,8 @@ Deno.serve(async (req: Request) => {
       if (cf > 0.5) reasons.push("Based on your activity");
       if (ct > 0.5) {
         if (query) reasons.push("Matches your search");
-        else reasons.push("Matches your interests");
+        else if (userExperienceLevel && userExperienceLevel === r.difficulty?.toLowerCase()) reasons.push("Perfect for your level");
+        else reasons.push("Matches your profile");
       }
       if (pp > 0.5) reasons.push("Popular in community");
       if (fr > 0.5) reasons.push("Newly added");

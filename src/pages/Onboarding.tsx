@@ -31,9 +31,51 @@ const Onboarding = () => {
     skills: [] as string[],
     learningGoals: "",
     bio: "",
+    interested_domains: [] as string[],
+    interested_subdomains: [] as string[],
   });
 
   const [skillInput, setSkillInput] = useState("");
+  const [domainInput, setDomainInput] = useState("");
+  const [subdomainInput, setSubdomainInput] = useState("");
+
+  const handleAddDomain = () => {
+    if (domainInput.trim() && formData.interested_domains.length < 5) {
+      if (!formData.interested_domains.includes(domainInput.trim())) {
+        setFormData({
+          ...formData,
+          interested_domains: [...formData.interested_domains, domainInput.trim()],
+        });
+      }
+      setDomainInput("");
+    }
+  };
+
+  const handleRemoveDomain = (index: number) => {
+    setFormData({
+      ...formData,
+      interested_domains: formData.interested_domains.filter((_, i) => i !== index),
+    });
+  };
+
+  const handleAddSubdomain = () => {
+    if (subdomainInput.trim() && formData.interested_subdomains.length < 10) {
+      if (!formData.interested_subdomains.includes(subdomainInput.trim())) {
+        setFormData({
+          ...formData,
+          interested_subdomains: [...formData.interested_subdomains, subdomainInput.trim()],
+        });
+      }
+      setSubdomainInput("");
+    }
+  };
+
+  const handleRemoveSubdomain = (index: number) => {
+    setFormData({
+      ...formData,
+      interested_subdomains: formData.interested_subdomains.filter((_, i) => i !== index),
+    });
+  };
 
   const handleAddSkill = () => {
     if (skillInput.trim() && formData.skills.length < 10) {
@@ -129,6 +171,8 @@ const Onboarding = () => {
             field: formData.field,
             goals: formData.learningGoals,
           },
+          interested_domains: formData.interested_domains,
+          interested_subdomains: formData.interested_subdomains,
         });
 
       if (profileError) throw profileError;
@@ -393,8 +437,84 @@ const Onboarding = () => {
                         <option value="expert">Expert</option>
                       </select>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="skills">Skills / Topics of Interest</Label>
+                      <Label htmlFor="interestedDomains">Interested Domains</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="interestedDomains"
+                          list="domainsList"
+                          placeholder="e.g. Technology, Design & Arts, AI & Data"
+                          value={domainInput}
+                          onChange={(e) => setDomainInput(e.target.value)}
+                          onKeyPress={(e) => e.key === "Enter" && handleAddDomain()}
+                        />
+                        <datalist id="domainsList">
+                          <option value="Technology" />
+                          <option value="AI & Data" />
+                          <option value="Business & Finance" />
+                          <option value="Design & Arts" />
+                          <option value="Humanities & Social Sciences" />
+                          <option value="Health & Lifestyle" />
+                          <option value="Academics & Exams" />
+                        </datalist>
+                        <Button type="button" onClick={handleAddDomain} size="sm">
+                          Add
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {formData.interested_domains.map((domain, index) => (
+                          <span
+                            key={`domain-${index}`}
+                            className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm flex items-center gap-2"
+                          >
+                            {domain}
+                            <button onClick={() => handleRemoveDomain(index)} className="hover:text-destructive">×</button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="interestedSubdomains">Interested Subdomains / Topics</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="interestedSubdomains"
+                          list="subdomainsList"
+                          placeholder="e.g. Web Development, Machine Learning, UI/UX"
+                          value={subdomainInput}
+                          onChange={(e) => setSubdomainInput(e.target.value)}
+                          onKeyPress={(e) => e.key === "Enter" && handleAddSubdomain()}
+                        />
+                        <datalist id="subdomainsList">
+                          <option value="Web Development" />
+                          <option value="Machine Learning" />
+                          <option value="Data Science" />
+                          <option value="Programming" />
+                          <option value="Cybersecurity" />
+                          <option value="Design" />
+                          <option value="Marketing" />
+                          <option value="Finance" />
+                        </datalist>
+                        <Button type="button" onClick={handleAddSubdomain} size="sm">
+                          Add
+                        </Button>
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        {formData.interested_subdomains.map((sub, index) => (
+                          <span
+                            key={`sub-${index}`}
+                            className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm flex items-center gap-2"
+                          >
+                            {sub}
+                            <button onClick={() => handleRemoveSubdomain(index)} className="hover:text-destructive">×</button>
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="skills">Specific Skills</Label>
                       <div className="flex gap-2">
                         <Input
                           id="skills"
@@ -410,16 +530,11 @@ const Onboarding = () => {
                       <div className="flex flex-wrap gap-2 mt-3">
                         {formData.skills.map((skill, index) => (
                           <span
-                            key={index}
+                            key={`skill-${index}`}
                             className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm flex items-center gap-2"
                           >
                             {skill}
-                            <button
-                              onClick={() => handleRemoveSkill(index)}
-                              className="hover:text-destructive"
-                            >
-                              ×
-                            </button>
+                            <button onClick={() => handleRemoveSkill(index)} className="hover:text-destructive">×</button>
                           </span>
                         ))}
                       </div>

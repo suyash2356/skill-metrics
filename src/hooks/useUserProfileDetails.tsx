@@ -42,6 +42,8 @@ export interface UserProfileDetails {
   skills: Skill[];
   achievements: Achievement[];
   learning_path: LearningPathItem[];
+  interested_domains?: string[];
+  interested_subdomains?: string[];
   total_posts: number;
   total_roadmaps: number;
   total_likes_received: number;
@@ -79,6 +81,8 @@ export const useUserProfileDetails = (userId?: string) => {
         skills: (data.skills as any) || [],
         achievements: (data.achievements as any) || [],
         learning_path: (data.learning_path as any) || [],
+        interested_domains: data.interested_domains || [],
+        interested_subdomains: data.interested_subdomains || [],
       } as UserProfileDetails;
     },
     enabled: !!targetUserId,
