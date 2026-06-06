@@ -22,9 +22,9 @@ import { useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSki
 import { buildLearningPath, matchDomainToSkillGraph, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
 import { useStepResources } from "@/hooks/useStepResources";
 import { cn } from "@/lib/utils";
-import { useContentRecommendations, type ContentRecommendation } from "@/hooks/useContentRecommendations";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, Flame } from "lucide-react";
+import type { MLRecommendation } from "@/hooks/useRecommendations";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -49,14 +49,10 @@ export default function SkillRecommendations() {
   const { data: userProgress = [] } = useUserSkillProgress();
   const updateProgress = useUpdateSkillProgress();
 
-  // Get ML Recommendations strictly for this domain
-  const { data: mlRecommendations } = useRecommendations(user?.id, graphDomain || undefined);
+  // Get ML Recommendations strictly for this domain (fallback to query if unmapped)
+  const targetDomain = graphDomain || decodeURIComponent(q);
+  const { data: mlRecommendations, isLoading: mlRecsLoading } = useRecommendations(user?.id, targetDomain);
   useLogImpressions(user?.id, mlRecommendations);
-
-  // Content-based TF-IDF + Popularity recommendations for Resources tab
-  const { data: contentRecommendations, isLoading: contentRecsLoading } = useContentRecommendations(
-    decodeURIComponent(q)
-  );
 
   const hasSkillGraph = graphDomain && skillNodes.length > 0;
 
@@ -245,8 +241,8 @@ export default function SkillRecommendations() {
 
               <TabsContent value="all" className="space-y-6">
 
-                {/* ═══ Recommended for You (TF-IDF + Popularity) ═══ */}
-                {contentRecsLoading && (
+                {/* ═══ Recommended for You (ML) ═══ */}
+                {mlRecsLoading && (
                   <div className="space-y-3">
                     <div className="flex items-center gap-2">
                       <Skeleton className="h-6 w-6 rounded-full" />
@@ -260,7 +256,7 @@ export default function SkillRecommendations() {
                   </div>
                 )}
 
-                {!contentRecsLoading && contentRecommendations && contentRecommendations.length > 0 && (
+                {!mlRecsLoading && mlRecommendations && mlRecommendations.length > 0 && (
                   <div className="space-y-4">
                     {/* Section Header */}
                     <div className="mb-2">
@@ -281,8 +277,8 @@ export default function SkillRecommendations() {
                       className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
                       style={{ scrollbarWidth: 'thin' }}
                     >
-                      {contentRecommendations.map((rec, i) => (
-                        <ContentRecCard key={`content-rec-${i}`} rec={rec} index={i} />
+                      {mlRecommendations.slice(0, 8).map((rec, i) => (
+                        <ContentRecCard key={`content-rec-${rec.id || i}`} rec={rec} index={i} />
                       ))}
                     </div>
                   </div>
@@ -777,10 +773,11 @@ function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
 }
 
 // ═══════════════════════════════════════════
-// CONTENT REC CARD (TF-IDF + Popularity)
+// CONTENT REC CARD (ML)
 // ═══════════════════════════════════════════
-function ContentRecCard({ rec, index }: { rec: ContentRecommendation; index: number }) {
-  const matchPercent = Math.round(rec.hybrid_score * 100);
+function ContentRecCard({ rec, index }: { rec: MLRecommendation; index: number }) {
+  // Using reason if available, else generic match label
+  const matchReason = rec.reason || 'Top Match';
   
   return (
     <a 
@@ -794,42 +791,42 @@ function ContentRecCard({ rec, index }: { rec: ContentRecommendation; index: num
       {/* Netflix-style Top 10 / Top Pick badge if it's the very first item, else normal badge */}
       {index === 0 && (
         <div className="absolute top-0 right-0">
-          <div className="bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-bl-lg shadow-lg">
+          <div className="bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-bl-lg shadow-lg z-10">
             #1 Top Pick
           </div>
         </div>
       )}
       
-      <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
-        <div className="text-[10px] font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border border-green-400/20">
-          {matchPercent}% Match
+      <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start z-10">
+        <div className="text-[10px] font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border border-green-400/20 max-w-[180px] truncate">
+          {matchReason}
         </div>
-        <div className="flex gap-1.5 flex-wrap max-w-[80%]">
-          <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm">
+        <div className="flex gap-1.5 flex-wrap max-w-[90%]">
+          <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm capitalize">
             {rec.difficulty || 'All Levels'}
           </Badge>
-          {rec.resource_type && (
-            <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm capitalize">
-              {rec.resource_type}
+          {rec.category && (
+            <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm capitalize max-w-[100px] truncate">
+              {rec.category}
             </Badge>
           )}
         </div>
       </div>
       
-      <div className="absolute bottom-0 left-0 right-0 p-3.5 pt-6 flex flex-col gap-1.5">
-        <h4 className="text-white font-medium text-sm leading-tight line-clamp-2 group-hover:text-primary-foreground transition-colors">
+      <div className="absolute bottom-0 left-0 right-0 p-3.5 pt-6 flex flex-col gap-1.5 z-10">
+        <h4 className="text-white font-medium text-sm leading-tight line-clamp-2 group-hover:text-primary-foreground transition-colors" title={rec.title}>
           {rec.title}
         </h4>
         
         <div className="flex items-center justify-between mt-1">
-          <div className="text-[10px] text-slate-400 flex items-center gap-1.5 line-clamp-1">
-            <span className="truncate">{rec.provider || rec.domain}</span>
-            {rec.avg_rating && (
-              <span className="flex items-center gap-0.5">
+          <div className="text-[10px] text-slate-400 flex items-center gap-1.5 line-clamp-1 w-full max-w-[80%]">
+            {rec.domain && <span className="truncate">{rec.domain}</span>}
+            {rec.weighted_rating && rec.weighted_rating > 0 ? (
+              <span className="flex items-center gap-0.5 shrink-0">
                 <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" /> 
-                {rec.avg_rating.toFixed(1)}
+                {rec.weighted_rating.toFixed(1)}
               </span>
-            )}
+            ) : null}
           </div>
           <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition-colors flex-shrink-0" />
         </div>
