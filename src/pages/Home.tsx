@@ -384,6 +384,12 @@ const Home = () => {
       (personalizedData?.userProfile?.skills || []).map(s => String(s).toLowerCase())
     );
     const userGoals = (personalizedData?.userProfile?.learningGoals || "").toLowerCase();
+    const userDomains = new Set(
+      (personalizedData?.userProfile?.interestedDomains || []).map(d => String(d).toLowerCase())
+    );
+    const userSubdomains = new Set(
+      (personalizedData?.userProfile?.interestedSubdomains || []).map(d => String(d).toLowerCase())
+    );
 
     // Simple hash function for deterministic shuffle
     const hashStr = (str: string) => {
@@ -405,13 +411,26 @@ const Home = () => {
       
       // Domain / Tag match boost
       if (post.tags) {
-        const hasTech = post.tags.some(t => t.toLowerCase() === 'tech');
+        // Massive boost for matching explicit interested domains or subdomains
+        const hasExplicitMatch = post.tags.some((t: string) => {
+          const lowerT = t.toLowerCase();
+          return userDomains.has(lowerT) || 
+                 userSubdomains.has(lowerT) || 
+                 Array.from(userDomains).some(d => lowerT.includes(d) || d.includes(lowerT)) ||
+                 Array.from(userSubdomains).some(s => lowerT.includes(s) || s.includes(lowerT));
+        });
+        
+        if (hasExplicitMatch) {
+          score += 50; // Heavy weightage for exact field/domain match!
+        }
+
+        const hasTech = post.tags.some((t: string) => t.toLowerCase() === 'tech');
         if (hasTech) score += 5;
         
-        const hasNews = post.tags.some(t => ['news', 'announcement'].includes(t.toLowerCase()));
+        const hasNews = post.tags.some((t: string) => ['news', 'announcement'].includes(t.toLowerCase()));
         if (hasNews) score += 10;
         
-        const hasMatch = post.tags.some(t => userSkills.has(t.toLowerCase()) || userGoals.includes(t.toLowerCase()));
+        const hasMatch = post.tags.some((t: string) => userSkills.has(t.toLowerCase()) || userGoals.includes(t.toLowerCase()));
         if (hasMatch) score += 15;
       }
       

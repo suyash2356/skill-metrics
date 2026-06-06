@@ -39,6 +39,8 @@ interface PersonalizedFeedData {
     experienceLevel: string;
     skills: any[];
     learningGoals: string;
+    interestedDomains?: string[];
+    interestedSubdomains?: string[];
   };
 }
 

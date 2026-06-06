@@ -320,6 +320,8 @@ ${roadmaps.slice(0, 20).map(r => `- ID: ${r.id}, Title: ${r.title}, Category: ${
           experienceLevel,
           skills: userSkills,
           learningGoals,
+          interestedDomains,
+          interestedSubdomains,
         },
       }),
       {
