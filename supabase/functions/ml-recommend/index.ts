@@ -36,6 +36,7 @@ interface ResourceRow {
   link: string | null;
   resource_type: string | null;
   section_type: string | null;
+  created_at: string | null;
 }
 
 function zscore(values: number[]): Map<number, number> {
