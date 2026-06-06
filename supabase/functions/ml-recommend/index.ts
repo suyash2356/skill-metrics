@@ -226,6 +226,7 @@ Deno.serve(async (req: Request) => {
         else reasons.push("Matches your interests");
       }
       if (pp > 0.5) reasons.push("Popular in community");
+      if (fr > 0.5) reasons.push("Newly added");
       if (reasons.length === 0) reasons.push("Recommended for you");
 
       return {
