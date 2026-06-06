@@ -935,7 +935,7 @@ export type Database = {
           created_at: string
           description: string
           difficulty: string
-          domain: string | null
+          domain: string
           duration: string | null
           education_levels: string[] | null
           estimated_time: string | null
@@ -958,7 +958,7 @@ export type Database = {
           resource_type: string
           section_type: string
           skill_node_id: string | null
-          subdomain: string | null
+          subdomain: string
           target_countries: string[] | null
           title: string
           total_ratings: number | null
@@ -974,7 +974,7 @@ export type Database = {
           created_at?: string
           description: string
           difficulty?: string
-          domain?: string | null
+          domain: string
           duration?: string | null
           education_levels?: string[] | null
           estimated_time?: string | null
@@ -997,7 +997,7 @@ export type Database = {
           resource_type?: string
           section_type?: string
           skill_node_id?: string | null
-          subdomain?: string | null
+          subdomain: string
           target_countries?: string[] | null
           title: string
           total_ratings?: number | null
@@ -1013,7 +1013,7 @@ export type Database = {
           created_at?: string
           description?: string
           difficulty?: string
-          domain?: string | null
+          domain?: string
           duration?: string | null
           education_levels?: string[] | null
           estimated_time?: string | null
@@ -1036,7 +1036,7 @@ export type Database = {
           resource_type?: string
           section_type?: string
           skill_node_id?: string | null
-          subdomain?: string | null
+          subdomain?: string
           target_countries?: string[] | null
           title?: string
           total_ratings?: number | null
