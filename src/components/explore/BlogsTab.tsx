@@ -30,7 +30,7 @@ export function BlogsTab({ blogsAndPapers, blogsLoading }: BlogsTabProps) {
         surface="explore"
         resourceTypes={["blog", "research_paper", "article", "paper"]}
         ignoreDomain
-        limit={6}
+        limit={12}
         title="Recommended Blogs & Papers"
         subtitle="Hybrid model picks blogs and research papers tailored to your interests"
         hideIfEmpty
