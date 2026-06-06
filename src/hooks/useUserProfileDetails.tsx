@@ -81,8 +81,8 @@ export const useUserProfileDetails = (userId?: string) => {
         skills: (data.skills as any) || [],
         achievements: (data.achievements as any) || [],
         learning_path: (data.learning_path as any) || [],
-        interested_domains: data.interested_domains || [],
-        interested_subdomains: data.interested_subdomains || [],
+        interested_domains: (data as any).interested_domains || [],
+        interested_subdomains: (data as any).interested_subdomains || [],
       } as UserProfileDetails;
     },
     enabled: !!targetUserId,

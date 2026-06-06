@@ -35,11 +35,6 @@ const Home = () => {
   const [commentDialogOpen, setCommentDialogOpen] = useState<{ open: boolean; postId: string | null }>({ open: false, postId: null });
   const [shareDialogOpen, setShareDialogOpen] = useState<{ open: boolean; post: PostWithProfile | null }>({ open: false, post: null });
   const [hiddenPosts, setHiddenPosts] = useState<Set<string>>(new Set());
-  const [showAiPopup, setShowAiPopup] = useState(() => {
-    // Show popup once per session
-    const shown = sessionStorage.getItem('aiPopupShown');
-    return !shown;
-  });
 
   const [initialSeenPosts] = useState<Set<string>>(() => {
     try {
@@ -508,47 +503,32 @@ const Home = () => {
 
           {/* Main Feed - Full width on mobile, centered on desktop */}
           <main className="w-full lg:col-span-6 px-0">
-            {/* AI Personalization Popup */}
-            {showAiPopup && personalizedData && personalizedData.posts.length > 0 && (
-              <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-md w-[90%] animate-in fade-in slide-in-from-top-2 duration-300">
-                <Alert className="border-primary/30 bg-card shadow-lg">
-                  <button
-                    onClick={() => {
-                      setShowAiPopup(false);
-                      sessionStorage.setItem('aiPopupShown', 'true');
-                    }}
-                    className="absolute top-2 right-2 p-1 hover:bg-muted rounded-full"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                  <div className="flex items-center gap-3 pr-6">
-                    <div className="p-2 bg-primary/20 rounded-full">
-                      <Sparkles className="h-5 w-5 text-primary" />
+
+            {(isLoadingPosts || (isLoadingPersonalized && (!displayFeed || displayFeed.length === 0))) ? (
+              <div className="flex flex-col space-y-6 py-4">
+                {/* Instagram-style Skeleton Loaders */}
+                {[1, 2, 3].map((skeleton) => (
+                  <Card key={skeleton} className="overflow-hidden border-border/40 animate-pulse">
+                    <div className="p-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-muted"></div>
+                      <div className="space-y-2 flex-1">
+                        <div className="h-4 w-32 bg-muted rounded"></div>
+                        <div className="h-3 w-24 bg-muted/70 rounded"></div>
+                      </div>
                     </div>
-                    <AlertDescription className="text-sm">
-                      <span className="font-semibold text-primary block mb-1">AI-Personalized Feed Active</span>
-                      <span className="text-muted-foreground text-xs">
-                        Content tailored for your skills & goals
-                      </span>
-                    </AlertDescription>
-                  </div>
-                </Alert>
-              </div>
-            )}
-
-            {isLoadingPersonalized && !personalizedData && (
-              <div className="flex items-center justify-center p-2 mb-4 bg-muted/30 rounded-lg animate-pulse">
-                <Sparkles className="h-4 w-4 text-primary mr-2 animate-spin" />
-                <span className="text-xs text-muted-foreground">Personalizing your experience...</span>
-              </div>
-            )}
-
-            {isLoadingPosts && (!displayFeed || displayFeed.length === 0) ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mb-4"></div>
-                <p className="text-muted-foreground">
-                  Loading feed...
-                </p>
+                    <div className="w-full h-80 bg-muted/60"></div>
+                    <div className="p-4 space-y-3">
+                      <div className="flex gap-4">
+                        <div className="w-6 h-6 bg-muted rounded-full"></div>
+                        <div className="w-6 h-6 bg-muted rounded-full"></div>
+                        <div className="w-6 h-6 bg-muted rounded-full"></div>
+                      </div>
+                      <div className="h-4 w-1/4 bg-muted rounded"></div>
+                      <div className="h-3 w-full bg-muted/70 rounded"></div>
+                      <div className="h-3 w-2/3 bg-muted/70 rounded"></div>
+                    </div>
+                  </Card>
+                ))}
               </div>
             ) : displayFeed.length === 0 ? (
               <Card className="py-16 px-4 text-center border-dashed">

@@ -21,6 +21,8 @@ interface UserProfileDetails {
   skills?: (Skill | string)[];
   experience_level?: string;
   learning_path?: LearningPath;
+  interested_domains?: string[];
+  interested_subdomains?: string[];
 }
 
 interface Post {
@@ -176,20 +178,24 @@ Deno.serve(async (req: Request) => {
     const experienceLevel = profileDetails?.experience_level || "beginner";
     const learningGoals = profileDetails?.learning_path?.goals || "";
     const background = profileDetails?.learning_path?.background || "";
+    const interestedDomains = profileDetails?.interested_domains || [];
+    const interestedSubdomains = profileDetails?.interested_subdomains || [];
 
     const systemPrompt = `You are a personalized content recommendation AI. Analyze user profiles and content to provide relevance scores.
     
 User Profile:
 - Experience Level: ${experienceLevel}
+- Interested Domains: ${interestedDomains.join(", ")}
+- Interested Subdomains/Topics: ${interestedSubdomains.join(", ")}
 - Skills: ${userSkills.map((s: Skill | string) => (typeof s === 'string' ? s : s.name || JSON.stringify(s))).join(", ")}
 - Background: ${background}
 - Learning Goals: ${learningGoals}
 
 Your task: Score each content item (posts and roadmaps) from 0-100 based on:
-1. Relevance to user's skills and experience level
-2. Alignment with learning goals
-3. Appropriate difficulty level
-4. Topic interest match
+1. **CRITICAL**: Exact match with user's Interested Domains and Subdomains. Give massive scores to these!
+2. Relevance to user's skills and experience level
+3. Alignment with learning goals
+4. Appropriate difficulty level
 
 Return ONLY a valid JSON object with this structure:
 {
