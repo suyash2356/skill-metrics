@@ -36,6 +36,7 @@ interface ResourceRow {
   link: string | null;
   resource_type: string | null;
   section_type: string | null;
+  created_at: string | null;
 }
 
 function zscore(values: number[]): Map<number, number> {
@@ -114,7 +115,7 @@ Deno.serve(async (req: Request) => {
     let q = supabase
       .from("resources")
       .select(
-        "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type",
+        "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
       )
       .eq("is_active", true)
       .limit(800);
@@ -142,7 +143,7 @@ Deno.serve(async (req: Request) => {
       let extraQ = supabase
         .from("resources")
         .select(
-          "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type",
+          "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
         )
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
@@ -164,8 +165,17 @@ Deno.serve(async (req: Request) => {
     }
 
     // 3) Score components
+    const nowMs = Date.now();
     const cfRaw = resources.map((r) => interactionMap.get(r.id) ?? 0);
     const popRaw = resources.map((r) => Number(r.weighted_rating ?? 0));
+    // Freshness: linearly decays over 30 days; resources newer than 30d get >0
+    const freshRaw = resources.map((r) => {
+      if (!r.created_at) return 0;
+      const ageDays = (nowMs - new Date(r.created_at).getTime()) / 86400000;
+      if (ageDays < 0) return 1;
+      if (ageDays > 30) return 0;
+      return 1 - ageDays / 30;
+    });
     const contentRaw = resources.map((r) => {
       let s = 0;
       const text = `${r.title} ${r.description ?? ""} ${(r.related_skills ?? []).join(" ")}`.toLowerCase();
@@ -191,17 +201,23 @@ Deno.serve(async (req: Request) => {
     const cfZ = zscore(cfRaw);
     const popZ = zscore(popRaw);
     const contentZ = zscore(contentRaw);
+    const freshZ = zscore(freshRaw);
 
-    // Weights — emphasize CF when we have signal, otherwise content + popularity
-    const wCF = hasInteractions ? 0.55 : 0.0;
-    const wContent = hasInteractions ? 0.25 : 0.55;
-    const wPop = hasInteractions ? 0.2 : 0.45;
+    // Weights — emphasize CF when we have signal, otherwise content + popularity.
+    // Freshness always gets a meaningful slice so newly-added admin resources
+    // surface in recommendations instead of being drowned out by older items
+    // that already have ratings or user interactions.
+    const wCF = hasInteractions ? 0.45 : 0.0;
+    const wContent = hasInteractions ? 0.25 : 0.45;
+    const wPop = hasInteractions ? 0.15 : 0.35;
+    const wFresh = hasInteractions ? 0.15 : 0.2;
 
     const scored = resources.map((r, i) => {
       const cf = cfZ.get(i) ?? 0;
       const ct = contentZ.get(i) ?? 0;
       const pp = popZ.get(i) ?? 0;
-      const score = wCF * cf + wContent * ct + wPop * pp;
+      const fr = freshZ.get(i) ?? 0;
+      const score = wCF * cf + wContent * ct + wPop * pp + wFresh * fr;
 
       const reasons: string[] = [];
       if (cf > 0.5) reasons.push("Based on your activity");
@@ -210,6 +226,7 @@ Deno.serve(async (req: Request) => {
         else reasons.push("Matches your interests");
       }
       if (pp > 0.5) reasons.push("Popular in community");
+      if (fr > 0.5) reasons.push("Newly added");
       if (reasons.length === 0) reasons.push("Recommended for you");
 
       return {
