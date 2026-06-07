@@ -10,9 +10,11 @@ import {
   GraduationCap, PlayCircle, FileText, Wrench, Rocket,
   Star, CheckCircle, Lock, ArrowRight, AlertTriangle, Zap, Clock,
   Target, Flame, Trophy, Sparkles, ExternalLink, ChevronRight,
+  BookOpen, Network,
 } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
 import { useAuth } from "@/hooks/useAuth";
@@ -26,6 +28,7 @@ import {
 import { useStepResources, type StepResource } from "@/hooks/useStepResources";
 import { useFocusSessions } from "@/hooks/useFocusSessions";
 import { cn } from "@/lib/utils";
+import { DomainInformationTab } from "@/components/skill/DomainInformationTab";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
