@@ -1656,6 +1656,8 @@ export type Database = {
           created_at: string
           experience_level: string | null
           id: string
+          interested_domains: string[] | null
+          interested_subdomains: string[] | null
           job_title: string | null
           join_date: string | null
           learning_path: Json | null
@@ -1677,6 +1679,8 @@ export type Database = {
           created_at?: string
           experience_level?: string | null
           id?: string
+          interested_domains?: string[] | null
+          interested_subdomains?: string[] | null
           job_title?: string | null
           join_date?: string | null
           learning_path?: Json | null
@@ -1698,6 +1702,8 @@ export type Database = {
           created_at?: string
           experience_level?: string | null
           id?: string
+          interested_domains?: string[] | null
+          interested_subdomains?: string[] | null
           job_title?: string | null
           join_date?: string | null
           learning_path?: Json | null
