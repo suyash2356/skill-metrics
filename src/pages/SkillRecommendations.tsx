@@ -134,37 +134,54 @@ export default function SkillRecommendations() {
           )}
         </motion.header>
 
-        {/* WORKSPACE */}
-        {nodesLoading ? (
-          <WorkspaceSkeleton />
-        ) : !learningPath || learningPath.orderedSkills.length === 0 ? (
-          <EmptyState query={decoded} />
-        ) : (
-          <div className="grid lg:grid-cols-[340px_1fr] gap-6">
-            <JourneyRail
-              skills={learningPath.orderedSkills}
-              selected={selectedSkill}
-              onSelect={setSelectedSkill}
-              nextSkillId={learningPath.nextSkill?.node.id}
-            />
-            <AnimatePresence mode="wait">
-              {selectedSkill && (
-                <motion.div
-                  key={selectedSkill.node.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -8 }}
-                  transition={{ duration: 0.25 }}
-                >
-                  <ActiveSkillWorkspace
-                    skill={selectedSkill}
-                    onStatusChange={handleStatus}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        )}
+        {/* TABS: Information ↔ Skill Graph */}
+        <Tabs defaultValue="information" className="w-full">
+          <TabsList className="h-11 p-1 bg-muted/60 rounded-xl">
+            <TabsTrigger value="information" className="gap-1.5 px-4 rounded-lg data-[state=active]:shadow-sm">
+              <BookOpen className="w-4 h-4" /> Information
+            </TabsTrigger>
+            <TabsTrigger value="skill-graph" className="gap-1.5 px-4 rounded-lg data-[state=active]:shadow-sm">
+              <Network className="w-4 h-4" /> Skill Graph
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="information" className="mt-6 focus-visible:outline-none">
+            <DomainInformationTab graphDomain={graphDomain} query={decoded} />
+          </TabsContent>
+
+          <TabsContent value="skill-graph" className="mt-6 focus-visible:outline-none">
+            {nodesLoading ? (
+              <WorkspaceSkeleton />
+            ) : !learningPath || learningPath.orderedSkills.length === 0 ? (
+              <EmptyState query={decoded} />
+            ) : (
+              <div className="grid lg:grid-cols-[340px_1fr] gap-6">
+                <JourneyRail
+                  skills={learningPath.orderedSkills}
+                  selected={selectedSkill}
+                  onSelect={setSelectedSkill}
+                  nextSkillId={learningPath.nextSkill?.node.id}
+                />
+                <AnimatePresence mode="wait">
+                  {selectedSkill && (
+                    <motion.div
+                      key={selectedSkill.node.id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <ActiveSkillWorkspace
+                        skill={selectedSkill}
+                        onStatusChange={handleStatus}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );
