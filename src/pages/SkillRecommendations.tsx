@@ -1,836 +1,552 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { Layout } from "@/components/Layout";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { fetchRecommendations, Recommendation } from "@/api/searchAPI";
-import { Book, Layers, Youtube, Globe, Brain, Star, Map, Library, ThumbsUp, ThumbsDown, MessageSquare, CheckCircle, Lock, ArrowRight, AlertTriangle, Zap, Clock, Target, TrendingUp } from "lucide-react";
-import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
-import { getPersonalizedResources } from "@/lib/resourceMatcher";
-import { getSkillRoadmap, generateGenericRoadmap } from "@/lib/skillRoadmaps";
-import { SkillRoadmapSection } from "@/components/SkillRoadmapSection";
-import { ResourceRatingCard } from "@/components/ResourceRatingCard";
-import { useResourceRatings } from "@/hooks/useResourceRatings";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
-import { useRecommendations, useLogImpressions } from "@/hooks/useRecommendations";
-import { useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress } from "@/hooks/useSkillGraph";
-import { buildLearningPath, matchDomainToSkillGraph, type SkillRecommendation, type LearningPathResult } from "@/lib/skillGraphEngine";
-import { useStepResources } from "@/hooks/useStepResources";
-import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ExternalLink, Flame } from "lucide-react";
-import type { MLRecommendation } from "@/hooks/useRecommendations";
+import {
+  GraduationCap, PlayCircle, FileText, Wrench, Rocket,
+  Star, CheckCircle, Lock, ArrowRight, AlertTriangle, Zap, Clock,
+  Target, Flame, Trophy, Sparkles, ExternalLink, ChevronRight,
+} from "lucide-react";
+import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+
+import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
+import { useAuth } from "@/hooks/useAuth";
+import {
+  useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress,
+} from "@/hooks/useSkillGraph";
+import {
+  buildLearningPath, matchDomainToSkillGraph,
+  type SkillRecommendation, type LearningPathResult,
+} from "@/lib/skillGraphEngine";
+import { useStepResources, type StepResource } from "@/hooks/useStepResources";
+import { useFocusSessions } from "@/hooks/useFocusSessions";
+import { cn } from "@/lib/utils";
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
+/* ────────────────────────────────────────────────────────────
+ *  PAGE
+ * ──────────────────────────────────────────────────────────── */
 export default function SkillRecommendations() {
   const { skill } = useParams<{ skill: string }>();
   const query = useQuery();
   const q = (skill || query.get("q") || query.get("skill") || "").trim();
-  const [loading, setLoading] = useState(false);
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'graph' | 'roadmap' | 'resources'>('roadmap');
+  const decoded = q ? decodeURIComponent(q) : "Skill";
+
   const { profileDetails } = useUserProfileDetails();
   const { user } = useAuth();
-  
-  // Skill Graph data
-  const graphDomain = useMemo(() => matchDomainToSkillGraph(decodeURIComponent(q)), [q]);
-  const { data: skillNodes = [] } = useSkillNodes(graphDomain || undefined);
+
+  const graphDomain = useMemo(() => matchDomainToSkillGraph(decoded), [decoded]);
+  const { data: skillNodes = [], isLoading: nodesLoading } = useSkillNodes(graphDomain || undefined);
   const skillNodeIds = useMemo(() => skillNodes.map(n => n.id), [skillNodes]);
   const { data: dependencies = [] } = useSkillDependencies(skillNodeIds);
   const { data: userProgress = [] } = useUserSkillProgress();
   const updateProgress = useUpdateSkillProgress();
+  const { streak } = useFocusSessions();
 
-  // Get ML Recommendations strictly for this domain (fallback to query if unmapped)
-  const targetDomain = graphDomain || decodeURIComponent(q);
-  const { data: mlRecommendations, isLoading: mlRecsLoading } = useRecommendations(user?.id, targetDomain);
-  useLogImpressions(user?.id, mlRecommendations);
-
-  const hasSkillGraph = graphDomain && skillNodes.length > 0;
-
-  // Build learning path
   const learningPath = useMemo<LearningPathResult | null>(() => {
-    if (!hasSkillGraph) return null;
+    if (!skillNodes.length) return null;
     const userProfile = profileDetails ? {
-      experienceLevel: profileDetails.experience_level || 'beginner',
-      skills: (profileDetails.skills || []).map((s: any) => typeof s === 'string' ? s : s.name || ''),
-      learningGoals: (profileDetails.learning_path as any)?.goals || '',
-      background: (profileDetails.learning_path as any)?.background || '',
+      experienceLevel: profileDetails.experience_level || "beginner",
+      skills: (profileDetails.skills || []).map((s: any) => typeof s === "string" ? s : s.name || ""),
+      learningGoals: (profileDetails.learning_path as any)?.goals || "",
+      background: (profileDetails.learning_path as any)?.background || "",
     } : undefined;
     return buildLearningPath(skillNodes, dependencies, userProgress, userProfile);
-  }, [hasSkillGraph, skillNodes, dependencies, userProgress, profileDetails]);
+  }, [skillNodes, dependencies, userProgress, profileDetails]);
 
-  // Get skill roadmap (fallback for domains without graph)
-  const skillRoadmap = useMemo(() => {
-    if (!q) return null;
-    return getSkillRoadmap(q) || generateGenericRoadmap(q);
-  }, [q]);
-
-  // Default to 'graph' if we have a skill graph, else 'roadmap'
-  useEffect(() => {
-    if (hasSkillGraph && activeTab !== 'resources') {
-      setActiveTab('graph');
-    } else if (!hasSkillGraph && activeTab === 'graph') {
-      setActiveTab('roadmap');
-    }
-  }, [hasSkillGraph, activeTab]);
+  const [selectedSkill, setSelectedSkill] = useState<SkillRecommendation | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-    async function load() {
-      if (!q) return;
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetchRecommendations(q);
-        if (!mounted) return;
-        setRecommendations(res || []);
-      } catch (e: any) {
-        console.error(e);
-        if (!mounted) return;
-        setError("Failed to load recommendations.");
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    }
-    load();
-    return () => { mounted = false; };
-  }, [q]);
+    if (!learningPath) return;
+    const next = learningPath.nextSkill || learningPath.orderedSkills[0] || null;
+    setSelectedSkill(prev => prev ?? next);
+  }, [learningPath]);
 
-  const personalizedRecommendations = useMemo(() => {
-    if (!profileDetails || recommendations.length === 0) return recommendations;
-    const userProfile = {
-      experienceLevel: profileDetails.experience_level || 'beginner',
-      skills: (profileDetails.skills || []).map((s: any) => s.name),
-      learningGoals: profileDetails.bio?.toLowerCase().split(/\s+/) || [],
-      prefersFree: !profileDetails.company,
-    };
-    return getPersonalizedResources(recommendations, userProfile);
-  }, [recommendations, profileDetails]);
-
-  const counts = useMemo(() => {
-    const map: Record<string, number> = {};
-    personalizedRecommendations.forEach((r) => { map[r.type] = (map[r.type] || 0) + 1; });
-    return map;
-  }, [personalizedRecommendations]);
-
-  const resourceTabs = [
-    { key: "all", label: "All" },
-    { key: "youtube", label: `Videos (${counts.youtube || 0})` },
-    { key: "book", label: `Books (${counts.book || 0})` },
-    { key: "course", label: `Courses (${counts.course || 0})` },
-    { key: "website", label: `Websites (${counts.website || 0})` },
-  ];
-
-  function typeIcon(t: Recommendation["type"]) {
-    switch (t) {
-      case "book": return <Book className="w-4 h-4 text-yellow-400" />;
-      case "course": return <Layers className="w-4 h-4 text-blue-400" />;
-      case "youtube": return <Youtube className="w-4 h-4 text-red-500" />;
-      case "website": return <Globe className="w-4 h-4 text-teal-400" />;
-      default: return <Brain className="w-4 h-4 text-gray-400" />;
-    }
-  }
-
-  const handleSkillStatusChange = (skillNodeId: string, newStatus: 'not_started' | 'in_progress' | 'completed' | 'skipped') => {
-    updateProgress.mutate(
-      { skillNodeId, status: newStatus },
-      {
-        onSuccess: () => toast.success(`Skill status updated`),
-        onError: () => toast.error('Failed to update progress'),
-      }
-    );
+  const handleStatus = (id: string, status: "not_started" | "in_progress" | "completed" | "skipped") => {
+    updateProgress.mutate({ skillNodeId: id, status }, {
+      onSuccess: () => toast.success("Progress saved"),
+      onError: () => toast.error("Could not update progress"),
+    });
   };
+
+  const completedCount = learningPath?.completedCount ?? 0;
+  const totalCount = learningPath?.totalCount ?? 0;
+  const progressPct = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
+  const hoursLeft = learningPath
+    ? learningPath.orderedSkills
+        .filter(s => s.status !== "completed" && s.status !== "skipped")
+        .reduce((sum, s) => sum + (s.node.estimated_hours || 0), 0)
+    : 0;
+  const milestones = learningPath
+    ? Math.floor((completedCount / Math.max(totalCount, 1)) * 4)
+    : 0;
 
   return (
     <Layout>
-      <div className="container mx-auto px-4 py-6 md:py-10 max-w-6xl">
-        {/* Header */}
-        <header className="mb-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div className="container mx-auto px-4 py-6 max-w-7xl">
+        {/* HERO HEADER */}
+        <motion.header
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-6"
+        >
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5">
             <div>
-              <h1 className="text-2xl md:text-4xl font-extrabold">{q ? decodeURIComponent(q) : "Skill"}</h1>
-              {profileDetails && (
-                <Badge variant="secondary" className="mt-2">
-                  Personalized for {profileDetails.experience_level || 'your'} level
-                </Badge>
-              )}
-              {learningPath && (
-                <div className="flex items-center gap-4 mt-3">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Target className="w-4 h-4 text-primary" />
-                    <span>{learningPath.completedCount}/{learningPath.totalCount} skills</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="w-4 h-4 text-primary" />
-                    <span>~{learningPath.totalEstimatedHours}h total</span>
-                  </div>
-                  <Progress 
-                    value={(learningPath.completedCount / learningPath.totalCount) * 100} 
-                    className="w-32 h-2" 
-                  />
-                </div>
-              )}
+              <div className="flex items-center gap-2 text-xs text-muted-foreground mb-1.5 uppercase tracking-wider font-semibold">
+                <Sparkles className="w-3.5 h-3.5 text-primary" />
+                Learning Journey
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tight">{decoded}</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {profileDetails?.experience_level ? `Tailored for ${profileDetails.experience_level} learners` : "A curated path to mastery"}
+              </p>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant={activeTab === 'roadmap' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveTab('roadmap')}
-                className="gap-2"
-              >
-                <Map className="w-4 h-4" />
-                Learning Path
-              </Button>
-              {hasSkillGraph && (
-                <Button
-                  variant={activeTab === 'graph' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setActiveTab('graph')}
-                  className="gap-2"
-                >
-                  <TrendingUp className="w-4 h-4" />
-                  Skill Graph
-                </Button>
-              )}
-              <Button
-                variant={activeTab === 'resources' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setActiveTab('resources')}
-                className="gap-2"
-              >
-                <Library className="w-4 h-4" />
-                Resources ({recommendations.length})
-              </Button>
+
+            {/* Journey Stats */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+              <StatTile icon={<Target className="w-3.5 h-3.5" />} label="Progress" value={`${progressPct}%`} accent="from-primary/20 to-primary/5" />
+              <StatTile icon={<Clock className="w-3.5 h-3.5" />} label="Remaining" value={`${hoursLeft}h`} accent="from-blue-500/20 to-blue-500/5" />
+              <StatTile icon={<Flame className="w-3.5 h-3.5" />} label="Streak" value={`${streak?.current_streak ?? 0}d`} accent="from-orange-500/20 to-orange-500/5" />
+              <StatTile icon={<Trophy className="w-3.5 h-3.5" />} label="Milestones" value={`${milestones}/4`} accent="from-amber-500/20 to-amber-500/5" />
             </div>
           </div>
-        </header>
 
-        <main>
-          {/* Skill Graph Tab */}
-          {activeTab === 'graph' && learningPath && (
-            <SkillGraphView 
-              learningPath={learningPath} 
-              onStatusChange={handleSkillStatusChange}
-              recommendations={personalizedRecommendations}
-              mlRecommendations={mlRecommendations || []}
+          {totalCount > 0 && (
+            <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
+              <motion.div
+                className="absolute inset-y-0 left-0 bg-gradient-to-r from-primary via-primary to-primary/70"
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPct}%` }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+              />
+            </div>
+          )}
+        </motion.header>
+
+        {/* WORKSPACE */}
+        {nodesLoading ? (
+          <WorkspaceSkeleton />
+        ) : !learningPath || learningPath.orderedSkills.length === 0 ? (
+          <EmptyState query={decoded} />
+        ) : (
+          <div className="grid lg:grid-cols-[340px_1fr] gap-6">
+            <JourneyRail
+              skills={learningPath.orderedSkills}
+              selected={selectedSkill}
+              onSelect={setSelectedSkill}
+              nextSkillId={learningPath.nextSkill?.node.id}
             />
-          )}
-
-          {/* Learning Path Tab */}
-          {activeTab === 'roadmap' && skillRoadmap && (
-            <SkillRoadmapSection roadmap={skillRoadmap} />
-          )}
-
-          {/* Resources Tab */}
-          {activeTab === 'resources' && (
-            <Tabs defaultValue="all" className="space-y-6">
-              <TabsList className="flex flex-wrap gap-2">
-                {resourceTabs.map((t) => (
-                  <TabsTrigger key={t.key} value={t.key}>{t.label}</TabsTrigger>
-                ))}
-              </TabsList>
-
-              <TabsContent value="all" className="space-y-6">
-
-                {/* ═══ Recommended for You (ML) ═══ */}
-                {mlRecsLoading && (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-2">
-                      <Skeleton className="h-6 w-6 rounded-full" />
-                      <Skeleton className="h-6 w-48" />
-                    </div>
-                    <div className="flex gap-4 overflow-hidden">
-                      {[...Array(4)].map((_, i) => (
-                        <Skeleton key={i} className="h-44 w-64 rounded-xl flex-shrink-0" />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {!mlRecsLoading && mlRecommendations && mlRecommendations.length > 0 && (
-                  <div className="space-y-4">
-                    {/* Section Header */}
-                    <div className="mb-2">
-                      <div className="flex items-center gap-2.5">
-                        <div className="p-1.5 rounded-lg bg-gradient-to-br from-orange-500 to-red-500 shadow-sm">
-                          <Flame className="w-4 h-4 text-white" />
-                        </div>
-                        <h2 className="text-2xl font-black tracking-tight bg-gradient-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">Recommended for You</h2>
-                        <span className="text-[10px] font-bold uppercase tracking-wider text-orange-500 bg-orange-500/10 px-2 py-0.5 rounded-sm border border-orange-500/20">Top Picks</span>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-1 ml-10">
-                        Specially curated resources tailored to your interest in <span className="font-semibold text-foreground">{decodeURIComponent(q)}</span>. Based on high content similarity and popularity, these are resources you shouldn't ignore!
-                      </p>
-                    </div>
-
-                    {/* Horizontal Scroll Carousel */}
-                    <div
-                      className="flex gap-4 overflow-x-auto pb-3 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
-                      style={{ scrollbarWidth: 'thin' }}
-                    >
-                      {mlRecommendations.slice(0, 8).map((rec, i) => (
-                        <ContentRecCard key={`content-rec-${rec.id || i}`} rec={rec} index={i} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* ═══ All Resources (original, unchanged) ═══ */}
-                <h3 className="text-xl font-bold mb-4">All Resources</h3>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {loading && <div className="text-sm text-muted-foreground">Loading resources…</div>}
-                  {!loading && personalizedRecommendations.length === 0 && (
-                    <div className="text-sm text-muted-foreground">No recommendations found for this category.</div>
-                  )}
-                  {!loading && personalizedRecommendations.map((r, i) => (
-                    <ResourceCard key={`all-${i}`} recommendation={r} typeIcon={typeIcon} />
-                  ))}
-                </div>
-              </TabsContent>
-
-              {/* Other specific resource type tabs */}
-              {resourceTabs.filter(t => t.key !== 'all').map((t) => (
-                <TabsContent key={t.key} value={t.key}>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    {loading && <div className="text-sm text-muted-foreground">Loading resources…</div>}
-                    {!loading && personalizedRecommendations.filter((r) => r.type === t.key).length === 0 && (
-                      <div className="text-sm text-muted-foreground">No resources found for this category.</div>
-                    )}
-                    {!loading && personalizedRecommendations.filter((r) => r.type === t.key).map((r, i) => (
-                      <ResourceCard key={`${t.key}-${i}`} recommendation={r} typeIcon={typeIcon} />
-                    ))}
-                  </div>
-                </TabsContent>
-              ))}
-            </Tabs>
-          )}
-        </main>
+            <AnimatePresence mode="wait">
+              {selectedSkill && (
+                <motion.div
+                  key={selectedSkill.node.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.25 }}
+                >
+                  <ActiveSkillWorkspace
+                    skill={selectedSkill}
+                    onStatusChange={handleStatus}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
     </Layout>
   );
 }
 
-// ═══════════════════════════════════════════
-// SKILL GRAPH VIEW
-// ═══════════════════════════════════════════
-
-interface SkillGraphViewProps {
-  learningPath: LearningPathResult;
-  onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
-  recommendations: Recommendation[];
-  mlRecommendations: import('@/hooks/useRecommendations').MLRecommendation[];
-}
-
-function SkillGraphView({ learningPath, onStatusChange, recommendations, mlRecommendations }: SkillGraphViewProps) {
-  const [selectedSkill, setSelectedSkill] = useState<SkillRecommendation | null>(
-    learningPath.nextSkill || learningPath.orderedSkills[0] || null
-  );
-
-  const getStatusColor = (status: SkillRecommendation['status']) => {
-    switch (status) {
-      case 'completed': return 'bg-green-500 text-white border-green-600';
-      case 'in_progress': return 'bg-blue-500 text-white border-blue-600';
-      case 'ready': return 'bg-primary/10 text-primary border-primary/30 hover:bg-primary/20';
-      case 'locked': return 'bg-muted text-muted-foreground border-border opacity-60';
-      case 'skipped': return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-    }
-  };
-
-  const getStatusIcon = (status: SkillRecommendation['status']) => {
-    switch (status) {
-      case 'completed': return <CheckCircle className="w-4 h-4" />;
-      case 'in_progress': return <Zap className="w-4 h-4 animate-pulse" />;
-      case 'ready': return <ArrowRight className="w-4 h-4" />;
-      case 'locked': return <Lock className="w-4 h-4" />;
-      case 'skipped': return <AlertTriangle className="w-4 h-4" />;
-    }
-  };
-
-  const getDifficultyBadge = (level: string) => {
-    const colors: Record<string, string> = {
-      beginner: 'bg-green-500/10 text-green-600',
-      intermediate: 'bg-amber-500/10 text-amber-600',
-      advanced: 'bg-red-500/10 text-red-600',
-    };
-    return colors[level] || 'bg-muted text-muted-foreground';
-  };
-
+/* ────────────────────────────────────────────────────────────
+ *  STAT TILE
+ * ──────────────────────────────────────────────────────────── */
+function StatTile({ icon, label, value, accent }: { icon: React.ReactNode; label: string; value: string; accent: string }) {
   return (
-    <div className="space-y-6">
-      {/* Next Recommended Skill Banner */}
-      {learningPath.nextSkill && (
-        <Card className="border-primary/30 bg-gradient-to-r from-primary/5 to-primary/10">
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="p-3 rounded-full bg-primary/10">
-                <Zap className="w-6 h-6 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-bold text-lg">Recommended Next: {learningPath.nextSkill.node.name}</h3>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {learningPath.nextSkill.recommendationReason || learningPath.nextSkill.node.description}
-                </p>
-                <div className="flex items-center gap-3 mt-2">
-                  <Badge className={getDifficultyBadge(learningPath.nextSkill.node.difficulty_level)}>
-                    {learningPath.nextSkill.node.difficulty_level}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3" /> ~{learningPath.nextSkill.node.estimated_hours}h
-                  </span>
-                </div>
-              </div>
-              <Button onClick={() => {
-                setSelectedSkill(learningPath.nextSkill);
-                onStatusChange(learningPath.nextSkill!.node.id, 'in_progress');
-              }}>
-                Start Learning
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Skill Graph Visual */}
-        <div className="lg:col-span-2 space-y-3">
-          <h3 className="font-semibold text-lg flex items-center gap-2">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            Skill Dependency Graph — {learningPath.domain}
-          </h3>
-
-          <div className="relative space-y-2">
-            {/* Vertical connector line */}
-            <div className="absolute left-6 top-8 bottom-8 w-0.5 bg-border hidden md:block" />
-
-            {learningPath.orderedSkills.map((skill, index) => (
-              <Card
-                key={skill.node.id}
-                className={cn(
-                  "cursor-pointer transition-all duration-200 hover:shadow-md",
-                  selectedSkill?.node.id === skill.node.id && "ring-2 ring-primary/40",
-                  skill.isRecommended && skill.status === 'ready' && "border-primary/30 shadow-sm"
-                )}
-                onClick={() => setSelectedSkill(skill)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-4">
-                    {/* Status indicator */}
-                    <div className={cn(
-                      "relative z-10 w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 border-2 transition-all",
-                      getStatusColor(skill.status)
-                    )}>
-                      {getStatusIcon(skill.status)}
-                    </div>
-
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h4 className="font-semibold">{skill.node.name}</h4>
-                        {skill.isRecommended && skill.status === 'ready' && (
-                          <Badge variant="default" className="text-xs bg-primary/80">
-                            ★ Recommended
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className={cn("text-xs", getDifficultyBadge(skill.node.difficulty_level))}>
-                          {skill.node.difficulty_level}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mt-0.5 line-clamp-1">{skill.node.description}</p>
-                      
-                      {/* Missing prerequisites warning */}
-                      {skill.missingPrerequisites.length > 0 && skill.status === 'locked' && (
-                        <div className="flex items-center gap-1.5 mt-1.5 text-xs text-amber-600">
-                          <AlertTriangle className="w-3 h-3" />
-                          <span>Requires: {skill.missingPrerequisites.map(p => p.name).join(', ')}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right: estimated time */}
-                    <div className="text-right flex-shrink-0">
-                      <span className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        {skill.node.estimated_hours}h
-                      </span>
-                      {skill.confidenceLevel > 0 && skill.status !== 'locked' && (
-                        <div className="mt-1">
-                          <Progress value={skill.confidenceLevel} className="w-16 h-1.5" />
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Skill Detail Sidebar */}
-        <div className="space-y-4">
-          {selectedSkill && (
-            <SkillDetailPanel
-              skill={selectedSkill}
-              onStatusChange={onStatusChange}
-            />
-          )}
-        </div>
+    <div className={cn(
+      "relative overflow-hidden rounded-xl border bg-gradient-to-br p-3 min-w-[100px]",
+      accent
+    )}>
+      <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        {icon}
+        {label}
       </div>
+      <div className="text-lg font-black mt-0.5">{value}</div>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════
-// SKILL DETAIL PANEL
-// ═══════════════════════════════════════════
-
-interface SkillDetailPanelProps {
-  skill: SkillRecommendation;
-  onStatusChange: (skillNodeId: string, status: 'not_started' | 'in_progress' | 'completed' | 'skipped') => void;
+/* ────────────────────────────────────────────────────────────
+ *  LEFT: JOURNEY RAIL
+ * ──────────────────────────────────────────────────────────── */
+interface JourneyRailProps {
+  skills: SkillRecommendation[];
+  selected: SkillRecommendation | null;
+  onSelect: (s: SkillRecommendation) => void;
+  nextSkillId?: string;
 }
 
-function SkillDetailPanel({ skill, onStatusChange }: SkillDetailPanelProps) {
-  // Fetch admin-curated resources matching this step's title & skills
-  const { data: stepResources = [], isLoading: stepResourcesLoading } = useStepResources(skill.node);
+function JourneyRail({ skills, selected, onSelect, nextSkillId }: JourneyRailProps) {
+  return (
+    <aside className="lg:sticky lg:top-6 lg:self-start lg:max-h-[calc(100vh-3rem)]">
+      <Card className="overflow-hidden border-border/60">
+        <div className="p-3 border-b bg-muted/30 flex items-center justify-between">
+          <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your Journey</div>
+          <Badge variant="secondary" className="text-[10px]">{skills.length} skills</Badge>
+        </div>
+        <div className="lg:max-h-[calc(100vh-9rem)] overflow-y-auto p-2 space-y-1">
+          {skills.map((s, i) => {
+            const isSelected = selected?.node.id === s.node.id;
+            const isNext = s.node.id === nextSkillId;
+            return (
+              <button
+                key={s.node.id}
+                onClick={() => onSelect(s)}
+                className={cn(
+                  "w-full text-left flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 group relative",
+                  isSelected
+                    ? "bg-primary/10 ring-1 ring-primary/30"
+                    : "hover:bg-muted/60"
+                )}
+              >
+                <StatusDot status={s.status} index={i + 1} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span className={cn(
+                      "text-sm font-semibold truncate",
+                      s.status === "locked" && "text-muted-foreground",
+                      isSelected && "text-primary"
+                    )}>
+                      {s.node.name}
+                    </span>
+                    {isNext && !isSelected && (
+                      <Sparkles className="w-3 h-3 text-primary shrink-0" />
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-0.5">
+                    <span className="capitalize">{s.node.difficulty_level}</span>
+                    <span>•</span>
+                    <span>{s.node.estimated_hours}h</span>
+                  </div>
+                </div>
+                <ChevronRight className={cn(
+                  "w-4 h-4 text-muted-foreground/40 transition-transform",
+                  isSelected && "text-primary translate-x-0.5"
+                )} />
+              </button>
+            );
+          })}
+        </div>
+      </Card>
+    </aside>
+  );
+}
 
-  const getDifficultyColor = (level: string) => {
-    const colors: Record<string, string> = {
-      beginner: 'bg-green-500/10 text-green-600 border-green-500/20',
-      intermediate: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-      advanced: 'bg-red-500/10 text-red-600 border-red-500/20',
-      expert: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
-    };
-    return colors[level?.toLowerCase()] || 'bg-muted text-muted-foreground';
-  };
+function StatusDot({ status, index }: { status: SkillRecommendation["status"]; index: number }) {
+  const base = "relative w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 border-2";
+  switch (status) {
+    case "completed":
+      return <div className={cn(base, "bg-green-500/15 border-green-500/40 text-green-600")}><CheckCircle className="w-4 h-4" /></div>;
+    case "in_progress":
+      return <div className={cn(base, "bg-blue-500/15 border-blue-500/40 text-blue-600")}><Zap className="w-4 h-4 animate-pulse" /></div>;
+    case "locked":
+      return <div className={cn(base, "bg-muted border-border text-muted-foreground/60")}><Lock className="w-3.5 h-3.5" /></div>;
+    case "skipped":
+      return <div className={cn(base, "bg-amber-500/10 border-amber-500/30 text-amber-600")}><AlertTriangle className="w-3.5 h-3.5" /></div>;
+    case "ready":
+    default:
+      return <div className={cn(base, "bg-primary/10 border-primary/40 text-primary")}>{index}</div>;
+  }
+}
+
+/* ────────────────────────────────────────────────────────────
+ *  RIGHT: ACTIVE SKILL WORKSPACE
+ * ──────────────────────────────────────────────────────────── */
+interface ActiveSkillWorkspaceProps {
+  skill: SkillRecommendation;
+  onStatusChange: (id: string, status: "not_started" | "in_progress" | "completed" | "skipped") => void;
+}
+
+const BEST_OF_CATEGORIES = [
+  { key: "course", label: "Best Course", icon: GraduationCap, types: ["course", "degree"], gradient: "from-violet-500/20 via-violet-500/10 to-transparent", iconBg: "bg-violet-500/15 text-violet-600" },
+  { key: "video", label: "Best Video", icon: PlayCircle, types: ["video", "youtube"], gradient: "from-red-500/20 via-red-500/10 to-transparent", iconBg: "bg-red-500/15 text-red-600" },
+  { key: "article", label: "Best Article", icon: FileText, types: ["blog", "paper", "research_paper", "documentation", "website", "book"], gradient: "from-blue-500/20 via-blue-500/10 to-transparent", iconBg: "bg-blue-500/15 text-blue-600" },
+  { key: "practice", label: "Best Practice", icon: Wrench, types: ["tool", "exam_prep", "certification"], gradient: "from-emerald-500/20 via-emerald-500/10 to-transparent", iconBg: "bg-emerald-500/15 text-emerald-600" },
+  { key: "project", label: "Best Project", icon: Rocket, types: ["project", "learning_path"], gradient: "from-amber-500/20 via-amber-500/10 to-transparent", iconBg: "bg-amber-500/15 text-amber-600" },
+] as const;
+
+function pickBest(resources: StepResource[], types: readonly string[]): StepResource | undefined {
+  const matches = resources.filter(r => types.includes((r.resource_type || "").toLowerCase()));
+  if (!matches.length) return undefined;
+  return [...matches].sort((a, b) =>
+    (b.weighted_rating ?? b.avg_rating ?? b.rating ?? 0) -
+    (a.weighted_rating ?? a.avg_rating ?? a.rating ?? 0)
+  )[0];
+}
+
+function ActiveSkillWorkspace({ skill, onStatusChange }: ActiveSkillWorkspaceProps) {
+  const { data: resources = [], isLoading } = useStepResources(skill.node);
+  const isLocked = skill.status === "locked";
+  const isStarted = skill.status === "in_progress" || skill.status === "completed";
 
   return (
-    <div className="sticky top-6 space-y-4">
-      <Card>
-        <CardContent className="p-6 space-y-4">
-          <div>
-            <h3 className="font-bold text-xl">{skill.node.name}</h3>
+    <div className="space-y-5">
+      {/* Hero */}
+      <Card className="overflow-hidden border-border/60 relative">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/8 via-transparent to-transparent pointer-events-none" />
+        <CardContent className="p-6 relative">
+          <div className="flex items-start gap-3 mb-3">
+            <Badge variant="outline" className="capitalize text-[10px]">{skill.node.difficulty_level}</Badge>
             {skill.node.subdomain && (
-              <Badge variant="outline" className="mt-1 text-xs">{skill.node.subdomain}</Badge>
+              <Badge variant="secondary" className="text-[10px]">{skill.node.subdomain}</Badge>
             )}
-          </div>
-
-          <p className="text-sm text-muted-foreground leading-relaxed">{skill.node.description}</p>
-
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-muted-foreground">Difficulty</span>
-              <p className="font-medium capitalize">{skill.node.difficulty_level}</p>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Est. Time</span>
-              <p className="font-medium">{skill.node.estimated_hours} hours</p>
+            <div className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3.5 h-3.5" /> ~{skill.node.estimated_hours}h
             </div>
           </div>
 
-          {/* Learning Outcomes */}
-          {skill.node.learning_outcomes.length > 0 && (
-            <div>
-              <h4 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-                <Target className="w-4 h-4 text-primary" />
-                Learning Outcomes
-              </h4>
-              <ul className="space-y-1.5">
-                {skill.node.learning_outcomes.map((outcome, i) => (
-                  <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                    <CheckCircle className="w-3.5 h-3.5 text-green-500 mt-0.5 flex-shrink-0" />
-                    {outcome}
-                  </li>
-                ))}
-              </ul>
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight mb-2">{skill.node.name}</h2>
+          {skill.node.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed mb-4 max-w-2xl">
+              {skill.node.description}
+            </p>
+          )}
+
+          {/* Confidence Bar */}
+          {skill.confidenceLevel > 0 && (
+            <div className="mb-4 max-w-sm">
+              <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                <span>Mastery</span>
+                <span>{skill.confidenceLevel}%</span>
+              </div>
+              <Progress value={skill.confidenceLevel} className="h-1.5" />
             </div>
           )}
 
-          {/* Missing Prerequisites */}
-          {skill.missingPrerequisites.length > 0 && (
-            <div className="p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
-              <h4 className="text-sm font-semibold text-amber-600 flex items-center gap-1.5 mb-2">
-                <AlertTriangle className="w-4 h-4" />
-                Missing Prerequisites
-              </h4>
+          {/* Action row */}
+          <div className="flex flex-wrap items-center gap-2.5 mt-4">
+            {!isLocked && skill.status !== "completed" && (
+              <Button
+                size="lg"
+                onClick={() => onStatusChange(skill.node.id, "in_progress")}
+                className="gap-2 h-12 px-6 text-base font-bold bg-gradient-to-r from-primary to-primary/80 hover:shadow-lg hover:shadow-primary/20 transition-all"
+              >
+                <Zap className="w-5 h-5" />
+                {isStarted ? "Continue Learning" : "Start Learning"}
+              </Button>
+            )}
+            {skill.status === "completed" && (
+              <Button size="lg" variant="outline" className="gap-2 h-12 px-6 border-green-500/40 text-green-600">
+                <CheckCircle className="w-5 h-5" /> Completed
+              </Button>
+            )}
+            {isLocked && (
+              <Button size="lg" disabled className="gap-2 h-12 px-6">
+                <Lock className="w-5 h-5" /> Complete prerequisites first
+              </Button>
+            )}
+            {!isLocked && skill.status !== "completed" && (
+              <Button variant="ghost" onClick={() => onStatusChange(skill.node.id, "completed")} className="gap-1.5">
+                <CheckCircle className="w-4 h-4" /> Mark Complete
+              </Button>
+            )}
+          </div>
+
+          {/* Prereq warning */}
+          {isLocked && skill.missingPrerequisites.length > 0 && (
+            <div className="mt-4 p-3 rounded-lg bg-amber-500/5 border border-amber-500/20">
+              <div className="text-xs font-semibold text-amber-600 flex items-center gap-1.5 mb-1.5">
+                <AlertTriangle className="w-3.5 h-3.5" /> Prerequisites required
+              </div>
               <div className="flex flex-wrap gap-1.5">
                 {skill.missingPrerequisites.map(p => (
-                  <Badge key={p.id} variant="outline" className="text-xs border-amber-500/30 text-amber-600">
+                  <Badge key={p.id} variant="outline" className="text-[10px] border-amber-500/30 text-amber-600">
                     {p.name}
                   </Badge>
                 ))}
               </div>
             </div>
           )}
-
-          {/* Status Actions */}
-          <div className="flex flex-wrap gap-2 pt-2 border-t">
-            {skill.status !== 'completed' && (
-              <Button size="sm" onClick={() => onStatusChange(skill.node.id, 'completed')} className="gap-1.5">
-                <CheckCircle className="w-4 h-4" /> Mark Complete
-              </Button>
-            )}
-            {skill.status !== 'in_progress' && skill.status !== 'completed' && (
-              <Button size="sm" variant="outline" onClick={() => onStatusChange(skill.node.id, 'in_progress')} className="gap-1.5">
-                <Zap className="w-4 h-4" /> Start
-              </Button>
-            )}
-            {skill.status !== 'skipped' && skill.status !== 'completed' && (
-              <Button size="sm" variant="ghost" onClick={() => onStatusChange(skill.node.id, 'skipped')} className="text-xs">
-                Skip
-              </Button>
-            )}
-            {(skill.status === 'completed' || skill.status === 'skipped') && (
-              <Button size="sm" variant="ghost" onClick={() => onStatusChange(skill.node.id, 'not_started')} className="text-xs">
-                Reset
-              </Button>
-            )}
-          </div>
         </CardContent>
       </Card>
 
-      {/* Resources for this step — from admin-curated resources table */}
-      <Card>
-        <CardContent className="p-4 space-y-3">
-          <h4 className="font-semibold text-sm flex items-center gap-1.5">
-            <Library className="w-4 h-4 text-primary" /> Resources for {skill.node.name}
-          </h4>
-
-          {stepResourcesLoading ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map(i => (
-                <Skeleton key={i} className="h-16 rounded-lg" />
+      {/* Learning Outcomes */}
+      {skill.node.learning_outcomes?.length > 0 && (
+        <Card className="border-border/60">
+          <CardContent className="p-5">
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 mb-3">
+              <Target className="w-3.5 h-3.5 text-primary" /> What you'll learn
+            </div>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {skill.node.learning_outcomes.map((o, i) => (
+                <div key={i} className="flex items-start gap-2 text-sm">
+                  <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 shrink-0" />
+                  <span>{o}</span>
+                </div>
               ))}
             </div>
-          ) : stepResources.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">
-              No resources found for this step yet.
-            </p>
-          ) : (
-            stepResources.slice(0, 8).map((r, i) => (
-              <a
-                key={r.id || i}
-                href={r.link}
-                target="_blank"
-                rel="noreferrer"
-                className="block p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors border border-transparent hover:border-border"
-              >
-                <h5 className="text-sm font-medium line-clamp-1">{r.title}</h5>
-                {r.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{r.description}</p>
-                )}
-                <div className="flex items-center justify-between mt-1.5">
-                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
-                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary hover:bg-primary/20 border-0">
-                      {r.resource_type}
-                    </Badge>
-                    {r.difficulty && (
-                      <Badge variant="outline" className={cn("text-[10px] capitalize", getDifficultyColor(r.difficulty))}>
-                        {r.difficulty}
-                      </Badge>
-                    )}
-                    {r.provider && <span>• {r.provider}</span>}
-                    {r.is_free && (
-                      <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 border-green-500/20">
-                        Free
-                      </Badge>
-                    )}
-                  </div>
-                  {r.avg_rating && r.avg_rating > 0 && (
-                    <div className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                      <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
-                      {r.avg_rating.toFixed(1)}
-                    </div>
-                  )}
-                </div>
-              </a>
-            ))
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Best Of Grid */}
+      <div>
+        <div className="flex items-center justify-between mb-3">
+          <div>
+            <h3 className="text-lg font-black tracking-tight">Top picks for this skill</h3>
+            <p className="text-xs text-muted-foreground">The single best resource in each format — curated, not exhaustive.</p>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 gap-3">
+          {BEST_OF_CATEGORIES.map(cat => {
+            const best = pickBest(resources, cat.types);
+            return (
+              <BestOfCard
+                key={cat.key}
+                label={cat.label}
+                icon={cat.icon}
+                gradient={cat.gradient}
+                iconBg={cat.iconBg}
+                resource={best}
+                loading={isLoading}
+              />
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }
 
-// ═══════════════════════════════════════════
-// RESOURCE CARD (kept from original)
-// ═══════════════════════════════════════════
-
-interface ResourceCardProps {
-  recommendation: Recommendation;
-  typeIcon: (t: Recommendation["type"]) => React.ReactNode;
+/* ────────────────────────────────────────────────────────────
+ *  BEST OF CARD
+ * ──────────────────────────────────────────────────────────── */
+interface BestOfCardProps {
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  gradient: string;
+  iconBg: string;
+  resource?: StepResource;
+  loading: boolean;
 }
 
-function ResourceCard({ recommendation: r, typeIcon }: ResourceCardProps) {
-  const { user } = useAuth();
-  const [resourceId, setResourceId] = useState<string | null>(null);
-  const [showRatingCard, setShowRatingCard] = useState(false);
+function BestOfCard({ label, icon: Icon, gradient, iconBg, resource, loading }: BestOfCardProps) {
+  if (loading) {
+    return (
+      <Card className="border-border/60">
+        <CardContent className="p-4 space-y-2">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-5 w-full" />
+          <Skeleton className="h-3 w-3/4" />
+        </CardContent>
+      </Card>
+    );
+  }
 
-  useEffect(() => {
-    async function findResource() {
-      const { data } = await supabase
-        .from('resources')
-        .select('id, avg_rating, total_ratings, recommend_percent, total_votes')
-        .ilike('title', r.title)
-        .limit(1)
-        .maybeSingle();
-      if (data) setResourceId(data.id);
-    }
-    findResource();
-  }, [r.title]);
+  if (!resource) {
+    return (
+      <Card className={cn("border-dashed border-border/60 bg-gradient-to-br", gradient)}>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", iconBg)}>
+              <Icon className="w-4 h-4" />
+            </div>
+            <div className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+          </div>
+          <p className="text-xs text-muted-foreground">No top pick yet — check back soon.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
-  const {
-    stats, userVote, hasEnoughRatings, formatRatingCount, submitVote, isAuthenticated,
-  } = useResourceRatings(resourceId || undefined);
-
-  const handleVote = (voteType: 'up' | 'down') => {
-    if (!isAuthenticated) { toast.error('Please log in to vote'); return; }
-    if (!resourceId) { toast.error('Resource not found in database'); return; }
-    submitVote(voteType);
-  };
+  const rating = resource.weighted_rating ?? resource.avg_rating ?? resource.rating ?? 0;
 
   return (
-    <Card className="bg-gradient-to-br from-background to-muted border-0 shadow-sm hover:shadow-md transition-all">
-      <CardHeader className="flex items-center gap-3 pb-2">
-        <div className="p-2 rounded bg-white/5">{typeIcon(r.type)}</div>
-        <div className="flex-1">
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="font-semibold">{r.title}</h3>
-            <div className="text-sm text-muted-foreground">{r.provider || r.type}</div>
-          </div>
-          {r.description && <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{r.description}</p>}
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-3">
-        <div className="flex items-center justify-between text-sm">
-          <div className="flex items-center gap-3">
-            {resourceId && stats ? (
-              hasEnoughRatings ? (
-                <>
-                  <div className="flex items-center gap-1">
-                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                    <span className="font-medium">{stats.avg_rating?.toFixed(1)}</span>
-                    <span className="text-muted-foreground">({formatRatingCount(stats.total_ratings)})</span>
-                  </div>
-                  {stats.recommend_percent !== null && (
-                    <div className="flex items-center gap-1 text-green-600">
-                      <CheckCircle className="w-3 h-3" />
-                      <span>{stats.recommend_percent}%</span>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <span className="text-muted-foreground text-xs">{stats.total_ratings}/10 ratings needed</span>
-              )
-            ) : (
-              r.rating && (
-                <div className="flex items-center gap-1">
-                  <Star className="w-3 h-3 text-yellow-400" />
-                  <span>{r.rating.toFixed(1)}</span>
-                </div>
-              )
-            )}
-            {r.duration && <span className="text-muted-foreground">{r.duration}</span>}
-            {r.difficulty && <Badge variant="outline" className="text-xs capitalize">{r.difficulty}</Badge>}
-          </div>
-        </div>
-
-        {resourceId && (
-          <div className="flex items-center gap-2">
-            <Button variant={userVote?.vote_type === 'up' ? 'default' : 'outline'} size="sm" className="h-7 px-2 gap-1 text-xs" onClick={() => handleVote('up')}>
-              <ThumbsUp className={`w-3 h-3 ${userVote?.vote_type === 'up' ? 'fill-current' : ''}`} /> Recommend
-            </Button>
-            <Button variant={userVote?.vote_type === 'down' ? 'destructive' : 'outline'} size="sm" className="h-7 px-2 gap-1 text-xs" onClick={() => handleVote('down')}>
-              <ThumbsDown className={`w-3 h-3 ${userVote?.vote_type === 'down' ? 'fill-current' : ''}`} />
-            </Button>
-            <Button variant="ghost" size="sm" className="h-7 px-2 gap-1 text-xs ml-auto" onClick={() => setShowRatingCard(!showRatingCard)}>
-              <MessageSquare className="w-3 h-3" /> Rate & Review
-            </Button>
-          </div>
-        )}
-
-        {showRatingCard && resourceId && (
-          <div className="pt-2 border-t">
-            <ResourceRatingCard resourceId={resourceId} resourceTitle={r.title} />
-          </div>
-        )}
-
-        <div className="flex items-center justify-between pt-2 border-t">
-          <a href={r.url} target="_blank" rel="noreferrer" className="text-sm text-primary hover:underline">Open resource →</a>
-          {r.views && <span className="text-xs text-muted-foreground">{r.views}</span>}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// ═══════════════════════════════════════════
-// CONTENT REC CARD (ML)
-// ═══════════════════════════════════════════
-function ContentRecCard({ rec, index }: { rec: MLRecommendation; index: number }) {
-  // Using reason if available, else generic match label
-  const matchReason = rec.reason || 'Top Match';
-  
-  return (
-    <a 
-      href={rec.link || '#'} 
-      target="_blank" 
+    <a
+      href={resource.link}
+      target="_blank"
       rel="noreferrer"
-      className="group relative flex-shrink-0 w-64 h-44 rounded-xl overflow-hidden bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700/50 hover:border-slate-500 transition-all hover:-translate-y-1 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary"
-    >
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent pointer-events-none" />
-      
-      {/* Netflix-style Top 10 / Top Pick badge if it's the very first item, else normal badge */}
-      {index === 0 && (
-        <div className="absolute top-0 right-0">
-          <div className="bg-red-600 text-white text-[9px] font-black uppercase tracking-wider px-2 py-1 rounded-bl-lg shadow-lg z-10">
-            #1 Top Pick
-          </div>
-        </div>
+      className={cn(
+        "group block rounded-xl border bg-gradient-to-br p-4 transition-all duration-200",
+        "hover:shadow-lg hover:-translate-y-0.5 hover:border-primary/40",
+        gradient
       )}
-      
-      <div className="absolute top-3 left-3 flex flex-col gap-1.5 items-start z-10">
-        <div className="text-[10px] font-bold text-green-400 bg-green-400/10 px-1.5 py-0.5 rounded backdrop-blur-sm shadow-sm border border-green-400/20 max-w-[180px] truncate">
-          {matchReason}
+    >
+      <div className="flex items-center gap-2 mb-2.5">
+        <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center", iconBg)}>
+          <Icon className="w-4 h-4" />
         </div>
-        <div className="flex gap-1.5 flex-wrap max-w-[90%]">
-          <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm capitalize">
-            {rec.difficulty || 'All Levels'}
-          </Badge>
-          {rec.category && (
-            <Badge variant="secondary" className="bg-slate-800/80 hover:bg-slate-800 text-[9px] px-1.5 py-0 text-slate-300 border-0 backdrop-blur-sm capitalize max-w-[100px] truncate">
-              {rec.category}
+        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{label}</div>
+        {rating > 0 && (
+          <div className="ml-auto flex items-center gap-0.5 text-xs font-semibold">
+            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+            {rating.toFixed(1)}
+          </div>
+        )}
+      </div>
+
+      <h4 className="font-bold text-sm leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+        {resource.title}
+      </h4>
+
+      {resource.description && (
+        <p className="text-xs text-muted-foreground line-clamp-2 mt-1.5">{resource.description}</p>
+      )}
+
+      <div className="flex items-center justify-between mt-3 pt-3 border-t border-border/40">
+        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          {resource.provider && <span className="font-medium">{resource.provider}</span>}
+          {resource.is_free && (
+            <Badge variant="outline" className="text-[9px] h-4 px-1.5 bg-green-500/10 text-green-600 border-green-500/20">
+              Free
             </Badge>
           )}
         </div>
-      </div>
-      
-      <div className="absolute bottom-0 left-0 right-0 p-3.5 pt-6 flex flex-col gap-1.5 z-10">
-        <h4 className="text-white font-medium text-sm leading-tight line-clamp-2 group-hover:text-primary-foreground transition-colors" title={rec.title}>
-          {rec.title}
-        </h4>
-        
-        <div className="flex items-center justify-between mt-1">
-          <div className="text-[10px] text-slate-400 flex items-center gap-1.5 line-clamp-1 w-full max-w-[80%]">
-            {rec.domain && <span className="truncate">{rec.domain}</span>}
-            {rec.weighted_rating && rec.weighted_rating > 0 ? (
-              <span className="flex items-center gap-0.5 shrink-0">
-                <Star className="w-2.5 h-2.5 text-yellow-500 fill-yellow-500" /> 
-                {rec.weighted_rating.toFixed(1)}
-              </span>
-            ) : null}
-          </div>
-          <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-white transition-colors flex-shrink-0" />
-        </div>
+        <span className="text-[10px] font-bold text-primary flex items-center gap-0.5 opacity-70 group-hover:opacity-100">
+          Open <ExternalLink className="w-3 h-3" />
+        </span>
       </div>
     </a>
+  );
+}
+
+/* ────────────────────────────────────────────────────────────
+ *  STATES
+ * ──────────────────────────────────────────────────────────── */
+function WorkspaceSkeleton() {
+  return (
+    <div className="grid lg:grid-cols-[340px_1fr] gap-6">
+      <div className="space-y-2">
+        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-14 rounded-lg" />)}
+      </div>
+      <div className="space-y-4">
+        <Skeleton className="h-48 rounded-xl" />
+        <div className="grid sm:grid-cols-2 gap-3">
+          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyState({ query }: { query: string }) {
+  return (
+    <Card className="border-dashed">
+      <CardContent className="p-12 text-center">
+        <Sparkles className="w-10 h-10 mx-auto text-muted-foreground/40 mb-3" />
+        <h3 className="font-bold text-lg mb-1">No journey available for "{query}" yet</h3>
+        <p className="text-sm text-muted-foreground">We're building structured paths for more skills. Try exploring related domains.</p>
+      </CardContent>
+    </Card>
   );
 }
