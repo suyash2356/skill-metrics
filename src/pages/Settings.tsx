@@ -166,7 +166,9 @@ const Settings = () => {
           toast({ title: 'Push blocked', description: 'Please allow notifications in your browser settings.' });
           return;
         }
-      } catch {}
+      } catch (error) {
+        console.error('Push notification permission error:', error);
+      }
     }
     setNotifications(n => ({ ...n, push_enabled: value }));
   };

@@ -107,7 +107,7 @@ export const useResources = (showInactive = false) => {
   return useQuery({
     queryKey: ['adminResources', showInactive],
     queryFn: async () => {
-      let query = supabase
+      const query = supabase
         .from('resources')
         .select('*')
         .order('category')

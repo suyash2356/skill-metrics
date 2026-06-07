@@ -39,7 +39,7 @@ export function useBlogsAndPapers() {
     queryKey: ['blogs-papers', user?.id],
     queryFn: async () => {
       // Fetch user onboarding data for personalization
-      let userData: UserOnboardingData = {
+      const userData: UserOnboardingData = {
         skills: [],
         background: '',
         education: '',
@@ -145,7 +145,7 @@ export function useBlogsAndPapers() {
       
       const scored = results.map(item => {
         let score = item.isFeatured ? 10 : 0;
-        let matchReasons: string[] = [];
+        const matchReasons: string[] = [];
         
         // Match by user's skills/interests
         const itemSkills = item.relatedSkills.map(s => s.toLowerCase());

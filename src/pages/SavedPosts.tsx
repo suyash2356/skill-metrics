@@ -26,6 +26,87 @@ interface BookmarkedPost {
   } | null;
 }
 
+const getMediaInfo = (content: string | null) => {
+  if (!content) return { type: 'text', url: null };
+
+  // Check for video
+  const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
+  const videoMatch = content.match(videoRegex);
+  if (videoMatch) return { type: 'video', url: videoMatch[0] };
+
+  // Check for base64 image
+  const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/;
+  const base64Match = content.match(base64Regex);
+  if (base64Match) return { type: 'image', url: base64Match[1] };
+
+  // Check for image URL
+  const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/;
+  const imgMatch = content.match(imgRegex);
+  if (imgMatch) return { type: 'image', url: imgMatch[1] };
+
+  // Check if starts with data:image
+  if (content.startsWith('data:image')) return { type: 'image', url: content };
+
+  return { type: 'text', url: null };
+};
+
+const categorizePost = (post: BookmarkedPost) => {
+  const media = getMediaInfo(post.posts?.content || null);
+  const category = post.posts?.category?.toLowerCase() || '';
+
+  if (media.type === 'image') return 'image';
+  if (media.type === 'video') return 'video';
+  if (category.includes('news') || category.includes('article')) return 'news';
+  if (category.includes('resource') || category.includes('tutorial') || category.includes('guide')) return 'resources';
+
+  return 'text';
+};
+
+const parseMedia = (content: string | null) => {
+  if (!content) return { text: "", media: [], attachments: [] };
+
+  const media: Array<{ type: "image" | "video"; url: string }> = [];
+  const attachments: Array<{ name: string; url: string; type: string }> = [];
+  let text = content;
+
+  // Extract base64 images
+  const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
+  const base64Matches = content.matchAll(base64Regex);
+  for (const match of base64Matches) {
+    media.push({ type: "image", url: match[1] });
+    text = text.replace(match[0], "");
+  }
+
+  // Extract regular image URLs
+  const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/g;
+  const imgMatches = content.matchAll(imgRegex);
+  for (const match of imgMatches) {
+    media.push({ type: "image", url: match[1] });
+    text = text.replace(match[0], "");
+  }
+
+  // Extract video URLs
+  const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
+  const videoMatches = content.matchAll(videoRegex);
+  for (const match of videoMatches) {
+    media.push({ type: "video", url: match[0] });
+    text = text.replace(match[0], "");
+  }
+
+  // Extract file attachments
+  const attachmentRegex = /\[Attachment: (.*?)\]\((.*?)\)/g;
+  const attachmentMatches = content.matchAll(attachmentRegex);
+  for (const match of attachmentMatches) {
+    const name = match[1];
+    const url = match[2];
+    const ext = name.split('.').pop()?.toUpperCase() || 'FILE';
+    attachments.push({ name, url, type: ext });
+    text = text.replace(match[0], "");
+  }
+
+  return { text: text.trim(), media, attachments };
+};
+
 const SavedPosts = () => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -75,91 +156,12 @@ const SavedPosts = () => {
     },
   });
 
-  const getMediaInfo = (content: string | null) => {
-    if (!content) return { type: 'text', url: null };
 
-    // Check for video
-    const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
-    const videoMatch = content.match(videoRegex);
-    if (videoMatch) return { type: 'video', url: videoMatch[0] };
-
-    // Check for base64 image
-    const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/;
-    const base64Match = content.match(base64Regex);
-    if (base64Match) return { type: 'image', url: base64Match[1] };
-
-    // Check for image URL
-    const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/;
-    const imgMatch = content.match(imgRegex);
-    if (imgMatch) return { type: 'image', url: imgMatch[1] };
-
-    // Check if starts with data:image
-    if (content.startsWith('data:image')) return { type: 'image', url: content };
-
-    return { type: 'text', url: null };
-  };
-
-  const categorizePost = (post: BookmarkedPost) => {
-    const media = getMediaInfo(post.posts?.content || null);
-    const category = post.posts?.category?.toLowerCase() || '';
-
-    if (media.type === 'image') return 'image';
-    if (media.type === 'video') return 'video';
-    if (category.includes('news') || category.includes('article')) return 'news';
-    if (category.includes('resource') || category.includes('tutorial') || category.includes('guide')) return 'resources';
-
-    return 'text';
-  };
 
   const filteredPosts = useMemo(() => {
     if (selectedCategory === 'all') return bookmarkedPosts;
     return bookmarkedPosts.filter(post => categorizePost(post) === selectedCategory);
   }, [bookmarkedPosts, selectedCategory]);
-
-  const parseMedia = (content: string | null) => {
-    if (!content) return { text: "", media: [], attachments: [] };
-
-    const media: Array<{ type: "image" | "video"; url: string }> = [];
-    const attachments: Array<{ name: string; url: string; type: string }> = [];
-    let text = content;
-
-    // Extract base64 images
-    const base64Regex = /!\[.*?\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
-    const base64Matches = content.matchAll(base64Regex);
-    for (const match of base64Matches) {
-      media.push({ type: "image", url: match[1] });
-      text = text.replace(match[0], "");
-    }
-
-    // Extract regular image URLs
-    const imgRegex = /!\[.*?\]\((https?:\/\/[^)]+)\)/g;
-    const imgMatches = content.matchAll(imgRegex);
-    for (const match of imgMatches) {
-      media.push({ type: "image", url: match[1] });
-      text = text.replace(match[0], "");
-    }
-
-    // Extract video URLs
-    const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
-    const videoMatches = content.matchAll(videoRegex);
-    for (const match of videoMatches) {
-      media.push({ type: "video", url: match[0] });
-      text = text.replace(match[0], "");
-    }
-
-    // Extract file attachments
-    const attachmentRegex = /\[Attachment: (.*?)\]\((.*?)\)/g;
-    const attachmentMatches = content.matchAll(attachmentRegex);
-    for (const match of attachmentMatches) {
-      const name = match[1];
-      const url = match[2];
-      const ext = name.split('.').pop()?.toUpperCase() || 'FILE';
-      attachments.push({ name, url, type: ext });
-      text = text.replace(match[0], "");
-    }
-
-    return { text: text.trim(), media, attachments };
-  };
 
   if (isLoading) {
     return (

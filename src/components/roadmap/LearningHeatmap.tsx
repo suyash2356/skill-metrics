@@ -18,7 +18,7 @@ export function LearningHeatmap({ roadmapId }: LearningHeatmapProps) {
   // Align to start of week (Sunday)
   startDate.setDate(startDate.getDate() - startDate.getDay());
 
-  let current = new Date(startDate);
+  const current = new Date(startDate);
   while (current <= today) {
     const week: Date[] = [];
     for (let d = 0; d < 7; d++) {

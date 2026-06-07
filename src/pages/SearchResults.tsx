@@ -51,23 +51,24 @@ export default function SearchResults() {
   const [previewId, setPreviewId] = useState<string | null>(null);
 
   useEffect(() => {
-    const q = params.get("q") || "";
+    async function runSearch(q: string) {
+      setLoading(true);
+      setPreviewId(null);
+      try {
+        const res = await fetchUniversalSearch(q, 40);
+        setResults(res);
+      } catch {
+        setResults({ resources: [], communityResources: [], people: [] });
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    const currentParams = new URLSearchParams(location.search);
+    const q = currentParams.get("q") || "";
     setQuery(q);
     if (q) runSearch(q);
   }, [location.search]);
-
-  async function runSearch(q: string) {
-    setLoading(true);
-    setPreviewId(null);
-    try {
-      const res = await fetchUniversalSearch(q, 40);
-      setResults(res);
-    } catch {
-      setResults({ resources: [], communityResources: [], people: [] });
-    } finally {
-      setLoading(false);
-    }
-  }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

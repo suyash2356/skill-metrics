@@ -86,7 +86,11 @@ const Landing = () => {
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
 
   const go = (path: string) => {
-    user ? navigate(path) : navigate(`/login?redirect=${encodeURIComponent(path)}`);
+    if (user) {
+      navigate(path);
+    } else {
+      navigate(`/login?redirect=${encodeURIComponent(path)}`);
+    }
   };
 
   const features = [

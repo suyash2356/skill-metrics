@@ -86,7 +86,7 @@ export function useMessages(conversationId: string | null, options?: UseMessages
 
       // Fetch reactions
       const msgIds = (data || []).map(m => m.id);
-      let reactionsMap: Record<string, MessageReaction[]> = {};
+      const reactionsMap: Record<string, MessageReaction[]> = {};
       if (msgIds.length > 0) {
         const { data: reactions } = await supabase
           .from('message_reactions')
@@ -101,7 +101,7 @@ export function useMessages(conversationId: string | null, options?: UseMessages
 
       // Build reply map
       const replyIds = (data || []).filter(m => m.reply_to_id).map(m => m.reply_to_id!);
-      let replyMap: Record<string, any> = {};
+      const replyMap: Record<string, any> = {};
       if (replyIds.length > 0) {
         const { data: replies } = await supabase
           .from('messages')

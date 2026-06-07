@@ -64,6 +64,7 @@ export function FocusTimer({ roadmapId, steps, isOwner }: FocusTimerProps) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isRunning]);
 
   const handleSessionComplete = () => {
@@ -89,7 +90,9 @@ export function FocusTimer({ roadmapId, steps, isOwner }: FocusTimerProps) {
         const audio = new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkYyIg3x1c3V9g4mLi4iFgHt3d3x+g4eIiIaCfnt5eXx+gYOFhYSDgX9+fX1+f4GCgoKBgH9+fn5+f4CAgICAgH9/fn5+fn9/f39/f39/f39/f39/f39/f4CAgICAgICAgICAgIB/f39/f39/f39/f39/f39/f38=");
         audio.volume = 0.3;
         audio.play().catch(() => {});
-      } catch {}
+      } catch (error) {
+        console.error("Audio playback failed", error);
+      }
     }
   };
 

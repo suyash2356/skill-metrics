@@ -168,7 +168,7 @@ export function useStepResources(skillNode: SkillNode | null | undefined) {
 
       const combinedFilter = [orFilters, skillOverlap].filter(Boolean).join(',');
 
-      let query = supabase
+      const query = supabase
         .from('resources')
         .select('id,title,description,link,category,difficulty,is_free,icon,color,provider,duration,rating,resource_type,related_skills,avg_rating,weighted_rating,total_ratings,recommend_percent')
         .eq('is_active', true)

@@ -152,7 +152,7 @@ export const InstagramPost = ({
 
     // ✅ Fixed regex: no double-escaping
     // Also match video tags embedded in content
-    const videoRegex = /(https?:\/\/[^\s<>"]+\.(?:mp4|webm|ogg))/gi;
+    const videoRegex = /(https?:\/\/[^\s]+\.(mp4|webm|ogg))/gi;
     const videoMatches = content.matchAll(videoRegex);
     for (const match of videoMatches) {
       media.push({ type: "video", url: match[0] });

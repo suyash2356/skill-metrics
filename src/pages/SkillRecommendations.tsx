@@ -81,7 +81,7 @@ export default function SkillRecommendations() {
     } else if (!hasSkillGraph && activeTab === 'graph') {
       setActiveTab('roadmap');
     }
-  }, [hasSkillGraph]);
+  }, [hasSkillGraph, activeTab]);
 
   useEffect(() => {
     let mounted = true;

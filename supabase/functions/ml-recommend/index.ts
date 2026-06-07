@@ -163,7 +163,7 @@ Deno.serve(async (req: Request) => {
 
     const { data: rawResources, error: resErr } = await q;
     if (resErr) throw resErr;
-    let resources = (rawResources ?? []) as ResourceRow[];
+    const resources = (rawResources ?? []) as ResourceRow[];
 
     // Cold-start fallback: pull global popular if filter returned <8
     if (resources.length < 8) {
