@@ -176,14 +176,6 @@ function useDomainResources(graphDomain: string | null, query: string) {
     queryKey: ["domain-resources", graphDomain, query, resourceDomain],
     queryFn: async () => {
       const q = query?.trim();
-      const filters: string[] = [];
-      if (resourceDomain) filters.push(`domain.eq.${resourceDomain}`);
-      if (q) {
-        const safe = q.replace(/[,()]/g, " ");
-        filters.push(`subdomain.ilike.%${safe}%`);
-        filters.push(`category.ilike.%${safe}%`);
-        filters.push(`title.ilike.%${safe}%`);
-      }
       let req = supabase
         .from("resources")
         .select(
@@ -193,7 +185,19 @@ function useDomainResources(graphDomain: string | null, query: string) {
         .order("weighted_rating", { ascending: false, nullsFirst: false })
         .limit(400);
 
-      if (filters.length > 0) req = req.or(filters.join(","));
+      // STRICT scoping: match the SPECIFIC subdomain/category, not the broad
+      // domain bucket. e.g. for "GRE" we want only the 13 GRE rows, not all
+      // ~180 Exam-Prep rows. The broad `resourceDomain` is only used as a
+      // last-resort fallback when no query is provided.
+      if (q) {
+        const safe = q.replace(/[,()]/g, " ").trim();
+        req = req.or(
+          `subdomain.ilike.${safe},category.ilike.${safe},subdomain.ilike.%${safe}%,category.ilike.%${safe}%`,
+        );
+      } else if (resourceDomain) {
+        req = req.eq("domain", resourceDomain);
+      }
+
       const { data, error } = await req;
       if (error) throw error;
       return (data ?? []) as ResourceRow[];
@@ -292,15 +296,15 @@ export function DomainInformationTab({ graphDomain, query }: Props) {
         </div>
       </motion.article>
 
-      {/* NETFLIX-STYLE ML RECOMMENDATION */}
+      {/* NETFLIX-STYLE ML RECOMMENDATION — scoped strictly to this domain */}
       <MLRecommendationsSection
         surface="skill"
-        domain={resourceDomain}
+        domain={query}
         query={query}
         limit={12}
-        ignoreDomain={!resourceDomain}
+        ignoreDomain={false}
         title="Recommended for you"
-        subtitle="Personalized via hybrid ML ranking — tuned to this domain and your activity"
+        subtitle={`Personalized via hybrid ML ranking — only from ${query} resources`}
         hideIfEmpty
       />
 
@@ -317,6 +321,12 @@ export function DomainInformationTab({ graphDomain, query }: Props) {
             <Badge variant="outline" className="text-[10px]">{totalResources} total</Badge>
           )}
         </div>
+
+        {!isLoading && totalResources > 0 && totalResources < 10 && (
+          <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-4 py-3 text-sm text-amber-700 dark:text-amber-400">
+            Low resource pool — only {totalResources} {totalResources === 1 ? "item" : "items"} curated for {query} so far. Showing all available.
+          </div>
+        )}
 
         {isLoading ? (
           <div className="space-y-6">
