@@ -32,25 +32,25 @@ export interface UserSkillProgress {
   completed_at: string | null;
 }
 
-/** Fetch all skill nodes for a domain */
+/** Fetch all skill nodes for a domain. Returns [] when no domain is provided
+ *  to prevent surfacing unrelated skill graphs (e.g. LSAT showing ML steps). */
 export function useSkillNodes(domain?: string) {
   return useQuery({
     queryKey: ['skill-nodes', domain],
     queryFn: async () => {
-      let query = supabase
+      if (!domain) return [] as SkillNode[];
+
+      const { data, error } = await supabase
         .from('skill_nodes' as any)
         .select('*')
         .eq('is_active', true)
+        .ilike('domain', domain)
         .order('display_order');
 
-      if (domain) {
-        query = query.ilike('domain', domain);
-      }
-
-      const { data, error } = await query;
       if (error) throw error;
       return (data || []) as unknown as SkillNode[];
     },
+    enabled: !!domain,
     staleTime: 5 * 60 * 1000,
   });
 }
