@@ -1,7 +1,7 @@
 project_id = "vecdjxbrkaqpvftwoafj"
 
 [functions.generate-roadmap]
-verify_jwt = false
+verify_jwt = true
 
 [functions.recommend-content]
 verify_jwt = true

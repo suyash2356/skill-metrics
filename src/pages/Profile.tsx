@@ -209,17 +209,28 @@ const Profile = () => {
   });
 
   const { data: userActivity, isLoading: isLoadingActivity } = useQuery({
-    queryKey: ['userActivity', targetUserId],
+    queryKey: ['userActivity', targetUserId, currentUser?.id],
     queryFn: async () => {
       if (!targetUserId) return [];
-      const { data, error } = await supabase
-        .from('user_activity')
-        .select('*')
-        .eq('user_id', targetUserId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-      if (error) throw error;
-      return data;
+      const isOwn = currentUser?.id === targetUserId;
+      if (isOwn) {
+        // Owner can query the raw table (RLS allows it)
+        const { data, error } = await supabase
+          .from('user_activity')
+          .select('id, user_id, activity_type, post_id, roadmap_id, community_id, target_user_id, created_at')
+          .eq('user_id', targetUserId)
+          .order('created_at', { ascending: false })
+          .limit(20);
+        if (error) throw error;
+        return data;
+      } else {
+        // Non-owner: use RPC that strips sensitive columns
+        const { data, error } = await supabase.rpc('get_visible_user_activity' as any, {
+          target_user_id: targetUserId,
+        });
+        if (error) throw error;
+        return (data || []).slice(0, 20);
+      }
     },
     enabled: !!targetUserId && canViewProfile,
   });
