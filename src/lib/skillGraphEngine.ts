@@ -211,20 +211,56 @@ export function buildLearningPath(
 export function matchDomainToSkillGraph(skillName: string): string | null {
   const domainMappings: Record<string, string[]> = {
     'Machine Learning': ['ai', 'ai/ml', 'machine learning', 'ml', 'artificial intelligence', 'deep learning', 'neural networks'],
-    'Web Development': ['web development', 'web dev', 'frontend', 'backend', 'full stack', 'fullstack', 'react', 'javascript', 'html', 'css', 'node.js', 'nodejs'],
+    'Web Development': ['web development', 'web dev', 'frontend', 'backend', 'fullstack', 'html', 'css', 'node.js', 'nodejs'],
+    'Full Stack Development': ['full stack', 'full stack development', 'mern', 'mean'],
     'Data Science': ['data science', 'data analysis', 'data analytics', 'data engineering', 'big data'],
     'Cybersecurity': ['cybersecurity', 'cyber security', 'information security', 'ethical hacking', 'penetration testing', 'infosec'],
-    'Cloud Computing': ['cloud computing', 'aws', 'azure', 'gcp', 'devops', 'cloud'],
+    'Cloud Computing': ['cloud computing', 'cloud', 'azure', 'gcp'],
+    'AWS': ['aws', 'amazon web services'],
+    'DevOps': ['devops', 'sre', 'site reliability'],
+    'Blockchain': ['blockchain', 'web3', 'crypto', 'solidity'],
+    'Mobile Development': ['mobile development', 'mobile dev', 'android', 'ios', 'react native', 'flutter'],
+    'Game Development': ['game development', 'game dev', 'unity', 'unreal'],
+    'JavaScript': ['javascript', 'js', 'typescript'],
+    'Python': ['python'],
+    'Database': ['database', 'databases', 'sql', 'postgres', 'mysql', 'mongodb'],
+    'DSA': ['dsa', 'data structures', 'algorithms', 'data structures and algorithms'],
+    'System Design': ['system design', 'distributed systems'],
+    'Computer Science': ['computer science', 'cs fundamentals'],
+    'Programming': ['programming', 'coding'],
     'GATE': ['gate', 'gate exam'],
     'CAT': ['cat', 'cat exam', 'mba entrance'],
     'GRE': ['gre', 'gre exam', 'graduate record'],
+    'GMAT': ['gmat'],
     'JEE': ['jee', 'jee main', 'jee advanced', 'iit jee'],
     'NEET': ['neet', 'neet exam', 'medical entrance'],
+    'SAT': ['sat', 'sat exam'],
+    'LSAT': ['lsat'],
+    'MCAT': ['mcat'],
+    'IELTS': ['ielts'],
+    'TOEFL': ['toefl'],
+    'UPSC': ['upsc', 'ias', 'civil services'],
+    'CompTIA': ['comptia', 'a+', 'network+', 'security+'],
     'Finance': ['finance', 'financial', 'accounting', 'investment', 'stock market'],
+    'Business': ['business', 'entrepreneurship'],
+    'Management': ['management', 'leadership', 'project management'],
+    'Marketing': ['marketing'],
+    'Digital Marketing': ['digital marketing', 'seo', 'sem'],
+    'Communication': ['communication', 'public speaking'],
     'Fine Arts': ['fine arts', 'painting', 'sculpture', 'drawing', 'visual arts'],
     'Music': ['music', 'music production', 'music theory', 'songwriting'],
     'Photography': ['photography', 'photo editing', 'camera'],
-    'Graphic Design': ['graphic design', 'ui/ux', 'ui design', 'ux design', 'visual design'],
+    'Graphic Design': ['graphic design', 'visual design'],
+    'UI/UX Design': ['ui/ux', 'ui design', 'ux design', 'ui ux', 'uiux', 'ux'],
+    'Animation': ['animation', 'motion graphics', '2d animation', '3d animation'],
+    'Architecture': ['architecture'],
+    'Fashion Design': ['fashion design', 'fashion'],
+    'Performing Arts': ['performing arts', 'theatre', 'theater', 'dance', 'acting'],
+    'Creative Writing': ['creative writing', 'writing', 'storytelling'],
+    'Film & Video': ['film', 'video', 'filmmaking', 'cinema'],
+    'Psychology': ['psychology', 'behavioral science'],
+    'Law': ['law', 'legal studies'],
+    'Journalism': ['journalism', 'reporting'],
   };
 
   const normalized = skillName.toLowerCase().trim();
@@ -232,23 +268,21 @@ export function matchDomainToSkillGraph(skillName: string): string | null {
   for (const [domain, keywords] of Object.entries(domainMappings)) {
     if (keywords.some(k => {
       if (normalized === k) return true;
-      
-      // Escape special characters in k for regex
       const escapedK = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // Match k as a distinct word (handles spaces, boundaries, hyphens)
       const regex = new RegExp(`(^|\\b|\\s|_|-)${escapedK}(\\b|\\s|_|-|$)`, 'i');
-      
-      // Also check if user search is a significant substring of the keyword 
-      // (e.g. searching "machine" matches "machine learning")
       const isSubMatch = normalized.length >= 4 && k.includes(normalized);
-      
       return regex.test(normalized) || isSubMatch;
     })) {
       return domain;
     }
   }
 
-  return null;
+  // Fallback: return the query itself so `useSkillNodes` can attempt an
+  // ilike match directly against `skill_nodes.domain` (which often stores
+  // the literal subdomain name, e.g. "Psychology", "Mobile Development").
+  // If no row matches, the UI shows an empty state instead of the wrong
+  // domain's skill graph.
+  return skillName.trim() || null;
 }
 
 function matchesKeyword(text: string, keyword: string): boolean {

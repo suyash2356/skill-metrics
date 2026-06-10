@@ -157,28 +157,23 @@ export function useStepResources(skillNode: SkillNode | null | undefined) {
     queryFn: async () => {
       if (!skillNode || !domain) return [];
 
-      // ── Step 1: Fetch resources matching keywords & category ───
-      const orFilters = keywords
-        .map(k => `title.ilike.%${k}%`)
-        .join(',');
-
-      const skillOverlap = keywords
-        .map(k => `related_skills.cs.{${k}}`)
-        .join(',');
-
+      // ── Step 1: Fetch resources matching keywords & step domain ───
+      // CRITICAL: scope strictly to this skill's domain (subdomain/category)
+      // so a Psychology skill never pulls Web-Dev resources.
+      const orFilters = keywords.map(k => `title.ilike.%${k}%`).join(',');
+      const skillOverlap = keywords.map(k => `related_skills.cs.{${k}}`).join(',');
       const combinedFilter = [orFilters, skillOverlap].filter(Boolean).join(',');
 
-      const query = supabase
+      let query = supabase
         .from('resources')
         .select('id,title,description,link,category,difficulty,is_free,icon,color,provider,duration,rating,resource_type,related_skills,avg_rating,weighted_rating,total_ratings,recommend_percent')
         .eq('is_active', true)
-        .or(combinedFilter);
+        // Strict same-domain scoping (matches subdomain OR category)
+        .or(`subdomain.ilike.${domain},category.ilike.${domain},subdomain.ilike.%${domain}%,category.ilike.%${domain}%`);
 
-      // Filter based on category (domain title)
-      // TEMPORARILY COMMENTED OUT AS REQUESTED
-      // if (domain) {
-      //   query = query.ilike('category', `%${domain}%`);
-      // }
+      if (combinedFilter) {
+        query = query.or(combinedFilter);
+      }
 
       const { data, error } = await query.limit(100);
 
