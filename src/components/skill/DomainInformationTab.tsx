@@ -127,6 +127,90 @@ const DOMAIN_META: Record<
       "Graphic Design covers typography, color, layout, branding, and digital product design. Great designers communicate clearly and beautifully.",
     highlights: ["Type & color", "Layout", "Brand systems", "UI / UX"],
   },
+  "Computer Applications": {
+    resourceDomain: "Technology",
+    tagline: "Master the digital tools that power every modern workplace.",
+    about:
+      "Computer Applications covers everything from hardware basics and operating systems to office suites, databases, and IT support. It's the foundation for digital literacy and a gateway to deeper tech skills.",
+    highlights: ["OS & file management", "Office suite", "Databases", "IT support"],
+  },
+  "Networking": {
+    resourceDomain: "Technology",
+    tagline: "Connect the world — one packet at a time.",
+    about:
+      "Networking is the backbone of the internet and every organization's IT infrastructure. You'll learn how data travels across networks, how to secure it, and how to build and maintain enterprise-grade systems.",
+    highlights: ["TCP/IP & OSI", "Routing & switching", "Security", "Cloud networking"],
+  },
+  "Economics": {
+    resourceDomain: "Business & Finance",
+    tagline: "Understand the forces that shape markets, policy, and everyday life.",
+    about:
+      "Economics blends analytical thinking with real-world impact. From supply-demand curves to GDP and trade policy, you'll build the mental models to analyze decisions at every scale — personal, corporate, and national.",
+    highlights: ["Micro & Macro", "Trade & policy", "Econometrics", "Behavioral econ"],
+  },
+  "Human Resources": {
+    resourceDomain: "Business & Finance",
+    tagline: "Build, develop, and retain the people who power organizations.",
+    about:
+      "Human Resources is where business strategy meets people management. You'll learn to recruit talent, design compensation systems, manage employee relations, and use analytics to drive workforce decisions.",
+    highlights: ["Recruitment", "L&D", "Compensation", "HR analytics"],
+  },
+  "Education": {
+    resourceDomain: "Humanities & Social Sciences",
+    tagline: "Shape minds, design learning, and transform futures.",
+    about:
+      "Education is both an art and a science. You'll master pedagogy, classroom management, curriculum design, and educational technology — everything needed to be an effective educator in modern settings.",
+    highlights: ["Pedagogy", "EdTech", "Curriculum", "Inclusive education"],
+  },
+  "Environmental Science": {
+    resourceDomain: "General Studies",
+    tagline: "Study Earth's systems and learn to protect them.",
+    about:
+      "Environmental Science integrates biology, chemistry, and policy to understand ecological systems, climate change, pollution, and conservation. It's where science meets sustainability.",
+    highlights: ["Ecology", "Climate science", "Conservation", "EIA & policy"],
+  },
+  "Health & Fitness": {
+    resourceDomain: "Health & Lifestyle",
+    tagline: "Understand the human body and help people live better.",
+    about:
+      "Health & Fitness combines anatomy, nutrition science, exercise physiology, and coaching methodology. Whether you want to transform your own health or build a career in fitness, this path covers it all.",
+    highlights: ["Anatomy", "Nutrition", "Training science", "Coaching"],
+  },
+  "Culinary Arts": {
+    resourceDomain: "Arts & Design",
+    tagline: "Turn ingredients into experiences — from kitchen basics to culinary mastery.",
+    about:
+      "Culinary Arts is technique, creativity, and science on a plate. You'll master knife skills, cooking methods, global cuisines, baking, and the business side of food — whether you're cooking at home or building a career.",
+    highlights: ["Techniques", "World cuisines", "Baking & pastry", "Food business"],
+  },
+  "Interior Design": {
+    resourceDomain: "Arts & Design",
+    tagline: "Transform spaces into experiences that inspire and function.",
+    about:
+      "Interior Design blends aesthetics with functionality. You'll learn space planning, color theory, CAD visualization, and project management — creating environments that enhance how people live and work.",
+    highlights: ["Space planning", "Materials", "CAD & 3D", "Residential & commercial"],
+  },
+  "Philosophy": {
+    resourceDomain: "Humanities & Social Sciences",
+    tagline: "Ask the deepest questions and sharpen your thinking.",
+    about:
+      "Philosophy trains you to think critically, argue precisely, and examine ideas that have shaped civilization. From ethics and logic to metaphysics, it builds intellectual foundations that apply everywhere.",
+    highlights: ["Ethics", "Logic", "Political philosophy", "Metaphysics"],
+  },
+  "Political Science": {
+    resourceDomain: "Humanities & Social Sciences",
+    tagline: "Understand power, governance, and the systems that shape society.",
+    about:
+      "Political Science analyzes how political systems work — from local governance to international relations. You'll study constitutions, compare democracies, evaluate public policy, and understand India's place in global politics.",
+    highlights: ["Political theory", "IR & diplomacy", "Indian polity", "Public policy"],
+  },
+  "Social Work": {
+    resourceDomain: "Humanities & Social Sciences",
+    tagline: "Empower individuals, strengthen communities, advance justice.",
+    about:
+      "Social Work is a profession rooted in empathy, ethics, and evidence. You'll learn assessment, counseling, community organizing, and policy advocacy — preparing to make real impact in people's lives.",
+    highlights: ["Casework", "Community practice", "Clinical skills", "Policy advocacy"],
+  },
 };
 
 const RESOURCE_TYPE_GROUPS: Array<{
