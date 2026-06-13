@@ -1,127 +1,449 @@
-# 🚀 Skill-Metrics: Your AI-Powered Learning Ecosystem
+# 🚀 Skill-Metric: AI-Powered Personalized Learning Recommendation Platform
 
 <p align="center">
-  <img src="https://github.com/suyash2356/skill-metrics/blob/main/Screen%20Recording%202025-11-13%20224524.gif" alt="Skill-Metrics Preview" width="850">
+  <img src="https://github.com/suyash2356/skill-metrics/blob/main/Screen%20Recording%202025-11-13%20224524.gif" alt="Skill-Metric Preview" width="850">
 </p>
 
 <p align="center">
-  <strong>The world's first learning platform that combines AI-driven roadmaps with a social learning feed and smart video scheduling.</strong><br/>
-  Stop searching for resources. Start following a path.
+  <strong>A machine learning-driven platform that helps learners discover what to learn next, which resources to use, and how to progress efficiently toward their goals.</strong>
 </p>
 
 ---
 
-## 🎯 The Problem
-In the age of information overload, learners face three massive hurdles:
-1.  **Resource Overwhelm:** Millions of tutorials, but no way to know which ones are actually good.
-2.  **Lack of Structure:** Having resources is one thing; knowing the *order* to learn them is another.
-3.  **The "Lone Learner" Syndrome:** Learning in isolation leads to burnout. Most platforms are passive delivery systems, not communities.
+## 🎯 Vision
 
-## ✨ How Skill-Metrics Solves It
-Skill-Metrics bridges the gap between **passive content** and **active mastery**. We don't just give you a list of links; we build you a dynamic, AI-powered ecosystem that adapts to your schedule, tracks your proficiency, and connects you with a community of like-minded builders.
+Most learners spend more time searching for resources than actually learning.
+
+Skill-Metric aims to solve this problem by building a personalized learning recommendation system that can:
+
+- Recommend the best learning resources
+- Generate structured learning roadmaps
+- Track skill progression
+- Suggest the next topic to learn
+- Create personalized learning journeys
+
+The long-term goal is to build a **Learning GPS** that guides users from their current skill level to their desired career goal through intelligent recommendations and skill graphs.
 
 ---
 
-## 🌟 Key Features & Highlights
+## ❌ The Problem
 
-### 🧠 1. AI Roadmap Generator
-Simply enter a goal (e.g., "Master Backend in 3 months") or type a custom skill, and our system constructs a multi-phase learning path.
-*   **Tailored Phases:** Breaks down complex skills into manageable milestones using AI.
-*   **Curated Resource Integration:** Replaces AI hallucinations with top-rated, community-vetted articles and videos from our internal database for every step.
-*   **Progress Tracking:** Visualize your completion percentage in real-time.
+Today's learners face three major challenges:
 
-### 🎥 2. First-of-its-Kind: Smart Watch Queue
-The ultimate solution for video learners. 
-*   **Goal-Based Scheduling:** Set a deadline, and the system auto-calculates how many videos you need to watch daily.
-*   **Learning Streaks:** Gamify your education with daily targets and watch history.
-*   **Curated Library:** Access 45+ high-quality videos across 16+ skill categories.
+### Information Overload
+Millions of resources exist, but finding the right one is difficult.
 
-### 🏠 3. Social Learning Hub (Feed)
-Inspired by Instagram and LinkedIn, our infinite-scroll Home Feed allows you to:
-*   **Share Insights:** Post your progress, share resources, or celebrate wins.
-*   **Personalized Recommendation Algorithm:** Posts are dynamically scored and sorted based on mutual friends (followers), your interested domains, and content types (tech/news).
-*   **Fresh Content Always:** Seen posts are automatically tracked in your session and penalized in scoring to ensure you always interact with new posts. An algorithmic session shuffle keeps the feed dynamic on every reload.
-*   **Engage:** Like, comment, and save posts to your personal collection.
+### Lack of Structured Learning
+Learners often know what they want to become but don't know the correct sequence of topics to learn.
 
-### 💼 4. Premium Profile Dashboard
-A visual representation of your professional growth.
-*   **Skill Proficiency:** Visual progress bars for every skill you're mastering.
-*   **Achievements & Awards:** Showcase your milestones and certifications.
-*   **Mutual Connections:** See who you and your fellow learners have in common.
+### No Personalization
+Most platforms provide the same content to everyone regardless of skill level, goals, or interests.
 
-### 💬 5. Secure Collaborative Spaces
-*   **Encrypted Messaging:** Private, secure chat for 1-on-1 collaboration.
-*   **Community Groups:** Join specialized learning circles (similar to Discord) to work on projects together.
+As a result:
+
+```text
+50% Learning
+50% Searching
+```
+
+Skill-Metric aims to make it:
+
+```text
+95% Learning
+5% Searching
+```
+
+---
+
+## 🧠 Machine Learning Focus
+
+Skill-Metric is centered around designing intelligent recommendation systems for educational content.
+
+### 1. Content-Based Recommendation
+
+Recommends resources using:
+
+- Domain
+- Skills
+- Difficulty
+- Tags
+- Learning Outcomes
+
+This helps solve cold-start problems and resource discovery.
+
+---
+
+### 2. Collaborative Filtering
+
+Learns from user behavior and interactions.
+
+| Interaction | Weight |
+|------------|---------:|
+| View | 1 |
+| Like | 3 |
+| Complete | 5 |
+| Skip | -2 |
+
+By analyzing interaction patterns, the system identifies resources that similar learners found useful.
+
+---
+
+### 3. Hybrid Recommendation System
+
+The recommendation engine combines:
+
+```text
+Collaborative Filtering (ALS)
++
+Content Similarity
++
+Resource Quality Scores
++
+Domain Preference Matching
+```
+
+to generate personalized recommendations.
+
+Final scoring approach:
+
+```text
+score(user, resource)
+=
+α × collaborative_score
++
+β × content_similarity
++
+γ × quality_score
++
+δ × domain_match
+```
+
+---
+
+## 📊 Recommendation Infrastructure
+
+Current recommendation dataset:
+
+| Metric | Count |
+|---------|--------:|
+| Resources | 780+ |
+| User Interactions | 2,100+ |
+| Domains | 6+ |
+| Learning Categories | 60+ |
+| Learning Outcomes | 700+ |
+
+The platform captures learning signals such as:
+
+- Views
+- Likes
+- Saves
+- Completions
+- Skips
+- User Preferences
+- Domain Interests
+
+These interactions form the foundation for recommendation model training.
+
+---
+
+## 🔬 Recommendation Pipeline
+
+```text
+User Activity
+      ↓
+Interaction Tracking
+      ↓
+Feature Engineering
+      ↓
+Recommendation Engine
+      ├── Collaborative Filtering
+      ├── Content Similarity
+      ├── Quality Ranking
+      └── Domain Matching
+      ↓
+Personalized Recommendations
+```
+
+---
+
+## 🚀 Current ML Work
+
+### Completed
+
+✅ Interaction tracking system
+
+✅ Recommendation data pipeline
+
+✅ User-resource interaction modeling
+
+✅ Resource ranking architecture
+
+✅ Content-based recommendation design
+
+✅ Collaborative filtering pipeline
+
+✅ Hybrid recommendation architecture
+
+✅ Personalized recommendation APIs
+
+✅ Cold-start recommendation support
+
+---
+
+### Currently Building
+
+#### Sequential Learning Engine
+
+The long-term goal is not only recommending resources but recommending the next best topic to learn.
+
+Example:
+
+```text
+Python
+ ↓
+NumPy
+ ↓
+Pandas
+ ↓
+Statistics
+ ↓
+Machine Learning
+ ↓
+Deep Learning
+```
+
+This system will use:
+
+- Skill Graphs
+- Prerequisite Relationships
+- User Progress
+- Learning History
+
+to create adaptive learning journeys.
+
+---
+
+## 🌟 Platform Features
+
+### 🧠 AI Roadmap Generator
+
+Generate personalized learning roadmaps based on:
+
+- Goal
+- Current Skill Level
+- Learning Timeline
+
+---
+
+### 📚 Personalized Resource Recommendations
+
+Discover learning resources tailored to your interests and goals.
+
+---
+
+### 🕸️ Skill Graphs
+
+Visualize:
+
+- Skills
+- Dependencies
+- Learning Paths
+- Progression Routes
+
+---
+
+### 📈 Progress Tracking
+
+Track:
+
+- Completed Resources
+- Skill Progress
+- Learning Milestones
+
+---
+
+### 🔍 Explore Platform
+
+Browse:
+
+- Trending Resources
+- Domain-Specific Content
+- Community Recommendations
+
+---
+
+### 🏠 Social Learning Feed
+
+A community-driven learning feed where users can:
+
+- Share insights
+- Post resources
+- Discuss technologies
+- Showcase projects
+
+---
+
+### 👥 Learning Communities
+
+Join domain-specific communities to:
+
+- Collaborate
+- Ask questions
+- Share notes
+- Learn together
+
+---
+
+## 🏗️ System Architecture
+
+```text
+                    User
+                      │
+                      ▼
+             Interaction Layer
+                      │
+                      ▼
+                PostgreSQL
+                  (Supabase)
+                      │
+                      ▼
+            Recommendation Engine
+         ┌─────────┬─────────┬─────────┐
+         │         │         │
+         ▼         ▼         ▼
+      Content     ALS      Ranking
+      Model      Model      Layer
+         │         │         │
+         └─────────┴─────────┘
+                   │
+                   ▼
+       Personalized Recommendations
+                   │
+                   ▼
+                Frontend
+```
 
 ---
 
 ## 🛠️ Tech Stack
 
 | Category | Technology |
-| :--- | :--- |
-| **Frontend** | React 18, Vite, TypeScript |
-| **Styling** | Tailwind CSS, shadcn/ui, Framer Motion |
-| **Backend/DB** | Supabase (PostgreSQL, Auth, Storage) |
-| **AI Layer** | Supabase Edge Functions + AI LLM Models |
-| **State/Data** | TanStack Query (React Query), Context API |
-| **Real-time** | Supabase Real-time Subscriptions |
+|-----------|------------|
+| Frontend | React, TypeScript, Vite |
+| UI Components | shadcn/ui |
+| Styling | Tailwind CSS |
+| Backend | Supabase |
+| Database | PostgreSQL |
+| Authentication | Supabase Auth |
+| Storage | Supabase Storage |
+| ML Models | Implicit ALS, Sentence Transformers |
+| Vector Search | FAISS |
+| APIs | Supabase Edge Functions |
+| Deployment | Vercel |
 
 ---
 
-## ⚙️ How It Works (Under the Hood)
+## 🎯 Future ML Roadmap
 
-1.  **AI Orchestration:** When you request a roadmap, a **Supabase Edge Function** triggers an AI model that processes your current skill level, time commitment, and goal. It returns a structured JSON object which is then parsed into a multi-table schema (Roadmaps -> Steps -> Resources).
-2.  **Social Graph & Feed:** We built a custom follower/following system using **PostgreSQL RLS (Row Level Security)** policies. The personalized feed uses a client-side algorithmic shuffle and scoring system, boosting posts from mutual friends and your skill domains while gracefully pushing seen posts to the bottom using browser storage.
-3.  **Real-Time Sync:** Notifications and messaging use **Supabase Real-time**, providing a seamless "app-like" experience without manual page refreshes.
-4.  **Content Curation (Skill Graphs):** Explore pages feature predefined Skill Graphs with dynamic fallback to AI generation. Resources mapped to roadmaps are rigorously filtered by our internal popularity metrics to prevent AI-generated inaccuracies.
+### Resource Recommendation Model
+Improve personalization using hybrid recommendation techniques.
+
+### Sequential Learning Engine
+Predict the most effective next skill or topic.
+
+### Explore Recommendation System
+Recommend resources similar to Spotify's personalized discovery.
+
+### Feed Ranking Model
+Rank posts based on:
+
+- Interests
+- Engagement
+- Skill Domains
+- Learning Goals
+
+### Roadmap Optimization Model
+Continuously improve generated learning paths using user outcomes and completion data.
+
+### Learning State Model
+Understand a learner's current knowledge level and dynamically adjust recommendations.
 
 ---
 
-## 🚧 Challenges Faced
+## ⚡ Why Skill-Metric is Different
 
-*   **Complex RLS Architecting:** Designing a secure yet flexible privacy system for profiles (Private vs. Public) required deep-diving into complex SQL policies and mutual-follower logic.
-*   **Responsive Dashboard Logic:** Managing a high-density dashboard with video queues, roadmaps, and feeds across mobile and desktop required significant CSS optimization.
-*   **AI Consistency:** Ensuring the AI consistently generates valid, high-quality learning steps required rigorous prompt engineering and error-handling on the Edge Function side.
+Most platforms recommend content.
 
----
+Skill-Metric aims to recommend the entire learning journey.
 
-## ⚖️ Why Skill-Metrics is Different?
+Instead of asking:
 
-| Feature | Skill-Metrics | Traditional LMS (Coursera/Udemy) |
-| :--- | :--- | :--- |
-| **Personalization** | **High** (AI-generated for *you*) | **Low** (Fixed curriculum) |
-| **Social** | **Integrated Feed & Chat** | **Static Forums** |
-| **Video Learning** | **Smart Watch Queue** | **Linear Playlists** |
-| **Structure** | **Dynamic Roadmaps** | **Single Courses** |
-| **Price** | **100% Free** | **Paid/Subscription** |
+> "Which course should I take?"
+
+Users can simply ask:
+
+> "I want to become an ML Engineer."
+
+And Skill-Metric helps determine:
+
+```text
+Current Skill Level
+        ↓
+Skills Required
+        ↓
+Learning Roadmap
+        ↓
+Best Resources
+        ↓
+Next Topic To Learn
+        ↓
+Progress Tracking
+        ↓
+Goal Achievement
+```
 
 ---
 
 ## 🚀 Getting Started
 
-### Prerequisites
-*   Node.js (v18+)
-*   Supabase Account
+### Clone Repository
 
-### Local Setup
-1.  **Clone the repo:**
-    ```bash
-    git clone https://github.com/suyash2356/skill-metrics.git
-    cd skill-metrics
-    ```
-2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Environment Variables:**
-    Create a `.env` file and add your Supabase URL and Anon Key.
-4.  **Run Dev Server:**
-    ```bash
-    npm run dev
-    ```
+```bash
+git clone https://github.com/suyash2356/skill-metrics.git
+cd skill-metrics
+```
+
+### Install Dependencies
+
+```bash
+npm install
+```
+
+### Configure Environment Variables
+
+Create a `.env` file:
+
+```env
+VITE_SUPABASE_URL=your_url
+VITE_SUPABASE_ANON_KEY=your_key
+```
+
+### Run Development Server
+
+```bash
+npm run dev
+```
+
+---
+
+## 👨‍💻 Author
+
+**Suyash**
+
+Building intelligent recommendation systems and personalized learning experiences through Machine Learning and AI.
 
 ---
 
 <p align="center">
-  Built with ❤️ by Suyash and the AI-Education Community.
+  Built with ❤️ to make learning more personalized, structured, and effective.
 </p>
