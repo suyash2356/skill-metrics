@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "skillgram-mcp",
+      "version": "0.1.0",
+      "title": "Skillgram MCP"
+    },
+    "tools": [
+      {
+        "name": "search_resources",
+        "title": "Search learning resources",
+        "description": "Search the app's admin-curated learning resources (courses, videos, degrees, certifications, books, blogs, papers, tools, projects). Filter by free-text query, domain, subdomain, category, or difficulty.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Free-text search over title and description."
+            },
+            "domain": {
+              "type": "string",
+              "description": "Domain name, e.g. 'Machine Learning'."
+            },
+            "subdomain": {
+              "type": "string",
+              "description": "Subdomain name."
+            },
+            "category": {
+              "type": "string",
+              "description": "Resource category, e.g. 'Course', 'Video', 'Certification'."
+            },
+            "difficulty": {
+              "type": "string",
+              "description": "Difficulty level, e.g. 'Beginner', 'Intermediate', 'Advanced'."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "description": "Max results (default 10)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "list_domains",
+        "title": "List skill domains",
+        "description": "List distinct learning domains and subdomains available in the platform's curated resource catalog, with resource counts.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Max domains to return (default 50)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_resource",
+        "title": "Get resource details",
+        "description": "Fetch full details for a single learning resource by its ID.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Resource UUID."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
