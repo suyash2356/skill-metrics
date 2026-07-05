@@ -72,6 +72,12 @@ const Profile = () => {
   const [previewPost, setPreviewPost] = useState<any | null>(null);
   const [showFollowersDialog, setShowFollowersDialog] = useState(false);
   const [followersDialogTab, setFollowersDialogTab] = useState<"followers" | "following">("followers");
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [cropperState, setCropperState] = useState<{ open: boolean; src: string | null; kind: "avatar" | "banner" }>({
+    open: false,
+    src: null,
+    kind: "avatar",
+  });
 
   // Fetch basic profile info using RPC function (always works, bypasses RLS)
   const { data: basicProfileInfo, isLoading: isLoadingPublicUser } = useQuery({
