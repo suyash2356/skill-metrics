@@ -1035,6 +1035,17 @@ const Profile = () => {
         />
       )}
 
+      <ImageCropperDialog
+        open={cropperState.open}
+        onOpenChange={(open) => setCropperState((s) => ({ ...s, open }))}
+        imageSrc={cropperState.src}
+        aspect={cropperState.kind === "avatar" ? 1 : 3}
+        cropShape={cropperState.kind === "avatar" ? "round" : "rect"}
+        title={cropperState.kind === "avatar" ? "Crop your profile picture" : "Crop your banner"}
+        outputWidth={cropperState.kind === "avatar" ? 512 : 1500}
+        onCropComplete={handleCroppedUpload}
+      />
+
       </div>
     </Layout>
   );
