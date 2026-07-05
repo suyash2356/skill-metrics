@@ -54,6 +54,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FollowersFollowingDialog } from "@/components/FollowersFollowingDialog";
 import { ProfileResourcesTab } from "@/components/ProfileResourcesTab";
+import { ImageCropperDialog } from "@/components/ImageCropperDialog";
+import { Camera, ImagePlus } from "lucide-react";
 
 const Profile = () => {
   const { user: currentUser } = useAuth();
@@ -70,6 +72,12 @@ const Profile = () => {
   const [previewPost, setPreviewPost] = useState<any | null>(null);
   const [showFollowersDialog, setShowFollowersDialog] = useState(false);
   const [followersDialogTab, setFollowersDialogTab] = useState<"followers" | "following">("followers");
+  const [bannerUrl, setBannerUrl] = useState<string | null>(null);
+  const [cropperState, setCropperState] = useState<{ open: boolean; src: string | null; kind: "avatar" | "banner" }>({
+    open: false,
+    src: null,
+    kind: "avatar",
+  });
 
   // Fetch basic profile info using RPC function (always works, bypasses RLS)
   const { data: basicProfileInfo, isLoading: isLoadingPublicUser } = useQuery({
@@ -251,35 +259,82 @@ const Profile = () => {
     enabled: !!targetUserId && canViewProfile,
   });
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Fetch banner_url for target user
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!targetUserId) return;
+      const { data } = await (supabase.from('profiles') as any)
+        .select('banner_url')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+      if (active) setBannerUrl((data?.banner_url as string) || null);
+    };
+    load();
+    return () => { active = false; };
+  }, [targetUserId]);
+
+  const readFileAsDataURL = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const openCropperForFile = async (event: React.ChangeEvent<HTMLInputElement>, kind: "avatar" | "banner") => {
     const file = event.target.files?.[0];
-    if (!file || !targetUserId) return;
-
+    event.target.value = "";
+    if (!file) return;
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${targetUserId}/${Date.now()}.${fileExt}`;
+      const src = await readFileAsDataURL(file);
+      setCropperState({ open: true, src, kind });
+    } catch (e: any) {
+      toast({ title: "Failed to read image", description: e.message, variant: "destructive" });
+    }
+  };
 
+  const handleCroppedUpload = async (blob: Blob) => {
+    if (!targetUserId) return;
+    const kind = cropperState.kind;
+    try {
+      const fileName = `${targetUserId}/${kind}-${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
-
+        .upload(fileName, blob, { upsert: true, contentType: 'image/jpeg' });
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
+      const updatePayload: any = kind === 'avatar' ? { avatar_url: publicUrl } : { banner_url: publicUrl };
+      const { error: updateError } = await (supabase.from('profiles') as any)
+        .update(updatePayload)
         .eq('user_id', targetUserId);
-
       if (updateError) throw updateError;
 
-      setFormData({ ...formData, avatar: publicUrl });
-      toast({ title: "Avatar updated successfully!" });
+      if (kind === 'avatar') {
+        setFormData((prev: any) => ({ ...prev, avatar: publicUrl }));
+        toast({ title: "Profile picture updated!" });
+      } else {
+        setBannerUrl(publicUrl);
+        toast({ title: "Banner updated!" });
+      }
     } catch (error: any) {
-      toast({ title: "Failed to upload avatar", description: error.message, variant: "destructive" });
+      toast({ title: `Failed to upload ${kind}`, description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleRemoveBanner = async () => {
+    if (!targetUserId) return;
+    try {
+      const { error } = await (supabase.from('profiles') as any)
+        .update({ banner_url: null })
+        .eq('user_id', targetUserId);
+      if (error) throw error;
+      setBannerUrl(null);
+      toast({ title: "Banner removed" });
+    } catch (e: any) {
+      toast({ title: "Failed to remove banner", description: e.message, variant: "destructive" });
     }
   };
 
@@ -358,32 +413,76 @@ const Profile = () => {
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
         <Card className="mb-6 overflow-hidden border-border/60 bg-card/70 backdrop-blur-xl shadow-xl">
-          {/* Decorative gradient banner */}
-          <div className="relative h-28 sm:h-36 w-full bg-[linear-gradient(120deg,hsl(var(--primary)/0.9),hsl(var(--accent)/0.85),hsl(var(--primary)/0.7))]">
-            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_50%,white,transparent_45%)]" />
-            <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,transparent_45%,white_50%,transparent_55%)]" />
+          {/* Banner: user-uploaded image or decorative gradient fallback */}
+          <div className="relative h-32 sm:h-48 w-full overflow-hidden">
+            {bannerUrl ? (
+              <img
+                src={bannerUrl}
+                alt="Profile banner"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,hsl(var(--primary)/0.9),hsl(var(--accent)/0.85),hsl(var(--primary)/0.7))]">
+                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_50%,white,transparent_45%)]" />
+                <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,transparent_45%,white_50%,transparent_55%)]" />
+              </div>
+            )}
+            {isOwnProfile && (
+              <div className="absolute top-3 right-3 flex gap-2">
+                <label
+                  htmlFor="banner-upload"
+                  className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-md border border-border/60 text-xs font-medium hover:bg-background transition-colors shadow-sm"
+                  title={bannerUrl ? "Change banner" : "Add banner"}
+                >
+                  <ImagePlus className="h-3.5 w-3.5" />
+                  {bannerUrl ? "Change banner" : "Add banner"}
+                </label>
+                <input
+                  id="banner-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => openCropperForFile(e, "banner")}
+                />
+                {bannerUrl && (
+                  <button
+                    onClick={handleRemoveBanner}
+                    className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-background/80 backdrop-blur-md border border-border/60 hover:bg-destructive hover:text-destructive-foreground transition-colors shadow-sm"
+                    title="Remove banner"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <CardContent className="p-4 sm:p-6 -mt-16 sm:-mt-20">
             <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6">
               <div className="relative text-center">
                 <div className="rounded-full p-1 bg-gradient-to-tr from-primary via-accent to-primary shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6)]">
                   <Avatar className="h-28 w-28 sm:h-36 sm:w-36 mx-auto ring-4 ring-background">
-                    <AvatarImage src={formData.avatar} />
+                    <AvatarImage src={formData.avatar} className="object-cover" />
                     <AvatarFallback className="text-3xl sm:text-4xl bg-muted">{initials}</AvatarFallback>
                   </Avatar>
                 </div>
-                {currentUser?.id === targetUserId && editMode && (
+                {isOwnProfile && (
                   <div className="absolute -bottom-1 right-0 flex gap-1">
                     <label htmlFor="avatar-upload" className="cursor-pointer">
-                      <div className="p-2 bg-primary rounded-full text-primary-foreground hover:bg-primary/90 transition-colors" title="Upload new photo">
-                        <Upload className="h-4 w-4" />
+                      <div className="p-2 bg-primary rounded-full text-primary-foreground hover:bg-primary/90 transition-colors shadow-md" title="Upload & crop new photo">
+                        <Camera className="h-4 w-4" />
                       </div>
-                      <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => openCropperForFile(e, "avatar")}
+                      />
                     </label>
-                    {formData.avatar && (
+                    {formData.avatar && editMode && (
                       <button
                         onClick={() => setFormData({ ...formData, avatar: null })}
-                        className="p-2 bg-destructive rounded-full text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                        className="p-2 bg-destructive rounded-full text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-md"
                         title="Remove photo"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -392,6 +491,7 @@ const Profile = () => {
                   </div>
                 )}
               </div>
+
 
               <div className="flex-1 space-y-3 text-center sm:text-left">
                 <div>
@@ -934,6 +1034,17 @@ const Profile = () => {
           initialTab={followersDialogTab}
         />
       )}
+
+      <ImageCropperDialog
+        open={cropperState.open}
+        onOpenChange={(open) => setCropperState((s) => ({ ...s, open }))}
+        imageSrc={cropperState.src}
+        aspect={cropperState.kind === "avatar" ? 1 : 3}
+        cropShape={cropperState.kind === "avatar" ? "round" : "rect"}
+        title={cropperState.kind === "avatar" ? "Crop your profile picture" : "Crop your banner"}
+        outputWidth={cropperState.kind === "avatar" ? 512 : 1500}
+        onCropComplete={handleCroppedUpload}
+      />
 
       </div>
     </Layout>
