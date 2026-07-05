@@ -259,35 +259,82 @@ const Profile = () => {
     enabled: !!targetUserId && canViewProfile,
   });
 
-  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Fetch banner_url for target user
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      if (!targetUserId) return;
+      const { data } = await (supabase.from('profiles') as any)
+        .select('banner_url')
+        .eq('user_id', targetUserId)
+        .maybeSingle();
+      if (active) setBannerUrl((data?.banner_url as string) || null);
+    };
+    load();
+    return () => { active = false; };
+  }, [targetUserId]);
+
+  const readFileAsDataURL = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+  const openCropperForFile = async (event: React.ChangeEvent<HTMLInputElement>, kind: "avatar" | "banner") => {
     const file = event.target.files?.[0];
-    if (!file || !targetUserId) return;
-
+    event.target.value = "";
+    if (!file) return;
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${targetUserId}/${Date.now()}.${fileExt}`;
+      const src = await readFileAsDataURL(file);
+      setCropperState({ open: true, src, kind });
+    } catch (e: any) {
+      toast({ title: "Failed to read image", description: e.message, variant: "destructive" });
+    }
+  };
 
+  const handleCroppedUpload = async (blob: Blob) => {
+    if (!targetUserId) return;
+    const kind = cropperState.kind;
+    try {
+      const fileName = `${targetUserId}/${kind}-${Date.now()}.jpg`;
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true });
-
+        .upload(fileName, blob, { upsert: true, contentType: 'image/jpeg' });
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(fileName);
+      const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName);
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ avatar_url: publicUrl })
+      const updatePayload: any = kind === 'avatar' ? { avatar_url: publicUrl } : { banner_url: publicUrl };
+      const { error: updateError } = await (supabase.from('profiles') as any)
+        .update(updatePayload)
         .eq('user_id', targetUserId);
-
       if (updateError) throw updateError;
 
-      setFormData({ ...formData, avatar: publicUrl });
-      toast({ title: "Avatar updated successfully!" });
+      if (kind === 'avatar') {
+        setFormData((prev: any) => ({ ...prev, avatar: publicUrl }));
+        toast({ title: "Profile picture updated!" });
+      } else {
+        setBannerUrl(publicUrl);
+        toast({ title: "Banner updated!" });
+      }
     } catch (error: any) {
-      toast({ title: "Failed to upload avatar", description: error.message, variant: "destructive" });
+      toast({ title: `Failed to upload ${kind}`, description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleRemoveBanner = async () => {
+    if (!targetUserId) return;
+    try {
+      const { error } = await (supabase.from('profiles') as any)
+        .update({ banner_url: null })
+        .eq('user_id', targetUserId);
+      if (error) throw error;
+      setBannerUrl(null);
+      toast({ title: "Banner removed" });
+    } catch (e: any) {
+      toast({ title: "Failed to remove banner", description: e.message, variant: "destructive" });
     }
   };
 
