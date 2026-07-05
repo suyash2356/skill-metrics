@@ -413,32 +413,76 @@ const Profile = () => {
           transition={{ duration: 0.5, ease: 'easeOut' }}
         >
         <Card className="mb-6 overflow-hidden border-border/60 bg-card/70 backdrop-blur-xl shadow-xl">
-          {/* Decorative gradient banner */}
-          <div className="relative h-28 sm:h-36 w-full bg-[linear-gradient(120deg,hsl(var(--primary)/0.9),hsl(var(--accent)/0.85),hsl(var(--primary)/0.7))]">
-            <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_50%,white,transparent_45%)]" />
-            <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,transparent_45%,white_50%,transparent_55%)]" />
+          {/* Banner: user-uploaded image or decorative gradient fallback */}
+          <div className="relative h-32 sm:h-48 w-full overflow-hidden">
+            {bannerUrl ? (
+              <img
+                src={bannerUrl}
+                alt="Profile banner"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-[linear-gradient(120deg,hsl(var(--primary)/0.9),hsl(var(--accent)/0.85),hsl(var(--primary)/0.7))]">
+                <div className="absolute inset-0 opacity-30 bg-[radial-gradient(circle_at_30%_50%,white,transparent_45%)]" />
+                <div className="absolute inset-0 opacity-20 bg-[linear-gradient(45deg,transparent_45%,white_50%,transparent_55%)]" />
+              </div>
+            )}
+            {isOwnProfile && (
+              <div className="absolute top-3 right-3 flex gap-2">
+                <label
+                  htmlFor="banner-upload"
+                  className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-background/80 backdrop-blur-md border border-border/60 text-xs font-medium hover:bg-background transition-colors shadow-sm"
+                  title={bannerUrl ? "Change banner" : "Add banner"}
+                >
+                  <ImagePlus className="h-3.5 w-3.5" />
+                  {bannerUrl ? "Change banner" : "Add banner"}
+                </label>
+                <input
+                  id="banner-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => openCropperForFile(e, "banner")}
+                />
+                {bannerUrl && (
+                  <button
+                    onClick={handleRemoveBanner}
+                    className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-background/80 backdrop-blur-md border border-border/60 hover:bg-destructive hover:text-destructive-foreground transition-colors shadow-sm"
+                    title="Remove banner"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <CardContent className="p-4 sm:p-6 -mt-16 sm:-mt-20">
             <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6">
               <div className="relative text-center">
                 <div className="rounded-full p-1 bg-gradient-to-tr from-primary via-accent to-primary shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6)]">
                   <Avatar className="h-28 w-28 sm:h-36 sm:w-36 mx-auto ring-4 ring-background">
-                    <AvatarImage src={formData.avatar} />
+                    <AvatarImage src={formData.avatar} className="object-cover" />
                     <AvatarFallback className="text-3xl sm:text-4xl bg-muted">{initials}</AvatarFallback>
                   </Avatar>
                 </div>
-                {currentUser?.id === targetUserId && editMode && (
+                {isOwnProfile && (
                   <div className="absolute -bottom-1 right-0 flex gap-1">
                     <label htmlFor="avatar-upload" className="cursor-pointer">
-                      <div className="p-2 bg-primary rounded-full text-primary-foreground hover:bg-primary/90 transition-colors" title="Upload new photo">
-                        <Upload className="h-4 w-4" />
+                      <div className="p-2 bg-primary rounded-full text-primary-foreground hover:bg-primary/90 transition-colors shadow-md" title="Upload & crop new photo">
+                        <Camera className="h-4 w-4" />
                       </div>
-                      <input id="avatar-upload" type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" />
+                      <input
+                        id="avatar-upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => openCropperForFile(e, "avatar")}
+                      />
                     </label>
-                    {formData.avatar && (
+                    {formData.avatar && editMode && (
                       <button
                         onClick={() => setFormData({ ...formData, avatar: null })}
-                        className="p-2 bg-destructive rounded-full text-destructive-foreground hover:bg-destructive/90 transition-colors"
+                        className="p-2 bg-destructive rounded-full text-destructive-foreground hover:bg-destructive/90 transition-colors shadow-md"
                         title="Remove photo"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -447,6 +491,7 @@ const Profile = () => {
                   </div>
                 )}
               </div>
+
 
               <div className="flex-1 space-y-3 text-center sm:text-left">
                 <div>
