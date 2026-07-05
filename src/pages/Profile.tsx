@@ -54,6 +54,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FollowersFollowingDialog } from "@/components/FollowersFollowingDialog";
 import { ProfileResourcesTab } from "@/components/ProfileResourcesTab";
+import { ImageCropperDialog } from "@/components/ImageCropperDialog";
+import { Camera, ImagePlus } from "lucide-react";
 
 const Profile = () => {
   const { user: currentUser } = useAuth();
