@@ -2199,6 +2199,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
       toggle_group_admin: {
         Args: { _conversation_id: string; _member_id: string }
         Returns: undefined

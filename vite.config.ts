@@ -20,4 +20,19 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    // Perf: split heavy vendor libs into their own chunks so route chunks stay
+    // small and browsers can cache vendors across deploys.
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "react-vendor": ["react", "react-dom", "react-router-dom"],
+          "query-vendor": ["@tanstack/react-query"],
+          "motion-vendor": ["framer-motion"],
+          "supabase-vendor": ["@supabase/supabase-js"],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1200,
+  },
 }));
