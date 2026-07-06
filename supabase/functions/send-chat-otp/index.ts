@@ -39,7 +39,15 @@ serve(async (req: Request) => {
     }
 
     const supabase = createClient(supabaseUrl, serviceRoleKey);
-    const { email, otp, action } = await req.json();
+    const { otp, action } = await req.json();
+    // Always derive OTP destination from verified JWT — never trust caller-supplied email
+    const email = user.email;
+    if (!email) {
+      return new Response(JSON.stringify({ error: "No verified email on account" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
 
     // ─── Verify OTP ───
     if (action === "verify") {
@@ -117,14 +125,20 @@ serve(async (req: Request) => {
       expires_at: new Date(Date.now() + 10 * 60 * 1000).toISOString(), // 10 min
     });
 
-    // Send email via Resend
+    // Send email via Resend — refuse to fall back to returning OTP in the response.
     if (!resendApiKey) {
-      // Fallback: log OTP (dev only)
-      console.log(`[DEV] Chat OTP for ${email}: ${otpCode}`);
-      return new Response(JSON.stringify({ success: true, dev_otp: otpCode }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      console.error("RESEND_API_KEY not configured — cannot deliver chat OTP");
+      return new Response(
+        JSON.stringify({ error: "Email service not configured. Please contact support." }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    const resend = new Resend(resendApiKey);
+    await resend.emails.send({
+      from: "Skill-Metrics <noreply@skill-metrics.com>",
+      to: [email],
+      subject: "Your Chat Password Reset Code",
 
     const resend = new Resend(resendApiKey);
     await resend.emails.send({
