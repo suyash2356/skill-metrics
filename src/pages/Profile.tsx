@@ -456,11 +456,12 @@ const Profile = () => {
               </div>
             )}
           </div>
-          <CardContent className="p-4 sm:p-6 -mt-16 sm:-mt-20">
-            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-6">
-              <div className="relative text-center">
+          <CardContent className="p-4 sm:p-6 pt-0">
+            {/* Avatar overlaps banner; details sit below for full visibility */}
+            <div className="flex justify-center sm:justify-start -mt-16 sm:-mt-20 mb-4">
+              <div className="relative">
                 <div className="rounded-full p-1 bg-gradient-to-tr from-primary via-accent to-primary shadow-[0_8px_30px_-8px_hsl(var(--primary)/0.6)]">
-                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 mx-auto ring-4 ring-background">
+                  <Avatar className="h-28 w-28 sm:h-36 sm:w-36 ring-4 ring-background">
                     <AvatarImage src={formData.avatar} className="object-cover" />
                     <AvatarFallback className="text-3xl sm:text-4xl bg-muted">{initials}</AvatarFallback>
                   </Avatar>
@@ -491,6 +492,10 @@ const Profile = () => {
                   </div>
                 )}
               </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+
 
 
               <div className="flex-1 space-y-3 text-center sm:text-left">
