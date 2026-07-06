@@ -2032,11 +2032,34 @@ export type Database = {
     Views: {
       interactions_training_view: {
         Row: {
-          interaction_count: number | null
+          created_at: string | null
+          id: string | null
+          interaction_type: string | null
           item_id: string | null
           item_type: string | null
-          total_score: number | null
+          metadata: Json | null
+          score: number | null
           user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string | null
+          interaction_type?: string | null
+          item_id?: string | null
+          item_type?: string | null
+          metadata?: Json | null
+          score?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string | null
+          interaction_type?: string | null
+          item_id?: string | null
+          item_type?: string | null
+          metadata?: Json | null
+          score?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }

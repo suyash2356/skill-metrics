@@ -465,10 +465,7 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
   } catch (error) {
     console.error('Error in generate-roadmap function:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error instanceof Error ? error.message : 'Unknown error occurred',
-        details: error instanceof Error ? error.stack : undefined
-      }), 
+      JSON.stringify({ error: 'An error occurred generating the roadmap.' }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
