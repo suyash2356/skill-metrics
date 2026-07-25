@@ -262,6 +262,7 @@ const Feature = ({
 const Landing = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
   const imagesRef = useRef<HTMLImageElement[]>([]);
   const frameIndexRef = useRef(0);
   const rafRef = useRef<number | null>(null);
