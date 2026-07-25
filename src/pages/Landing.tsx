@@ -96,6 +96,30 @@ const GhostBtn = ({
 );
 
 /* ─────────────────────────────────────────────
+   Skill-Metrics brand logo — matches the mark used
+   across the app (Login, Signup, in-app header).
+   ───────────────────────────────────────────── */
+const BrandLogo = ({ size = "sm" }: { size?: "sm" | "md" }) => {
+  const box = size === "md" ? "h-10 w-10" : "h-8 w-8";
+  const text = size === "md" ? "text-base" : "text-sm";
+  const mark = size === "md" ? "text-base" : "text-xs";
+  return (
+    <span className="flex items-center gap-2">
+      <span
+        className={`${box} flex items-center justify-center rounded-lg bg-gradient-primary shadow-[0_6px_20px_-6px_rgba(139,92,246,0.6)]`}
+      >
+        <span className={`font-bold text-white ${mark}`}>SM</span>
+      </span>
+      <span
+        className={`${text} font-bold tracking-tight bg-gradient-primary bg-clip-text text-transparent`}
+      >
+        Skill-Metrics
+      </span>
+    </span>
+  );
+};
+
+/* ─────────────────────────────────────────────
    Sticky top navigation
    ───────────────────────────────────────────── */
 const TopNav = ({ scrolled }: { scrolled: boolean }) => (
@@ -107,13 +131,8 @@ const TopNav = ({ scrolled }: { scrolled: boolean }) => (
     }`}
   >
     <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-10">
-      <Link to="/" className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500">
-          <Sparkles className="h-4 w-4 text-white" />
-        </div>
-        <span className="text-sm font-semibold tracking-tight text-white">
-          Skill-Metrics
-        </span>
+      <Link to="/" aria-label="Skill-Metrics home">
+        <BrandLogo />
       </Link>
 
       <div className="hidden items-center gap-8 md:flex">
