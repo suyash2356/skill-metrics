@@ -339,13 +339,15 @@ const Landing = () => {
     if (!isLoaded) return;
 
     const handleScroll = () => {
-      const container = containerRef.current;
-      if (!container) return;
+      const main = mainRef.current;
+      if (!main) return;
 
       const scrollTop = window.scrollY;
       setScrolled(scrollTop > 20);
 
-      const maxScroll = container.scrollHeight - window.innerHeight;
+      // Progress is measured only over the scenes area so the final laptop
+      // frame stays fully visible before the footer scrolls into view.
+      const maxScroll = Math.max(main.offsetHeight - window.innerHeight, 1);
       const progress = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
       const targetFrame = Math.min(
         Math.round(progress * (TOTAL_FRAMES - 1)),
