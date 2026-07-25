@@ -1,0 +1,26 @@
+
+REVOKE EXECUTE ON FUNCTION public.migrate_profile_data() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.create_default_collections_for_existing_users() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.create_default_preferences_for_existing_users() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.cleanup_old_activity() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.register_first_admin(uuid, text) FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.update_review_helpful_count() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.update_resource_aggregates() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.update_user_resource_aggregates() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.update_session_activity() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.validate_post_tags() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.assign_admin_role_to_creator() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.assign_member_role_on_join() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.update_community_leaderboard() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.community_messages_summary_sync() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.community_messages_broadcast_trigger() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.handle_new_user() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.handle_follow_request_acceptance() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.notify_follow_request() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.update_conversation_on_message() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.check_user_resource_content() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.create_default_collection() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.set_updated_at() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.set_updated_at_profiles() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.update_updated_at_column() FROM authenticated, anon;
+REVOKE EXECUTE ON FUNCTION public.mask_ip_address(inet) FROM authenticated, anon;
