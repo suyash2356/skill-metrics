@@ -641,42 +641,48 @@ const Landing = () => {
             </motion.div>
           </div>
         </Scene>
+
+        {/* Final reveal — empty spacer viewport so the last laptop-on-desk
+            frame is visible in full before the footer scrolls into view. */}
+        <section
+          aria-hidden
+          className="relative h-screen w-full"
+        />
       </main>
 
       {/* ── Footer (below the pinned animation range) ── */}
-      <footer className="relative z-10 border-t border-white/[0.06] bg-[#050510]/95 backdrop-blur-xl">
+      <footer className="relative z-10 border-t border-white/[0.06] bg-[#050510]">
         <div className="mx-auto max-w-7xl px-6 py-16 sm:px-10">
           <div className="grid grid-cols-2 gap-10 md:grid-cols-4">
             <div className="col-span-2">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-500">
-                  <Sparkles className="h-4 w-4 text-white" />
-                </div>
-                <span className="text-sm font-semibold text-white">
-                  Skill-Metrics
-                </span>
-              </div>
+              <BrandLogo size="md" />
               <p className="mt-4 max-w-sm text-sm text-white/50">
                 An AI-powered learning operating system for lifelong learners
                 across tech, arts, finance, and sciences.
               </p>
               <div className="mt-6 flex items-center gap-3">
                 <a
-                  href="#"
+                  href="https://twitter.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="Twitter"
                   className="rounded-full border border-white/10 p-2 text-white/60 transition hover:border-white/30 hover:text-white"
                 >
                   <Twitter className="h-4 w-4" />
                 </a>
                 <a
-                  href="#"
+                  href="https://github.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="GitHub"
                   className="rounded-full border border-white/10 p-2 text-white/60 transition hover:border-white/30 hover:text-white"
                 >
                   <Github className="h-4 w-4" />
                 </a>
                 <a
-                  href="#"
+                  href="https://linkedin.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   aria-label="LinkedIn"
                   className="rounded-full border border-white/10 p-2 text-white/60 transition hover:border-white/30 hover:text-white"
                 >
@@ -740,7 +746,7 @@ const Landing = () => {
               <ShieldCheck className="h-3.5 w-3.5" />
               <span>Privacy-first · Admin-vetted</span>
               <Link
-                to="/admin-login"
+                to="/admin/login"
                 className="ml-2 rounded-md border border-white/10 px-2.5 py-1 text-white/40 transition hover:border-white/25 hover:text-white/70"
               >
                 Admin login
