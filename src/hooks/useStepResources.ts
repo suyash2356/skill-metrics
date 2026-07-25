@@ -30,216 +30,259 @@ const DIFFICULTY_ORDER: Record<string, number> = {
   expert: 3,
 };
 
-/**
- * Extract meaningful search keywords from a skill-node name.
- *
- * "Statistics and Probability" → ["statistics probability", "statistics", "stati", "stat", "probability", "proba", "prob"]
- * "Deep Learning" → ["deep learning", "deep", "learning", "learn", "lear"]
- *
- * This generates powerful prefixes to catch variations like "stats", "proba", "maths"
- * regardless of how they are written in the resource title.
- */
-function extractKeywords(name: string): string[] {
-  const full = name.trim().toLowerCase();
-  // Split on common separators or punctuation
-  const parts = full.split(/[^a-z0-9]+/).filter(Boolean);
+/* ─────────────────────────────────────────────────────────────
+ *  Tokenizer + alias-expander for token-overlap similarity.
+ *  We compare the *step name* against the *resource title*
+ *  (and the resource's related skills) using a Jaccard-like
+ *  ratio: sharedTokens / stepTokens.
+ *  A resource is considered relevant when the ratio is ≥ 0.4
+ *  (i.e. at least 40–50 % of the step's meaningful words appear
+ *  in the resource).
+ * ───────────────────────────────────────────────────────────── */
 
-  const STOP_WORDS = new Set([
-    'basic', 'basics', 'intro', 'introduction', 'advanced', 'intermediate',
-    'fundamental', 'fundamentals', 'to', 'of', 'and', 'the', 'in', 'for',
-    'with', 'an', 'a', 'on', 'is', 'or', 'not', 'how', 'what', 'why'
-  ]);
+const STOP_WORDS = new Set([
+  'a', 'an', 'the', 'and', 'or', 'of', 'to', 'in', 'for', 'with', 'on', 'at',
+  'is', 'are', 'be', 'by', 'from', 'as', 'into', 'this', 'that', 'these',
+  'those', 'it', 'its', 'basic', 'basics', 'intro', 'introduction',
+  'advanced', 'intermediate', 'fundamental', 'fundamentals', 'complete',
+  'guide', 'course', 'tutorial', 'lesson', 'lessons', 'learn', 'learning',
+  'crash', 'masterclass', 'full', 'part', 'chapter', 'series', 'video',
+  'videos', 'book', 'books', 'using', 'made', 'easy', 'beginner', 'beginners',
+  'expert', 'quick', 'you', 'your', 'how', 'what', 'why', 'when', 'not',
+]);
 
-  // Collect individual meaningful words
-  const meaningful = parts.filter(w => w.length > 2 && !STOP_WORDS.has(w));
+const ALIAS_GROUPS: string[][] = [
+  ['math', 'maths', 'mathematics', 'mathematical'],
+  ['stat', 'stats', 'statistics', 'statistical'],
+  ['prob', 'proba', 'probability', 'probabilities', 'probabilistic'],
+  ['algo', 'algorithm', 'algorithms', 'algorithmic'],
+  ['ml', 'machinelearning'],
+  ['ai', 'artificialintelligence'],
+  ['dl', 'deeplearning'],
+  ['nn', 'neuralnetwork', 'neuralnetworks'],
+  ['nlp', 'naturallanguageprocessing'],
+  ['cv', 'computervision'],
+  ['db', 'database', 'databases'],
+  ['os', 'operatingsystem', 'operatingsystems'],
+  ['dsa', 'datastructures'],
+  ['ds', 'datascience'],
+  ['js', 'javascript'],
+  ['ts', 'typescript'],
+  ['py', 'python'],
+  ['regression', 'regressions'],
+  ['classification', 'classifier', 'classifiers'],
+  ['cluster', 'clustering'],
+  ['optimization', 'optimisation', 'optimize', 'optimise'],
+  ['visualization', 'visualisation', 'visualize', 'visualise', 'viz'],
+  ['linear', 'linearity'],
+  ['calculus', 'differential', 'integral'],
+  ['algebra', 'algebraic'],
+]; // each group maps to a canonical token = the first element
 
-  const keywords: string[] = [];
-
-  // Add the combined meaningful phrase (e.g., "deep learning")
-  if (meaningful.length > 0) {
-    keywords.push(meaningful.join(' '));
+const ALIAS_LOOKUP: Record<string, string> = (() => {
+  const m: Record<string, string> = {};
+  for (const group of ALIAS_GROUPS) {
+    const canon = group[0];
+    for (const w of group) m[w] = canon;
   }
-  
-  // Also add the original full string just in case
-  keywords.push(full);
+  return m;
+})();
 
-  // Add individual meaningful words and their 4-5 letter prefixes
-  meaningful.forEach(w => {
-    keywords.push(w);
-    
-    // User requested: extract starting 4-5 letters to catch variations 
-    // like statistics -> stat (matches stats), probability -> proba (matches probabilities)
-    if (w.length >= 6) {
-      keywords.push(w.slice(0, 5)); // "probability" -> "proba"
-      keywords.push(w.slice(0, 4)); // "statistics" -> "stat"
-    } else if (w.length === 5) {
-      keywords.push(w.slice(0, 4)); // "maths" -> "math"
-    }
-  });
+function canonicalize(word: string): string {
+  const w = word.toLowerCase();
+  if (ALIAS_LOOKUP[w]) return ALIAS_LOOKUP[w];
+  // very light stemming: drop trailing "s"/"es"/"ing"/"ion"
+  if (w.length > 5 && w.endsWith('ing')) return w.slice(0, -3);
+  if (w.length > 5 && w.endsWith('ion')) return w.slice(0, -3);
+  if (w.length > 4 && w.endsWith('es')) return w.slice(0, -2);
+  if (w.length > 3 && w.endsWith('s')) return w.slice(0, -1);
+  return w;
+}
 
-  // Remove duplicates and sort by length descending (so longest keywords are scored first)
-  return [...new Set(keywords)].sort((a, b) => b.length - a.length);
+function tokenize(text: string | null | undefined): Set<string> {
+  if (!text) return new Set();
+  const raw = text.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  const out = new Set<string>();
+  for (const w of raw) {
+    if (w.length < 2) continue;
+    if (STOP_WORDS.has(w)) continue;
+    out.add(canonicalize(w));
+  }
+  return out;
 }
 
 /**
- * Check whether `text` contains `keyword` as a meaningful match.
- * Handles partial word matches like "mathematics" matching "maths",
- * and "linear algebra" matching "algebra & linear".
+ * Token-overlap ratio: |shared| / |stepTokens|.
+ * Falls back to 0 when the step has no meaningful tokens.
  */
-function fuzzyMatch(text: string, keyword: string): boolean {
-  if (!text || !keyword) return false;
-  const t = text.toLowerCase();
-  const k = keyword.toLowerCase();
-
-  // Direct substring
-  if (t.includes(k)) return true;
-
-  // Handle maths ↔ mathematics
-  const ALIASES: Record<string, string[]> = {
-    maths: ['math', 'mathematics', 'mathematical'],
-    math: ['maths', 'mathematics', 'mathematical'],
-    mathematics: ['math', 'maths', 'mathematical'],
-    stats: ['statistics', 'statistical'],
-    statistics: ['stats', 'statistical'],
-    algo: ['algorithm', 'algorithms', 'algorithmic'],
-    algorithm: ['algo', 'algorithms', 'algorithmic'],
-    algorithms: ['algo', 'algorithm', 'algorithmic'],
-    ml: ['machine learning'],
-    ai: ['artificial intelligence'],
-    dl: ['deep learning'],
-    ds: ['data science', 'data structures'],
-    db: ['database', 'databases'],
-    os: ['operating system', 'operating systems'],
-    oop: ['object oriented programming'],
-    dsa: ['data structures', 'algorithms'],
-  };
-
-  const aliases = ALIASES[k] || [];
-  if (aliases.some(a => t.includes(a))) return true;
-
-  // Also check if any alias of each word in keyword matches
-  const kParts = k.split(/\s+/);
-  if (kParts.length > 1) {
-    // For multi-word keywords, check if all significant words appear in text
-    const significantParts = kParts.filter(p => p.length > 2);
-    if (significantParts.length > 0 && significantParts.every(p => {
-      if (t.includes(p)) return true;
-      const pAliases = ALIASES[p] || [];
-      return pAliases.some(a => t.includes(a));
-    })) {
-      return true;
-    }
-  }
-
-  return false;
+function overlapRatio(stepTokens: Set<string>, otherTokens: Set<string>): number {
+  if (stepTokens.size === 0) return 0;
+  let shared = 0;
+  for (const t of stepTokens) if (otherTokens.has(t)) shared++;
+  return shared / stepTokens.size;
 }
 
-/**
- * Hook: fetch admin-curated resources for a skill-graph step.
- *
- * Simple strategy:
- *  1. Search resources by step-name keywords (title match) AND domain category
- *  2. Sort by difficulty level (beginner → intermediate → advanced)
- */
+/* ─────────────────────────────────────────────────────────────
+ *  Cross-step de-duplication registry.
+ *  A single resource must not appear in more than 2 different
+ *  steps of the same skill graph. We track (domain → resourceId
+ *  → Set<nodeId>) in module scope. Each query first releases the
+ *  current node's claim, then re-registers on the chosen items.
+ * ───────────────────────────────────────────────────────────── */
+
+const MAX_STEPS_PER_RESOURCE = 2;
+const assignments: Map<string, Map<string, Set<string>>> = new Map();
+
+function releaseNode(domain: string, nodeId: string) {
+  const domainMap = assignments.get(domain);
+  if (!domainMap) return;
+  for (const [rid, nodes] of domainMap) {
+    if (nodes.delete(nodeId) && nodes.size === 0) domainMap.delete(rid);
+  }
+}
+
+function canClaim(domain: string, resourceId: string, nodeId: string): boolean {
+  const domainMap = assignments.get(domain);
+  if (!domainMap) return true;
+  const nodes = domainMap.get(resourceId);
+  if (!nodes) return true;
+  if (nodes.has(nodeId)) return true;
+  return nodes.size < MAX_STEPS_PER_RESOURCE;
+}
+
+function claim(domain: string, resourceId: string, nodeId: string) {
+  let domainMap = assignments.get(domain);
+  if (!domainMap) {
+    domainMap = new Map();
+    assignments.set(domain, domainMap);
+  }
+  let nodes = domainMap.get(resourceId);
+  if (!nodes) {
+    nodes = new Set();
+    domainMap.set(resourceId, nodes);
+  }
+  nodes.add(nodeId);
+}
+
+/* ─────────────────────────────────────────────────────────────
+ *  Hook
+ * ───────────────────────────────────────────────────────────── */
+
 export function useStepResources(skillNode: SkillNode | null | undefined) {
-  const keywords = skillNode ? extractKeywords(skillNode.name) : [];
   const domain = skillNode?.domain || '';
-  const nodeSkills: string[] = skillNode
-    ? [
-        skillNode.name.toLowerCase(),
-        ...(skillNode.subdomain ? [skillNode.subdomain.toLowerCase()] : []),
-        ...(skillNode.learning_outcomes || []).map(o => o.toLowerCase()),
-      ]
-    : [];
 
   return useQuery({
     queryKey: ['step-resources', skillNode?.id, domain],
     queryFn: async () => {
       if (!skillNode || !domain) return [];
 
-      // ── Step 1: Fetch resources matching keywords & step domain ───
-      // CRITICAL: scope strictly to this skill's domain (subdomain/category)
-      // so a Psychology skill never pulls Web-Dev resources.
-      const orFilters = keywords.map(k => `title.ilike.%${k}%`).join(',');
-      const skillOverlap = keywords.map(k => `related_skills.cs.{${k}}`).join(',');
-      const combinedFilter = [orFilters, skillOverlap].filter(Boolean).join(',');
+      // Step tokens: name + subdomain + learning outcomes (the "identity"
+      // of the step). These form the comparison basis.
+      const stepText = [
+        skillNode.name,
+        skillNode.subdomain || '',
+        ...(skillNode.learning_outcomes || []),
+      ].join(' ');
+      const stepTokens = tokenize(stepText);
 
-      let query = supabase
+      // A tighter primary token set derived from the step *name* only.
+      // Used to gate matches so that only truly on-topic resources pass.
+      const nameTokens = tokenize(skillNode.name);
+      if (nameTokens.size === 0) return [];
+
+      // ── Pull the candidate pool: all active resources in this domain ──
+      const { data, error } = await supabase
         .from('resources')
-        .select('id,title,description,link,category,difficulty,is_free,icon,color,provider,duration,rating,resource_type,related_skills,avg_rating,weighted_rating,total_ratings,recommend_percent')
+        .select(
+          'id,title,description,link,category,difficulty,is_free,icon,color,provider,duration,rating,resource_type,related_skills,avg_rating,weighted_rating,total_ratings,recommend_percent,subdomain'
+        )
         .eq('is_active', true)
-        // Strict same-domain scoping (matches subdomain OR category)
-        .or(`subdomain.ilike.${domain},category.ilike.${domain},subdomain.ilike.%${domain}%,category.ilike.%${domain}%`);
-
-      if (combinedFilter) {
-        query = query.or(combinedFilter);
-      }
-
-      const { data, error } = await query.limit(100);
+        .or(
+          `subdomain.ilike.%${domain}%,category.ilike.%${domain}%,domain.ilike.%${domain}%`
+        )
+        .limit(500);
 
       if (error) {
         console.error('[useStepResources] query error:', error);
         return [];
       }
 
-      const raw = (data || []) as StepResource[];
+      const raw = (data || []) as (StepResource & { subdomain?: string })[];
 
-      // ── Step 2: Score by keyword relevance ────────────────────────────
-      type Scored = StepResource & { _titleMatch: boolean; _skillMatch: boolean; _score: number };
-
-      const scoreResource = (r: StepResource): Scored => {
-        let titleMatch = false;
-        let skillMatch = false;
-        let score = 0;
-
-        // Title keyword matching
-        for (const kw of keywords) {
-          if (fuzzyMatch(r.title, kw)) {
-            titleMatch = true;
-            score += kw.length;
-          }
-        }
-
-        // Description keyword matching (weaker)
-        if (!titleMatch) {
-          for (const kw of keywords) {
-            if (fuzzyMatch(r.description || '', kw)) {
-              score += kw.length * 0.3;
-            }
-          }
-        }
-
-        // Skills overlap
-        const rSkills = (r.related_skills || []).map(s => s.toLowerCase());
-        for (const ns of nodeSkills) {
-          for (const rs of rSkills) {
-            if (fuzzyMatch(rs, ns) || fuzzyMatch(ns, rs)) {
-              skillMatch = true;
-              score += 2;
-            }
-          }
-        }
-
-        return { ...r, _titleMatch: titleMatch, _skillMatch: skillMatch, _score: score };
+      // ── Score every candidate by token-overlap similarity ───────────
+      type Scored = StepResource & {
+        _nameRatio: number;
+        _stepRatio: number;
+        _skillRatio: number;
+        _score: number;
       };
 
-      const scored = raw.map(scoreResource);
+      const MIN_NAME_RATIO = 0.4; // user's 40–50 % threshold
 
-      // Title matches first; if none, fall back to skill matches
-      let filtered = scored.filter(r => r._titleMatch);
+      const scored: Scored[] = raw.map((r) => {
+        const titleTokens = tokenize(r.title);
+        const skillTokens = tokenize((r.related_skills || []).join(' '));
+
+        const nameRatio = overlapRatio(nameTokens, titleTokens);
+        const stepRatio = overlapRatio(stepTokens, titleTokens);
+        const skillRatio = overlapRatio(nameTokens, skillTokens);
+
+        // Small popularity/quality tie-breaker.
+        const quality =
+          (r.weighted_rating ?? r.avg_rating ?? r.rating ?? 0) / 5;
+
+        const score =
+          nameRatio * 3 + stepRatio * 1.5 + skillRatio * 2 + quality * 0.25;
+
+        return {
+          ...r,
+          _nameRatio: nameRatio,
+          _stepRatio: stepRatio,
+          _skillRatio: skillRatio,
+          _score: score,
+        };
+      });
+
+      // Primary pass: strict 40 %+ overlap on the step *name*.
+      // Fallback pass: strong skills-overlap counts too (≥ 50 %).
+      let filtered = scored.filter(
+        (r) =>
+          r._nameRatio >= MIN_NAME_RATIO ||
+          r._skillRatio >= 0.5 ||
+          r._stepRatio >= 0.5
+      );
+
+      // If nothing matched strictly, relax to any positive overlap so the
+      // step still surfaces something useful instead of being empty.
       if (filtered.length === 0) {
-        filtered = scored.filter(r => r._skillMatch || r._score > 0);
+        filtered = scored.filter((r) => r._score > 0);
       }
 
-      // ── Step 3: Sort by difficulty level (beginner → expert) ──────────
+      // ── Rank: relevance → difficulty ladder → quality ───────────────
       filtered.sort((a, b) => {
+        if (Math.abs(b._score - a._score) > 0.15) return b._score - a._score;
         const da = DIFFICULTY_ORDER[a.difficulty?.toLowerCase()] ?? 99;
         const db = DIFFICULTY_ORDER[b.difficulty?.toLowerCase()] ?? 99;
         if (da !== db) return da - db;
-        return b._score - a._score;
+        return (
+          (b.weighted_rating ?? b.avg_rating ?? 0) -
+          (a.weighted_rating ?? a.avg_rating ?? 0)
+        );
       });
 
-      return filtered.map(({ _titleMatch, _skillMatch, _score, ...rest }) => rest) as StepResource[];
+      // ── Cross-step dedup: max 2 different steps per resource ────────
+      releaseNode(domain, skillNode.id);
+      const final: Scored[] = [];
+      for (const r of filtered) {
+        if (canClaim(domain, r.id, skillNode.id)) {
+          claim(domain, r.id, skillNode.id);
+          final.push(r);
+        }
+      }
+
+      return final.map(
+        ({ _nameRatio, _stepRatio, _skillRatio, _score, ...rest }) => rest
+      ) as StepResource[];
     },
     enabled: !!skillNode?.id,
     staleTime: 2 * 60 * 1000,
