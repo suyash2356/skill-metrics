@@ -448,7 +448,7 @@ const Landing = () => {
           Content layer — 6 scenes × 100vh = 600vh.
           Position tuned to each frame phase's clear zone.
           ══════════════════════════════════════════ */}
-      <main className="relative z-10">
+      <main ref={mainRef} className="relative z-10">
         {/* Scene 1 — Frames 1-60 · Rocket TOP-CENTER · CLEAR ZONE: bottom */}
         <Scene zone="bottom" label="Hero" id="hero">
           <div className="text-center">
