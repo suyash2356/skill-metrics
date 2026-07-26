@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Resource, ResourceInsert, useBulkCreateResources } from '@/hooks/useAdmin';
+import { resolveCategoryMapping } from '@/utils/categoryMapping';
 import { Download, Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -150,11 +151,15 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
             obj[header] = value ? parseInt(value, 10) : null;
             break;
           case 'related_skills':
+          case 'skills':
           case 'relevant_backgrounds':
           case 'target_countries':
           case 'prerequisites':
           case 'education_levels':
             obj[header] = value ? value.split(';').map(s => s.trim()).filter(Boolean) : [];
+            break;
+          case 'subcategory':
+            obj['subcategory'] = value || null;
             break;
           default:
             obj[header] = value || null;
@@ -192,12 +197,65 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     return result;
   };
 
+  /**
+   * Normalize new-format rows (`category` = "Domains"/"Exams", `subcategory`,
+   * `skills`) into DB-shaped rows. Backward compatible with the old format
+   * where `category` was already the specific title and `section_type` was set.
+   */
+  const normalizeRow = (raw: any): any => {
+    const row = { ...raw };
+    const catRaw = (row.category ?? '').toString().trim();
+    const catLower = catRaw.toLowerCase();
+    const isNewFormat =
+      row.subcategory != null ||
+      catLower === 'domains' ||
+      catLower === 'domain' ||
+      catLower === 'exams' ||
+      catLower === 'exam';
+
+    if (isNewFormat) {
+      const subcategory = (row.subcategory ?? '').toString().trim();
+      if (subcategory) {
+        // section_type derived from the top-level category bucket
+        if (catLower.startsWith('exam')) {
+          row.section_type = 'exam';
+        } else if (catLower.startsWith('domain')) {
+          row.section_type = 'domain';
+        }
+        // The DB `category` column stores the specific title
+        row.category = subcategory;
+      }
+      delete row.subcategory;
+    }
+
+    // Alias: `skills` -> `related_skills`
+    if (row.skills && !row.related_skills) {
+      row.related_skills = row.skills;
+    }
+    delete row.skills;
+
+    // Resolve domain/subdomain up front (case-insensitive, with exam fallback)
+    if (row.category) {
+      const mapping = resolveCategoryMapping(row.category);
+      if (mapping) {
+        row.domain = mapping.domain;
+        row.subdomain = mapping.subdomain;
+      } else if (row.section_type === 'exam') {
+        // Unknown exam title: place under Exam Prep with the title as subdomain
+        row.domain = 'Exam Prep';
+        row.subdomain = row.category;
+      }
+    }
+    return row;
+  };
+
   // Pre-import validation
   const validateResources = (data: Partial<ResourceInsert>[], fallbackResourceType: string): { valid: ResourceInsert[]; errors: string[] } => {
     const valid: ResourceInsert[] = [];
     const errors: string[] = [];
 
-    data.forEach((item, index) => {
+    data.forEach((raw, index) => {
+      const item = normalizeRow(raw) as any;
       const rowNum = index + 1;
       const rowErrors: string[] = [];
 
@@ -209,7 +267,10 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
         rowErrors.push('link is required');
       }
       if (!item.category?.trim()) {
-        rowErrors.push('category is required');
+        rowErrors.push('category (or subcategory) is required');
+      }
+      if (item.category && !item.domain) {
+        rowErrors.push(`unknown category/subcategory "${item.category}" — no domain mapping found. Add it to CATEGORY_MAPPING or use an existing one.`);
       }
 
       // URL validation
@@ -220,9 +281,6 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
       if (rowErrors.length > 0) {
         errors.push(`Row ${rowNum}: ${rowErrors.join(', ')}`);
       } else {
-        // Build valid resource with defaults
-        // Use the per-row resource_type if provided, otherwise fall back to
-        // the batch-level default selected by the admin in the UI.
         valid.push({
           title: item.title!.trim(),
           description: item.description?.trim() || '',
@@ -245,7 +303,10 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
           estimated_time: item.estimated_time || null,
           prerequisites: item.prerequisites || [],
           education_levels: item.education_levels || [],
-        });
+          // Pre-resolved so useBulkCreateResources skips mapping lookup
+          domain: item.domain,
+          subdomain: item.subdomain,
+        } as ResourceInsert);
       }
     });
 
@@ -355,31 +416,31 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
   };
 
   const copyTemplate = (format: 'json' | 'csv') => {
-    const template = format === 'json' 
+    const template = format === 'json'
       ? JSON.stringify([{
           title: "Example Resource",
           description: "Description here",
           link: "https://example.com",
-          category: "Web Development",
+          category: "Domains",           // "Domains" or "Exams"
+          subcategory: "Web Development", // e.g. "Web Development", "IMUCET", "GRE"
+          skills: ["react", "javascript"],
           difficulty: "beginner",
           is_free: true,
           icon: "📚",
           color: "blue",
-          related_skills: ["react", "javascript"],
           relevant_backgrounds: ["tech"],
           provider: "Provider Name",
           duration: "10 hours",
           is_featured: false,
           is_active: true,
           resource_type: "course",
-          section_type: "domain",
           target_countries: ["India", "USA"],
           prerequisites: ["HTML", "CSS"],
           education_levels: ["undergraduate", "graduate"]
         }], null, 2)
-      : `title,description,link,category,difficulty,is_free,icon,color,related_skills,relevant_backgrounds,provider,duration,is_featured,is_active,resource_type,section_type,target_countries,prerequisites,education_levels
-Example Resource,Description here,https://example.com,Web Development,beginner,true,📚,blue,react;javascript,tech,Provider Name,10 hours,false,true,course,domain,India;USA,HTML;CSS,undergraduate;graduate`;
-    
+      : `title,description,link,category,subcategory,skills,difficulty,is_free,icon,color,relevant_backgrounds,provider,duration,is_featured,is_active,resource_type,target_countries,prerequisites,education_levels
+Example Resource,Description here,https://example.com,Domains,Web Development,react;javascript,beginner,true,📚,blue,tech,Provider Name,10 hours,false,true,course,India;USA,HTML;CSS,undergraduate;graduate`;
+
     navigator.clipboard.writeText(template);
     toast.success(`${format.toUpperCase()} template copied!`);
   };
@@ -585,10 +646,13 @@ Example Resource,Description here,https://example.com,Web Development,beginner,t
               )}
             </Button>
 
-            <p className="text-xs text-muted-foreground">
-              Required fields: title, link, category. Max file size: 5MB. 
-              Array fields (skills, countries, etc.) use semicolon separator in CSV.
-            </p>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p><strong>Required:</strong> <code>title</code>, <code>link</code>, <code>category</code>, <code>subcategory</code>.</p>
+              <p><strong>category</strong>: <code>"Domains"</code> or <code>"Exams"</code> — decides which section the resource lives in.</p>
+              <p><strong>subcategory</strong>: the specific tab title (e.g. <code>"Web Development"</code>, <code>"IMUCET"</code>, <code>"GRE"</code>). Must match a known mapping unless <code>category="Exams"</code>.</p>
+              <p><strong>skills</strong>: list of skills the learner picks up (CSV: semicolon-separated).</p>
+              <p>Legacy rows (old <code>category</code> + <code>section_type</code>) still import. Duplicates are skipped. Max 5MB.</p>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
