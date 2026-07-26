@@ -151,11 +151,15 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
             obj[header] = value ? parseInt(value, 10) : null;
             break;
           case 'related_skills':
+          case 'skills':
           case 'relevant_backgrounds':
           case 'target_countries':
           case 'prerequisites':
           case 'education_levels':
             obj[header] = value ? value.split(';').map(s => s.trim()).filter(Boolean) : [];
+            break;
+          case 'subcategory':
+            obj['subcategory'] = value || null;
             break;
           default:
             obj[header] = value || null;
