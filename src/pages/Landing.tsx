@@ -15,6 +15,7 @@ import {
   Linkedin,
 } from "lucide-react";
 import { PageSEO } from "@/components/PageSEO";
+import brandLogoImg from "@/logo.jpg";
 
 /* ══════════════════════════════════════════════════════════════════
    SKILL-METRICS · SCROLL-DRIVEN FRAME ANIMATION LANDING PAGE
