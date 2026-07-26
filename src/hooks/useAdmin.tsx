@@ -197,6 +197,13 @@ export const useBulkCreateResources = () => {
         const batch = [];
         
         for (const res of rawBatch) {
+          // If caller already resolved domain/subdomain (e.g. importer with
+          // new category/subcategory schema), trust it and skip mapping lookup.
+          const hasResolved = (res as any).domain && (res as any).subdomain;
+          if (hasResolved) {
+            batch.push(res);
+            continue;
+          }
           const mapping = CATEGORY_MAPPING[res.category];
           if (!mapping) {
             errors.push(`Category mapping not found for category: ${res.category}`);
