@@ -8,6 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Resource, ResourceInsert, useBulkCreateResources } from '@/hooks/useAdmin';
+import { resolveCategoryMapping } from '@/utils/categoryMapping';
 import { Download, Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
