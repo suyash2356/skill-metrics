@@ -416,31 +416,31 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
   };
 
   const copyTemplate = (format: 'json' | 'csv') => {
-    const template = format === 'json' 
+    const template = format === 'json'
       ? JSON.stringify([{
           title: "Example Resource",
           description: "Description here",
           link: "https://example.com",
-          category: "Web Development",
+          category: "Domains",           // "Domains" or "Exams"
+          subcategory: "Web Development", // e.g. "Web Development", "IMUCET", "GRE"
+          skills: ["react", "javascript"],
           difficulty: "beginner",
           is_free: true,
           icon: "📚",
           color: "blue",
-          related_skills: ["react", "javascript"],
           relevant_backgrounds: ["tech"],
           provider: "Provider Name",
           duration: "10 hours",
           is_featured: false,
           is_active: true,
           resource_type: "course",
-          section_type: "domain",
           target_countries: ["India", "USA"],
           prerequisites: ["HTML", "CSS"],
           education_levels: ["undergraduate", "graduate"]
         }], null, 2)
-      : `title,description,link,category,difficulty,is_free,icon,color,related_skills,relevant_backgrounds,provider,duration,is_featured,is_active,resource_type,section_type,target_countries,prerequisites,education_levels
-Example Resource,Description here,https://example.com,Web Development,beginner,true,📚,blue,react;javascript,tech,Provider Name,10 hours,false,true,course,domain,India;USA,HTML;CSS,undergraduate;graduate`;
-    
+      : `title,description,link,category,subcategory,skills,difficulty,is_free,icon,color,relevant_backgrounds,provider,duration,is_featured,is_active,resource_type,target_countries,prerequisites,education_levels
+Example Resource,Description here,https://example.com,Domains,Web Development,react;javascript,beginner,true,📚,blue,tech,Provider Name,10 hours,false,true,course,India;USA,HTML;CSS,undergraduate;graduate`;
+
     navigator.clipboard.writeText(template);
     toast.success(`${format.toUpperCase()} template copied!`);
   };
