@@ -646,10 +646,13 @@ Example Resource,Description here,https://example.com,Domains,Web Development,re
               )}
             </Button>
 
-            <p className="text-xs text-muted-foreground">
-              Required fields: title, link, category. Max file size: 5MB. 
-              Array fields (skills, countries, etc.) use semicolon separator in CSV.
-            </p>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <p><strong>Required:</strong> <code>title</code>, <code>link</code>, <code>category</code>, <code>subcategory</code>.</p>
+              <p><strong>category</strong>: <code>"Domains"</code> or <code>"Exams"</code> — decides which section the resource lives in.</p>
+              <p><strong>subcategory</strong>: the specific tab title (e.g. <code>"Web Development"</code>, <code>"IMUCET"</code>, <code>"GRE"</code>). Must match a known mapping unless <code>category="Exams"</code>.</p>
+              <p><strong>skills</strong>: list of skills the learner picks up (CSV: semicolon-separated).</p>
+              <p>Legacy rows (old <code>category</code> + <code>section_type</code>) still import. Duplicates are skipped. Max 5MB.</p>
+            </div>
           </TabsContent>
         </Tabs>
       </DialogContent>
