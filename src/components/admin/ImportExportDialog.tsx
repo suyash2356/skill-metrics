@@ -197,12 +197,65 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     return result;
   };
 
+  /**
+   * Normalize new-format rows (`category` = "Domains"/"Exams", `subcategory`,
+   * `skills`) into DB-shaped rows. Backward compatible with the old format
+   * where `category` was already the specific title and `section_type` was set.
+   */
+  const normalizeRow = (raw: any): any => {
+    const row = { ...raw };
+    const catRaw = (row.category ?? '').toString().trim();
+    const catLower = catRaw.toLowerCase();
+    const isNewFormat =
+      row.subcategory != null ||
+      catLower === 'domains' ||
+      catLower === 'domain' ||
+      catLower === 'exams' ||
+      catLower === 'exam';
+
+    if (isNewFormat) {
+      const subcategory = (row.subcategory ?? '').toString().trim();
+      if (subcategory) {
+        // section_type derived from the top-level category bucket
+        if (catLower.startsWith('exam')) {
+          row.section_type = 'exam';
+        } else if (catLower.startsWith('domain')) {
+          row.section_type = 'domain';
+        }
+        // The DB `category` column stores the specific title
+        row.category = subcategory;
+      }
+      delete row.subcategory;
+    }
+
+    // Alias: `skills` -> `related_skills`
+    if (row.skills && !row.related_skills) {
+      row.related_skills = row.skills;
+    }
+    delete row.skills;
+
+    // Resolve domain/subdomain up front (case-insensitive, with exam fallback)
+    if (row.category) {
+      const mapping = resolveCategoryMapping(row.category);
+      if (mapping) {
+        row.domain = mapping.domain;
+        row.subdomain = mapping.subdomain;
+      } else if (row.section_type === 'exam') {
+        // Unknown exam title: place under Exam Prep with the title as subdomain
+        row.domain = 'Exam Prep';
+        row.subdomain = row.category;
+      }
+    }
+    return row;
+  };
+
   // Pre-import validation
   const validateResources = (data: Partial<ResourceInsert>[], fallbackResourceType: string): { valid: ResourceInsert[]; errors: string[] } => {
     const valid: ResourceInsert[] = [];
     const errors: string[] = [];
 
-    data.forEach((item, index) => {
+    data.forEach((raw, index) => {
+      const item = normalizeRow(raw) as any;
       const rowNum = index + 1;
       const rowErrors: string[] = [];
 
@@ -214,7 +267,10 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
         rowErrors.push('link is required');
       }
       if (!item.category?.trim()) {
-        rowErrors.push('category is required');
+        rowErrors.push('category (or subcategory) is required');
+      }
+      if (item.category && !item.domain) {
+        rowErrors.push(`unknown category/subcategory "${item.category}" — no domain mapping found. Add it to CATEGORY_MAPPING or use an existing one.`);
       }
 
       // URL validation
@@ -225,9 +281,6 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
       if (rowErrors.length > 0) {
         errors.push(`Row ${rowNum}: ${rowErrors.join(', ')}`);
       } else {
-        // Build valid resource with defaults
-        // Use the per-row resource_type if provided, otherwise fall back to
-        // the batch-level default selected by the admin in the UI.
         valid.push({
           title: item.title!.trim(),
           description: item.description?.trim() || '',
@@ -250,7 +303,10 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
           estimated_time: item.estimated_time || null,
           prerequisites: item.prerequisites || [],
           education_levels: item.education_levels || [],
-        });
+          // Pre-resolved so useBulkCreateResources skips mapping lookup
+          domain: item.domain,
+          subdomain: item.subdomain,
+        } as ResourceInsert);
       }
     });
 
