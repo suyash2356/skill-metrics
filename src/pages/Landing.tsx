@@ -15,6 +15,7 @@ import {
   Linkedin,
 } from "lucide-react";
 import { PageSEO } from "@/components/PageSEO";
+import brandLogoImg from "@/logo.jpg";
 
 /* ══════════════════════════════════════════════════════════════════
    SKILL-METRICS · SCROLL-DRIVEN FRAME ANIMATION LANDING PAGE
@@ -102,14 +103,13 @@ const GhostBtn = ({
 const BrandLogo = ({ size = "sm" }: { size?: "sm" | "md" }) => {
   const box = size === "md" ? "h-10 w-10" : "h-8 w-8";
   const text = size === "md" ? "text-base" : "text-sm";
-  const mark = size === "md" ? "text-base" : "text-xs";
   return (
     <span className="flex items-center gap-2">
-      <span
-        className={`${box} flex items-center justify-center rounded-lg bg-gradient-primary shadow-[0_6px_20px_-6px_rgba(139,92,246,0.6)]`}
-      >
-        <span className={`font-bold text-white ${mark}`}>SM</span>
-      </span>
+      <img
+        src={brandLogoImg}
+        alt="Skill Metrics"
+        className={`${box} rounded-lg object-cover shadow-[0_6px_20px_-6px_rgba(139,92,246,0.6)]`}
+      />
       <span
         className={`${text} font-bold tracking-tight bg-gradient-primary bg-clip-text text-transparent`}
       >
