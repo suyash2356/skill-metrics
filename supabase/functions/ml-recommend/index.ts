@@ -163,12 +163,30 @@ Deno.serve(async (req: Request) => {
     const userExperienceLevel = taxonomy.experience_level?.toLowerCase() || null;
 
 
-    // 2) Candidate resources (sourced from admin-managed `resources` table)
+    // 2) Candidate resources — read from the Zone B content-model contract
+    // (`v_resource_features` = resources ⋈ resource_stats ⋈ resource_skills).
+    const FEATURE_COLS =
+      "resource_id, title, description, category, domain, subdomain, difficulty, language, skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at";
+
+    const toRow = (r: any): ResourceRow => ({
+      id: r.resource_id,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      domain: r.domain,
+      difficulty: r.difficulty,
+      related_skills: r.skills ?? [],
+      weighted_rating: r.weighted_rating,
+      total_ratings: r.total_ratings,
+      link: r.link,
+      resource_type: r.resource_type,
+      section_type: r.section_type,
+      created_at: r.created_at,
+    });
+
     let q = supabase
-      .from("resources")
-      .select(
-        "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
-      )
+      .from("v_resource_features")
+      .select(FEATURE_COLS)
       .eq("is_active", true)
       .limit(800);
 
@@ -188,15 +206,13 @@ Deno.serve(async (req: Request) => {
 
     const { data: rawResources, error: resErr } = await q;
     if (resErr) throw resErr;
-    const resources = (rawResources ?? []) as ResourceRow[];
+    const resources = (rawResources ?? []).map(toRow);
 
     // Cold-start fallback: pull global popular if filter returned <8
     if (resources.length < 8) {
       let extraQ = supabase
-        .from("resources")
-        .select(
-          "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
-        )
+        .from("v_resource_features")
+        .select(FEATURE_COLS)
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
         .limit(50);
@@ -205,9 +221,10 @@ Deno.serve(async (req: Request) => {
       const { data: extra } = await extraQ;
       const seen = new Set(resources.map((r) => r.id));
       (extra ?? []).forEach((r: any) => {
-        if (!seen.has(r.id)) resources.push(r as ResourceRow);
+        if (!seen.has(r.resource_id)) resources.push(toRow(r));
       });
     }
+
 
     if (resources.length === 0) {
       return new Response(
