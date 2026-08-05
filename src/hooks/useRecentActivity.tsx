@@ -4,7 +4,9 @@ import { useAuth } from './useAuth';
 import { RecentActivity } from '@/lib/personalization';
 
 /**
- * Hook to fetch user's recent activity for personalization
+ * Recent activity for personalization, read from the unified
+ * `interaction_events` spine (Zone C) rather than the retired
+ * `user_activity` table.
  */
 export const useRecentActivity = (limit: number = 50) => {
   const { user } = useAuth();
@@ -14,11 +16,11 @@ export const useRecentActivity = (limit: number = 50) => {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await supabase
-        .from('user_activity')
-        .select('activity_type, metadata, created_at, post_id, roadmap_id')
+      const { data, error } = await (supabase as any)
+        .from('interaction_events')
+        .select('event_type, subject_type, subject_id, context, occurred_at')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
+        .order('occurred_at', { ascending: false })
         .limit(limit);
 
       if (error) {
@@ -26,16 +28,21 @@ export const useRecentActivity = (limit: number = 50) => {
         return [];
       }
 
-      return (data || []).map(item => ({
-        activity_type: item.activity_type,
-        metadata: item.metadata as Record<string, any> | undefined,
-        created_at: item.created_at,
-        post_id: item.post_id || undefined,
-        roadmap_id: item.roadmap_id || undefined,
+      return (data || []).map((item: any) => ({
+        activity_type: item.event_type,
+        metadata: {
+          ...(item.context ?? {}),
+          subject_type: item.subject_type,
+          subject_id: item.subject_id,
+        } as Record<string, any>,
+        created_at: item.occurred_at,
+        post_id: item.subject_type === 'post' ? item.subject_id ?? undefined : undefined,
+        roadmap_id:
+          item.subject_type === 'roadmap' ? item.subject_id ?? undefined : undefined,
       }));
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 5 * 60 * 1000,
   });
 
   return {
