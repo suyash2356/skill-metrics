@@ -101,7 +101,8 @@ Deno.serve(async (req: Request) => {
         .eq("user_id", user.id)
         .maybeSingle(),
     ]);
-    const prefs = settings;
+
+
 
 
     const interactionMap = new Map<string, number>();
