@@ -69,6 +69,16 @@ const ResourceView = () => {
   const isAdminResource = source === 'resources';
   const resource: any = isAdminResource ? adminResource : userResource;
 
+  // Zone C: log the open once and the accumulated attention time on unmount.
+  const trackVerb = useTrackVerb();
+  const subjectType = isAdminResource ? 'resource' : 'user_resource';
+  useEffect(() => {
+    if (resource?.id) trackVerb(subjectType, 'open', resource.id, 'resource_view');
+  }, [resource?.id, subjectType, trackVerb]);
+  useDwellTracking(subjectType, resource?.id, 'resource_view');
+
+
+
   const { data: myRating } = useQuery({
     queryKey: ['userResourceRating', id, user?.id],
     queryFn: async () => {
