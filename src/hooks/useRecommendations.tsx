@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { track, trackEvent } from '@/lib/tracking';
+
 
 export interface MLRecommendation {
   id: string;
