@@ -14,6 +14,8 @@ import { ResourcePreview } from "@/components/ResourcePreview";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDwellTracking, useTrackVerb } from "@/hooks/useTracking";
+import { useEffect } from "react";
 
 const ResourceView = () => {
   const { id } = useParams<{ id: string }>();
@@ -66,6 +68,16 @@ const ResourceView = () => {
   const isLoading = adminLoading || userLoading;
   const isAdminResource = source === 'resources';
   const resource: any = isAdminResource ? adminResource : userResource;
+
+  // Zone C: log the open once and the accumulated attention time on unmount.
+  const trackVerb = useTrackVerb();
+  const subjectType = isAdminResource ? 'resource' : 'user_resource';
+  useEffect(() => {
+    if (resource?.id) trackVerb(subjectType, 'open', resource.id, 'resource_view');
+  }, [resource?.id, subjectType, trackVerb]);
+  useDwellTracking(subjectType, resource?.id, 'resource_view');
+
+
 
   const { data: myRating } = useQuery({
     queryKey: ['userResourceRating', id, user?.id],

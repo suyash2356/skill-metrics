@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { track, trackEvent } from '@/lib/tracking';
+
 
 export interface MLRecommendation {
   id: string;
@@ -160,7 +162,8 @@ export const useHybridRecommendations = (
 };
 
 /**
- * Logs an "impression" event for each recommendation the first time the user sees it.
+ * Logs an "impression" event for each recommendation the first time the user
+ * sees it. Writes to the unified `interaction_events` spine.
  */
 export function useLogImpressions(
   userId: string | undefined,
@@ -176,21 +179,16 @@ export function useLogImpressions(
     if (fresh.length === 0) return;
     fresh.forEach((r) => loggedRef.current.add(r.id));
 
-    const rows = fresh.map((r) => ({
-      user_id: userId,
-      resource_id: r.id,
-      event_type: 'impression' as const,
-      reason: r.reason,
-      surface,
-      rank_position: recs.findIndex((x) => x.id === r.id) + 1,
-    }));
-
-    supabase
-      .from('recommendation_events' as any)
-      .insert(rows)
-      .then(({ error }) => {
-        if (error) console.warn('impression log failed', error);
+    fresh.forEach((r) => {
+      track({
+        subjectType: 'resource',
+        eventType: 'impression',
+        subjectId: r.id,
+        surface,
+        position: recs.findIndex((x) => x.id === r.id) + 1,
+        context: { reason: r.reason },
       });
+    });
   }, [userId, recs, surface]);
 }
 
@@ -203,12 +201,13 @@ export async function logRecommendationClick(
   rankPosition: number,
   surface: Surface = 'skill',
 ) {
-  await supabase.from('recommendation_events' as any).insert({
-    user_id: userId,
-    resource_id: rec.id,
-    event_type: 'click',
-    reason: rec.reason,
+  await trackEvent({
+    subjectType: 'resource',
+    eventType: 'click',
+    subjectId: rec.id,
     surface,
-    rank_position: rankPosition,
+    position: rankPosition,
+    context: { reason: rec.reason },
   });
 }
+

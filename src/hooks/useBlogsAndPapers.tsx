@@ -79,25 +79,27 @@ export function useBlogsAndPapers() {
           userData.experienceLevel = profileDetails.experience_level || '';
         }
 
-        // Also check recent activity for additional interests
-        const { data: recentActivity } = await supabase
-          .from('user_activity')
-          .select('metadata')
+        // Also check recent resource activity for additional interests
+        const { data: recentActivity } = await (supabase as any)
+          .from('interaction_events')
+          .select('context')
           .eq('user_id', user.id)
-          .eq('activity_type', 'resource_view')
-          .order('created_at', { ascending: false })
+          .eq('subject_type', 'resource')
+          .in('event_type', ['open', 'click', 'dwell'])
+          .order('occurred_at', { ascending: false })
           .limit(20);
 
         if (recentActivity) {
           recentActivity.forEach((activity: any) => {
-            if (activity.metadata?.category) {
-              userData.skills.push(activity.metadata.category);
+            if (activity.context?.category) {
+              userData.skills.push(activity.context.category);
             }
-            if (activity.metadata?.related_skills) {
-              userData.skills.push(...activity.metadata.related_skills);
+            if (activity.context?.related_skills) {
+              userData.skills.push(...activity.context.related_skills);
             }
           });
         }
+
       }
 
       // Fetch blogs and research papers from resources - sorted by ratings

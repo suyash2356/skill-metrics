@@ -387,6 +387,978 @@ export type Database = {
         }
         Relationships: []
       }
+      interaction_events: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2026_08: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2026_09: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2026_10: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2026_11: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2026_12: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_01: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_02: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_03: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_04: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_05: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_06: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_07: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_08: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_09: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_2027_10: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_future: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      interaction_events_history: {
+        Row: {
+          context: Json
+          created_at: string
+          dwell_ms: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id: number
+          model_version: string | null
+          occurred_at: string
+          position: number | null
+          sequence_no: number | null
+          session_id: string | null
+          subject_id: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface: string | null
+          user_id: string
+          variant: string | null
+        }
+        Insert: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id: string
+          variant?: string | null
+        }
+        Update: {
+          context?: Json
+          created_at?: string
+          dwell_ms?: number | null
+          event_type?: Database["public"]["Enums"]["interaction_verb"]
+          id?: number
+          model_version?: string | null
+          occurred_at?: string
+          position?: number | null
+          sequence_no?: number | null
+          session_id?: string | null
+          subject_id?: string | null
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          surface?: string | null
+          user_id?: string
+          variant?: string | null
+        }
+        Relationships: []
+      }
       interactions_ml: {
         Row: {
           created_at: string | null
@@ -583,6 +1555,13 @@ export type Database = {
             referencedRelation: "resources"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "messages_shared_resource_id_fkey"
+            columns: ["shared_resource_id"]
+            isOneToOne: false
+            referencedRelation: "v_resource_features"
+            referencedColumns: ["resource_id"]
+          },
         ]
       }
       notifications: {
@@ -614,6 +1593,35 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      post_engagement: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_engagement_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_preferences: {
         Row: {
@@ -826,6 +1834,13 @@ export type Database = {
             referencedRelation: "resources"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "resource_ratings_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "v_resource_features"
+            referencedColumns: ["resource_id"]
+          },
         ]
       }
       resource_review_helpful: {
@@ -896,6 +1911,116 @@ export type Database = {
             referencedRelation: "resources"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "resource_reviews_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "v_resource_features"
+            referencedColumns: ["resource_id"]
+          },
+        ]
+      }
+      resource_skills: {
+        Row: {
+          created_at: string
+          id: string
+          resource_id: string
+          skill_name: string
+          skill_node_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resource_id: string
+          skill_name: string
+          skill_node_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resource_id?: string
+          skill_name?: string
+          skill_node_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_skills_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_skills_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "v_resource_features"
+            referencedColumns: ["resource_id"]
+          },
+          {
+            foreignKeyName: "resource_skills_skill_node_id_fkey"
+            columns: ["skill_node_id"]
+            isOneToOne: false
+            referencedRelation: "skill_nodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      resource_stats: {
+        Row: {
+          avg_rating: number | null
+          click_count: number
+          recommend_percent: number | null
+          resource_id: string
+          total_dwell_ms: number
+          total_ratings: number
+          total_reviews: number
+          total_votes: number
+          updated_at: string
+          view_count: number
+          weighted_rating: number | null
+        }
+        Insert: {
+          avg_rating?: number | null
+          click_count?: number
+          recommend_percent?: number | null
+          resource_id: string
+          total_dwell_ms?: number
+          total_ratings?: number
+          total_reviews?: number
+          total_votes?: number
+          updated_at?: string
+          view_count?: number
+          weighted_rating?: number | null
+        }
+        Update: {
+          avg_rating?: number | null
+          click_count?: number
+          recommend_percent?: number | null
+          resource_id?: string
+          total_dwell_ms?: number
+          total_ratings?: number
+          total_reviews?: number
+          total_votes?: number
+          updated_at?: string
+          view_count?: number
+          weighted_rating?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "resource_stats_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: true
+            referencedRelation: "resources"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_stats_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: true
+            referencedRelation: "v_resource_features"
+            referencedColumns: ["resource_id"]
+          },
         ]
       }
       resource_votes: {
@@ -927,6 +2052,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "resources"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "resource_votes_resource_id_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "v_resource_features"
+            referencedColumns: ["resource_id"]
           },
         ]
       }
@@ -1302,6 +2434,47 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      saved_items: {
+        Row: {
+          collection_id: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          collection_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          subject_id: string
+          subject_type: Database["public"]["Enums"]["interaction_subject"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          collection_id?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          subject_id?: string
+          subject_type?: Database["public"]["Enums"]["interaction_subject"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_items_collection_id_fkey"
+            columns: ["collection_id"]
+            isOneToOne: false
+            referencedRelation: "saved_posts_collections"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       saved_posts: {
         Row: {
@@ -1883,6 +3056,13 @@ export type Database = {
             referencedRelation: "resources"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_seen_resources_resource_fkey"
+            columns: ["resource_id"]
+            isOneToOne: false
+            referencedRelation: "v_resource_features"
+            referencedColumns: ["resource_id"]
+          },
         ]
       }
       user_sessions: {
@@ -1941,6 +3121,84 @@ export type Database = {
           security_notes?: string | null
           timezone?: string | null
           user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          allow_follow_requests: boolean
+          company: string | null
+          created_at: string
+          email_notifications: boolean
+          experience_level: string | null
+          interested_domains: string[]
+          interested_subdomains: string[]
+          interests: string[]
+          language: string
+          login_notifications: boolean
+          marketing_emails: boolean
+          portfolio_url: string | null
+          primary_domain: string | null
+          profile_visibility: string
+          push_notifications: boolean
+          show_online_status: boolean
+          skills: Json
+          social_links: Json
+          theme: string
+          timezone: string | null
+          two_factor_enabled: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          allow_follow_requests?: boolean
+          company?: string | null
+          created_at?: string
+          email_notifications?: boolean
+          experience_level?: string | null
+          interested_domains?: string[]
+          interested_subdomains?: string[]
+          interests?: string[]
+          language?: string
+          login_notifications?: boolean
+          marketing_emails?: boolean
+          portfolio_url?: string | null
+          primary_domain?: string | null
+          profile_visibility?: string
+          push_notifications?: boolean
+          show_online_status?: boolean
+          skills?: Json
+          social_links?: Json
+          theme?: string
+          timezone?: string | null
+          two_factor_enabled?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          allow_follow_requests?: boolean
+          company?: string | null
+          created_at?: string
+          email_notifications?: boolean
+          experience_level?: string | null
+          interested_domains?: string[]
+          interested_subdomains?: string[]
+          interests?: string[]
+          language?: string
+          login_notifications?: boolean
+          marketing_emails?: boolean
+          portfolio_url?: string | null
+          primary_domain?: string | null
+          profile_visibility?: string
+          push_notifications?: boolean
+          show_online_status?: boolean
+          skills?: Json
+          social_links?: Json
+          theme?: string
+          timezone?: string | null
+          two_factor_enabled?: boolean
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -2060,6 +3318,96 @@ export type Database = {
           metadata?: Json | null
           score?: number | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      v_recommendation_outcomes: {
+        Row: {
+          converted: boolean | null
+          impressed_at: string | null
+          model_version: string | null
+          position: number | null
+          resource_id: string | null
+          surface: string | null
+          user_id: string | null
+          variant: string | null
+        }
+        Insert: {
+          converted?: never
+          impressed_at?: string | null
+          model_version?: string | null
+          position?: number | null
+          resource_id?: string | null
+          surface?: string | null
+          user_id?: string | null
+          variant?: string | null
+        }
+        Update: {
+          converted?: never
+          impressed_at?: string | null
+          model_version?: string | null
+          position?: number | null
+          resource_id?: string | null
+          surface?: string | null
+          user_id?: string | null
+          variant?: string | null
+        }
+        Relationships: []
+      }
+      v_resource_features: {
+        Row: {
+          avg_rating: number | null
+          category: string | null
+          click_count: number | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          domain: string | null
+          duration: string | null
+          estimated_time: string | null
+          is_active: boolean | null
+          is_featured: boolean | null
+          is_free: boolean | null
+          language: string | null
+          link: string | null
+          provider: string | null
+          recommend_percent: number | null
+          resource_id: string | null
+          resource_type: string | null
+          section_type: string | null
+          skills: string[] | null
+          subdomain: string | null
+          title: string | null
+          total_dwell_ms: number | null
+          total_ratings: number | null
+          total_reviews: number | null
+          total_votes: number | null
+          view_count: number | null
+          weighted_rating: number | null
+        }
+        Relationships: []
+      }
+      v_session_sequences: {
+        Row: {
+          ended_at: string | null
+          event_count: number | null
+          session_id: string | null
+          started_at: string | null
+          subject_path: string[] | null
+          surface_path: string[] | null
+          total_dwell_ms: number | null
+          user_id: string | null
+          verb_path: string[] | null
+        }
+        Relationships: []
+      }
+      v_user_item_implicit: {
+        Row: {
+          event_count: number | null
+          last_seen_at: string | null
+          resource_id: string | null
+          score: number | null
+          user_id: string | null
         }
         Relationships: []
       }
@@ -2205,6 +3553,21 @@ export type Database = {
         Args: { _conversation_id: string; _member_id: string }
         Returns: undefined
       }
+      track_interaction: {
+        Args: {
+          _context?: Json
+          _dwell_ms?: number
+          _event_type: Database["public"]["Enums"]["interaction_verb"]
+          _model_version?: string
+          _position?: number
+          _session_id?: string
+          _subject_id?: string
+          _subject_type: Database["public"]["Enums"]["interaction_subject"]
+          _surface?: string
+          _variant?: string
+        }
+        Returns: number
+      }
       update_group_settings: {
         Args: {
           _avatar_url?: string
@@ -2217,6 +3580,30 @@ export type Database = {
     }
     Enums: {
       community_role: "admin" | "moderator" | "member"
+      interaction_subject:
+        | "resource"
+        | "post"
+        | "roadmap"
+        | "skill"
+        | "profile"
+        | "search"
+        | "user_resource"
+      interaction_verb:
+        | "impression"
+        | "click"
+        | "open"
+        | "dwell"
+        | "download"
+        | "like"
+        | "unlike"
+        | "save"
+        | "unsave"
+        | "share"
+        | "comment"
+        | "rate"
+        | "vote"
+        | "complete"
+        | "search"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2345,6 +3732,32 @@ export const Constants = {
   public: {
     Enums: {
       community_role: ["admin", "moderator", "member"],
+      interaction_subject: [
+        "resource",
+        "post",
+        "roadmap",
+        "skill",
+        "profile",
+        "search",
+        "user_resource",
+      ],
+      interaction_verb: [
+        "impression",
+        "click",
+        "open",
+        "dwell",
+        "download",
+        "like",
+        "unlike",
+        "save",
+        "unsave",
+        "share",
+        "comment",
+        "rate",
+        "vote",
+        "complete",
+        "search",
+      ],
     },
   },
 } as const

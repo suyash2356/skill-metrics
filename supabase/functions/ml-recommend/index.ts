@@ -81,16 +81,18 @@ Deno.serve(async (req: Request) => {
       : null;
     const ignoreDomain = !!body.ignore_domain;
 
-    // 1) User context: preferences + interactions + profile
-    const [{ data: prefs }, { data: interactions }, { data: profile }] = await Promise.all([
+    // 1) User context: settings + implicit interest scores + profile
+    // Zone A (`user_settings`) is the consolidated source of truth; Zone C's
+    // `v_user_item_implicit` view is the behaviour-model training contract.
+    const [{ data: settings }, { data: interactions }, { data: profile }] = await Promise.all([
       supabase
-        .from("user_preferences")
-        .select("primary_domain, interests")
+        .from("user_settings")
+        .select("primary_domain, interests, experience_level, skills, interested_domains, interested_subdomains")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
-        .from("interactions_ml")
-        .select("item_id, score")
+        .from("v_user_item_implicit")
+        .select("resource_id, score")
         .eq("user_id", user.id)
         .limit(2000),
       supabase
@@ -100,50 +102,91 @@ Deno.serve(async (req: Request) => {
         .maybeSingle(),
     ]);
 
+
+
+
     const interactionMap = new Map<string, number>();
     (interactions ?? []).forEach((row: any) => {
       interactionMap.set(
-        row.item_id,
-        (interactionMap.get(row.item_id) ?? 0) + Number(row.score ?? 0),
+        row.resource_id,
+        (interactionMap.get(row.resource_id) ?? 0) + Number(row.score ?? 0),
       );
     });
     const hasInteractions = interactionMap.size > 0;
 
-    const userPrimaryDomain: string | null = ((prefs as any)?.primary_domain as string | null) ?? null;
+    // Zone A settings win; the legacy profile-details row is a fallback while
+    // the two are still kept in sync.
+    const taxonomy = {
+      primary_domain: (settings as any)?.primary_domain ?? null,
+      interests: ((settings as any)?.interests as string[] | null) ?? [],
+      experience_level:
+        (settings as any)?.experience_level ?? profile?.experience_level ?? null,
+      skills: ((settings as any)?.skills ?? profile?.skills) as any[] | null,
+      interested_domains:
+        ((settings as any)?.interested_domains?.length
+          ? (settings as any).interested_domains
+          : profile?.interested_domains) as string[] | null,
+      interested_subdomains:
+        ((settings as any)?.interested_subdomains?.length
+          ? (settings as any).interested_subdomains
+          : profile?.interested_subdomains) as string[] | null,
+    };
+
+    const userPrimaryDomain: string | null = taxonomy.primary_domain;
     const userDomain = ignoreDomain
       ? null
       : (domain || userPrimaryDomain || null);
-    const interests: string[] =
-      ((prefs as any)?.interests as string[] | null) ?? [];
 
     const userKeywords = new Set<string>();
-    interests.forEach(i => i && userKeywords.add(i.toLowerCase()));
+    taxonomy.interests.forEach((i) => i && userKeywords.add(i.toLowerCase()));
 
     const userInterestedDomains = new Set<string>();
     const userInterestedSubdomains = new Set<string>();
 
-    if (profile) {
-      if (profile.interested_domains && Array.isArray(profile.interested_domains)) {
-        profile.interested_domains.forEach((d: string) => userInterestedDomains.add(d.toLowerCase()));
-      }
-      if (profile.interested_subdomains && Array.isArray(profile.interested_subdomains)) {
-        profile.interested_subdomains.forEach((sd: string) => userInterestedSubdomains.add(sd.toLowerCase()));
-      }
-      if (profile.skills && Array.isArray(profile.skills)) {
-        profile.skills.forEach((s: any) => {
-          if (s.name) userKeywords.add(s.name.toLowerCase());
-        });
-      }
+    if (Array.isArray(taxonomy.interested_domains)) {
+      taxonomy.interested_domains.forEach((d: string) => d && userInterestedDomains.add(d.toLowerCase()));
     }
-    const hasRichProfile = userInterestedDomains.size > 0 || userInterestedSubdomains.size > 0 || !!profile?.experience_level;
-    const userExperienceLevel = profile?.experience_level?.toLowerCase() || null;
+    if (Array.isArray(taxonomy.interested_subdomains)) {
+      taxonomy.interested_subdomains.forEach((sd: string) => sd && userInterestedSubdomains.add(sd.toLowerCase()));
+    }
+    if (Array.isArray(taxonomy.skills)) {
+      taxonomy.skills.forEach((s: any) => {
+        const name = typeof s === "string" ? s : s?.name;
+        if (name) userKeywords.add(String(name).toLowerCase());
+      });
+    }
 
-    // 2) Candidate resources (sourced from admin-managed `resources` table)
+    const hasRichProfile =
+      userInterestedDomains.size > 0 ||
+      userInterestedSubdomains.size > 0 ||
+      !!taxonomy.experience_level;
+    const userExperienceLevel = taxonomy.experience_level?.toLowerCase() || null;
+
+
+    // 2) Candidate resources — read from the Zone B content-model contract
+    // (`v_resource_features` = resources ⋈ resource_stats ⋈ resource_skills).
+    const FEATURE_COLS =
+      "resource_id, title, description, category, domain, subdomain, difficulty, language, skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at";
+
+    const toRow = (r: any): ResourceRow => ({
+      id: r.resource_id,
+      title: r.title,
+      description: r.description,
+      category: r.category,
+      domain: r.domain,
+      difficulty: r.difficulty,
+      related_skills: r.skills ?? [],
+      weighted_rating: r.weighted_rating,
+      total_ratings: r.total_ratings,
+      link: r.link,
+      resource_type: r.resource_type,
+      section_type: r.section_type,
+      created_at: r.created_at,
+    });
+
     let q = supabase
-      .from("resources")
-      .select(
-        "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
-      )
+      .from("v_resource_features")
+      .select(FEATURE_COLS)
       .eq("is_active", true)
       .limit(800);
 
@@ -163,15 +206,13 @@ Deno.serve(async (req: Request) => {
 
     const { data: rawResources, error: resErr } = await q;
     if (resErr) throw resErr;
-    const resources = (rawResources ?? []) as ResourceRow[];
+    const resources = (rawResources ?? []).map(toRow);
 
     // Cold-start fallback: pull global popular if filter returned <8
     if (resources.length < 8) {
       let extraQ = supabase
-        .from("resources")
-        .select(
-          "id, title, description, category, domain, difficulty, related_skills, weighted_rating, total_ratings, link, resource_type, section_type, created_at",
-        )
+        .from("v_resource_features")
+        .select(FEATURE_COLS)
         .eq("is_active", true)
         .order("weighted_rating", { ascending: false, nullsFirst: false })
         .limit(50);
@@ -180,9 +221,10 @@ Deno.serve(async (req: Request) => {
       const { data: extra } = await extraQ;
       const seen = new Set(resources.map((r) => r.id));
       (extra ?? []).forEach((r: any) => {
-        if (!seen.has(r.id)) resources.push(r as ResourceRow);
+        if (!seen.has(r.resource_id)) resources.push(toRow(r));
       });
     }
+
 
     if (resources.length === 0) {
       return new Response(

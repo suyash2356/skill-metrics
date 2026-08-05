@@ -222,15 +222,23 @@ const Profile = () => {
       if (!targetUserId) return [];
       const isOwn = currentUser?.id === targetUserId;
       if (isOwn) {
-        // Owner can query the raw table (RLS allows it)
-        const { data, error } = await supabase
-          .from('user_activity')
-          .select('id, user_id, activity_type, post_id, roadmap_id, community_id, target_user_id, created_at')
+        // Owner reads their own rows from the unified event spine (RLS allows it)
+        const { data, error } = await (supabase as any)
+          .from('interaction_events')
+          .select('id, user_id, event_type, subject_type, subject_id, occurred_at')
           .eq('user_id', targetUserId)
-          .order('created_at', { ascending: false })
+          .order('occurred_at', { ascending: false })
           .limit(20);
         if (error) throw error;
-        return data;
+        return (data || []).map((e: any) => ({
+          id: e.id,
+          user_id: e.user_id,
+          activity_type: e.event_type,
+          post_id: e.subject_type === 'post' ? e.subject_id : null,
+          roadmap_id: e.subject_type === 'roadmap' ? e.subject_id : null,
+          target_user_id: e.subject_type === 'profile' ? e.subject_id : null,
+          created_at: e.occurred_at,
+        }));
       } else {
         // Non-owner: use RPC that strips sensitive columns
         const { data, error } = await supabase.rpc('get_visible_user_activity' as any, {
