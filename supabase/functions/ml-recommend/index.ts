@@ -81,16 +81,18 @@ Deno.serve(async (req: Request) => {
       : null;
     const ignoreDomain = !!body.ignore_domain;
 
-    // 1) User context: preferences + interactions + profile
-    const [{ data: prefs }, { data: interactions }, { data: profile }] = await Promise.all([
+    // 1) User context: settings + implicit interest scores + profile
+    // Zone A (`user_settings`) is the consolidated source of truth; Zone C's
+    // `v_user_item_implicit` view is the behaviour-model training contract.
+    const [{ data: settings }, { data: interactions }, { data: profile }] = await Promise.all([
       supabase
-        .from("user_preferences")
-        .select("primary_domain, interests")
+        .from("user_settings")
+        .select("primary_domain, interests, experience_level, skills, interested_domains, interested_subdomains")
         .eq("user_id", user.id)
         .maybeSingle(),
       supabase
-        .from("interactions_ml")
-        .select("item_id, score")
+        .from("v_user_item_implicit")
+        .select("resource_id, score")
         .eq("user_id", user.id)
         .limit(2000),
       supabase
@@ -99,6 +101,8 @@ Deno.serve(async (req: Request) => {
         .eq("user_id", user.id)
         .maybeSingle(),
     ]);
+    const prefs = settings;
+
 
     const interactionMap = new Map<string, number>();
     (interactions ?? []).forEach((row: any) => {
