@@ -14,6 +14,8 @@ import { ResourcePreview } from "@/components/ResourcePreview";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useDwellTracking, useTrackVerb } from "@/hooks/useTracking";
+import { useEffect } from "react";
 
 const ResourceView = () => {
   const { id } = useParams<{ id: string }>();
