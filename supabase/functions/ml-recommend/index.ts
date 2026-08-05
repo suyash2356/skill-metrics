@@ -107,40 +107,60 @@ Deno.serve(async (req: Request) => {
     const interactionMap = new Map<string, number>();
     (interactions ?? []).forEach((row: any) => {
       interactionMap.set(
-        row.item_id,
-        (interactionMap.get(row.item_id) ?? 0) + Number(row.score ?? 0),
+        row.resource_id,
+        (interactionMap.get(row.resource_id) ?? 0) + Number(row.score ?? 0),
       );
     });
     const hasInteractions = interactionMap.size > 0;
 
-    const userPrimaryDomain: string | null = ((prefs as any)?.primary_domain as string | null) ?? null;
+    // Zone A settings win; the legacy profile-details row is a fallback while
+    // the two are still kept in sync.
+    const taxonomy = {
+      primary_domain: (settings as any)?.primary_domain ?? null,
+      interests: ((settings as any)?.interests as string[] | null) ?? [],
+      experience_level:
+        (settings as any)?.experience_level ?? profile?.experience_level ?? null,
+      skills: ((settings as any)?.skills ?? profile?.skills) as any[] | null,
+      interested_domains:
+        ((settings as any)?.interested_domains?.length
+          ? (settings as any).interested_domains
+          : profile?.interested_domains) as string[] | null,
+      interested_subdomains:
+        ((settings as any)?.interested_subdomains?.length
+          ? (settings as any).interested_subdomains
+          : profile?.interested_subdomains) as string[] | null,
+    };
+
+    const userPrimaryDomain: string | null = taxonomy.primary_domain;
     const userDomain = ignoreDomain
       ? null
       : (domain || userPrimaryDomain || null);
-    const interests: string[] =
-      ((prefs as any)?.interests as string[] | null) ?? [];
 
     const userKeywords = new Set<string>();
-    interests.forEach(i => i && userKeywords.add(i.toLowerCase()));
+    taxonomy.interests.forEach((i) => i && userKeywords.add(i.toLowerCase()));
 
     const userInterestedDomains = new Set<string>();
     const userInterestedSubdomains = new Set<string>();
 
-    if (profile) {
-      if (profile.interested_domains && Array.isArray(profile.interested_domains)) {
-        profile.interested_domains.forEach((d: string) => userInterestedDomains.add(d.toLowerCase()));
-      }
-      if (profile.interested_subdomains && Array.isArray(profile.interested_subdomains)) {
-        profile.interested_subdomains.forEach((sd: string) => userInterestedSubdomains.add(sd.toLowerCase()));
-      }
-      if (profile.skills && Array.isArray(profile.skills)) {
-        profile.skills.forEach((s: any) => {
-          if (s.name) userKeywords.add(s.name.toLowerCase());
-        });
-      }
+    if (Array.isArray(taxonomy.interested_domains)) {
+      taxonomy.interested_domains.forEach((d: string) => d && userInterestedDomains.add(d.toLowerCase()));
     }
-    const hasRichProfile = userInterestedDomains.size > 0 || userInterestedSubdomains.size > 0 || !!profile?.experience_level;
-    const userExperienceLevel = profile?.experience_level?.toLowerCase() || null;
+    if (Array.isArray(taxonomy.interested_subdomains)) {
+      taxonomy.interested_subdomains.forEach((sd: string) => sd && userInterestedSubdomains.add(sd.toLowerCase()));
+    }
+    if (Array.isArray(taxonomy.skills)) {
+      taxonomy.skills.forEach((s: any) => {
+        const name = typeof s === "string" ? s : s?.name;
+        if (name) userKeywords.add(String(name).toLowerCase());
+      });
+    }
+
+    const hasRichProfile =
+      userInterestedDomains.size > 0 ||
+      userInterestedSubdomains.size > 0 ||
+      !!taxonomy.experience_level;
+    const userExperienceLevel = taxonomy.experience_level?.toLowerCase() || null;
+
 
     // 2) Candidate resources (sourced from admin-managed `resources` table)
     let q = supabase
