@@ -67,7 +67,7 @@ export const useUserProfileDetails = (userId?: string) => {
         .from('user_profile_details')
         .select('*')
         .eq('user_id', targetUserId)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         throw error;

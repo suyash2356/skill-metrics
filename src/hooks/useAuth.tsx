@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           .from('user_preferences')
           .select('login_notifications')
           .eq('user_id', data.user.id)
-          .single();
+          .maybeSingle();
         
         if (prefs?.login_notifications) {
           // Get device and location info

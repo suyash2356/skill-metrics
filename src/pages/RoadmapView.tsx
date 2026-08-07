@@ -87,7 +87,7 @@ const RoadmapView = () => {
         .from('roadmaps')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       if (error) throw error;
 
       // Fetch user profile separately
@@ -96,7 +96,7 @@ const RoadmapView = () => {
           .from('profiles')
           .select('id, full_name, avatar_url')
           .eq('user_id', roadmapData.user_id)
-          .single();
+          .maybeSingle();
 
         return { ...roadmapData, user: profileData ? { id: profileData.id, full_name: profileData.full_name, avatar_url: profileData.avatar_url } : null };
       }

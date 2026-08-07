@@ -154,7 +154,7 @@ export const useCreateResource = () => {
           ignoreDuplicates: true 
         })
         .select()
-        .single();
+        .maybeSingle();
 
       if (error) {
         // If no rows returned due to duplicate, it's not an error

@@ -53,7 +53,7 @@ export function useBlogsAndPapers() {
           .from('user_profile_details')
           .select('skills, learning_path, experience_level')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (profileDetails) {
           // Extract skills

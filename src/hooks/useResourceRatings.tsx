@@ -65,7 +65,7 @@ export function useResourceRatings(resourceId?: string) {
         .from('resources')
         .select('avg_rating, weighted_rating, total_ratings, recommend_percent, total_votes, total_reviews')
         .eq('id', resourceId)
-        .single();
+        .maybeSingle();
       
       if (error) {
         console.error('Error fetching resource stats:', error);

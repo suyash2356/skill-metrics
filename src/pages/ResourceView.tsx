@@ -40,7 +40,7 @@ const ResourceView = () => {
         .from('resources')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       if (error) return null;
       return data;
     },
@@ -56,7 +56,7 @@ const ResourceView = () => {
         .from('user_resources')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
       if (error) return null;
       // Increment view count
       supabase.from('user_resources').update({ view_count: (data.view_count || 0) + 1 }).eq('id', id).then();
