@@ -116,7 +116,7 @@ export const CommentDialog = ({ isOpen, onClose, roadmapId, postId }: CommentDia
           .from('posts')
           .select('user_id, title')
           .eq('id', postId)
-          .single();
+          .maybeSingle();
         
         if (post) {
           await sendCommentNotification(postId, post.user_id, post.title, content);

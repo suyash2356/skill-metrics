@@ -154,14 +154,12 @@ export const useCreateResource = () => {
           ignoreDuplicates: true 
         })
         .select()
-        .single();
+        .maybeSingle();
 
-      if (error) {
-        // If no rows returned due to duplicate, it's not an error
-        if (error.code === 'PGRST116') {
-          throw new Error('Resource already exists with same title, link and category');
-        }
-        throw error;
+      if (error) throw error;
+      // `ignoreDuplicates` returns zero rows when the resource already exists.
+      if (!data) {
+        throw new Error('Resource already exists with same title, link and category');
       }
       return data as Resource;
     },
