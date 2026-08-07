@@ -48,16 +48,18 @@ export const SharedPostPreview = ({ postId }: SharedPostPreviewProps) => {
                     .from("posts")
                     .select("id, title, content, created_at, user_id, category, tags")
                     .eq("id", postId)
-                    .single();
+                    .maybeSingle();
 
                 if (postError) throw postError;
+                // Post was deleted or is not visible to this viewer.
+                if (!postData) throw new Error("Post unavailable");
 
                 // 2. Fetch Profile details
                 const { data: profileData, error: profileError } = await supabase
                     .from("profiles")
                     .select("full_name, avatar_url")
                     .eq("user_id", postData.user_id)
-                    .single();
+                    .maybeSingle();
 
                 if (profileError) {
                     console.log("Could not fetch profile for shared post", profileError);
