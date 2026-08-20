@@ -12,10 +12,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Play, Clock, Eye, Heart, Search, Plus, Check, X,
   ListVideo, Target, Flame, TrendingUp, Timer, Trash2,
-  ChevronRight, Sparkles, GripVertical, CheckCircle2
+  ChevronRight, Sparkles, GripVertical, CheckCircle2, Link2, Settings2, ExternalLink
 } from "lucide-react";
 import { videos, VideoData, parseViewCount, parseDurationMinutes } from "@/lib/videosData";
 import { useWatchQueue } from "@/hooks/useWatchQueue";
+import {
+  AddVideoLinkDialog, ManageCustomVideosDialog, LinkDraftList, LinkDraft, emptyDraft,
+} from "@/components/videos/CustomVideoDialogs";
+import { describeLinkError, isDirectVideoUrl } from "@/lib/customVideos";
+
+const externalUrlOf = (v: VideoData) => (v as VideoData & { externalUrl?: string }).externalUrl ?? "";
 import { motion, AnimatePresence } from "framer-motion";
 
 const categories = [
@@ -41,6 +47,10 @@ const NewVideos = () => {
   const [goalCategory, setGoalCategory] = useState("Programming");
   const [goalDays, setGoalDays] = useState("30");
   const [activeTab, setActiveTab] = useState("browse");
+  const [goalLinks, setGoalLinks] = useState<LinkDraft[]>([]);
+  const [showAddLinkDialog, setShowAddLinkDialog] = useState(false);
+  const [addLinkGoalId, setAddLinkGoalId] = useState<string | undefined>(undefined);
+  const [showManageCustom, setShowManageCustom] = useState(false);
 
   const wq = useWatchQueue(videos);
 
@@ -67,10 +77,23 @@ const NewVideos = () => {
 
   const handleCreateGoal = () => {
     if (!goalTitle.trim()) return;
-    wq.createGoal(goalTitle, goalCategory, parseInt(goalDays));
+    const validLinks = goalLinks
+      .filter(l => l.url.trim() && !describeLinkError(l.url))
+      .map(l => ({
+        url: l.url.trim(),
+        title: l.title.trim() || undefined,
+        durationMinutes: l.durationMinutes ? parseInt(l.durationMinutes) : undefined,
+      }));
+    wq.createGoal(goalTitle, goalCategory, parseInt(goalDays), validLinks);
     setShowGoalDialog(false);
     setGoalTitle("");
+    setGoalLinks([]);
     setActiveTab("queue");
+  };
+
+  const openAddLink = (goalId?: string) => {
+    setAddLinkGoalId(goalId);
+    setShowAddLinkDialog(true);
   };
 
   const formatMinutes = (m: number) => {
@@ -208,6 +231,9 @@ const NewVideos = () => {
                 <p className="text-sm text-muted-foreground mb-4">Add videos from the Browse tab or create a learning goal</p>
                 <div className="flex justify-center gap-2">
                   <Button variant="outline" onClick={() => setActiveTab("browse")}>Browse Videos</Button>
+                  <Button variant="outline" onClick={() => openAddLink()}>
+                    <Link2 className="h-4 w-4 mr-2" /> Add Video Link
+                  </Button>
                   <Button onClick={() => setShowGoalDialog(true)}>
                     <Target className="h-4 w-4 mr-2" /> Set a Goal
                   </Button>
@@ -221,10 +247,18 @@ const NewVideos = () => {
                       {wq.queue.length} videos · {formatMinutes(wq.totalQueueMinutes)} total
                     </p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     <Button size="sm" onClick={() => setActiveVideo(wq.queueVideos[0])}>
                       <Play className="h-4 w-4 mr-1" /> Play Next
                     </Button>
+                    <Button size="sm" variant="outline" onClick={() => openAddLink()}>
+                      <Link2 className="h-4 w-4 mr-1" /> Add Link
+                    </Button>
+                    {wq.customVideos.length > 0 && (
+                      <Button size="sm" variant="outline" onClick={() => setShowManageCustom(true)}>
+                        <Settings2 className="h-4 w-4 mr-1" /> My Videos ({wq.customVideos.length})
+                      </Button>
+                    )}
                     <Button size="sm" variant="ghost" onClick={wq.clearQueue}>
                       <Trash2 className="h-4 w-4 mr-1" /> Clear
                     </Button>
@@ -259,9 +293,19 @@ const NewVideos = () => {
           <TabsContent value="goals" className="mt-0">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold">Learning Goals</h2>
-              <Button onClick={() => setShowGoalDialog(true)} size="sm">
-                <Plus className="h-4 w-4 mr-1" /> New Goal
-              </Button>
+              <div className="flex gap-2 flex-wrap">
+                <Button variant="outline" size="sm" onClick={() => openAddLink()}>
+                  <Link2 className="h-4 w-4 mr-1" /> Add Video Link
+                </Button>
+                {wq.customVideos.length > 0 && (
+                  <Button variant="outline" size="sm" onClick={() => setShowManageCustom(true)}>
+                    <Settings2 className="h-4 w-4 mr-1" /> My Videos ({wq.customVideos.length})
+                  </Button>
+                )}
+                <Button onClick={() => setShowGoalDialog(true)} size="sm">
+                  <Plus className="h-4 w-4 mr-1" /> New Goal
+                </Button>
+              </div>
             </div>
 
             {wq.goals.length === 0 ? (
@@ -293,9 +337,14 @@ const NewVideos = () => {
                             <h3 className="font-semibold">{goal.title}</h3>
                             <Badge variant="outline" className="mt-1">{goal.category}</Badge>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={() => wq.deleteGoal(goal.id)}>
-                            <X className="h-4 w-4" />
-                          </Button>
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="sm" aria-label="Add video link to goal" onClick={() => openAddLink(goal.id)}>
+                              <Link2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="sm" aria-label="Delete goal" onClick={() => wq.deleteGoal(goal.id)}>
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
 
                         {/* Progress Bar */}
@@ -339,13 +388,26 @@ const NewVideos = () => {
             {activeVideo && (
               <div>
                 <div className="aspect-video bg-black">
-                  <iframe
-                    className="w-full h-full"
-                    src={`https://www.youtube.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0`}
-                    title={activeVideo.title}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
+                  {activeVideo.youtubeId ? (
+                    <iframe
+                      className="w-full h-full"
+                      src={`https://www.youtube.com/embed/${activeVideo.youtubeId}?autoplay=1&rel=0`}
+                      title={activeVideo.title}
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  ) : isDirectVideoUrl(externalUrlOf(activeVideo)) ? (
+                    <video className="w-full h-full" src={externalUrlOf(activeVideo)} controls autoPlay />
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center gap-3 text-center p-6">
+                      <p className="text-sm text-white/80">This video can only be played on its original site.</p>
+                      <Button asChild size="sm">
+                        <a href={externalUrlOf(activeVideo)} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4 mr-1" /> Open video
+                        </a>
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="p-4 space-y-3">
                   <h2 className="text-lg font-semibold leading-tight">{activeVideo.title}</h2>
@@ -431,12 +493,45 @@ const NewVideos = () => {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="border-t pt-3">
+                <div className="flex items-center justify-between mb-2">
+                  <div>
+                    <p className="text-sm font-medium">Your own videos (optional)</p>
+                    <p className="text-xs text-muted-foreground">
+                      Add YouTube or other video links to include in this goal's queue.
+                    </p>
+                  </div>
+                </div>
+                <LinkDraftList drafts={goalLinks} onChange={setGoalLinks} />
+              </div>
               <Button className="w-full" onClick={handleCreateGoal} disabled={!goalTitle.trim()}>
                 <Target className="h-4 w-4 mr-2" /> Create Goal & Build Queue
               </Button>
             </div>
           </DialogContent>
         </Dialog>
+
+        <AddVideoLinkDialog
+          open={showAddLinkDialog}
+          onOpenChange={setShowAddLinkDialog}
+          categories={categories.filter(c => c !== "All")}
+          goals={wq.goals}
+          defaultGoalId={addLinkGoalId}
+          defaultCategory={activeCategory !== "All" ? activeCategory : goalCategory}
+          onAdd={(input) => {
+            wq.addCustomVideo(input);
+            setActiveTab("queue");
+          }}
+        />
+
+        <ManageCustomVideosDialog
+          open={showManageCustom}
+          onOpenChange={setShowManageCustom}
+          videos={wq.customVideos}
+          categories={categories.filter(c => c !== "All")}
+          onUpdate={wq.updateCustomVideo}
+          onRemove={wq.removeCustomVideo}
+        />
       </div>
     </Layout>
   );
