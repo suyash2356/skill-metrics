@@ -17,7 +17,7 @@ import {
 import { videos, VideoData, parseViewCount, parseDurationMinutes } from "@/lib/videosData";
 import { useWatchQueue } from "@/hooks/useWatchQueue";
 import {
-  AddVideoLinkDialog, ManageCustomVideosDialog, LinkDraftList, LinkDraft, emptyDraft,
+  AddVideoLinkDialog, ManageCustomVideosDialog, LinkDraftList, LinkDraft,
 } from "@/components/videos/CustomVideoDialogs";
 import { describeLinkError, isDirectVideoUrl } from "@/lib/customVideos";
 
