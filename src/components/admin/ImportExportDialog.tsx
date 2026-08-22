@@ -32,15 +32,39 @@ interface ImportExportDialogProps {
   resources: Resource[];
 }
 
-// All resource fields for complete export/import
-const ALL_FIELDS = [
-  'title', 'description', 'link', 'category', 'difficulty', 'is_free',
-  'icon', 'color', 'related_skills', 'relevant_backgrounds', 'provider',
+// Export columns in the canonical import format (category/subcategory/skills)
+// so an exported file can be re-imported without any manual editing.
+const EXPORT_FIELDS = [
+  'category', 'subcategory', 'title', 'description', 'link', 'skills',
+  'difficulty', 'is_free', 'icon', 'color', 'relevant_backgrounds', 'provider',
   'duration', 'rating', 'is_featured', 'is_active', 'resource_type',
-  'section_type', 'target_countries', 'estimated_time', 'prerequisites',
-  'education_levels', 'avg_rating', 'weighted_rating', 'total_ratings',
-  'recommend_percent', 'total_votes', 'total_reviews'
+  'target_countries', 'estimated_time', 'prerequisites', 'education_levels',
 ];
+
+/** DB row -> canonical export/import row */
+const toExportRow = (r: Resource): Record<string, unknown> => ({
+  category: r.section_type === 'exam' ? 'Exams' : 'Domains',
+  subcategory: r.category,
+  title: r.title,
+  description: r.description,
+  link: r.link,
+  skills: r.related_skills || [],
+  difficulty: r.difficulty,
+  is_free: r.is_free,
+  icon: r.icon,
+  color: r.color,
+  relevant_backgrounds: r.relevant_backgrounds || [],
+  provider: r.provider,
+  duration: r.duration,
+  rating: r.rating,
+  is_featured: r.is_featured,
+  is_active: r.is_active,
+  resource_type: r.resource_type,
+  target_countries: r.target_countries || [],
+  estimated_time: r.estimated_time,
+  prerequisites: r.prerequisites || [],
+  education_levels: r.education_levels || [],
+});
 
 const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialogProps) => {
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
@@ -53,6 +77,15 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bulkCreate = useBulkCreateResources();
+  const { data: categories = [] } = useCategories();
+
+  /** Case-insensitive lookup of admin-managed category names -> type */
+  const categoryTypes = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach((c) => map.set(c.name.trim().toLowerCase(), c.type));
+    return map;
+  }, [categories]);
+
 
   const exportToJSON = () => {
     const exportData = resources.map(({ id, created_at, updated_at, ...rest }) => rest);
