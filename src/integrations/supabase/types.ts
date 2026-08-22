@@ -3484,6 +3484,18 @@ export type Database = {
       }
       get_site_average_rating: { Args: never; Returns: number }
       get_user_public_key: { Args: { target_user_id: string }; Returns: string }
+      get_visible_user_activity: {
+        Args: { target_user_id: string }
+        Returns: {
+          activity_type: string
+          created_at: string
+          id: string
+          post_id: string
+          roadmap_id: string
+          target_profile_id: string
+          user_id: string
+        }[]
+      }
       has_community_role: {
         Args: {
           _community_id: string
