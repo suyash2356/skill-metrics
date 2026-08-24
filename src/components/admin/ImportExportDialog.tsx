@@ -267,20 +267,28 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     }
     delete row.skills;
 
-    // Resolve domain/subdomain up front (case-insensitive, with exam fallback)
+    // Resolve domain/subdomain up front (case-insensitive, with fallbacks)
     if (row.category) {
       const mapping = resolveCategoryMapping(row.category);
+      const knownType = categoryTypes.get(row.category.toString().trim().toLowerCase());
       if (mapping) {
         row.domain = mapping.domain;
         row.subdomain = mapping.subdomain;
-      } else if (row.section_type === 'exam') {
-        // Unknown exam title: place under Exam Prep with the title as subdomain
+      } else if (row.section_type === 'exam' || knownType === 'exam') {
+        // Exam title (known or new): place under Exam Prep with the title as subdomain
+        row.section_type = 'exam';
         row.domain = 'Exam Prep';
+        row.subdomain = row.category;
+      } else if (knownType) {
+        // Category exists in the admin panel but has no static mapping yet
+        row.section_type = row.section_type || 'domain';
+        row.domain = row.category;
         row.subdomain = row.category;
       }
     }
     return row;
   };
+
 
   // Pre-import validation
   const validateResources = (data: Partial<ResourceInsert>[], fallbackResourceType: string): { valid: ResourceInsert[]; errors: string[] } => {
