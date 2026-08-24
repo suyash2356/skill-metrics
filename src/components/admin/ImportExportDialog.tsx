@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Resource, ResourceInsert, useBulkCreateResources } from '@/hooks/useAdmin';
 import { resolveCategoryMapping } from '@/utils/categoryMapping';
+import { useCategories } from '@/hooks/useCategories';
 import { Download, Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -88,31 +89,31 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
 
 
   const exportToJSON = () => {
-    const exportData = resources.map(({ id, created_at, updated_at, ...rest }) => rest);
+    const exportData = resources.map(toExportRow);
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     downloadBlob(blob, 'resources.json');
     toast.success('Exported to JSON successfully!');
   };
 
   const exportToCSV = () => {
-    const headers = ALL_FIELDS;
-    
+    const headers = EXPORT_FIELDS;
+
     const csvRows = [
       headers.join(','),
-      ...resources.map(r => headers.map(header => {
-        const value = r[header as keyof Resource];
+      ...resources.map(toExportRow).map(row => headers.map(header => {
+        const value = row[header];
         if (value === null || value === undefined) return '';
         if (Array.isArray(value)) return escapeCSV(value.join(';'));
-        if (typeof value === 'boolean') return value.toString();
-        if (typeof value === 'number') return value.toString();
+        if (typeof value === 'boolean' || typeof value === 'number') return String(value);
         return escapeCSV(String(value));
       }).join(','))
     ];
-    
+
     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
     downloadBlob(blob, 'resources.csv');
     toast.success('Exported to CSV successfully!');
   };
+
 
   const escapeCSV = (value: string) => {
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -267,20 +268,28 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     }
     delete row.skills;
 
-    // Resolve domain/subdomain up front (case-insensitive, with exam fallback)
+    // Resolve domain/subdomain up front (case-insensitive, with fallbacks)
     if (row.category) {
       const mapping = resolveCategoryMapping(row.category);
+      const knownType = categoryTypes.get(row.category.toString().trim().toLowerCase());
       if (mapping) {
         row.domain = mapping.domain;
         row.subdomain = mapping.subdomain;
-      } else if (row.section_type === 'exam') {
-        // Unknown exam title: place under Exam Prep with the title as subdomain
+      } else if (row.section_type === 'exam' || knownType === 'exam') {
+        // Exam title (known or new): place under Exam Prep with the title as subdomain
+        row.section_type = 'exam';
         row.domain = 'Exam Prep';
+        row.subdomain = row.category;
+      } else if (knownType) {
+        // Category exists in the admin panel but has no static mapping yet
+        row.section_type = row.section_type || 'domain';
+        row.domain = row.category;
         row.subdomain = row.category;
       }
     }
     return row;
   };
+
 
   // Pre-import validation
   const validateResources = (data: Partial<ResourceInsert>[], fallbackResourceType: string): { valid: ResourceInsert[]; errors: string[] } => {
