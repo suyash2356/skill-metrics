@@ -360,3 +360,33 @@ export const diffCatalogs = (
   const extra = [...afterMap.keys()].filter((k) => !beforeMap.has(k));
   return { drift, missing, extra };
 };
+
+/**
+ * Apply the same defaults the importer applies, so a DB snapshot can be
+ * compared against re-imported rows without false-positive drift from
+ * nullable columns (e.g. `description` null vs '').
+ */
+export const canonicalizeCatalogRow = (
+  r: Record<string, any>,
+  fallbackResourceType = 'course'
+): Record<string, any> => ({
+  ...r,
+  description: r.description?.trim() || '',
+  difficulty: r.difficulty || 'beginner',
+  is_free: r.is_free ?? true,
+  icon: r.icon || '📚',
+  color: r.color || 'blue',
+  related_skills: r.related_skills || [],
+  relevant_backgrounds: r.relevant_backgrounds || [],
+  provider: r.provider || null,
+  duration: r.duration || null,
+  rating: r.rating ?? null,
+  is_featured: r.is_featured ?? false,
+  is_active: r.is_active ?? true,
+  resource_type: r.resource_type || fallbackResourceType,
+  section_type: r.section_type || 'domain',
+  target_countries: r.target_countries || [],
+  estimated_time: r.estimated_time || null,
+  prerequisites: r.prerequisites || [],
+  education_levels: r.education_levels || [],
+});
