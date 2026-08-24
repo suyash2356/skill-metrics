@@ -88,31 +88,31 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
 
 
   const exportToJSON = () => {
-    const exportData = resources.map(({ id, created_at, updated_at, ...rest }) => rest);
+    const exportData = resources.map(toExportRow);
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     downloadBlob(blob, 'resources.json');
     toast.success('Exported to JSON successfully!');
   };
 
   const exportToCSV = () => {
-    const headers = ALL_FIELDS;
-    
+    const headers = EXPORT_FIELDS;
+
     const csvRows = [
       headers.join(','),
-      ...resources.map(r => headers.map(header => {
-        const value = r[header as keyof Resource];
+      ...resources.map(toExportRow).map(row => headers.map(header => {
+        const value = row[header];
         if (value === null || value === undefined) return '';
         if (Array.isArray(value)) return escapeCSV(value.join(';'));
-        if (typeof value === 'boolean') return value.toString();
-        if (typeof value === 'number') return value.toString();
+        if (typeof value === 'boolean' || typeof value === 'number') return String(value);
         return escapeCSV(String(value));
       }).join(','))
     ];
-    
+
     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
     downloadBlob(blob, 'resources.csv');
     toast.success('Exported to CSV successfully!');
   };
+
 
   const escapeCSV = (value: string) => {
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {
