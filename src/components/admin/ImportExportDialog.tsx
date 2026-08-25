@@ -33,93 +33,16 @@ interface ImportExportDialogProps {
   resources: Resource[];
 }
 
-// Export columns in the canonical import format (category/subcategory/skills)
-// so an exported file can be re-imported without any manual editing.
-const EXPORT_FIELDS = [
-  'category', 'subcategory', 'title', 'description', 'link', 'skills',
-  'difficulty', 'is_free', 'icon', 'color', 'relevant_backgrounds', 'provider',
-  'duration', 'rating', 'is_featured', 'is_active', 'resource_type',
-  'target_countries', 'estimated_time', 'prerequisites', 'education_levels',
-];
-
-/** DB row -> canonical export/import row */
-const toExportRow = (r: Resource): Record<string, unknown> => ({
-  category: r.section_type === 'exam' ? 'Exams' : 'Domains',
-  subcategory: r.category,
-  title: r.title,
-  description: r.description,
-  link: r.link,
-  skills: r.related_skills || [],
-  difficulty: r.difficulty,
-  is_free: r.is_free,
-  icon: r.icon,
-  color: r.color,
-  relevant_backgrounds: r.relevant_backgrounds || [],
-  provider: r.provider,
-  duration: r.duration,
-  rating: r.rating,
-  is_featured: r.is_featured,
-  is_active: r.is_active,
-  resource_type: r.resource_type,
-  target_countries: r.target_countries || [],
-  estimated_time: r.estimated_time,
-  prerequisites: r.prerequisites || [],
-  education_levels: r.education_levels || [],
-});
-
-const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialogProps) => {
-  const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
-  const [importData, setImportData] = useState('');
-  const [importFormat, setImportFormat] = useState<'json' | 'csv'>('json');
-  const [defaultResourceType, setDefaultResourceType] = useState<string>('course');
-  const [isImporting, setIsImporting] = useState(false);
-  const [importProgress, setImportProgress] = useState(0);
-  const [importResult, setImportResult] = useState<{ success: number; failed: number; errors: string[]; skipped?: number } | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const bulkCreate = useBulkCreateResources();
-  const { data: categories = [] } = useCategories();
-
-  /** Case-insensitive lookup of admin-managed category names -> type */
-  const categoryTypes = useMemo(() => {
-    const map = new Map<string, string>();
-    categories.forEach((c) => map.set(c.name.trim().toLowerCase(), c.type));
-    return map;
-  }, [categories]);
-
-
   const exportToJSON = () => {
-    const exportData = resources.map(toExportRow);
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const blob = new Blob([toJSONExport(resources)], { type: 'application/json' });
     downloadBlob(blob, 'resources.json');
     toast.success('Exported to JSON successfully!');
   };
 
   const exportToCSV = () => {
-    const headers = EXPORT_FIELDS;
-
-    const csvRows = [
-      headers.join(','),
-      ...resources.map(toExportRow).map(row => headers.map(header => {
-        const value = row[header];
-        if (value === null || value === undefined) return '';
-        if (Array.isArray(value)) return escapeCSV(value.join(';'));
-        if (typeof value === 'boolean' || typeof value === 'number') return String(value);
-        return escapeCSV(String(value));
-      }).join(','))
-    ];
-
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const blob = new Blob([toCSVExport(resources)], { type: 'text/csv' });
     downloadBlob(blob, 'resources.csv');
     toast.success('Exported to CSV successfully!');
-  };
-
-
-  const escapeCSV = (value: string) => {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
   };
 
   const downloadBlob = (blob: Blob, filename: string) => {
@@ -132,6 +55,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
