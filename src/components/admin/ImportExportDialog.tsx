@@ -158,7 +158,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
 
     // Bulk insert using upsert (skips duplicates automatically)
     try {
-      const result = await bulkCreate.mutateAsync(valid);
+      const result = await bulkCreate.mutateAsync(valid as unknown as ResourceInsert[]);
       
       setImportProgress(100);
       
