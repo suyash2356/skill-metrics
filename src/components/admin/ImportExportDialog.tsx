@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Resource, ResourceInsert, useBulkCreateResources } from '@/hooks/useAdmin';
-import { resolveCategoryMapping } from '@/utils/categoryMapping';
+import { toJSONExport, toCSVExport, parseCSV, validateResources } from '@/lib/resourceIo';
 import { useCategories } from '@/hooks/useCategories';
 import { Download, Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -139,7 +139,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     setImportProgress(10);
 
     // Validate all resources before importing
-    const { valid, errors: validationErrs } = validateResources(dataToImport, defaultResourceType);
+    const { valid, errors: validationErrs } = validateRows(dataToImport as Record<string, any>[], defaultResourceType);
     
     if (validationErrs.length > 0) {
       setValidationErrors(validationErrs.slice(0, 10)); // Show first 10 errors
