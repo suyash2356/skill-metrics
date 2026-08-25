@@ -33,7 +33,28 @@ interface ImportExportDialogProps {
   resources: Resource[];
 }
 
+const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialogProps) => {
+  const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
+  const [importData, setImportData] = useState('');
+  const [importFormat, setImportFormat] = useState<'json' | 'csv'>('json');
+  const [defaultResourceType, setDefaultResourceType] = useState<string>('course');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState(0);
+  const [importResult, setImportResult] = useState<{ success: number; failed: number; errors: string[]; skipped?: number } | null>(null);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const bulkCreate = useBulkCreateResources();
+  const { data: categories = [] } = useCategories();
+
+  /** Case-insensitive lookup of admin-managed category names -> type */
+  const categoryTypes = useMemo(() => {
+    const map = new Map<string, string>();
+    categories.forEach((c) => map.set(c.name.trim().toLowerCase(), c.type));
+    return map;
+  }, [categories]);
+
   const exportToJSON = () => {
+
     const blob = new Blob([toJSONExport(resources)], { type: 'application/json' });
     downloadBlob(blob, 'resources.json');
     toast.success('Exported to JSON successfully!');
