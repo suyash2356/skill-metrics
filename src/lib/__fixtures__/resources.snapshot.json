@@ -1,0 +1,2089 @@
+[
+    {
+        "title": "100 Days of Code Python",
+        "description": "Complete Python bootcamp by Angela Yu.",
+        "link": "https://www.udemy.com/course/100-days-of-code/",
+        "category": "Python",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Python",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "Code",
+        "color": "from-yellow-400 to-blue-500",
+        "related_skills": [
+            "Python",
+            "Web Development",
+            "Automation",
+            "Games"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy - Angela Yu",
+        "duration": null,
+        "rating": 4.8,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "2D Animation with Adobe Animate",
+        "description": "Create frame-by-frame and tweened animations for web, games, and social media",
+        "link": "https://www.udemy.com/course/adobe-animate-2d/",
+        "category": "Animation",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Animation",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "2D animation",
+            "Adobe Animate",
+            "frame-by-frame",
+            "tweening"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "15 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school",
+            "bachelors"
+        ]
+    },
+    {
+        "title": "2IIM CAT Prep",
+        "description": "Quality CAT coaching with free resources",
+        "link": "https://www.2iim.com",
+        "category": "CAT",
+        "section_type": "exam",
+        "domain": "Exam Prep",
+        "subdomain": "CAT",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcd6",
+        "color": "orange",
+        "related_skills": [
+            "CAT",
+            "XAT",
+            "GMAT",
+            "Practice"
+        ],
+        "relevant_backgrounds": [
+            "MBA Aspirant"
+        ],
+        "provider": "2IIM",
+        "duration": "Self-paced",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "website",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "3Blue1Brown \u2013 Essence of Calculus (YouTube Series)",
+        "description": "A visually stunning 12-part YouTube series by 3Blue1Brown that rebuilds calculus from first principles \u2014 derivatives, integrals, chain rule, Taylor series, and the fundamental theorem of calculus. Essential for understanding backpropagation and gradient descent in machine learning.",
+        "link": "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr",
+        "category": "AI/ML",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "AI/ML",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83c\udfa5",
+        "color": "green",
+        "related_skills": [
+            "calculus",
+            "derivatives",
+            "integrals",
+            "chain rule",
+            "gradient descent",
+            "Taylor series"
+        ],
+        "relevant_backgrounds": [
+            "tech",
+            "engineering",
+            "computer science",
+            "data science"
+        ],
+        "provider": "3Blue1Brown (YouTube)",
+        "duration": "12 videos (~2.5 hours total)",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "video",
+        "target_countries": [
+            "India",
+            "USA",
+            "UK",
+            "Global"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Basic high school algebra"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "graduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "3Blue1Brown \u2013 Essence of Linear Algebra (YouTube Series)",
+        "description": "The most visually intuitive linear algebra series on the internet by Grant Sanderson (3Blue1Brown). Covers vectors, matrices, determinants, eigenvectors, dot products, and linear transformations through stunning animations. Widely considered the best starting point for understanding the geometric intuition behind linear algebra for AI/ML.",
+        "link": "https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab",
+        "category": "AI/ML",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "AI/ML",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83c\udfa5",
+        "color": "blue",
+        "related_skills": [
+            "linear algebra",
+            "vectors",
+            "matrices",
+            "eigenvectors",
+            "linear transformations",
+            "dot product"
+        ],
+        "relevant_backgrounds": [
+            "tech",
+            "engineering",
+            "computer science",
+            "data science"
+        ],
+        "provider": "3Blue1Brown (YouTube)",
+        "duration": "16 videos (~3.5 hours total)",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "video",
+        "target_countries": [
+            "India",
+            "USA",
+            "UK",
+            "Global"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Basic high school algebra"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "graduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "3Blue1Brown Neural Networks",
+        "description": "Visual explanations of neural network concepts",
+        "link": "https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi",
+        "category": "Data Science",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "Data Science",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83c\udfac",
+        "color": "blue",
+        "related_skills": [
+            "Neural Networks",
+            "Deep Learning",
+            "Mathematics"
+        ],
+        "relevant_backgrounds": [
+            "Student",
+            "Developer"
+        ],
+        "provider": "3Blue1Brown",
+        "duration": "4 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "video",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "3D Animation with Blender",
+        "description": "Complete 3D animation pipeline in Blender - modeling, rigging, animating, and rendering",
+        "link": "https://www.udemy.com/course/blender-3d-animation/",
+        "category": "Animation",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Animation",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Blender",
+            "3D animation",
+            "modeling",
+            "rigging",
+            "rendering"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "30 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "A Cloud Guru",
+        "description": "Cloud certification training platform",
+        "link": "https://acloudguru.com",
+        "category": "Cloud Computing",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Cloud Computing",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83c\udf93",
+        "color": "orange",
+        "related_skills": [
+            "AWS",
+            "Azure",
+            "GCP",
+            "Certifications"
+        ],
+        "relevant_backgrounds": [
+            "IT Professional",
+            "Developer"
+        ],
+        "provider": "A Cloud Guru",
+        "duration": "Self-paced",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "A Cloud Guru",
+        "description": "Cloud certification training for AWS, Azure, and GCP.",
+        "link": "https://acloudguru.com/",
+        "category": "Cloud Computing",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Cloud Computing",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "Cloud",
+        "color": "from-yellow-500 to-orange-500",
+        "related_skills": [
+            "AWS",
+            "Azure",
+            "GCP",
+            "Certification"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "A Cloud Guru",
+        "duration": null,
+        "rating": 4.6,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "A Cloud Guru AWS",
+        "description": "Comprehensive AWS cert training",
+        "link": "https://acloudguru.com/aws-cloud-training",
+        "category": "AWS",
+        "section_type": "exam",
+        "domain": "Technology",
+        "subdomain": "Cloud Computing",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83c\udf93",
+        "color": "orange",
+        "related_skills": [
+            "All AWS Certs",
+            "Labs",
+            "Practice"
+        ],
+        "relevant_backgrounds": [
+            "Developer",
+            "IT Professional"
+        ],
+        "provider": "A Cloud Guru",
+        "duration": "Self-paced",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "A Few Useful Things to Know About Machine Learning \u2013 Pedro Domingos (Paper)",
+        "description": "A widely cited 2012 paper by University of Washington professor Pedro Domingos, published in Communications of the ACM. Covers 12 key lessons in ML including the bias-variance tradeoff, the curse of dimensionality, overfitting, and feature engineering \u2014 all grounded in statistical and mathematical intuition. Essential reading for anyone starting ML seriously.",
+        "link": "https://homes.cs.washington.edu/~pedrod/papers/cacm12.pdf",
+        "category": "AI/ML",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "AI/ML",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcc4",
+        "color": "slate",
+        "related_skills": [
+            "machine learning theory",
+            "bias-variance tradeoff",
+            "overfitting",
+            "dimensionality",
+            "feature engineering",
+            "statistical learning"
+        ],
+        "relevant_backgrounds": [
+            "tech",
+            "data science",
+            "engineering",
+            "computer science"
+        ],
+        "provider": "Pedro Domingos, University of Washington (ACM)",
+        "duration": "45 min read",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "paper",
+        "target_countries": [
+            "India",
+            "USA",
+            "UK",
+            "Global"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Basic ML concepts"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "graduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "A List Apart",
+        "description": "Explores the design, development, and meaning of web content.",
+        "link": "https://alistapart.com/",
+        "category": "UI/UX Design",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "UI/UX Design",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Web Design",
+            "Accessibility",
+            "UX"
+        ],
+        "relevant_backgrounds": [
+            "professional"
+        ],
+        "provider": "A List Apart",
+        "duration": null,
+        "rating": 4.7,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "blog",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "A List Apart \u2013 Web & Software Development Best Practices Blog",
+        "description": "A List Apart explores the design, development, and meaning of web content. Since 1997, it has published research-backed articles on web standards, accessibility, progressive enhancement, performance, and developer best practices. Highly respected by frontend developers, web architects, and accessibility advocates.",
+        "link": "https://alistapart.com",
+        "category": "Development",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Programming",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\u2699\ufe0f",
+        "color": "gray",
+        "related_skills": [
+            "web standards",
+            "accessibility",
+            "progressive enhancement",
+            "performance optimization",
+            "frontend architecture"
+        ],
+        "relevant_backgrounds": [
+            "tech",
+            "computer science",
+            "design",
+            "engineering"
+        ],
+        "provider": "A List Apart (An Event Apart)",
+        "duration": "Ongoing (articles 10\u201320 min read)",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "blog",
+        "target_countries": [
+            "India",
+            "USA",
+            "UK",
+            "Global"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Basic web development knowledge"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "graduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "Abdul Bari Algorithms",
+        "description": "Best algorithm course for GATE",
+        "link": "https://www.youtube.com/@abdul_bari",
+        "category": "GATE",
+        "section_type": "exam",
+        "domain": "Exam Prep",
+        "subdomain": "GATE",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83c\udfac",
+        "color": "red",
+        "related_skills": [
+            "Algorithms",
+            "DSA",
+            "Complexity Analysis"
+        ],
+        "relevant_backgrounds": [
+            "Engineering Student"
+        ],
+        "provider": "Abdul Bari",
+        "duration": "50 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "video",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Abstract Art: Acrylic Painting Techniques",
+        "description": "Explore abstract expressionism with acrylic paints, palette knives, and mixed media.",
+        "link": "https://www.udemy.com/course/abstract-art-acrylic-painting/",
+        "category": "Fine Arts",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83c\udfa8",
+        "color": "pink",
+        "related_skills": [
+            "abstract art",
+            "acrylic",
+            "mixed media"
+        ],
+        "relevant_backgrounds": [
+            "visual-arts"
+        ],
+        "provider": "Udemy",
+        "duration": "10 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Academic Writing Made Easy",
+        "description": "Learn research paper writing, citation management, and academic publishing",
+        "link": "https://www.coursera.org/learn/academic-writing",
+        "category": "Communication",
+        "section_type": "domain",
+        "domain": "Business & Finance",
+        "subdomain": "Communication",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "academic writing",
+            "research papers",
+            "citations"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Coursera / UCI",
+        "duration": "14 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors",
+            "masters",
+            "phd"
+        ]
+    },
+    {
+        "title": "Accounting Coach Blog \u2013 Accounting Fundamentals",
+        "description": "AccountingCoach is one of the most visited accounting education blogs globally, written by CPA Harold Averkamp. Covers financial accounting, managerial accounting, bookkeeping, balance sheets, income statements, cash flow, and ratio analysis with free quizzes. Used by accounting students and finance professionals worldwide.",
+        "link": "https://www.accountingcoach.com/blog",
+        "category": "Accounting",
+        "section_type": "domain",
+        "domain": "Business & Finance",
+        "subdomain": "Finance",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83e\uddfe",
+        "color": "green",
+        "related_skills": [
+            "financial accounting",
+            "bookkeeping",
+            "balance sheet",
+            "income statement",
+            "ratio analysis"
+        ],
+        "relevant_backgrounds": [
+            "commerce",
+            "economics",
+            "non-tech"
+        ],
+        "provider": "AccountingCoach (Harold Averkamp, CPA)",
+        "duration": "Ongoing (articles 5\u201315 min read)",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "blog",
+        "target_countries": [
+            "India",
+            "USA",
+            "UK",
+            "Global"
+        ],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "undergraduate",
+            "graduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "Accounting Fundamentals - edX",
+        "description": "Introduction to financial accounting: balance sheets, income statements and cash flows.",
+        "link": "https://www.edx.org/learn/accounting",
+        "category": "Accounting",
+        "section_type": "domain",
+        "domain": "Business & Finance",
+        "subdomain": "Finance",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83d\udcca",
+        "color": "emerald",
+        "related_skills": [
+            "accounting",
+            "financial statements",
+            "bookkeeping"
+        ],
+        "relevant_backgrounds": [
+            "finance",
+            "accounting"
+        ],
+        "provider": "edX",
+        "duration": "20 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Accredited Legal Secretary Certificate \u2013 ILSPA",
+        "description": "An accredited certification from the Institute of Legal Secretaries and PAs (ILSPA), UK. Covers legal terminology, court procedures, conveyancing, litigation, company law, and legal document drafting. Recognized by law firms globally and a direct pathway into legal support careers without a law degree.",
+        "link": "https://www.institutelegalsecretaries.com/legal-secretary-course/",
+        "category": "Law & Legal Studies",
+        "section_type": "domain",
+        "domain": "Humanities & Social Sciences",
+        "subdomain": "Law",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\u2696\ufe0f",
+        "color": "stone",
+        "related_skills": [
+            "legal terminology",
+            "document drafting",
+            "court procedures",
+            "litigation support",
+            "legal research"
+        ],
+        "relevant_backgrounds": [
+            "humanities",
+            "arts",
+            "commerce",
+            "social sciences",
+            "non-tech"
+        ],
+        "provider": "Institute of Legal Secretaries and PAs (ILSPA)",
+        "duration": "6 months (self-paced online)",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "certification",
+        "target_countries": [
+            "India",
+            "UK",
+            "UAE",
+            "Canada",
+            "Australia"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "High School Diploma"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "Accrual vs Cash Accounting \u2013 Journal of Accountancy Research",
+        "description": "The Journal of Accountancy, published by the AICPA, features peer-reviewed research and practitioner articles on financial reporting standards, auditing, taxation, and accounting ethics. This freely accessible paper on accrual vs cash accounting methodology is foundational reading for accounting students and CPA candidates.",
+        "link": "https://www.journalofaccountancy.com",
+        "category": "Accounting",
+        "section_type": "domain",
+        "domain": "Business & Finance",
+        "subdomain": "Finance",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcd2",
+        "color": "slate",
+        "related_skills": [
+            "financial reporting",
+            "auditing",
+            "GAAP",
+            "IFRS",
+            "taxation basics"
+        ],
+        "relevant_backgrounds": [
+            "commerce",
+            "economics",
+            "finance"
+        ],
+        "provider": "Journal of Accountancy (AICPA)",
+        "duration": "Per article (15\u201330 min read)",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "paper",
+        "target_countries": [
+            "India",
+            "USA",
+            "UK",
+            "Global"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Basic accounting knowledge"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "graduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "Acrylic Painting - Complete Guide",
+        "description": "Everything about acrylic painting from materials to advanced blending and texturing techniques",
+        "link": "https://www.udemy.com/course/acrylic-painting-complete/",
+        "category": "Fine Arts",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "acrylic painting",
+            "blending",
+            "texturing",
+            "materials"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "14 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school",
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Acrylic Painting Techniques",
+        "description": "Learn how to use acrylic paints, layering, textures, and brush techniques.",
+        "link": "https://www.youtube.com/watch?v=Hc7Q5FQ2Y3g",
+        "category": "Arts & Painting",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\uddbc\ufe0f",
+        "color": "orange",
+        "related_skills": [
+            "acrylic painting"
+        ],
+        "relevant_backgrounds": [
+            "non-tech"
+        ],
+        "provider": "YouTube",
+        "duration": "4 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "video",
+        "target_countries": [
+            "India",
+            "USA"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Basic Painting"
+        ],
+        "education_levels": [
+            "undergraduate"
+        ]
+    },
+    {
+        "title": "Adobe Certified Professional \u2013 Graphic Design & Illustration",
+        "description": "An industry-recognized certification from Adobe validating skills in Adobe Illustrator, Photoshop, and InDesign for graphic design and illustration. Exam-based certification administered globally through Certiport. Widely valued by design studios, advertising agencies, and publishing companies.",
+        "link": "https://www.adobe.com/products/certify/graphic-design-illustration.html",
+        "category": "Graphic Design",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Graphic Design",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83c\udfa8",
+        "color": "red",
+        "related_skills": [
+            "Adobe Illustrator",
+            "Photoshop",
+            "InDesign",
+            "typography",
+            "visual design",
+            "branding"
+        ],
+        "relevant_backgrounds": [
+            "arts",
+            "design",
+            "creative",
+            "media"
+        ],
+        "provider": "Adobe (via Certiport)",
+        "duration": "Self-paced (exam ~90 mins)",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "certification",
+        "target_countries": [
+            "India",
+            "USA",
+            "UK",
+            "Global"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Basic knowledge of Adobe Creative Suite"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "working professional"
+        ]
+    },
+    {
+        "title": "Adobe Illustrator CC \u2013 Complete Masterclass",
+        "description": "Master vector graphics with Adobe Illustrator from logos to complex illustrations.",
+        "link": "https://www.udemy.com/course/adobe-illustrator-cc-tutorial/",
+        "category": "Graphic Design",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Graphic Design",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udd8c\ufe0f",
+        "color": "indigo",
+        "related_skills": [
+            "illustrator",
+            "vector art",
+            "logo design"
+        ],
+        "relevant_backgrounds": [
+            "digital-design"
+        ],
+        "provider": "Udemy",
+        "duration": "15 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Adobe Illustrator Complete Course",
+        "description": "Master vector graphics, logo design, icon creation, and illustration with Illustrator",
+        "link": "https://www.udemy.com/course/adobe-illustrator-complete/",
+        "category": "Graphic Design",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Graphic Design",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Illustrator",
+            "vector graphics",
+            "logo design",
+            "illustration"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "20 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school",
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Adobe InDesign for Print & Digital",
+        "description": "Layout design for magazines, books, brochures, and digital publications",
+        "link": "https://www.udemy.com/course/adobe-indesign-complete/",
+        "category": "Graphic Design",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Graphic Design",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "InDesign",
+            "layout design",
+            "print",
+            "publishing"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "14 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Adobe Lightroom CC Photo Editing Masterclass",
+        "description": "Complete Lightroom workflow from import to export with professional color grading.",
+        "link": "https://www.udemy.com/course/adobe-lightroom-cc-photo-editing-masterclass/",
+        "category": "Photography",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Photography",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83d\udcf7",
+        "color": "teal",
+        "related_skills": [
+            "lightroom",
+            "photo editing",
+            "color grading"
+        ],
+        "relevant_backgrounds": [
+            "photography"
+        ],
+        "provider": "Udemy",
+        "duration": "12 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Adobe Lightroom Classic Complete",
+        "description": "Master photo editing with Lightroom - importing, organizing, developing, and exporting",
+        "link": "https://www.udemy.com/course/lightroom-classic-complete/",
+        "category": "Photography",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Photography",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Lightroom",
+            "photo editing",
+            "RAW processing",
+            "color grading"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "15 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school",
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Adobe Photoshop for Photographers",
+        "description": "Photo retouching, compositing, and manipulation techniques for photographers",
+        "link": "https://www.udemy.com/course/photoshop-for-photographers/",
+        "category": "Photography",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Photography",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Photoshop",
+            "retouching",
+            "compositing",
+            "manipulation"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "18 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Adobe Premiere Pro Complete Course",
+        "description": "Professional video editing in Premiere Pro from basics to advanced color grading.",
+        "link": "https://www.udemy.com/course/adobe-premiere-pro-video-editing/",
+        "category": "Film & Video",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Film & Video",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83c\udfac",
+        "color": "red",
+        "related_skills": [
+            "premiere pro",
+            "video editing",
+            "color grading"
+        ],
+        "relevant_backgrounds": [
+            "film",
+            "video"
+        ],
+        "provider": "Udemy",
+        "duration": "20 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Adobe XD Essential Training",
+        "description": "Learn Adobe XD for UI/UX design including prototyping, animations, and responsive design",
+        "link": "https://www.linkedin.com/learning/adobe-xd-essential-training",
+        "category": "Design",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Design",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Adobe XD",
+            "prototyping",
+            "animations",
+            "responsive"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "LinkedIn Learning",
+        "duration": "8 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Adrian Cantrill AWS Courses",
+        "description": "Deep-dive AWS training",
+        "link": "https://learn.cantrill.io",
+        "category": "AWS",
+        "section_type": "exam",
+        "domain": "Technology",
+        "subdomain": "Cloud Computing",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83c\udf93",
+        "color": "blue",
+        "related_skills": [
+            "AWS SAA",
+            "SAP",
+            "Advanced"
+        ],
+        "relevant_backgrounds": [
+            "Developer",
+            "Architect"
+        ],
+        "provider": "Adrian Cantrill",
+        "duration": "80 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Advanced Accounting and Taxation",
+        "description": "Deep dive into advanced accounting concepts and taxation principles.",
+        "link": "https://www.udemy.com/course/accounting-finance/",
+        "category": "Finance & Accounting",
+        "section_type": "domain",
+        "domain": "Business & Finance",
+        "subdomain": "Finance",
+        "difficulty": "advanced",
+        "is_free": false,
+        "icon": "\ud83d\udcd8",
+        "color": "purple",
+        "related_skills": [
+            "accounting",
+            "taxation"
+        ],
+        "relevant_backgrounds": [
+            "commerce"
+        ],
+        "provider": "Udemy",
+        "duration": "20 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [
+            "India",
+            "USA"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Accounting Basics"
+        ],
+        "education_levels": [
+            "graduate"
+        ]
+    },
+    {
+        "title": "Advanced Dance Choreography Masterclass",
+        "description": "Master advanced choreography techniques and storytelling through dance.",
+        "link": "https://www.masterclass.com/classes/dance",
+        "category": "Dance",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Performing Arts",
+        "difficulty": "advanced",
+        "is_free": false,
+        "icon": "\u2b50",
+        "color": "gold",
+        "related_skills": [
+            "choreography",
+            "advanced dance"
+        ],
+        "relevant_backgrounds": [
+            "non-tech"
+        ],
+        "provider": "MasterClass",
+        "duration": "10 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [
+            "India",
+            "USA"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Choreography"
+        ],
+        "education_levels": [
+            "graduate"
+        ]
+    },
+    {
+        "title": "Advanced GATE Problem Solving Techniques",
+        "description": "Learn advanced tricks and techniques to solve complex problems efficiently.",
+        "link": "https://www.youtube.com/watch?v=3h5v7y9d1cA",
+        "category": "GATE",
+        "section_type": "exam",
+        "domain": "Exam Prep",
+        "subdomain": "GATE",
+        "difficulty": "advanced",
+        "is_free": true,
+        "icon": "\u26a1",
+        "color": "purple",
+        "related_skills": [
+            "advanced problem solving"
+        ],
+        "relevant_backgrounds": [
+            "tech"
+        ],
+        "provider": "YouTube",
+        "duration": "5 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "video",
+        "target_countries": [
+            "India"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Practice"
+        ],
+        "education_levels": [
+            "undergraduate"
+        ]
+    },
+    {
+        "title": "Advanced Python Programming",
+        "description": "Deep dive into decorators, metaclasses, generators, concurrency, and design patterns",
+        "link": "https://www.udemy.com/course/advanced-python-programming/",
+        "category": "Python",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Python",
+        "difficulty": "advanced",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "decorators",
+            "metaclasses",
+            "concurrency",
+            "design patterns"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "14 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors",
+            "masters"
+        ]
+    },
+    {
+        "title": "Advanced React Patterns",
+        "description": "Learn advanced concepts like context API, performance optimization, and reusable patterns.",
+        "link": "https://react.dev/learn",
+        "category": "Web Development",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Web Development",
+        "difficulty": "advanced",
+        "is_free": true,
+        "icon": "\ud83d\udcd8",
+        "color": "blue",
+        "related_skills": [
+            "react"
+        ],
+        "relevant_backgrounds": [
+            "tech"
+        ],
+        "provider": "React Docs",
+        "duration": "15 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "documentation",
+        "target_countries": [
+            "India",
+            "USA"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "React Basics"
+        ],
+        "education_levels": [
+            "graduate"
+        ]
+    },
+    {
+        "title": "Advanced Realism Drawing Techniques",
+        "description": "Master hyper-realistic drawing including textures, details, and advanced shading.",
+        "link": "https://www.youtube.com/watch?v=5lXrY3l2y8g",
+        "category": "Arts & Painting",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "advanced",
+        "is_free": true,
+        "icon": "\ud83e\udde0",
+        "color": "black",
+        "related_skills": [
+            "realism drawing"
+        ],
+        "relevant_backgrounds": [
+            "non-tech"
+        ],
+        "provider": "YouTube",
+        "duration": "5 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "video",
+        "target_countries": [
+            "India",
+            "USA"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Drawing Basics"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "graduate"
+        ]
+    },
+    {
+        "title": "Agile with Atlassian Jira",
+        "description": "Learn Agile project management with hands-on Jira experience for Scrum and Kanban",
+        "link": "https://www.coursera.org/learn/agile-atlassian-jira",
+        "category": "Management",
+        "section_type": "domain",
+        "domain": "Business & Finance",
+        "subdomain": "Management",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Agile",
+            "Jira",
+            "Scrum",
+            "Kanban"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Coursera / Atlassian",
+        "duration": "12 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Ahrefs Academy",
+        "description": "SEO and content marketing courses",
+        "link": "https://ahrefs.com/academy",
+        "category": "Digital Marketing",
+        "section_type": "domain",
+        "domain": "Business & Finance",
+        "subdomain": "Digital Marketing",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83c\udf93",
+        "color": "blue",
+        "related_skills": [
+            "SEO",
+            "Backlinks",
+            "Keyword Research"
+        ],
+        "relevant_backgrounds": [
+            "Marketer",
+            "SEO Specialist"
+        ],
+        "provider": "Ahrefs",
+        "duration": "10 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "AI/ML Engineer",
+        "description": "Advanced path to become an AI/ML Engineer. Covers deep learning, NLP, computer vision, and MLOps.",
+        "link": "https://roadmap.sh/ai-engineer",
+        "category": "Artificial Intelligence",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "Artificial Intelligence",
+        "difficulty": "advanced",
+        "is_free": true,
+        "icon": "Brain",
+        "color": "from-purple-500 to-indigo-500",
+        "related_skills": [
+            "Python",
+            "TensorFlow",
+            "PyTorch",
+            "Deep Learning",
+            "NLP",
+            "Computer Vision",
+            "MLOps"
+        ],
+        "relevant_backgrounds": [
+            "Developer",
+            "Data Scientist"
+        ],
+        "provider": "Roadmap.sh",
+        "duration": "12-18 months",
+        "rating": 4.8,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "learning_path",
+        "target_countries": [],
+        "estimated_time": "800 hours",
+        "prerequisites": [
+            "Python",
+            "Linear Algebra",
+            "Calculus",
+            "Probability"
+        ],
+        "education_levels": [
+            "graduate"
+        ]
+    },
+    {
+        "title": "Alchemy University",
+        "description": "Free Web3 development bootcamp.",
+        "link": "https://university.alchemy.com/",
+        "category": "Blockchain",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Blockchain",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "Zap",
+        "color": "from-violet-500 to-purple-600",
+        "related_skills": [
+            "Ethereum",
+            "Solidity",
+            "Web3",
+            "JavaScript"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Alchemy",
+        "duration": null,
+        "rating": 4.7,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Anaconda Distribution",
+        "description": "Python data science platform and package manager",
+        "link": "https://www.anaconda.com/download",
+        "category": "Data Science",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "Data Science",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83d\udc0d",
+        "color": "green",
+        "related_skills": [
+            "Python",
+            "Jupyter",
+            "Conda"
+        ],
+        "relevant_backgrounds": [
+            "Student",
+            "Data Scientist"
+        ],
+        "provider": "Anaconda",
+        "duration": "Self-paced",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "website",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Andrew Ng Machine Learning",
+        "description": "The most famous ML course on Coursera",
+        "link": "https://www.coursera.org/learn/machine-learning",
+        "category": "AI/ML",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "AI/ML",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83c\udf93",
+        "color": "blue",
+        "related_skills": [
+            "Machine Learning",
+            "Neural Networks",
+            "Python"
+        ],
+        "relevant_backgrounds": [
+            "Student",
+            "Developer"
+        ],
+        "provider": "Stanford/Coursera",
+        "duration": "60 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Android Developers",
+        "description": "Official Android development resources and courses.",
+        "link": "https://developer.android.com/courses",
+        "category": "Mobile Development",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Mobile Development",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "Laptop",
+        "color": "from-cyan-500 to-blue-600",
+        "related_skills": [
+            "Android",
+            "Kotlin",
+            "Java",
+            "Jetpack"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Google",
+        "duration": null,
+        "rating": 4.7,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Android Developers Blog",
+        "description": "Official Android development blog with updates, best practices, and tutorials.",
+        "link": "https://android-developers.googleblog.com/",
+        "category": "Mobile Development",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Mobile Development",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Android",
+            "Kotlin",
+            "Mobile Development"
+        ],
+        "relevant_backgrounds": [
+            "professional",
+            "student"
+        ],
+        "provider": "Google",
+        "duration": null,
+        "rating": 4.7,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "blog",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Android Developers Guide",
+        "description": "Official Android development documentation",
+        "link": "https://developer.android.com/guide",
+        "category": "Mobile Development",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Mobile Development",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83e\udd16",
+        "color": "green",
+        "related_skills": [
+            "Android",
+            "Kotlin",
+            "Java"
+        ],
+        "relevant_backgrounds": [
+            "Developer"
+        ],
+        "provider": "Google",
+        "duration": "Self-paced",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "website",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Animation Principles - Disney's 12 Principles",
+        "description": "Master the 12 principles of animation used by Disney and Pixar animators",
+        "link": "https://www.coursera.org/learn/animation-principles",
+        "category": "Animation",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Animation",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "animation principles",
+            "squash and stretch",
+            "timing",
+            "Disney"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Coursera / CalArts",
+        "duration": "12 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school",
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Anime & Manga Drawing & Animation",
+        "description": "Draw and animate in anime/manga style including character design and action scenes",
+        "link": "https://www.udemy.com/course/anime-manga-drawing/",
+        "category": "Animation",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Animation",
+        "difficulty": "beginner",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "anime",
+            "manga",
+            "character design",
+            "Japanese animation"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "12 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school",
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Ansible Documentation",
+        "description": "IT automation platform docs",
+        "link": "https://docs.ansible.com",
+        "category": "DevOps",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "DevOps",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcd6",
+        "color": "red",
+        "related_skills": [
+            "Ansible",
+            "Configuration Management",
+            "Automation"
+        ],
+        "relevant_backgrounds": [
+            "DevOps",
+            "IT Professional"
+        ],
+        "provider": "Red Hat",
+        "duration": "Self-paced",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "website",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Apache Cassandra for Developers",
+        "description": "Distributed NoSQL database design, CQL, and data modeling for scalable applications",
+        "link": "https://www.datastax.com/dev/academy",
+        "category": "Database",
+        "section_type": "domain",
+        "domain": "Technology",
+        "subdomain": "Database",
+        "difficulty": "advanced",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Cassandra",
+            "distributed systems",
+            "CQL",
+            "NoSQL"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "DataStax",
+        "duration": "20 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors",
+            "masters"
+        ]
+    },
+    {
+        "title": "Architectural Design - MIT OCW",
+        "description": "MIT course on architectural design principles, spatial design, and building analysis",
+        "link": "https://ocw.mit.edu/courses/4-111-introduction-to-architecture-design-spring-2014/",
+        "category": "Architecture",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Architecture",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "architectural design",
+            "spatial design",
+            "building analysis"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "MIT OCW",
+        "duration": "40 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Architectural Design - MIT OpenCourseWare",
+        "description": "Fundamentals of architectural design thinking, spatial composition, and form.",
+        "link": "https://ocw.mit.edu/courses/4-105-geometric-disciplines/",
+        "category": "Architecture",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Architecture",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83c\udfdb\ufe0f",
+        "color": "stone",
+        "related_skills": [
+            "architectural design",
+            "spatial composition",
+            "form"
+        ],
+        "relevant_backgrounds": [
+            "architecture"
+        ],
+        "provider": "MIT OpenCourseWare",
+        "duration": "30 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Architectural Visualization with V-Ray",
+        "description": "Create photorealistic architectural renders using V-Ray with 3ds Max or SketchUp",
+        "link": "https://www.udemy.com/course/vray-architectural-visualization/",
+        "category": "Architecture",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Architecture",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "V-Ray",
+            "architectural visualization",
+            "3D rendering",
+            "photorealistic"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Udemy",
+        "duration": "18 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "bachelors"
+        ]
+    },
+    {
+        "title": "Art History - Ancient to Modern",
+        "description": "Khan Academy comprehensive art history from prehistoric cave paintings to contemporary art",
+        "link": "https://www.khanacademy.org/humanities/art-history",
+        "category": "Fine Arts",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "art history",
+            "Renaissance",
+            "Impressionism",
+            "Baroque",
+            "contemporary"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Khan Academy",
+        "duration": "100 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school",
+            "bachelors",
+            "masters"
+        ]
+    },
+    {
+        "title": "Art History: Renaissance to Modern - Coursera",
+        "description": "Survey of Western art history from the Renaissance through contemporary movements.",
+        "link": "https://www.coursera.org/learn/modern-art",
+        "category": "Fine Arts",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "beginner",
+        "is_free": true,
+        "icon": "\ud83c\udfa8",
+        "color": "pink",
+        "related_skills": [
+            "art history",
+            "renaissance",
+            "modern art"
+        ],
+        "relevant_backgrounds": [
+            "visual-arts",
+            "humanities"
+        ],
+        "provider": "Coursera / MoMA",
+        "duration": "20 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Art Portfolio Preparation for College",
+        "description": "Build a winning art portfolio for college admissions with critique and guidance",
+        "link": "https://www.coursera.org/learn/art-portfolio",
+        "category": "Fine Arts",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "intermediate",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "portfolio",
+            "college admissions",
+            "art critique",
+            "presentation"
+        ],
+        "relevant_backgrounds": [],
+        "provider": "Coursera / CalArts",
+        "duration": "12 hours",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "course",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "high-school"
+        ]
+    },
+    {
+        "title": "Art Project: Create Your Own Painting Portfolio",
+        "description": "Build a portfolio by creating multiple artworks showcasing different techniques and styles.",
+        "link": "https://www.youtube.com/watch?v=9k2j8h5f6dA",
+        "category": "Arts & Painting",
+        "section_type": "domain",
+        "domain": "Arts & Design",
+        "subdomain": "Arts",
+        "difficulty": "advanced",
+        "is_free": true,
+        "icon": "\ud83d\ude80",
+        "color": "purple",
+        "related_skills": [
+            "art project",
+            "portfolio"
+        ],
+        "relevant_backgrounds": [
+            "non-tech"
+        ],
+        "provider": "YouTube",
+        "duration": "4 hours",
+        "rating": null,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "project",
+        "target_countries": [
+            "India",
+            "USA"
+        ],
+        "estimated_time": null,
+        "prerequisites": [
+            "Painting Techniques"
+        ],
+        "education_levels": [
+            "undergraduate",
+            "graduate"
+        ]
+    },
+    {
+        "title": "Arun Sharma Quant Book",
+        "description": "Best-selling CAT quant preparation book",
+        "link": "https://www.amazon.in/Quantitative-Aptitude-CAT-Arun-Sharma/dp/9339222032",
+        "category": "CAT",
+        "section_type": "exam",
+        "domain": "Exam Prep",
+        "subdomain": "CAT",
+        "difficulty": "intermediate",
+        "is_free": false,
+        "icon": "\ud83d\udcd5",
+        "color": "red",
+        "related_skills": [
+            "Quantitative Aptitude",
+            "Mathematics"
+        ],
+        "relevant_backgrounds": [
+            "MBA Aspirant"
+        ],
+        "provider": "Tata McGraw Hill",
+        "duration": "3 months",
+        "rating": null,
+        "is_featured": false,
+        "is_active": true,
+        "resource_type": "book",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": []
+    },
+    {
+        "title": "Attention Is All You Need - Transformer Paper",
+        "description": "The seminal research paper that introduced the Transformer architecture, revolutionizing NLP and leading to models like GPT and BERT.",
+        "link": "https://arxiv.org/abs/1706.03762",
+        "category": "Artificial Intelligence",
+        "section_type": "domain",
+        "domain": "AI & Data",
+        "subdomain": "Artificial Intelligence",
+        "difficulty": "advanced",
+        "is_free": true,
+        "icon": "\ud83d\udcda",
+        "color": "blue",
+        "related_skills": [
+            "Deep Learning",
+            "NLP",
+            "Machine Learning",
+            "Transformers"
+        ],
+        "relevant_backgrounds": [
+            "professional",
+            "student"
+        ],
+        "provider": "Google Research",
+        "duration": null,
+        "rating": 4.9,
+        "is_featured": true,
+        "is_active": true,
+        "resource_type": "research_paper",
+        "target_countries": [],
+        "estimated_time": null,
+        "prerequisites": [],
+        "education_levels": [
+            "masters",
+            "phd"
+        ]
+    }
+]

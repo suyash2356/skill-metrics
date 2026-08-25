@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Resource, ResourceInsert, useBulkCreateResources } from '@/hooks/useAdmin';
-import { resolveCategoryMapping } from '@/utils/categoryMapping';
+import { toJSONExport, toCSVExport, parseCSV, validateResources } from '@/lib/resourceIo';
 import { useCategories } from '@/hooks/useCategories';
 import { Download, Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, AlertCircle, Copy } from 'lucide-react';
 import { toast } from 'sonner';
@@ -33,40 +33,6 @@ interface ImportExportDialogProps {
   resources: Resource[];
 }
 
-// Export columns in the canonical import format (category/subcategory/skills)
-// so an exported file can be re-imported without any manual editing.
-const EXPORT_FIELDS = [
-  'category', 'subcategory', 'title', 'description', 'link', 'skills',
-  'difficulty', 'is_free', 'icon', 'color', 'relevant_backgrounds', 'provider',
-  'duration', 'rating', 'is_featured', 'is_active', 'resource_type',
-  'target_countries', 'estimated_time', 'prerequisites', 'education_levels',
-];
-
-/** DB row -> canonical export/import row */
-const toExportRow = (r: Resource): Record<string, unknown> => ({
-  category: r.section_type === 'exam' ? 'Exams' : 'Domains',
-  subcategory: r.category,
-  title: r.title,
-  description: r.description,
-  link: r.link,
-  skills: r.related_skills || [],
-  difficulty: r.difficulty,
-  is_free: r.is_free,
-  icon: r.icon,
-  color: r.color,
-  relevant_backgrounds: r.relevant_backgrounds || [],
-  provider: r.provider,
-  duration: r.duration,
-  rating: r.rating,
-  is_featured: r.is_featured,
-  is_active: r.is_active,
-  resource_type: r.resource_type,
-  target_countries: r.target_countries || [],
-  estimated_time: r.estimated_time,
-  prerequisites: r.prerequisites || [],
-  education_levels: r.education_levels || [],
-});
-
 const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialogProps) => {
   const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
   const [importData, setImportData] = useState('');
@@ -87,39 +53,17 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     return map;
   }, [categories]);
 
-
   const exportToJSON = () => {
-    const exportData = resources.map(toExportRow);
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+
+    const blob = new Blob([toJSONExport(resources)], { type: 'application/json' });
     downloadBlob(blob, 'resources.json');
     toast.success('Exported to JSON successfully!');
   };
 
   const exportToCSV = () => {
-    const headers = EXPORT_FIELDS;
-
-    const csvRows = [
-      headers.join(','),
-      ...resources.map(toExportRow).map(row => headers.map(header => {
-        const value = row[header];
-        if (value === null || value === undefined) return '';
-        if (Array.isArray(value)) return escapeCSV(value.join(';'));
-        if (typeof value === 'boolean' || typeof value === 'number') return String(value);
-        return escapeCSV(String(value));
-      }).join(','))
-    ];
-
-    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
+    const blob = new Blob([toCSVExport(resources)], { type: 'text/csv' });
     downloadBlob(blob, 'resources.csv');
     toast.success('Exported to CSV successfully!');
-  };
-
-
-  const escapeCSV = (value: string) => {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-      return `"${value.replace(/"/g, '""')}"`;
-    }
-    return value;
   };
 
   const downloadBlob = (blob: Blob, filename: string) => {
@@ -132,6 +76,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
+
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -154,215 +99,9 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     reader.readAsText(file);
   };
 
-  const parseCSV = (csv: string): Partial<ResourceInsert>[] => {
-    const lines = csv.split('\n').filter(line => line.trim());
-    if (lines.length < 2) return [];
+  const validateRows = (data: Record<string, any>[], fallbackResourceType: string) =>
+    validateResources(data, fallbackResourceType, categoryTypes);
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-    const results: Partial<ResourceInsert>[] = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = parseCSVLine(lines[i]);
-      const obj: Record<string, unknown> = {};
-      
-      headers.forEach((header, index) => {
-        const value = values[index]?.trim() || '';
-        switch (header) {
-          case 'is_free':
-          case 'is_featured':
-          case 'is_active':
-            obj[header] = value.toLowerCase() === 'true';
-            break;
-          case 'rating':
-          case 'avg_rating':
-          case 'weighted_rating':
-            obj[header] = value ? parseFloat(value) : null;
-            break;
-          case 'total_ratings':
-          case 'recommend_percent':
-          case 'total_votes':
-          case 'total_reviews':
-            obj[header] = value ? parseInt(value, 10) : null;
-            break;
-          case 'related_skills':
-          case 'skills':
-          case 'relevant_backgrounds':
-          case 'target_countries':
-          case 'prerequisites':
-          case 'education_levels':
-            obj[header] = value ? value.split(';').map(s => s.trim()).filter(Boolean) : [];
-            break;
-          case 'subcategory':
-            obj['subcategory'] = value || null;
-            break;
-          default:
-            obj[header] = value || null;
-        }
-      });
-      
-      results.push(obj as Partial<ResourceInsert>);
-    }
-    
-    return results;
-  };
-
-  const parseCSVLine = (line: string): string[] => {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"') {
-        if (inQuotes && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = !inQuotes;
-        }
-      } else if (char === ',' && !inQuotes) {
-        result.push(current);
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    result.push(current);
-    return result;
-  };
-
-  /**
-   * Normalize new-format rows (`category` = "Domains"/"Exams", `subcategory`,
-   * `skills`) into DB-shaped rows. Backward compatible with the old format
-   * where `category` was already the specific title and `section_type` was set.
-   */
-  const normalizeRow = (raw: any): any => {
-    const row = { ...raw };
-    const catRaw = (row.category ?? '').toString().trim();
-    const catLower = catRaw.toLowerCase();
-    const isNewFormat =
-      row.subcategory != null ||
-      catLower === 'domains' ||
-      catLower === 'domain' ||
-      catLower === 'exams' ||
-      catLower === 'exam';
-
-    if (isNewFormat) {
-      const subcategory = (row.subcategory ?? '').toString().trim();
-      if (subcategory) {
-        // section_type derived from the top-level category bucket
-        if (catLower.startsWith('exam')) {
-          row.section_type = 'exam';
-        } else if (catLower.startsWith('domain')) {
-          row.section_type = 'domain';
-        }
-        // The DB `category` column stores the specific title
-        row.category = subcategory;
-      }
-      delete row.subcategory;
-    }
-
-    // Alias: `skills` -> `related_skills`
-    if (row.skills && !row.related_skills) {
-      row.related_skills = row.skills;
-    }
-    delete row.skills;
-
-    // Resolve domain/subdomain up front (case-insensitive, with fallbacks)
-    if (row.category) {
-      const mapping = resolveCategoryMapping(row.category);
-      const knownType = categoryTypes.get(row.category.toString().trim().toLowerCase());
-      if (mapping) {
-        row.domain = mapping.domain;
-        row.subdomain = mapping.subdomain;
-      } else if (row.section_type === 'exam' || knownType === 'exam') {
-        // Exam title (known or new): place under Exam Prep with the title as subdomain
-        row.section_type = 'exam';
-        row.domain = 'Exam Prep';
-        row.subdomain = row.category;
-      } else if (knownType) {
-        // Category exists in the admin panel but has no static mapping yet
-        row.section_type = row.section_type || 'domain';
-        row.domain = row.category;
-        row.subdomain = row.category;
-      }
-    }
-    return row;
-  };
-
-
-  // Pre-import validation
-  const validateResources = (data: Partial<ResourceInsert>[], fallbackResourceType: string): { valid: ResourceInsert[]; errors: string[] } => {
-    const valid: ResourceInsert[] = [];
-    const errors: string[] = [];
-
-    data.forEach((raw, index) => {
-      const item = normalizeRow(raw) as any;
-      const rowNum = index + 1;
-      const rowErrors: string[] = [];
-
-      // Required field validation
-      if (!item.title?.trim()) {
-        rowErrors.push('title is required');
-      }
-      if (!item.link?.trim()) {
-        rowErrors.push('link is required');
-      }
-      if (!item.category?.trim()) {
-        rowErrors.push('category (or subcategory) is required');
-      }
-      if (item.category && !item.domain) {
-        rowErrors.push(`unknown category/subcategory "${item.category}" — no domain mapping found. Add it to CATEGORY_MAPPING or use an existing one.`);
-      }
-
-      // URL validation
-      if (item.link && !isValidUrl(item.link)) {
-        rowErrors.push('invalid link URL');
-      }
-
-      if (rowErrors.length > 0) {
-        errors.push(`Row ${rowNum}: ${rowErrors.join(', ')}`);
-      } else {
-        valid.push({
-          title: item.title!.trim(),
-          description: item.description?.trim() || '',
-          link: item.link!.trim(),
-          category: item.category!.trim(),
-          difficulty: item.difficulty || 'beginner',
-          is_free: item.is_free ?? true,
-          icon: item.icon || '📚',
-          color: item.color || 'blue',
-          related_skills: item.related_skills || [],
-          relevant_backgrounds: item.relevant_backgrounds || [],
-          provider: item.provider || null,
-          duration: item.duration || null,
-          rating: item.rating || null,
-          is_featured: item.is_featured ?? false,
-          is_active: item.is_active ?? true,
-          resource_type: item.resource_type || fallbackResourceType,
-          section_type: item.section_type || 'domain',
-          target_countries: item.target_countries || [],
-          estimated_time: item.estimated_time || null,
-          prerequisites: item.prerequisites || [],
-          education_levels: item.education_levels || [],
-          // Pre-resolved so useBulkCreateResources skips mapping lookup
-          domain: item.domain,
-          subdomain: item.subdomain,
-        } as ResourceInsert);
-      }
-    });
-
-    return { valid, errors };
-  };
-
-  const isValidUrl = (str: string): boolean => {
-    try {
-      new URL(str);
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   const handleImport = async () => {
     if (!importData.trim()) {
@@ -400,7 +139,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
     setImportProgress(10);
 
     // Validate all resources before importing
-    const { valid, errors: validationErrs } = validateResources(dataToImport, defaultResourceType);
+    const { valid, errors: validationErrs } = validateRows(dataToImport as Record<string, any>[], defaultResourceType);
     
     if (validationErrs.length > 0) {
       setValidationErrors(validationErrs.slice(0, 10)); // Show first 10 errors
@@ -419,7 +158,7 @@ const ImportExportDialog = ({ open, onOpenChange, resources }: ImportExportDialo
 
     // Bulk insert using upsert (skips duplicates automatically)
     try {
-      const result = await bulkCreate.mutateAsync(valid);
+      const result = await bulkCreate.mutateAsync(valid as unknown as ResourceInsert[]);
       
       setImportProgress(100);
       
