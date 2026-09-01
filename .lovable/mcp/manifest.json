@@ -3,13 +3,17 @@
   "sdk_version": "1.0.0",
   "path": "/functions/v1/mcp",
   "auth": {
-    "type": "none"
+    "type": "oauth",
+    "issuer": "https://vecdjxbrkaqpvftwoafj.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
   },
   "mcp": {
     "server": {
-      "name": "skillgram-mcp",
+      "name": "skills-metrics",
       "version": "0.1.0",
-      "title": "Skillgram MCP"
+      "title": "skills-metrics"
     },
     "tools": [
       {

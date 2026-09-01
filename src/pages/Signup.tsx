@@ -24,13 +24,17 @@ const Signup = () => {
   const { signUp, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const requestedRedirect = searchParams.get('redirect');
+  const safeRedirect = requestedRedirect?.startsWith('/') && !requestedRedirect.startsWith('//')
+    ? requestedRedirect
+    : null;
   // Track when signup just completed to prevent redirect to /home
   const justSignedUp = useRef(false);
 
   // Redirect if already logged in (but not if we just signed up — onboarding takes priority)
   useEffect(() => {
     if (user && !justSignedUp.current) {
-      const redirectTo = searchParams.get('redirect') || '/home';
+      const redirectTo = safeRedirect || '/home';
       navigate(redirectTo);
     }
   }, [user, navigate, searchParams]);
@@ -61,7 +65,12 @@ const Signup = () => {
     justSignedUp.current = true;
 
     try {
-      const { error } = await signUp(formData.email, formData.password, formData.fullName);
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        safeRedirect ?? '/onboarding',
+      );
 
       if (error) {
         justSignedUp.current = false;
@@ -77,7 +86,7 @@ const Signup = () => {
           title: "Account Created!",
           description: "Let's set up your profile",
         });
-        navigate('/onboarding');
+        navigate(safeRedirect ?? '/onboarding');
       }
     } catch (error) {
       justSignedUp.current = false;
@@ -278,7 +287,10 @@ const Signup = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Already have an account?{" "}
-                <Link to="/login" className="text-primary hover:underline font-medium">
+                <Link
+                  to={safeRedirect ? `/login?redirect=${encodeURIComponent(safeRedirect)}` : "/login"}
+                  className="text-primary hover:underline font-medium"
+                >
                   Sign in
                 </Link>
               </p>

@@ -44,6 +44,7 @@ const Chat = lazy(() => import("./pages/Chat"));
 const MyCommunities = lazy(() => import("./pages/MyCommunities"));
 const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const OAuthConsent = lazy(() => import("./pages/OAuthConsent"));
 
 // Perf-tuned React Query defaults:
 //  - Longer staleTime cuts redundant refetches when users navigate between pages
@@ -84,6 +85,7 @@ const AnimatedRoutes = () => {
           <Route path="/" element={<PageTransition><Landing /></PageTransition>} />
           <Route path="/login" element={<PageTransition><Login /></PageTransition>} />
           <Route path="/signup" element={<PageTransition><Signup /></PageTransition>} />
+          <Route path="/.lovable/oauth/consent" element={<PageTransition><OAuthConsent /></PageTransition>} />
           <Route path="/onboarding" element={<PageTransition><Onboarding /></PageTransition>} />
           <Route path="/notifications" element={<ProtectedRoute><PageTransition><Notifications /></PageTransition></ProtectedRoute>} />
           <Route path="/follow-requests" element={<ProtectedRoute><PageTransition><FollowRequests /></PageTransition></ProtectedRoute>} />
