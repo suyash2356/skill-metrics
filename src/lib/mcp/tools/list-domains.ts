@@ -1,14 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-
-function db() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-}
+import { supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "list_domains",
@@ -19,8 +11,9 @@ export default defineTool({
     limit: z.number().int().min(1).max(200).optional().describe("Max domains to return (default 50)."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ limit }) => {
-    const supabase = db();
+  handler: async ({ limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase
       .from("resources")
       .select("domain,subdomain")
@@ -34,7 +27,8 @@ export default defineTool({
       const d = (r as any).domain as string;
       if (!d) continue;
       if (!counts.has(d)) counts.set(d, { domain: d, subdomains: new Map(), total: 0 });
-      const entry = counts.get(d)!;
+      const entry = counts.get(d);
+      if (!entry) continue;
       entry.total += 1;
       const s = (r as any).subdomain as string | null;
       if (s) entry.subdomains.set(s, (entry.subdomains.get(s) ?? 0) + 1);

@@ -20,11 +20,15 @@ const Login = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
+  const safeRedirect = () => {
+    const requested = searchParams.get('redirect');
+    return requested?.startsWith('/') && !requested.startsWith('//') ? requested : '/home';
+  };
+
   // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const redirectTo = searchParams.get('redirect') || '/home';
-      navigate(redirectTo);
+      navigate(safeRedirect());
     }
   }, [user, navigate, searchParams]);
 
@@ -48,8 +52,7 @@ const Login = () => {
           title: "Login Successful!",
           description: "Welcome back to Skill-Metrics",
         });
-        const redirectTo = searchParams.get('redirect') || '/home';
-        navigate(redirectTo);
+        navigate(safeRedirect());
       }
     } catch (error) {
       toast({
@@ -191,7 +194,10 @@ const Login = () => {
             <div className="mt-6 text-center">
               <p className="text-sm text-muted-foreground">
                 Don't have an account?{" "}
-                <Link to="/signup" className="text-primary hover:underline font-medium">
+                <Link
+                  to={searchParams.get('redirect') ? `/signup?redirect=${encodeURIComponent(safeRedirect())}` : "/signup"}
+                  className="text-primary hover:underline font-medium"
+                >
                   Sign up
                 </Link>
               </p>

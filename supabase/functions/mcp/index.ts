@@ -3,19 +3,61 @@
 // supabase function: mcp
 // Bundled from src/lib/mcp/index.ts by @lovable.dev/mcp-js.
 // src/lib/mcp/index.ts
-import { defineMcp } from "npm:@lovable.dev/mcp-js@0.20.0";
+import { auth, defineMcp } from "npm:@lovable.dev/mcp-js@1.0.0";
 
 // src/lib/mcp/tools/search-resources.ts
-import { defineTool } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { createClient } from "npm:@supabase/supabase-js@^2.57.4";
+import { defineTool } from "npm:@lovable.dev/mcp-js@1.0.0";
 import { z } from "npm:zod@^3.25.76";
-function db() {
-  return createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
+
+// src/lib/mcp/supabase.ts
+import { createClient } from "npm:@supabase/supabase-js@^2.57.4";
+function runtimeEnv(name) {
+  const runtime = globalThis;
+  return runtime.Deno?.env?.get?.(name) ?? runtime.process?.env?.[name];
 }
+function configuredEnv(names) {
+  for (const name of names) {
+    const value = runtimeEnv(name)?.trim();
+    if (value) return value;
+  }
+  return void 0;
+}
+function projectUrl() {
+  const value = configuredEnv(["SUPABASE_URL", "VITE_SUPABASE_URL"]);
+  if (!value) throw new Error("SUPABASE_URL is required");
+  return value;
+}
+function publishableKey() {
+  const direct = configuredEnv(["SUPABASE_PUBLISHABLE_KEY", "VITE_SUPABASE_PUBLISHABLE_KEY"]);
+  if (direct) return direct;
+  const keyset = runtimeEnv("SUPABASE_PUBLISHABLE_KEYS");
+  if (keyset) {
+    try {
+      const parsed = JSON.parse(keyset);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        const keys = parsed;
+        const value = [keys.default, ...Object.values(keys)].find(
+          (key) => typeof key === "string" && key.trim().startsWith("sb_publishable_")
+        );
+        if (value) return value.trim();
+      }
+    } catch {
+    }
+  }
+  const legacy = configuredEnv(["SUPABASE_ANON_KEY", "VITE_SUPABASE_ANON_KEY"]);
+  if (!legacy) throw new Error("A Supabase publishable key is required");
+  return legacy;
+}
+function supabaseForUser(ctx) {
+  const token = ctx.getToken();
+  if (!token) throw new Error("A verified OAuth token is required");
+  return createClient(projectUrl(), publishableKey(), {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false, autoRefreshToken: false }
+  });
+}
+
+// src/lib/mcp/tools/search-resources.ts
 var search_resources_default = defineTool({
   name: "search_resources",
   title: "Search learning resources",
@@ -29,8 +71,9 @@ var search_resources_default = defineTool({
     limit: z.number().int().min(1).max(50).optional().describe("Max results (default 10).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ query, domain, subdomain, category, difficulty, limit }) => {
-    const supabase = db();
+  handler: async ({ query, domain, subdomain, category, difficulty, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const supabase = supabaseForUser(ctx);
     let q = supabase.from("resources").select("id,title,description,link,category,domain,subdomain,difficulty,weighted_rating,total_ratings").order("weighted_rating", { ascending: false, nullsFirst: false }).limit(limit ?? 10);
     if (query) q = q.or(`title.ilike.%${query}%,description.ilike.%${query}%`);
     if (domain) q = q.ilike("domain", `%${domain}%`);
@@ -49,16 +92,8 @@ var search_resources_default = defineTool({
 });
 
 // src/lib/mcp/tools/list-domains.ts
-import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { createClient as createClient2 } from "npm:@supabase/supabase-js@^2.57.4";
+import { defineTool as defineTool2 } from "npm:@lovable.dev/mcp-js@1.0.0";
 import { z as z2 } from "npm:zod@^3.25.76";
-function db2() {
-  return createClient2(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
-}
 var list_domains_default = defineTool2({
   name: "list_domains",
   title: "List skill domains",
@@ -67,8 +102,9 @@ var list_domains_default = defineTool2({
     limit: z2.number().int().min(1).max(200).optional().describe("Max domains to return (default 50).")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ limit }) => {
-    const supabase = db2();
+  handler: async ({ limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("resources").select("domain,subdomain").not("domain", "is", null).limit(5e3);
     if (error) {
       return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
@@ -79,6 +115,7 @@ var list_domains_default = defineTool2({
       if (!d) continue;
       if (!counts.has(d)) counts.set(d, { domain: d, subdomains: /* @__PURE__ */ new Map(), total: 0 });
       const entry = counts.get(d);
+      if (!entry) continue;
       entry.total += 1;
       const s = r.subdomain;
       if (s) entry.subdomains.set(s, (entry.subdomains.get(s) ?? 0) + 1);
@@ -98,16 +135,8 @@ var list_domains_default = defineTool2({
 });
 
 // src/lib/mcp/tools/get-resource.ts
-import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@0.20.0";
-import { createClient as createClient3 } from "npm:@supabase/supabase-js@^2.57.4";
+import { defineTool as defineTool3 } from "npm:@lovable.dev/mcp-js@1.0.0";
 import { z as z3 } from "npm:zod@^3.25.76";
-function db3() {
-  return createClient3(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY,
-    { auth: { persistSession: false, autoRefreshToken: false } }
-  );
-}
 var get_resource_default = defineTool3({
   name: "get_resource",
   title: "Get resource details",
@@ -116,8 +145,9 @@ var get_resource_default = defineTool3({
     id: z3.string().uuid().describe("Resource UUID.")
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ id }) => {
-    const supabase = db3();
+  handler: async ({ id }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const supabase = supabaseForUser(ctx);
     const { data, error } = await supabase.from("resources").select("*").eq("id", id).maybeSingle();
     if (error) return { content: [{ type: "text", text: `Error: ${error.message}` }], isError: true };
     if (!data) return { content: [{ type: "text", text: "Not found" }], isError: true };
@@ -129,14 +159,19 @@ var get_resource_default = defineTool3({
 });
 
 // src/lib/mcp/index.ts
+var projectRef = "vecdjxbrkaqpvftwoafj";
 var mcp_default = defineMcp({
-  name: "skillgram-mcp",
-  title: "Skillgram MCP",
+  name: "skills-metrics",
+  title: "skills-metrics",
   version: "0.1.0",
   instructions: "Tools for exploring the Skillgram learning platform's admin-curated catalog of skills, domains, and learning resources. Use `list_domains` to discover available skill areas, `search_resources` to find courses/videos/certifications/books/blogs, and `get_resource` to fetch full details for a specific resource.",
+  auth: auth.oauth.issuer({
+    issuer: `https://${projectRef}.supabase.co/auth/v1`,
+    acceptedAudiences: "authenticated"
+  }),
   tools: [search_resources_default, list_domains_default, get_resource_default]
 });
 
 // lovable-mcp-supabase-entry.ts
-import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@0.20.0/stacks/supabase";
+import { createSupabaseHandler } from "npm:@lovable.dev/mcp-js@1.0.0/stacks/supabase";
 Deno.serve(createSupabaseHandler(mcp_default, { functionName: "mcp" }));

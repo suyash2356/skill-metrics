@@ -1,14 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-
-function db() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.SUPABASE_ANON_KEY!,
-    { auth: { persistSession: false, autoRefreshToken: false } },
-  );
-}
+import { supabaseForUser } from "../supabase";
 
 export default defineTool({
   name: "search_resources",
@@ -24,8 +16,9 @@ export default defineTool({
     limit: z.number().int().min(1).max(50).optional().describe("Max results (default 10)."),
   },
   annotations: { readOnlyHint: true, idempotentHint: true, openWorldHint: false },
-  handler: async ({ query, domain, subdomain, category, difficulty, limit }) => {
-    const supabase = db();
+  handler: async ({ query, domain, subdomain, category, difficulty, limit }, ctx) => {
+    if (!ctx.isAuthenticated()) return { content: [{ type: "text", text: "Not authenticated" }], isError: true };
+    const supabase = supabaseForUser(ctx);
     let q = supabase
       .from("resources")
       .select("id,title,description,link,category,domain,subdomain,difficulty,weighted_rating,total_ratings")
