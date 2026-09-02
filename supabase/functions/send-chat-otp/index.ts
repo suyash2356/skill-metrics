@@ -139,12 +139,6 @@ serve(async (req: Request) => {
       from: "Skill-Metrics <noreply@skill-metrics.com>",
       to: [email],
       subject: "Your Chat Password Reset Code",
-
-    const resend = new Resend(resendApiKey);
-    await resend.emails.send({
-      from: "Skill-Metrics <noreply@skill-metrics.com>",
-      to: [email],
-      subject: "Your Chat Password Reset Code",
       html: `
         <div style="font-family: sans-serif; max-width: 400px; margin: 0 auto;">
           <h2>Chat Password Reset</h2>
