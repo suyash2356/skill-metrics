@@ -17,155 +17,6 @@ interface RoadmapRequest {
   learningDuration?: string;
 }
 
-interface DBResource {
-  id: string;
-  title: string;
-  link: string;
-  category: string;
-  difficulty: string;
-  resource_type: string;
-  related_skills: string[] | null;
-  description: string;
-  duration: string | null;
-  provider: string | null;
-}
-
-// Map user skill level to difficulty levels for resource matching
-function getDifficultyLevels(skillLevel: string): string[] {
-  const level = skillLevel.toLowerCase();
-  if (level.includes('beginner')) {
-    return ['beginner', 'intermediate'];
-  } else if (level.includes('intermediate')) {
-    return ['beginner', 'intermediate', 'advanced'];
-  } else if (level.includes('advanced')) {
-    return ['intermediate', 'advanced'];
-  }
-  return ['beginner', 'intermediate', 'advanced'];
-}
-
-// Tokenize a string into meaningful lowercase keywords
-const STOPWORDS = new Set([
-  'the','a','an','and','or','of','to','for','in','on','with','your','you','from','at','by',
-  'be','is','are','this','that','these','those','as','it','its','into','using','use','will',
-  'week','weeks','intro','introduction','basics','basic','fundamental','fundamentals',
-  'beginner','intermediate','advanced','learn','learning','understand','understanding',
-  'getting','started','step','phase','module','project','build','create','complete','overview'
-]);
-function tokenize(s: string): string[] {
-  return (s || '')
-    .toLowerCase()
-    .replace(/[^a-z0-9+#.\s-]/g, ' ')
-    .split(/\s+/)
-    .map(t => t.trim())
-    .filter(t => t.length >= 3 && !STOPWORDS.has(t));
-}
-
-// Find matching resources from database based on step context.
-// Strictly relevance-gated: a resource must share meaningful keywords
-// with the step's title/topics/skills (category/difficulty alone are
-// NOT enough — they only act as bonuses).
-function findMatchingResources(
-  allResources: DBResource[],
-  stepTitle: string,
-  stepTopics: string[],
-  category: string,
-  domainKeywords: string[],
-  difficultyLevels: string[],
-  learningStyle: string,
-  maxResources: number = 6
-): any[] {
-  const stepTokens = new Set<string>([
-    ...tokenize(stepTitle),
-    ...stepTopics.flatMap(t => tokenize(t)),
-  ]);
-  const domainTokens = new Set<string>(domainKeywords.flatMap(k => tokenize(k)));
-
-  const scored = allResources.map(resource => {
-    const resourceTitle = (resource.title || '').toLowerCase();
-    const resourceCategory = (resource.category || '').toLowerCase();
-    const resourceSkills = (resource.related_skills || []).map(s => s.toLowerCase());
-    const resourceDifficulty = (resource.difficulty || '').toLowerCase();
-    const resourceType = (resource.resource_type || '').toLowerCase();
-
-    const resourceTokens = new Set<string>([
-      ...tokenize(resource.title),
-      ...tokenize(resource.description || ''),
-      ...resourceSkills.flatMap(s => tokenize(s)),
-    ]);
-
-    // Semantic relevance to THIS step (hard requirement)
-    let relevance = 0;
-    for (const t of stepTokens) {
-      if (resourceTokens.has(t)) relevance += 10;
-      else if (resourceTitle.includes(t)) relevance += 6;
-      else if (resourceSkills.some(s => s === t || s.includes(t))) relevance += 8;
-    }
-    if (relevance < 8) return { resource, score: -1 };
-
-    // Domain alignment bonus
-    let domainBonus = 0;
-    for (const t of domainTokens) {
-      if (resourceTokens.has(t) || resourceCategory.includes(t)) domainBonus += 4;
-    }
-    if (category && resourceCategory.includes(category.toLowerCase())) domainBonus += 12;
-
-    const diffBonus = difficultyLevels.includes(resourceDifficulty) ? 6 : 0;
-
-    let styleBonus = 0;
-    const ls = (learningStyle || '').toLowerCase();
-    if (ls.includes('visual') && (resourceType.includes('video') || resourceType.includes('course'))) styleBonus += 4;
-    if (ls.includes('reading') && (resourceType.includes('article') || resourceType.includes('book') || resourceType.includes('documentation'))) styleBonus += 4;
-    if (ls.includes('hands') && (resourceType.includes('project') || resourceType.includes('tutorial') || resourceType.includes('practice'))) styleBonus += 4;
-
-    return { resource, score: relevance + domainBonus + diffBonus + styleBonus };
-  });
-
-  return scored
-    .filter(r => r.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, maxResources)
-    .map(r => ({
-      title: r.resource.title,
-      url: r.resource.link,
-      type: mapResourceType(r.resource.resource_type),
-      duration: r.resource.duration || estimateDuration(r.resource.resource_type),
-      difficulty: r.resource.difficulty || 'intermediate',
-      provider: r.resource.provider || null,
-    }));
-}
-
-// Map database resource types to display types
-function mapResourceType(dbType: string): string {
-  const typeMap: Record<string, string> = {
-    'course': 'course',
-    'video': 'video',
-    'article': 'article',
-    'book': 'book',
-    'documentation': 'documentation',
-    'tutorial': 'article',
-    'tool': 'tool',
-    'practice': 'practice',
-    'certification': 'certification',
-    'exam_prep': 'course',
-  };
-  return typeMap[dbType?.toLowerCase()] || 'article';
-}
-
-// Estimate duration based on resource type
-function estimateDuration(resourceType: string): string {
-  const durationMap: Record<string, string> = {
-    'course': '10-20 hours',
-    'video': '1-2 hours',
-    'article': '15-30 minutes',
-    'book': '10-20 hours',
-    'documentation': '2-4 hours',
-    'tutorial': '1-3 hours',
-    'tool': 'N/A',
-    'practice': '5-10 hours',
-  };
-  return durationMap[resourceType?.toLowerCase()] || '1-2 hours';
-}
-
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -204,37 +55,13 @@ serve(async (req) => {
     const { title, description, skillLevel, timeCommitment, learningStyle, focusAreas, category, learningDuration }: RoadmapRequest = await req.json();
     
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
     
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
     
-    if (!SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error('SUPABASE_SERVICE_ROLE_KEY is not configured');
-    }
-
-    // Initialize Supabase client
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-    
-    // Fetch all active resources from the database
-    console.log('Fetching resources from database...');
-    const { data: dbResources, error: dbError } = await supabase
-      .from('resources')
-      .select('id, title, link, category, difficulty, resource_type, related_skills, description, duration, provider')
-      .eq('is_active', true);
-    
-    if (dbError) {
-      console.error('Error fetching resources:', dbError);
-    }
-    
-    const allResources: DBResource[] = dbResources || [];
-    console.log(`Fetched ${allResources.length} resources from database`);
-
-    // Get difficulty levels for resource matching
-    const difficultyLevels = getDifficultyLevels(skillLevel);
-
-    // Construct the enhanced detailed prompt (without resources - AI will generate structure only)
+    // The AI produces learning guidance only. Resource links are selected client-side
+    // from the active admin catalog after this response is validated.
     const prompt = `You are an expert learning path designer with deep industry experience. Create an exceptionally detailed, actionable, and personalized learning roadmap based on the following requirements:
 
 Title: ${title}
