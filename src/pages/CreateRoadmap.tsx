@@ -44,8 +44,6 @@ const CreateRoadmap = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [aiPreview, setAiPreview] = useState<any | null>(null);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [isPublic, setIsPublic] = useState(false); // New state for public/private
   const [formData, setFormData] = useState({
     title: "",
@@ -718,40 +716,6 @@ const CreateRoadmap = () => {
                     <Button variant="ghost" onClick={saveDraft} disabled={isSaving}>{isSaving ? 'Saving...' : 'Save Draft'}</Button>
                   </div>
 
-                  {/* AI Preview Modal (simple inline dialog) */}
-                  {previewOpen && aiPreview && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                      <div className="max-w-3xl w-full bg-white rounded-lg p-6">
-                        <div className="flex justify-between items-start">
-                          <h3 className="text-xl font-semibold">AI-generated Roadmap Preview</h3>
-                          <div className="flex gap-2">
-                            <Button variant="ghost" onClick={() => setPreviewOpen(false)}>Close</Button>
-                          </div>
-                        </div>
-                        <div className="mt-4 space-y-3 max-h-[60vh] overflow-auto">
-                          <h4 className="font-semibold">Phases</h4>
-                          {(aiPreview.phases || []).map((p:any, i:number)=>(
-                            <div key={i} className="p-3 rounded-md border bg-muted/10">
-                              <div className="flex justify-between items-center">
-                                <strong>{p.name}</strong>
-                                <span className="text-sm text-muted-foreground">{p.duration}</span>
-                              </div>
-                              <p className="text-sm mt-2">{p.description}</p>
-                              {p.topics && p.topics.length>0 && (
-                                <div className="mt-2 text-sm">
-                                  <strong>Topics:</strong> {p.topics.join(', ')}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <div className="mt-4 flex justify-end gap-2">
-                          <Button variant="outline" onClick={() => setPreviewOpen(false)}>Edit</Button>
-                          <Button onClick={generateRoadmap}>Confirm & Create Roadmap</Button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 <div className="pt-4 border-t">
                   <p className="text-xs text-muted-foreground">
                     This is a preview based on your selections. The final roadmap will include 
