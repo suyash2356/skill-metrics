@@ -215,7 +215,7 @@ const CreateRoadmap = () => {
         .eq('is_active', true);
       if (resourcesError) throw resourcesError;
 
-      const resourceMatches = matchRoadmapResources(dbResources || [], aiResponse.steps, {
+      const resourceMatches = matchRoadmapResources((dbResources || []) as any[], aiResponse.steps, {
         focusAreas: formData.focusAreas,
         roadmapTitle: formData.title,
         maxPerStep: 5,
@@ -634,41 +634,6 @@ const CreateRoadmap = () => {
                 </div>
               </CardContent>
             </Card>
-
-            {recommendedResources.length > 0 && (
-              <Card className="shadow-card">
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Sparkles className="h-5 w-5" />
-                    <span>Recommended Resources</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="use-recommendations"
-                      checked={useRecommendedResources}
-                      onCheckedChange={(checked: boolean) => setUseRecommendedResources(checked)}
-                    />
-                    <Label htmlFor="use-recommendations" className="text-sm cursor-pointer">
-                      Include these recommended resources in my roadmap
-                    </Label>
-                  </div>
-                  {useRecommendedResources && (
-                    <div className="space-y-3 mt-4">
-                      {recommendedResources.map((resource, index) => (
-                        <div key={index} className="flex items-center space-x-3">
-                          <span className="text-muted-foreground">•</span>
-                          <a href={resource.url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                            {resource.title} ({resource.type})
-                          </a>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             <div className="flex items-center space-x-2">
               <Checkbox

@@ -85,7 +85,7 @@ ${category === 'Non-Tech' || ['visual-arts', 'graphic-design', 'music', 'film-ph
 Include community building, showcase opportunities, and real-world application throughout.` : ''}
 ${category === 'Tech' || ['software-development', 'data-science', 'cybersecurity', 'cloud-devops', 'web-mobile'].includes(category || '') ? 'IMPORTANT: This is a technical skill. Focus on hands-on coding projects, documentation reading, debugging skills, and building a technical portfolio. Include specific tools, frameworks, and best practices.' : ''}
 
-CRITICAL RESOURCE RULE: Do not recommend, invent, name, or include any URLs, books, courses, videos, websites, providers, or `resources` field. A separate application process will attach matching resources only from the active admin catalog after generation. The `whereToLearn` field must be an empty array.
+CRITICAL RESOURCE RULE: Do not recommend, invent, name, or include any URLs, books, courses, videos, websites, providers, or resources field. A separate application process will attach matching resources only from the active admin catalog after generation. The whereToLearn field must be an empty array.
 
 Return your response as a valid JSON object with this EXACT structure:
 {
