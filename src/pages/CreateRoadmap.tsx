@@ -26,8 +26,8 @@ import { supabase as rawSupabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { TypedSupabaseClient } from "@/integrations/supabase/client";
 import { TablesInsert, Database } from "@/integrations/supabase/types";
-import { generateAIPrompt, callAIGenerator, generateMockRoadmap } from "@/lib/aiRoadmapGenerator";
-import { filterResourcesBySkill } from "@/lib/skillGraphEngine";
+import { generateAIPrompt, generateMockRoadmap } from "@/lib/aiRoadmapGenerator";
+import { matchRoadmapResources } from "@/lib/roadmapResourceMatcher";
 
 
 const supabase = rawSupabase as TypedSupabaseClient;
@@ -46,8 +46,6 @@ const CreateRoadmap = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [aiPreview, setAiPreview] = useState<any | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [recommendedResources, setRecommendedResources] = useState<any[]>([]);
-  const [useRecommendedResources, setUseRecommendedResources] = useState(false);
   const [isPublic, setIsPublic] = useState(false); // New state for public/private
   const [formData, setFormData] = useState({
     title: "",
@@ -77,8 +75,6 @@ const CreateRoadmap = () => {
 
   useEffect(() => {
     const topic = searchParams.get('topic');
-    const recommendationsParam = searchParams.get('recommendations');
-
     if (topic) {
       setFormData(prev => ({
         ...prev,
@@ -87,15 +83,6 @@ const CreateRoadmap = () => {
       }));
     }
 
-    if (recommendationsParam) {
-      try {
-        const parsedRecommendations = JSON.parse(decodeURIComponent(recommendationsParam));
-        setRecommendedResources(parsedRecommendations);
-        setUseRecommendedResources(true); // Default to true if recommendations are present
-      } catch (error) {
-        console.error("Error parsing recommendations from URL:", error);
-      }
-    }
   }, [searchParams]);
 
   const skillLevels = [
@@ -221,63 +208,18 @@ const CreateRoadmap = () => {
 
       console.log(`AI generated ${aiResponse.steps.length} steps`);
 
-      // === INTERCEPT AI RESOURCES ===
-      // Fetch domain resources from DB to overwrite the AI's hallucinated resources
-      const mainDomain = formData.category || formData.targetRole || formData.title || "";
-      let { data: dbResources } = await getTypedTable('resources')
-        .select('*')
-        .eq('is_active', true)
-        .ilike('category', `%${mainDomain}%`);
+      // Fetch only active admin resources. AI output is never used as a resource
+      // source; matching is deterministic and happens against this catalog only.
+      const { data: dbResources, error: resourcesError } = await getTypedTable('resources')
+        .select('id,title,description,link,category,domain,subdomain,difficulty,resource_type,related_skills,learning_outcomes,duration,provider,weighted_rating,quality_score')
+        .eq('is_active', true);
+      if (resourcesError) throw resourcesError;
 
-      if (!dbResources || dbResources.length === 0) {
-        // Fallback: broaden search if exact category misses
-        const { data } = await getTypedTable('resources')
-          .select('*')
-          .eq('is_active', true)
-          .or(`title.ilike.%${mainDomain}%,related_skills.cs.{${mainDomain}}`);
-        dbResources = data;
-      }
-      const resourcesPool = dbResources || [];
-
-      // Process each step and replace AI resources with our algorithmic DB matches
-      for (let i = 0; i < aiResponse.steps.length; i++) {
-        const step = aiResponse.steps[i];
-        if (resourcesPool.length > 0) {
-           const mockSkillNode = {
-             id: `mock-${i}`,
-             name: step.title,
-             domain: mainDomain,
-             subdomain: step.topics && step.topics.length > 0 ? step.topics[0] : '',
-             description: step.description || '',
-             difficulty_level: formData.skillLevel,
-             estimated_hours: step.estimatedHours || 1,
-             learning_outcomes: step.learningObjectives || step.topics || [],
-           };
-           
-           const matchedResources = filterResourcesBySkill(resourcesPool, mockSkillNode as any);
-           
-           // ALWAYS overwrite step.resources to completely remove the AI's hallucinated resources
-           // Take top 5 most popular & relevant resources from our database
-           step.resources = matchedResources.slice(0, 5).map(r => {
-             // Assign a type based on the link or provider
-             let type = 'website';
-             const providerLower = (r.provider || '').toLowerCase();
-             const linkLower = (r.link || '').toLowerCase();
-             if (linkLower.includes('youtube.com') || providerLower.includes('youtube')) type = 'youtube';
-             else if (providerLower.includes('coursera') || providerLower.includes('udemy') || providerLower.includes('edx')) type = 'course';
-             else if (providerLower.includes('o\'reilly') || linkLower.includes('book') || providerLower.includes('author')) type = 'book';
-
-             return {
-               title: r.title,
-               url: r.link,
-               type: type,
-               duration: r.duration || null,
-               difficulty: r.difficulty || null,
-             };
-           });
-        }
-      }
-      // ===================================
+      const resourceMatches = matchRoadmapResources(dbResources || [], aiResponse.steps, {
+        focusAreas: formData.focusAreas,
+        roadmapTitle: formData.title,
+        maxPerStep: 5,
+      });
 
       // Insert the main roadmap entry
       const insertedRoadmapData: TablesInsert<'roadmaps'> = {
@@ -312,17 +254,25 @@ const CreateRoadmap = () => {
         const stepData: TablesInsert<'roadmap_steps'> = {
           roadmap_id: roadmapId,
           title: step.title,
-          description: step.description || null,
+          description: [step.description, step.whyToLearn ? `Why this matters: ${step.whyToLearn}` : null]
+            .filter(Boolean).join('\n\n') || null,
           order_index: i,
           duration: step.duration || null,
           completed: false,
-          topics: step.topics || null,
+          topics: step.whatToLearn || step.topics || null,
           task: step.task || null,
           estimated_hours: step.estimatedHours || null,
           learning_objectives: step.learningObjectives || [],
           prerequisites: step.prerequisites || [],
           milestones: step.milestones || [],
-          tasks: step.tasks || [],
+          tasks: [
+            ...(Array.isArray(step.tasks) ? step.tasks : []),
+            ...(Array.isArray(step.howToLearn) && step.howToLearn.length > 0 ? [{
+              title: 'How to learn this month',
+              description: step.howToLearn.join(' '),
+              difficulty: formData.skillLevel,
+            }] : []),
+          ],
           common_pitfalls: step.commonPitfalls || [],
           assessment_criteria: step.assessmentCriteria || [],
           real_world_examples: step.realWorldExamples || [],
@@ -340,10 +290,11 @@ const CreateRoadmap = () => {
         const stepId = insertedStep[0].id;
 
         // Insert resources for this step
-        if (step.resources && Array.isArray(step.resources) && step.resources.length > 0) {
-          const resourcePayload: TablesInsert<'roadmap_step_resources'>[] = step.resources.map((resource: any) => ({
+        const stepResources = resourceMatches[i] || [];
+        if (stepResources.length > 0) {
+          const resourcePayload: TablesInsert<'roadmap_step_resources'>[] = stepResources.map((resource) => ({
             step_id: stepId,
-            title: resource.title || 'Resource',
+            title: resource.title,
             url: resource.url || null,
             type: resource.type || 'article',
             duration: resource.duration || null,
