@@ -62,7 +62,7 @@ serve(async (req) => {
     
     // The AI produces learning guidance only. Resource links are selected client-side
     // from the active admin catalog after this response is validated.
-    const prompt = `You are an expert learning path designer with deep industry experience. Create an exceptionally detailed, actionable, and personalized learning roadmap based on the following requirements:
+    const prompt = `You are a senior curriculum architect and experienced practitioner. Design a practical, personalized learning roadmap that a learner can follow month by month.
 
 Title: ${title}
 Description: ${description}
@@ -73,7 +73,7 @@ Total Learning Duration: ${learningDuration || 'Flexible'}
 Learning Style: ${learningStyle}
 Focus Areas: ${focusAreas.join(', ')}
 
-Create a comprehensive learning roadmap with 6-10 progressive steps that fits within the ${learningDuration || 'flexible'} timeframe. Each step should build upon the previous one with MAXIMUM DETAIL AND PRACTICAL VALUE.
+Create a month-by-month roadmap that fits within ${learningDuration || 'a flexible timeframe'}. Return 4-12 ordered monthly steps (one step per month; combine or split topics when needed). Each month must have a clear theme, a small number of tightly related concepts, a learning method, a reason the month matters, measurable practice, and a concrete outcome. The sequence should resemble a text version of a roadmap diagram: foundations first, then core concepts, applied work, specialization, and a capstone or exam-ready outcome. Do not pad the roadmap with generic phases or unrelated topics.
 
 ${category === 'Exam Prep' ? 'IMPORTANT: This is for exam preparation. Focus on exam-specific study strategies, syllabus coverage, mock tests, previous year questions, time management techniques, and revision schedules. Include specific exam patterns and scoring strategies.' : ''}
 ${category === 'Non-Tech' || ['visual-arts', 'graphic-design', 'music', 'film-photography', 'writing', 'fashion', 'performing-arts', 'finance', 'marketing', 'psychology', 'education-teaching', 'law', 'languages', 'philosophy-history', 'fitness-wellness', 'culinary'].includes(category || '') ? `IMPORTANT: This is a non-technical/creative/professional skill. Tailor the roadmap to this specific domain:
@@ -85,50 +85,45 @@ ${category === 'Non-Tech' || ['visual-arts', 'graphic-design', 'music', 'film-ph
 Include community building, showcase opportunities, and real-world application throughout.` : ''}
 ${category === 'Tech' || ['software-development', 'data-science', 'cybersecurity', 'cloud-devops', 'web-mobile'].includes(category || '') ? 'IMPORTANT: This is a technical skill. Focus on hands-on coding projects, documentation reading, debugging skills, and building a technical portfolio. Include specific tools, frameworks, and best practices.' : ''}
 
-CRITICAL: DO NOT include any "resources" array in your response. Resources will be added separately from our curated database.
+CRITICAL RESOURCE RULE: Do not recommend, invent, name, or include any URLs, books, courses, videos, websites, providers, or `resources` field. A separate application process will attach matching resources only from the active admin catalog after generation. The `whereToLearn` field must be an empty array.
 
 Return your response as a valid JSON object with this EXACT structure:
 {
   "steps": [
     {
-      "title": "Specific, actionable step title",
-      "description": "Comprehensive 4-5 sentence description explaining what will be learned, why it matters, and how it connects to the bigger picture. Be extremely specific about outcomes.",
-      "duration": "X weeks",
+      "month": 1,
+      "title": "Month 1: Specific learning theme",
+      "description": "A concise explanation of what this month delivers and how it connects to the next month.",
+      "duration": "1 month",
       "estimatedHours": 40,
-      "topics": [
-        "Specific Topic 1 with concrete examples",
-        "Specific Topic 2 with real-world application",
-        "Specific Topic 3 with tools/frameworks",
-        "Topic 4", "Topic 5", "Topic 6", "Topic 7", "Topic 8"
-      ],
-      "learningObjectives": [
-        "Understand [specific concept] and apply it to [real scenario]",
-        "Be able to implement [specific feature/project]",
-        "Master [specific technique] including [details]",
-        "Explain [concept] to others clearly"
-      ],
+      "whatToLearn": ["Specific concept", "Specific technique", "Specific vocabulary or tool"],
+      "howToLearn": ["A sequenced study method with concrete practice", "A deliberate practice or review routine"],
+      "whyToLearn": "The practical reason these concepts matter for the stated goal.",
+      "whereToLearn": [],
+      "topics": ["Specific concept", "Specific technique", "Specific application"],
+      "learningObjectives": ["A measurable outcome the learner can demonstrate", "A second measurable outcome"],
       "prerequisites": ["Prerequisite 1", "Prerequisite 2"],
       "milestones": [
         {
-          "title": "Milestone 1: Specific substep",
-          "description": "What to achieve in this substep with measurable outcome",
+          "title": "Week 1: Specific checkpoint",
+          "description": "What to complete and how it will be checked.",
           "estimatedHours": 10
         },
         {
-          "title": "Milestone 2: Next substep",
-          "description": "Concrete achievement with clear deliverable",
+          "title": "Week 4: Monthly deliverable",
+          "description": "A concrete artifact or score that proves progress.",
           "estimatedHours": 15
         }
       ],
       "tasks": [
         {
-          "title": "Hands-on Project 1",
-          "description": "Build [specific thing] using [specific tools]. Include [specific features]. Expected outcome: [concrete deliverable]",
+          "title": "Monthly practice project",
+          "description": "Build or solve something specific. Include acceptance criteria and an expected deliverable.",
           "difficulty": "beginner"
         },
         {
-          "title": "Practical Exercise 2",
-          "description": "Create [specific implementation] that demonstrates [specific skill]",
+          "title": "Retrieval or exam practice",
+          "description": "Use deliberate recall, timed practice, critique, or debugging to verify the month’s skills.",
           "difficulty": "intermediate"
         }
       ],
@@ -150,18 +145,15 @@ Return your response as a valid JSON object with this EXACT structure:
 }
 
 DETAILED GUIDELINES:
-1. PROGRESSIVE LEARNING: Each step builds directly on previous ones with clear connections
-2. TOPICS (6-10 per step): Be ultra-specific - mention exact tools, frameworks, patterns, not just general concepts
-3. LEARNING OBJECTIVES (3-5): Concrete, measurable goals with real-world applications
-4. PREREQUISITES (1-3): What must be known before starting this step
-5. MILESTONES (2-4 per step): Break each step into digestible substeps with time estimates
-6. TASKS (2-3 per step): Hands-on projects with specific requirements and expected outcomes
-7. DO NOT include resources - they will be added from our database
-8. COMMON PITFALLS (2-4): Specific mistakes with actionable solutions
-9. ASSESSMENT CRITERIA (2-4): How to self-evaluate mastery
-10. REAL-WORLD EXAMPLES (2-3): Concrete industry applications or case studies
-11. ESTIMATED HOURS: Realistic based on ${timeCommitment} commitment
-12. DIFFICULTY LEVELS: Match to ${skillLevel} and progress appropriately
+1. MONTHLY STRUCTURE: Use one ordered step per month and make the title begin with "Month N:".
+2. WHAT: Keep whatToLearn and topics specific to ${focusAreas.join(', ')}; name concepts, techniques, standards, and tools only when genuinely relevant.
+3. HOW: Explain a repeatable study sequence, practice method, feedback loop, and revision routine in howToLearn and tasks.
+4. WHY: Tie every month to the learner’s goal in whyToLearn; avoid generic motivation.
+5. MILESTONES: Include 2-4 weekly checkpoints with measurable deliverables.
+6. PRACTICE: Include 2-3 tasks with acceptance criteria; tailor these to ${learningStyle} learning.
+7. ASSESSMENT: Include 2-4 observable assessment criteria and specific common pitfalls with fixes.
+8. RESOURCE SEPARATION: whereToLearn must be [] and there must be no resources, URL, provider, or named learning source anywhere in the response.
+9. ESTIMATED HOURS: Keep each month realistic for ${timeCommitment}; the whole plan must fit ${learningDuration || 'the available timeframe'}.
 
 QUALITY STANDARDS:
 ✓ Every sentence should add concrete value
@@ -254,36 +246,15 @@ Return ONLY the JSON object, no additional text or markdown formatting.`;
       throw new Error('Invalid roadmap structure from AI');
     }
 
-    console.log(`AI generated ${roadmapData.steps.length} steps, now adding resources from database...`);
-
-    // Domain keywords used to keep recommendations on-topic across steps
-    const domainKeywords = [
-      ...(focusAreas || []),
-      title,
-      category || '',
-    ].filter(Boolean);
-
-    // Add matching resources from database to each step
-    for (const step of roadmapData.steps) {
-      const stepTopics = step.topics || [];
-      const matchedResources = findMatchingResources(
-        allResources,
-        step.title,
-        stepTopics,
-        category || title,
-        domainKeywords,
-        difficultyLevels,
-        learningStyle,
-        6
-      );
-
-      step.resources = matchedResources;
-      console.log(`Step "${step.title}": Added ${matchedResources.length} resources from database`);
-    }
-
-    // Log summary
-    const totalResources = roadmapData.steps.reduce((sum: number, step: any) => sum + (step.resources?.length || 0), 0);
-    console.log(`Total: Generated roadmap with ${roadmapData.steps.length} steps and ${totalResources} curated resources`);
+    // Resource selection is intentionally not performed here. This function only
+    // returns curriculum content; the client matches active admin resources after
+    // generation so AI output can never introduce an external recommendation.
+    roadmapData.steps = roadmapData.steps.map((step: Record<string, unknown>, index: number) => ({
+      ...step,
+      month: typeof step.month === 'number' ? step.month : index + 1,
+      whereToLearn: [],
+    }));
+    console.log(`AI generated ${roadmapData.steps.length} curriculum months without resources`);
 
     return new Response(JSON.stringify(roadmapData), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
