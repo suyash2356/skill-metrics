@@ -1,36 +1,42 @@
-# Pre-launch security pass
+# Premium roadmap workspace
 
-Scan finished: **zero critical findings**. Five warnings, three of which are expected for this app's design. Nothing blocks publishing.
+## User-facing outcome
 
-## Verdict
+Turn the roadmap Steps tab into a serious 3–4 month learning workspace that people can follow week by week, while keeping Insights & Stats and My Template unchanged. The roadmap will read like a visual progression map: monthly phases, weekly actions, completion gates, a clear current step, and admin-curated resources attached to the relevant step.
 
-The site is ready for public use at your expected scale. This plan closes the two warnings that actually matter once the app is public, and tells you the one toggle to flip yourself.
+## Scope
 
-## What to fix
+- Keep existing roadmap creation, progress saving, resource storage, Insights & Stats, and My Template functionality.
+- Redesign only the roadmap header and Steps tab presentation.
+- Make each generated month an explicit phase with a sequence of weekly checkpoints.
+- Preserve the existing database shape by rendering the structured JSON already stored on `roadmap_steps`.
+- Add no new subscription or payment logic.
 
-### 1. Anonymous visitors can read post engagement
-The `post_engagement` table currently allows any unauthenticated visitor to read the whole table, which reveals which user engaged with which post. That is private behaviour data, unlike ratings and reviews which are public on purpose.
+## Implementation
 
-Fix: replace the "Anyone can read post engagement" policy with one scoped to signed-in users, keeping aggregate counts working through the existing count paths so nothing in the feed UI changes.
-
-### 2. MCP server is open once published
-The app's MCP server has authentication disabled. After publishing, anyone with the URL could call `search_resources`, `list_domains`, and `get_resource`.
-
-Fix: require auth on the MCP endpoint so only signed-in callers can use the tools. The catalog data itself is already public in the app, so the practical risk is unmetered scraping rather than data leakage — but it should still be gated.
-
-## What stays as-is (documented, not fixed)
-
-- **SECURITY DEFINER functions callable by anon / authenticated** — these are your intentional user-facing RPCs (`track_interaction`, `find_or_create_conversation`, `send_like_notification`, `has_role`, etc.). They must be callable to work, and each one validates its own caller. Internal trigger and utility functions already had EXECUTE revoked in an earlier pass. I'll record this in security memory so future scans stop re-raising it.
-
-- **Leaked password protection disabled** — this is a Supabase Auth dashboard toggle, not code. Turn it on at Authentication → Providers → Password so signups are checked against known breached passwords. One click, recommended before launch.
+1. Add a focused roadmap presentation model in `RoadmapView.tsx` that safely normalizes JSON fields such as topics, tasks, milestones, objectives, and resources.
+2. Replace the current generic phase grouping in the Steps tab with a month-based journey rail and responsive roadmap map. Each month will show its position, duration, estimated effort, completion percentage, and outcome.
+3. Add a rich active-month panel with:
+   - outcome and why it matters,
+   - what to learn,
+   - how to learn as a weekly routine,
+   - weekly checkpoints/milestones,
+   - practical deliverables and mastery checks,
+   - prerequisite/context callouts,
+   - matched admin resources.
+4. Add owner interactions without changing persistence:
+   - select a month from the journey rail,
+   - mark the month complete from the rail or detail panel,
+   - open resource links,
+   - edit existing step fields through the current edit flow.
+5. Improve roadmap-level summary UI with completion, months, weekly commitment, and next action, while retaining public/follow/delete controls.
+6. Keep Insights & Stats and My Template tabs byte-for-byte in behavior and available under the same tab labels.
+7. Update the AI generation contract only as needed to ensure 3–4 month requests produce a practical 12–16-week plan with weekly milestones and a capstone, without allowing AI-suggested resources.
+8. Validate TypeScript/build output and run the existing resource roundtrip tests; inspect the live preview for layout and runtime errors.
 
 ## Technical details
 
-- One migration: drop the permissive SELECT policy on `public.post_engagement`, add a policy restricted to `authenticated`, and adjust the `anon` grant accordingly. Verify feed like/comment counts still render for signed-out visitors; if any count path depends on anon reads, route it through an existing aggregate view instead of widening the policy back.
-- MCP: enable OAuth/JWT verification on the MCP surface (`supabase/functions/mcp` and `.lovable/mcp/manifest.json`), matching how the other authenticated functions declare `verify_jwt = true` in `supabase/config.toml`.
-- Update security memory to record the SECURITY DEFINER rationale so it isn't re-flagged.
-- Re-run the scan afterwards to confirm both warnings clear.
-
-## Not in scope
-
-No feature, UI, or recommendation changes. Publishing itself is a separate step you trigger when ready.
+- Use existing semantic design tokens and shadcn components; no raw color values in page code.
+- Avoid introducing new tables or migrations because the current `roadmap_steps` JSON columns already contain the required learning structure.
+- Keep resources sourced exclusively from `roadmap_step_resources`, which are populated from the admin catalog by the existing matcher.
+- Use responsive grid/flex layouts so the rail remains usable on narrow screens and the detail panel never overlaps the roadmap.
