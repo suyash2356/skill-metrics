@@ -42,6 +42,7 @@ import { ShareLinkDialog } from "@/components/ShareLinkDialog";
 import { useRoadmapTemplates } from "@/hooks/useRoadmapTemplates";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Database } from "@/integrations/supabase/types";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import { getSkillsForDomain } from "@/lib/roadmapSkills";
 
 type RoadmapWithUser = Database['public']['Tables']['roadmaps']['Row'] & {
@@ -230,7 +231,7 @@ const RoadmapView = () => {
   const { isFollowing, toggleFollow } = useUserFollows(roadmap?.user_id);
 
   const updateRoadmapMutation = useMutation({
-    mutationFn: async (updates: Partial<any>) => {
+    mutationFn: async (updates: TablesUpdate<'roadmaps'>) => {
       if (!id) throw new Error("Roadmap ID not found");
       const { data, error } = await supabase.from('roadmaps').update(updates).eq('id', id).select().single();
       if (error) throw error;
@@ -246,7 +247,7 @@ const RoadmapView = () => {
   });
 
   const updateStepMutation = useMutation({
-    mutationFn: async (updates: Partial<any> & { id: string }) => {
+    mutationFn: async (updates: TablesUpdate<'roadmap_steps'> & { id: string }) => {
       const { id: stepId, ...rest } = updates;
       const { data, error } = await supabase.from('roadmap_steps').update(rest).eq('id', stepId).select().single();
       if (error) throw error;

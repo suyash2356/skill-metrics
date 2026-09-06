@@ -367,9 +367,7 @@ const CreateRoadmap = () => {
       preferredLearningStyle: learningStyles.find(style => style.value === formData.preferredLearningStyle)?.label || 'Not specified',
       focusAreas: formData.focusAreas,
       deadline: formData.deadline,
-    }), 
-    [], 
-    false
+    })
   );
 
   return (
@@ -687,7 +685,7 @@ const CreateRoadmap = () => {
                     </div>
                     <div className="flex items-center space-x-2">
                       <Target className="h-4 w-4" />
-                      <span>{previewRoadmap.phases.length} phases</span>
+                      <span>{previewRoadmap.steps.length} months</span>
                     </div>
                   </div>
                 </div>
