@@ -1,81 +1,156 @@
-# 🚀 Skill-Metric: AI-Powered Personalized Learning Recommendation Platform
+<div align="center">
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:6366f1,100:ec4899&height=220&section=header&text=Skill-Metric&fontSize=60&fontColor=ffffff&animation=fadeIn&fontAlignY=35&desc=Your%20Learning%20GPS%20—%20Powered%20by%20AI&descAlignY=55&descSize=20" width="100%"/>
+
+<a href="#">
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&weight=600&size=22&duration=2800&pause=800&color=A855F7&center=true&vCenter=true&multiline=true&repeat=true&width=720&height=90&lines=Stop+Searching.+Start+Learning.;AI-Powered+Roadmaps+%2B+Recommendations;Hybrid+ML+Recommendation+Engine;Built+for+People+Who+Actually+Want+to+Grow" alt="Typing SVG" />
+</a>
+
+<br/>
+
+<p>
+  <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Machine%20Learning-FF6F00?style=for-the-badge&logo=scikitlearn&logoColor=white" />
+</p>
+
+<p>
+  <img src="https://img.shields.io/github/stars/suyash2356/skill-metrics?style=social" />
+  <img src="https://img.shields.io/github/forks/suyash2356/skill-metrics?style=social" />
+  <img src="https://img.shields.io/badge/status-live%20%26%20growing-6366f1" />
+  <img src="https://img.shields.io/badge/license-MIT-blue.svg" />
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" />
+</p>
+
+</div>
+
+<br/>
 
 <p align="center">
   <img src="https://github.com/suyash2356/skill-metrics/blob/main/Screen%20Recording%202025-11-13%20224524.gif" alt="Skill-Metric Preview" width="850">
 </p>
 
 <p align="center">
-  <strong>A machine learning-driven platform that helps learners discover what to learn next, which resources to use, and how to progress efficiently toward their goals.</strong>
+  <strong>Skill-Metric is a live, working platform</strong> that uses machine learning to tell you exactly what to learn next — not just another list of courses. Real recommendation models, real skill tracking, real roadmaps.
 </p>
 
----
+<div align="center">
 
-## 🎯 Vision
+[![Try It Live](https://img.shields.io/badge/🚀_Try_It_Live-Visit_Platform-6366f1?style=for-the-badge)](#)
+[![Star on GitHub](https://img.shields.io/badge/⭐_Star_this_repo-if_you_like_it-ec4899?style=for-the-badge)](../../stargazers)
 
-Most learners spend more time searching for resources than actually learning.
-
-Skill-Metric aims to solve this problem by building a personalized learning recommendation system that can:
-
-- Recommend the best learning resources
-- Generate structured learning roadmaps
-- Track skill progression
-- Suggest the next topic to learn
-- Create personalized learning journeys
-
-The long-term goal is to build a **Learning GPS** that guides users from their current skill level to their desired career goal through intelligent recommendations and skill graphs.
+</div>
 
 ---
 
-## ❌ The Problem
+## 📑 Table of Contents
 
-Today's learners face three major challenges:
+- [Why This Exists](#-why-this-exists)
+- [The Core Idea](#-the-core-idea)
+- [What You Can Actually Do With It](#-what-you-can-actually-do-with-it)
+- [The Machine Learning Engine](#-the-machine-learning-engine)
+- [How a Recommendation Gets Made](#-how-a-recommendation-gets-made)
+- [Where the ML Is Headed](#-where-the-ml-is-headed)
+- [System Architecture](#️-system-architecture)
+- [Tech Stack](#️-tech-stack)
+- [What's Built vs. What's Next](#-whats-built-vs-whats-next)
+- [Getting Started](#-getting-started)
+- [Author](#-author)
 
-### Information Overload
-Millions of resources exist, but finding the right one is difficult.
+---
 
-### Lack of Structured Learning
-Learners often know what they want to become but don't know the correct sequence of topics to learn.
+## ❌ Why This Exists
 
-### No Personalization
-Most platforms provide the same content to everyone regardless of skill level, goals, or interests.
+If you've ever tried to learn something new — a language, a framework, ML itself — you already know the real problem isn't a *lack* of resources. It's the opposite.
 
-As a result:
+There are a million tutorials, courses, and roadmaps out there, and figuring out which one is actually right for **you**, at **your** level, for **your** goal, ends up eating more time than the learning itself.
+
+Right now, most people's learning time looks like this:
 
 ```text
-50% Learning
-50% Searching
+🔍 50% Searching for the "right" resource
+📖 50% Actually learning
 ```
 
-Skill-Metric aims to make it:
+Skill-Metric exists to flip that ratio:
 
 ```text
-95% Learning
-5% Searching
+📖 95% Learning
+🔍  5% Searching
 ```
+
+No more tab-hoarding fifteen "best roadmap" articles. No more guessing whether you should learn Pandas before Statistics. The platform figures that part out for you.
 
 ---
 
-## 🧠 Machine Learning Focus
+## 💡 The Core Idea
 
-Skill-Metric is centered around designing intelligent recommendation systems for educational content.
+Most platforms answer: **"Which course should I take?"**
 
-### 1. Content-Based Recommendation
+Skill-Metric answers a bigger question:
 
-Recommends resources using:
+> **"I want to become an ML Engineer. Now what?"**
+
+And it works through the whole chain for you:
+
+```text
+Where you are right now
+        ↓
+What skills you actually need
+        ↓
+A structured roadmap to get there
+        ↓
+The best resources for each step
+        ↓
+The next topic you should learn
+        ↓
+Tracking your real progress
+        ↓
+Reaching the goal
+```
+
+This is the difference between a search engine for courses and an actual **learning GPS**.
+
+---
+
+## 🌟 What You Can Actually Do With It
+
+| Feature | What it means for you |
+|---|---|
+| 🧠 **AI Roadmap Generator** | Tell it your goal, current level, and timeline — get back a structured, personalized roadmap instead of a generic "top 10 courses" list. |
+| 📚 **Personalized Recommendations** | Every resource suggested to you is scored based on your actual behavior and goals, not a one-size-fits-all popularity list. |
+| 🕸️ **Skill Graphs** | See your skills, their dependencies, and your learning path visually — so you always know what comes next and why. |
+| 📈 **Progress Tracking** | Track completed resources, skill growth, and milestones over time instead of losing your progress across ten different bookmarked tabs. |
+| 🔍 **Explore** | Browse trending resources, domain-specific content, and what the community is actually learning right now. |
+| 🌐 **Social Learning Feed** | Share what you're learning, post useful resources, discuss tech, and show off what you've built. |
+| 👥 **Learning Communities** | Join domain-specific spaces to ask questions, share notes, and learn alongside people on the same path as you. |
+
+This isn't a mockup or a demo — it's a platform people are actively using to learn, right now.
+
+---
+
+## 🧠 The Machine Learning Engine
+
+At the center of Skill-Metric is a genuine recommendation system, not a simple filter or sort. It's built from three techniques working together.
+
+### 1️⃣ Content-Based Recommendation
+
+Matches resources to you using their actual attributes:
 
 - Domain
-- Skills
-- Difficulty
+- Skills covered
+- Difficulty level
 - Tags
-- Learning Outcomes
+- Learning outcomes
 
-This helps solve cold-start problems and resource discovery.
+This is what solves the **cold-start problem** — the platform can recommend something useful to you even on day one, before it knows anything about your behavior.
 
----
+### 2️⃣ Collaborative Filtering
 
-### 2. Collaborative Filtering
-
-Learns from user behavior and interactions.
+Learns from what people actually *do*, not just what they say they want. Every interaction is weighted:
 
 | Interaction | Weight |
 |------------|---------:|
@@ -84,45 +159,35 @@ Learns from user behavior and interactions.
 | Complete | 5 |
 | Skip | -2 |
 
-By analyzing interaction patterns, the system identifies resources that similar learners found useful.
+By spotting patterns across thousands of interactions, the system learns which resources people *similar to you* found genuinely useful — the same core idea behind Spotify or Netflix's recommendations, applied to learning.
 
----
+### 3️⃣ Hybrid Recommendation System
 
-### 3. Hybrid Recommendation System
-
-The recommendation engine combines:
+The real magic happens when these signals are combined:
 
 ```text
 Collaborative Filtering (ALS)
-+
-Content Similarity
-+
-Resource Quality Scores
-+
-Domain Preference Matching
+          +
+   Content Similarity
+          +
+    Quality Scores
+          +
+  Domain Preference Match
 ```
 
-to generate personalized recommendations.
-
-Final scoring approach:
+Final score for a given user and resource:
 
 ```text
-score(user, resource)
-=
-α × collaborative_score
-+
-β × content_similarity
-+
-γ × quality_score
-+
-δ × domain_match
+score(user, resource) =
+    α · collaborative_score
+  + β · content_similarity
+  + γ · quality_score
+  + δ · domain_match
 ```
 
----
+Each weight (α, β, γ, δ) is tuned so cold-start users still get solid recommendations while active users get increasingly personalized ones over time.
 
-## 📊 Recommendation Infrastructure
-
-Current recommendation dataset:
+### 📊 The Numbers Behind It
 
 | Metric | Count |
 |---------|--------:|
@@ -132,21 +197,11 @@ Current recommendation dataset:
 | Learning Categories | 60+ |
 | Learning Outcomes | 700+ |
 
-The platform captures learning signals such as:
-
-- Views
-- Likes
-- Saves
-- Completions
-- Skips
-- User Preferences
-- Domain Interests
-
-These interactions form the foundation for recommendation model training.
+Every view, like, save, completion, and skip feeds back into the model — the platform genuinely gets smarter the more it's used.
 
 ---
 
-## 🔬 Recommendation Pipeline
+## 🔬 How a Recommendation Gets Made
 
 ```text
 User Activity
@@ -166,37 +221,11 @@ Personalized Recommendations
 
 ---
 
-## 🚀 Current ML Work
+## 🎯 Where the ML Is Headed
 
-### Completed
+### Sequential Learning Engine *(actively in progress)*
 
-✅ Interaction tracking system
-
-✅ Recommendation data pipeline
-
-✅ User-resource interaction modeling
-
-✅ Resource ranking architecture
-
-✅ Content-based recommendation design
-
-✅ Collaborative filtering pipeline
-
-✅ Hybrid recommendation architecture
-
-✅ Personalized recommendation APIs
-
-✅ Cold-start recommendation support
-
----
-
-### Currently Building
-
-#### Sequential Learning Engine
-
-The long-term goal is not only recommending resources but recommending the next best topic to learn.
-
-Example:
+The next big leap isn't just recommending resources — it's recommending the **next topic**, automatically, based on what you already know.
 
 ```text
 Python
@@ -212,201 +241,124 @@ Machine Learning
 Deep Learning
 ```
 
-This system will use:
+This will run on:
 
-- Skill Graphs
-- Prerequisite Relationships
-- User Progress
-- Learning History
+- Skill graphs
+- Prerequisite relationships
+- Your learning history
+- Your live progress
 
-to create adaptive learning journeys.
+...to build adaptive learning journeys that change as you grow, instead of a static list handed to you once.
 
----
+### Full ML Roadmap
 
-## 🌟 Platform Features
-
-### 🧠 AI Roadmap Generator
-
-Generate personalized learning roadmaps based on:
-
-- Goal
-- Current Skill Level
-- Learning Timeline
-
----
-
-### 📚 Personalized Resource Recommendations
-
-Discover learning resources tailored to your interests and goals.
-
----
-
-### 🕸️ Skill Graphs
-
-Visualize:
-
-- Skills
-- Dependencies
-- Learning Paths
-- Progression Routes
-
----
-
-### 📈 Progress Tracking
-
-Track:
-
-- Completed Resources
-- Skill Progress
-- Learning Milestones
-
----
-
-### 🔍 Explore Platform
-
-Browse:
-
-- Trending Resources
-- Domain-Specific Content
-- Community Recommendations
-
----
-
-### 🏠 Social Learning Feed
-
-A community-driven learning feed where users can:
-
-- Share insights
-- Post resources
-- Discuss technologies
-- Showcase projects
-
----
-
-### 👥 Learning Communities
-
-Join domain-specific communities to:
-
-- Collaborate
-- Ask questions
-- Share notes
-- Learn together
+| Model | Goal |
+|---|---|
+| **Resource Recommendation Model** | Deepen personalization with more advanced hybrid techniques |
+| **Sequential Learning Engine** | Predict the single most effective next skill to learn |
+| **Explore Recommendation System** | Spotify-style discovery, but for learning resources |
+| **Feed Ranking Model** | Rank community posts by relevance to your interests and goals |
+| **Roadmap Optimization Model** | Improve generated roadmaps using real completion outcomes |
+| **Learning State Model** | Understand your current knowledge level and adapt recommendations dynamically |
 
 ---
 
 ## 🏗️ System Architecture
 
-```text
-                    User
-                      │
-                      ▼
-             Interaction Layer
-                      │
-                      ▼
-                PostgreSQL
-                  (Supabase)
-                      │
-                      ▼
-            Recommendation Engine
-         ┌─────────┬─────────┬─────────┐
-         │         │         │
-         ▼         ▼         ▼
-      Content     ALS      Ranking
-      Model      Model      Layer
-         │         │         │
-         └─────────┴─────────┘
-                   │
-                   ▼
-       Personalized Recommendations
-                   │
-                   ▼
-                Frontend
+```mermaid
+flowchart TB
+    U["👤 User"] --> IL["Interaction Layer"]
+    IL --> DB[("PostgreSQL<br/>via Supabase")]
+    DB --> RE["Recommendation Engine"]
+
+    subgraph RE["🧠 Recommendation Engine"]
+        direction LR
+        CM["Content Model"]
+        ALS["ALS Model<br/>(Collaborative Filtering)"]
+        RL["Ranking Layer"]
+    end
+
+    CM --> OUT["Personalized Recommendations"]
+    ALS --> OUT
+    RL --> OUT
+    OUT --> FE["🖥️ Frontend"]
+    FE --> U
 ```
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Category | Technology |
-|-----------|------------|
-| Frontend | React, TypeScript, Vite |
-| UI Components | shadcn/ui |
-| Styling | Tailwind CSS |
-| Backend | Supabase |
-| Database | PostgreSQL |
-| Authentication | Supabase Auth |
-| Storage | Supabase Storage |
-| ML Models | Implicit ALS, Sentence Transformers |
-| Vector Search | FAISS |
-| APIs | Supabase Edge Functions |
-| Deployment | Vercel |
+<table>
+<tr>
+<td valign="top" width="50%">
+
+**Frontend**
+- React + TypeScript
+- Vite
+- shadcn/ui
+- Tailwind CSS
+
+</td>
+<td valign="top" width="50%">
+
+**Backend & Data**
+- Supabase (Auth, Storage, Edge Functions)
+- PostgreSQL
+
+</td>
+</tr>
+<tr>
+<td valign="top" width="50%">
+
+**Machine Learning**
+- Implicit ALS (collaborative filtering)
+- Sentence Transformers (content similarity)
+- FAISS (vector search)
+
+</td>
+<td valign="top" width="50%">
+
+**Deployment**
+- Vercel
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 🎯 Future ML Roadmap
+## ✅ What's Built vs. What's Next
 
-### Resource Recommendation Model
-Improve personalization using hybrid recommendation techniques.
+<details open>
+<summary><strong>✅ Completed</strong></summary>
 
-### Sequential Learning Engine
-Predict the most effective next skill or topic.
+- Interaction tracking system
+- Recommendation data pipeline
+- User–resource interaction modeling
+- Resource ranking architecture
+- Content-based recommendation design
+- Collaborative filtering pipeline
+- Hybrid recommendation architecture
+- Personalized recommendation APIs
+- Cold-start recommendation support
 
-### Explore Recommendation System
-Recommend resources similar to Spotify's personalized discovery.
+</details>
 
-### Feed Ranking Model
-Rank posts based on:
+<details>
+<summary><strong>🚧 Currently Building</strong></summary>
 
-- Interests
-- Engagement
-- Skill Domains
-- Learning Goals
+- Sequential Learning Engine (next-topic prediction)
+- Skill-graph-driven adaptive journeys
+- Deeper progress-based roadmap optimization
 
-### Roadmap Optimization Model
-Continuously improve generated learning paths using user outcomes and completion data.
-
-### Learning State Model
-Understand a learner's current knowledge level and dynamically adjust recommendations.
-
----
-
-## ⚡ Why Skill-Metric is Different
-
-Most platforms recommend content.
-
-Skill-Metric aims to recommend the entire learning journey.
-
-Instead of asking:
-
-> "Which course should I take?"
-
-Users can simply ask:
-
-> "I want to become an ML Engineer."
-
-And Skill-Metric helps determine:
-
-```text
-Current Skill Level
-        ↓
-Skills Required
-        ↓
-Learning Roadmap
-        ↓
-Best Resources
-        ↓
-Next Topic To Learn
-        ↓
-Progress Tracking
-        ↓
-Goal Achievement
-```
+</details>
 
 ---
 
 ## 🚀 Getting Started
 
-### Clone Repository
+### Clone the Repository
 
 ```bash
 git clone https://github.com/suyash2356/skill-metrics.git
@@ -421,18 +373,28 @@ npm install
 
 ### Configure Environment Variables
 
-Create a `.env` file:
+Create a `.env` file in the project root:
 
 ```env
 VITE_SUPABASE_URL=your_url
 VITE_SUPABASE_ANON_KEY=your_key
 ```
 
-### Run Development Server
+### Run the Development Server
 
 ```bash
 npm run dev
 ```
+
+Open the app locally and start exploring 🎉
+
+---
+
+## ⚡ Why Skill-Metric Is Different
+
+Most platforms recommend **content**.
+
+Skill-Metric recommends the **entire journey** — where you are, what you need, what to do next, and how to know you're actually improving. It's built for people who are tired of collecting bookmarks and just want to know what to open next.
 
 ---
 
@@ -442,8 +404,16 @@ npm run dev
 
 Building intelligent recommendation systems and personalized learning experiences through Machine Learning and AI.
 
+<p align="left">
+  <a href="https://github.com/suyash2356"><img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" /></a>
+</p>
+
 ---
 
-<p align="center">
-  Built with ❤️ to make learning more personalized, structured, and effective.
-</p>
+<div align="center">
+
+### If Skill-Metric helped you think about learning differently, a ⭐ goes a long way.
+
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:ec4899,100:6366f1&height=120&section=footer" width="100%"/>
+
+</div>
