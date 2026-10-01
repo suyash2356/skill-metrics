@@ -302,23 +302,6 @@ const Home = () => {
     },
   });
 
-  // My Roadmaps (left sidebar)
-  const { data: myRoadmaps = [], isLoading: isLoadingMyRoadmaps } = useQuery({
-    queryKey: ['myRoadmaps', user?.id],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('roadmaps')
-        .select('id, title, progress, status')
-        .eq('user_id', user.id)
-        .order('updated_at', { ascending: false })
-        .limit(3);
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!user,
-  });
-
   // My External Community Links (left sidebar)
   const { links: myCommunityLinks, isLoading: isLoadingMyCommunityLinks, deleteLink } = useExternalCommunityLinks();
 
@@ -464,28 +447,39 @@ const Home = () => {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-6">
           {/* Left Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
-            <Card>
-              <CardContent className="p-4">
-                <h2 className="font-semibold mb-4 text-base">My Roadmaps</h2>
-                <div className="space-y-2">
-                  {isLoadingMyRoadmaps ? (
-                    <div className="text-sm text-muted-foreground">Loading...</div>
-                  ) : myRoadmaps.length === 0 ? (
-                    <div className="text-sm text-muted-foreground">No roadmaps yet</div>
-                  ) : (
-                    myRoadmaps.map((r: any) => (
-                      <Link key={r.id} to={`/roadmaps/${r.id}`} className="flex items-center justify-between text-sm hover:text-primary">
-                        <span>{r.title}</span>
-                        <Badge variant="secondary">{r.progress || 0}%</Badge>
+            {/* Recommended Roadmaps */}
+            {personalizedData && personalizedData.roadmaps.length > 0 && (
+              <Card className="border-primary/20">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <h2 className="font-semibold text-base">Recommended for You</h2>
+                  </div>
+                  <div className="space-y-3">
+                    {personalizedData.roadmaps.slice(0, 3).map((roadmap) => (
+                      <Link
+                        key={roadmap.id}
+                        to={`/roadmaps/${roadmap.id}`}
+                        className="block p-3 rounded-lg hover:bg-accent/50 transition-colors border border-border"
+                      >
+                        <div className="flex items-start justify-between mb-1">
+                          <h4 className="font-medium text-sm line-clamp-1">{roadmap.title}</h4>
+                          <Badge variant="secondary" className="text-xs">{roadmap.score}%</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
+                          {roadmap.description}
+                        </p>
+                        {roadmap.recommendation_reason && (
+                          <p className="text-xs text-primary italic">
+                            💡 {roadmap.recommendation_reason}
+                          </p>
+                        )}
                       </Link>
-                    ))
-                  )}
-                </div>
-                <Link to="/create-roadmap">
-                  <Button className="w-full mt-4" size="sm"><Plus className="h-4 w-4 mr-2" />Create Roadmap</Button>
-                </Link>
-              </CardContent>
-            </Card>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
             <Card>
               <CardContent className="p-4">
                 <h2 className="font-semibold mb-4 text-base">My Communities</h2>
