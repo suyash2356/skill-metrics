@@ -66,6 +66,7 @@ interface InstagramPostProps {
   onHide?: () => void;
   connectedAbove?: boolean;
   connectedBelow?: boolean;
+  fillWidth?: boolean;
 }
 
 import { SharePostDialog } from "./SharePostDialog";
@@ -82,6 +83,7 @@ export const InstagramPost = ({
   onHide,
   connectedAbove = false,
   connectedBelow = false,
+  fillWidth = false,
 }: InstagramPostProps) => {
   const [imageError, setImageError] = useState(false);
   const [reportDialogOpen, setReportDialogOpen] = useState(false);
@@ -401,7 +403,7 @@ export const InstagramPost = ({
           <div className="w-px bg-slate-200 h-full" />
         </div>
       )}
-      <Card className={`w-full max-w-[470px] mx-auto border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg ${isTextOnlyPost ? 'min-h-[280px]' : ''}`}>
+      <Card className={`w-full ${fillWidth ? '' : 'max-w-[470px] mx-auto'} border-0 sm:border shadow-none sm:shadow-sm bg-card mb-4 sm:mb-6 rounded-none sm:rounded-lg ${isTextOnlyPost ? 'min-h-[280px]' : ''}`}>
         {/* small pointed square to visually connect to the line */}
         {(connectedAbove || connectedBelow) && (
           <div className="absolute left-2 top-3 w-3 h-3 bg-slate-200 rotate-45 transform" style={{ zIndex: 10 }} />

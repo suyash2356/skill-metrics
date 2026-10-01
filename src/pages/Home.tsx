@@ -444,9 +444,9 @@ const Home = () => {
       />
       <div className="w-full max-w-7xl mx-auto">
         <h1 className="sr-only">Your Learning Feed</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[6fr_11fr_6fr] gap-0 lg:gap-4">
           {/* Left Sidebar - Hidden on mobile */}
-          <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
+          <aside className="hidden lg:block space-y-4 sticky top-20 self-start">
             {/* Recommended Roadmaps */}
             {personalizedData && personalizedData.roadmaps.length > 0 && (
               <Card className="border-primary/20">
@@ -515,7 +515,7 @@ const Home = () => {
           </aside>
 
           {/* Main Feed - Full width on mobile, centered on desktop */}
-          <main className="w-full lg:col-span-6 px-0">
+          <main className="w-full px-0 min-w-0">
 
             {(isLoadingPosts || (isLoadingPersonalized && (!displayFeed || displayFeed.length === 0))) ? (
               <div className="flex flex-col space-y-6 py-4">
@@ -571,6 +571,7 @@ const Home = () => {
                     >
                       <InstagramPost
                         post={post}
+                        fillWidth
                         isLiked={likedPosts.has(post.id)}
                         isBookmarked={bookmarkedPosts.has(post.id)}
                         isRecommended={post.score && post.score > 70}
@@ -593,7 +594,7 @@ const Home = () => {
           </main>
 
           {/* Right Sidebar - Hidden on mobile */}
-          <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
+          <aside className="hidden lg:block space-y-4 sticky top-20 self-start">
             <Card>
               <CardContent className="p-4">
                 <h2 className="font-semibold mb-4 text-base">Trending Topics</h2>
