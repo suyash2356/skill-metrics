@@ -594,42 +594,6 @@ const Home = () => {
 
           {/* Right Sidebar - Hidden on mobile */}
           <aside className="hidden lg:block lg:col-span-3 space-y-4 sticky top-20 self-start">
-
-
-            {/* Recommended Roadmaps */}
-            {personalizedData && personalizedData.roadmaps.length > 0 && (
-              <Card className="border-primary/20">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    <h2 className="font-semibold text-base">Recommended for You</h2>
-                  </div>
-                  <div className="space-y-3">
-                    {personalizedData.roadmaps.slice(0, 3).map((roadmap) => (
-                      <Link
-                        key={roadmap.id}
-                        to={`/roadmaps/${roadmap.id}`}
-                        className="block p-3 rounded-lg hover:bg-accent/50 transition-colors border border-border"
-                      >
-                        <div className="flex items-start justify-between mb-1">
-                          <h4 className="font-medium text-sm line-clamp-1">{roadmap.title}</h4>
-                          <Badge variant="secondary" className="text-xs">{roadmap.score}%</Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                          {roadmap.description}
-                        </p>
-                        {roadmap.recommendation_reason && (
-                          <p className="text-xs text-primary italic">
-                            💡 {roadmap.recommendation_reason}
-                          </p>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
             <Card>
               <CardContent className="p-4">
                 <h2 className="font-semibold mb-4 text-base">Trending Topics</h2>
