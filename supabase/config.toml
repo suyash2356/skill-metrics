@@ -1,5 +1,9 @@
 project_id = "vecdjxbrkaqpvftwoafj"
 
+# Let the MCP server validate OAuth bearer tokens itself.
+[functions.mcp]
+verify_jwt = false
+
 [functions.generate-roadmap]
 verify_jwt = true
 
