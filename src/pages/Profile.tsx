@@ -216,40 +216,6 @@ const Profile = () => {
     enabled: !!targetUserId && canViewProfile,
   });
 
-  const { data: userActivity, isLoading: isLoadingActivity } = useQuery({
-    queryKey: ['userActivity', targetUserId, currentUser?.id],
-    queryFn: async () => {
-      if (!targetUserId) return [];
-      const isOwn = currentUser?.id === targetUserId;
-      if (isOwn) {
-        // Owner reads their own rows from the unified event spine (RLS allows it)
-        const { data, error } = await (supabase as any)
-          .from('interaction_events')
-          .select('id, user_id, event_type, subject_type, subject_id, occurred_at')
-          .eq('user_id', targetUserId)
-          .order('occurred_at', { ascending: false })
-          .limit(20);
-        if (error) throw error;
-        return (data || []).map((e: any) => ({
-          id: e.id,
-          user_id: e.user_id,
-          activity_type: e.event_type,
-          post_id: e.subject_type === 'post' ? e.subject_id : null,
-          roadmap_id: e.subject_type === 'roadmap' ? e.subject_id : null,
-          target_user_id: e.subject_type === 'profile' ? e.subject_id : null,
-          created_at: e.occurred_at,
-        }));
-      } else {
-        // Non-owner: use RPC that strips sensitive columns
-        const { data, error } = await supabase.rpc('get_visible_user_activity' as any, {
-          target_user_id: targetUserId,
-        });
-        if (error) throw error;
-        return (data || []).slice(0, 20);
-      }
-    },
-    enabled: !!targetUserId && canViewProfile,
-  });
 
   const { data: userPosts, isLoading: isLoadingUserPosts } = useQuery({
     queryKey: ['userPosts', targetUserId],
@@ -876,31 +842,9 @@ const Profile = () => {
 
             <TabsContent value="activity">
               <Card>
-                <CardHeader><CardTitle>Learning Activity</CardTitle></CardHeader>
+                <CardHeader><CardTitle>Posts</CardTitle></CardHeader>
                 <CardContent>
-                  {isLoadingActivity ? <p>Loading activity...</p> : (userActivity || []).length === 0 ? null : (
-                    <div className="space-y-3">
-                      {(userActivity || []).map((activity: any) => (
-                        <div key={activity.id} className="flex items-start gap-3 p-3 border rounded-lg hover:bg-muted/50">
-                          <div className="mt-1">
-                            {activity.activity_type === 'post_created' && <BookOpen className="h-5 w-5 text-blue-500" />}
-                            {activity.activity_type === 'roadmap_created' && <Target className="h-5 w-5 text-green-500" />}
-                            {activity.activity_type === 'comment_created' && <Users className="h-5 w-5 text-purple-500" />}
-                            {activity.activity_type === 'like' && <Star className="h-5 w-5 text-yellow-500" />}
-                            {!['post_created', 'roadmap_created', 'comment_created', 'like'].includes(activity.activity_type) && <TrendingUp className="h-5 w-5 text-gray-500" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm"><span className="font-medium">{activity.activity_type.replace(/_/g, ' ')}</span>
-                              {activity.metadata?.title && <span className="text-muted-foreground">: {activity.metadata.title}</span>}
-                            </p>
-                            <p className="text-xs text-muted-foreground mt-1">{new Date(activity.created_at).toLocaleString()}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {/* User posts section */}
-                  <div className="mt-6">
+                  <div>
                     <h3 className="text-lg font-semibold mb-3">Posts</h3>
                     {isLoadingUserPosts ? (
                       <p>Loading posts...</p>
