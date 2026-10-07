@@ -71,7 +71,7 @@ export function ResourceDetailsDialog({ resource, onClose, onContinue }: Resourc
           <>
             <DialogHeader className="space-y-3 text-left">
               <div className="flex flex-wrap items-center gap-2">
-                {resource.type && <Badge variant="outline" className="capitalize">{resource.type.replaceAll("_", " ")}</Badge>}
+                {resource.type && <Badge variant="outline" className="capitalize">{resource.type.replace(/_/g, " ")}</Badge>}
                 {resource.rating != null && String(resource.rating).trim() !== "" && (
                   <Badge variant="secondary" className="gap-1">
                     <Star className="h-3 w-3 fill-current" /> {resource.rating}
