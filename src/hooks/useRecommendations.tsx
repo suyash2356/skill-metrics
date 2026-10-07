@@ -15,6 +15,8 @@ export interface MLRecommendation {
   category?: string | null;
   domain?: string | null;
   difficulty?: string | null;
+  resource_type?: string | null;
+  related_skills?: string[] | null;
   weighted_rating?: number | null;
   total_ratings?: number | null;
 }

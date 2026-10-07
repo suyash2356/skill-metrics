@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { iconMap, cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
 import type { PersonalizedExploreData } from "@/hooks/usePersonalizedExplore";
 import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
+import { ResourceDetailsDialog, type ResourcePreviewData } from "./ResourceDetailsDialog";
 
 interface ResourcesTabProps {
   personalizedData: PersonalizedExploreData;
@@ -15,6 +16,7 @@ interface ResourcesTabProps {
 
 export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
+  const [selectedResource, setSelectedResource] = useState<ResourcePreviewData | null>(null);
 
   const filteredResources = personalizedData.trendingResources.filter((scoredRes) => {
     if (difficultyFilter !== "all" && scoredRes.item.difficulty !== difficultyFilter) return false;
@@ -85,7 +87,21 @@ export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <Card
-                  onClick={() => window.open(res.link, "_blank")}
+                  onClick={() => setSelectedResource({
+                    title: res.title,
+                    description: res.description,
+                    link: res.link,
+                    type: res.resourceType || "Learning resource",
+                    provider: res.provider,
+                    category: res.category,
+                    difficulty: res.difficulty,
+                    estimatedTime: res.estimatedTime,
+                    duration: res.duration,
+                    rating: res.weighted_rating ?? res.avg_rating,
+                    relatedSkills: res.relatedSkills,
+                    prerequisites: res.prerequisites,
+                    relevantBackgrounds: res.relevantBackgrounds,
+                  })}
                   className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-orange-500/30 shadow-sm hover:shadow-lg transition-all h-[180px] flex flex-col group"
                 >
                   <CardHeader className="flex flex-row items-start gap-3 p-4">
@@ -112,6 +128,7 @@ export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
         </div>
       )}
       </div>
-    </section>
+      <ResourceDetailsDialog resource={selectedResource} onClose={() => setSelectedResource(null)} />
+      </section>
   );
 }

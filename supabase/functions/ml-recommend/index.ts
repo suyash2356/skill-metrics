@@ -334,6 +334,8 @@ Deno.serve(async (req: Request) => {
         category: r.category,
         domain: r.domain,
         difficulty: r.difficulty,
+        resource_type: r.resource_type,
+        related_skills: r.related_skills,
         weighted_rating: r.weighted_rating,
         total_ratings: r.total_ratings,
         score: Number(score.toFixed(4)),
