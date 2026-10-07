@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -6,6 +7,7 @@ import { Sparkles, ExternalLink, Star, AlertTriangle, Database, Globe2 } from "l
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { ResourceDetailsDialog, type ResourcePreviewData } from "@/components/explore/ResourceDetailsDialog";
 import {
   useHybridRecommendations,
   useLogImpressions,
@@ -46,6 +48,8 @@ export function MLRecommendationsSection({
   resourceTypes = null,
   ignoreDomain,
 }: MLRecommendationsSectionProps) {
+  const [selectedResource, setSelectedResource] = useState<ResourcePreviewData | null>(null);
+  const [selectedResourceId, setSelectedResourceId] = useState<string | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   // Default behavior: explore surface feeds ALL admin domains together.
@@ -68,8 +72,16 @@ export function MLRecommendationsSection({
 
   const handleClick = (rec: MLRecommendation, idx: number) => {
     if (user?.id) logRecommendationClick(user.id, rec, idx + 1, surface);
-    if (rec.link) window.open(rec.link, "_blank");
-    else navigate(`/resources/${rec.id}?source=resources`);
+    setSelectedResourceId(rec.id);
+    setSelectedResource({
+      title: rec.title,
+      description: rec.description,
+      link: rec.link,
+      type: resourceType || resourceTypes?.[0] || "Learning resource",
+      category: rec.category,
+      difficulty: rec.difficulty,
+      rating: rec.weighted_rating,
+    });
   };
 
   return (
@@ -180,6 +192,18 @@ export function MLRecommendationsSection({
           ))}
         </div>
       )}
+      <ResourceDetailsDialog
+        resource={selectedResource}
+        onClose={() => { setSelectedResource(null); setSelectedResourceId(null); }}
+        onContinue={selectedResource
+          ? () => {
+              if (selectedResource.link) window.open(selectedResource.link, "_blank", "noopener,noreferrer");
+              else if (selectedResourceId) navigate(`/resources/${selectedResourceId}?source=resources`);
+              setSelectedResource(null);
+              setSelectedResourceId(null);
+            }
+          : undefined}
+      />
     </section>
   );
 }
