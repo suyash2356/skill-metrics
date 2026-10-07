@@ -91,10 +91,15 @@ export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
                     title: res.title,
                     description: res.description,
                     link: res.link,
-                    type: "Learning resource",
+                    type: res.resourceType || "Learning resource",
+                    provider: res.provider,
+                    category: res.category,
                     difficulty: res.difficulty,
+                    estimatedTime: res.estimatedTime,
+                    duration: res.duration,
                     rating: res.weighted_rating ?? res.avg_rating,
                     relatedSkills: res.relatedSkills,
+                    prerequisites: res.prerequisites,
                     relevantBackgrounds: res.relevantBackgrounds,
                   })}
                   className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-orange-500/30 shadow-sm hover:shadow-lg transition-all h-[180px] flex flex-col group"

@@ -27,6 +27,12 @@ export interface TrendingResource {
   difficulty: string;
   relevantBackgrounds: string[];
   relatedSkills: string[];
+  provider?: string | null;
+  category?: string | null;
+  resourceType?: string | null;
+  estimatedTime?: string | null;
+  duration?: string | null;
+  prerequisites?: string[] | null;
   avg_rating?: number | null;
   weighted_rating?: number | null;
   total_ratings?: number | null;

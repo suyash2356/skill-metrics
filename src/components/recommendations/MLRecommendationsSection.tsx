@@ -77,10 +77,11 @@ export function MLRecommendationsSection({
       title: rec.title,
       description: rec.description,
       link: rec.link,
-      type: resourceType || resourceTypes?.[0] || "Learning resource",
+      type: rec.resource_type || resourceType || resourceTypes?.[0] || "Learning resource",
       category: rec.category,
       difficulty: rec.difficulty,
       rating: rec.weighted_rating,
+      relatedSkills: rec.related_skills,
     });
   };
 
