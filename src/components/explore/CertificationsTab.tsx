@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { iconMap, cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
 import type { PersonalizedExploreData } from "@/hooks/usePersonalizedExplore";
 import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
+import { ResourceDetailsDialog, type ResourcePreviewData } from "./ResourceDetailsDialog";
 
 interface CertificationsTabProps {
   personalizedData: PersonalizedExploreData;
@@ -16,6 +17,7 @@ interface CertificationsTabProps {
 export function CertificationsTab({ personalizedData }: CertificationsTabProps) {
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [costFilter, setCostFilter] = useState<string>("all");
+  const [selectedCertification, setSelectedCertification] = useState<ResourcePreviewData | null>(null);
 
   const filteredCerts = personalizedData.certifications.filter((scoredCert) => {
     const cert = scoredCert.item;
@@ -100,7 +102,20 @@ export function CertificationsTab({ personalizedData }: CertificationsTabProps) 
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 <Card
-                  onClick={() => window.open(cert.link, "_blank")}
+                  onClick={() => setSelectedCertification({
+                    title: cert.name,
+                    description: cert.description,
+                    link: cert.link,
+                    type: "Certification",
+                    provider: cert.provider,
+                    category: cert.domain,
+                    difficulty: cert.difficulty,
+                    estimatedTime: cert.estimatedTime,
+                    cost: cert.cost,
+                    rating: cert.avg_rating,
+                    relatedSkills: cert.relatedSkills,
+                    relevantBackgrounds: cert.relevantBackgrounds,
+                  })}
                   className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-amber-500/30 shadow-sm hover:shadow-lg transition-all h-[180px] flex flex-col"
                 >
                   <CardHeader className="flex flex-row items-start gap-3 p-4">
@@ -134,6 +149,7 @@ export function CertificationsTab({ personalizedData }: CertificationsTabProps) 
           })}
         </div>
       )}
+      <ResourceDetailsDialog resource={selectedCertification} onClose={() => setSelectedCertification(null)} />
     </section>
   );
 }

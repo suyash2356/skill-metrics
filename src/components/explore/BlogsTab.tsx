@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FileText, BookOpen, Star, ExternalLink } from "lucide-react";
 import { motion } from "framer-motion";
 import { cardVariants, CardGridSkeleton, EmptyState } from "./ExploreShared";
 import { MLRecommendationsSection } from "@/components/recommendations/MLRecommendationsSection";
+import { ResourceDetailsDialog, type ResourcePreviewData } from "./ResourceDetailsDialog";
 
 interface BlogsTabProps {
   blogsAndPapers: any[] | undefined;
@@ -11,6 +13,7 @@ interface BlogsTabProps {
 }
 
 export function BlogsTab({ blogsAndPapers, blogsLoading }: BlogsTabProps) {
+  const [selectedResource, setSelectedResource] = useState<ResourcePreviewData | null>(null);
   return (
     <section className="space-y-10">
       <div>
@@ -51,7 +54,7 @@ export function BlogsTab({ blogsAndPapers, blogsLoading }: BlogsTabProps) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {blogsAndPapers.filter(item => item.type === 'research_paper').slice(0, 6).map((item: any, i) => (
                 <motion.div key={`paper-${i}`} initial="hidden" animate="visible" custom={i} variants={cardVariants} whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}>
-                  <Card onClick={() => window.open(item.link, "_blank")} className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-violet-500/30 shadow-sm hover:shadow-lg transition-all h-[220px] flex flex-col group">
+                  <Card onClick={() => setSelectedResource({ title: item.title, description: item.description, link: item.link, type: "Research paper", provider: item.provider, category: item.category, difficulty: item.difficulty, rating: item.avg_rating ?? item.rating, relatedSkills: item.relatedSkills, relevantBackgrounds: item.relevantBackgrounds })} className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-violet-500/30 shadow-sm hover:shadow-lg transition-all h-[220px] flex flex-col group">
                     <CardHeader className="flex flex-row items-start gap-3 p-4 pb-2">
                       <div className="p-2.5 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 text-white shadow-md flex-shrink-0">
                         <FileText className="h-5 w-5" />
@@ -98,7 +101,7 @@ export function BlogsTab({ blogsAndPapers, blogsLoading }: BlogsTabProps) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {blogsAndPapers.filter(item => item.type === 'blog').slice(0, 9).map((item: any, i) => (
                 <motion.div key={`blog-${i}`} initial="hidden" animate="visible" custom={i} variants={cardVariants} whileHover={{ scale: 1.02 }} transition={{ type: "spring", stiffness: 300 }}>
-                  <Card onClick={() => window.open(item.link, "_blank")} className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-pink-500/30 shadow-sm hover:shadow-lg transition-all h-[220px] flex flex-col group">
+                  <Card onClick={() => setSelectedResource({ title: item.title, description: item.description, link: item.link, type: "Blog or article", provider: item.provider, category: item.category, difficulty: item.difficulty, rating: item.avg_rating ?? item.rating, relatedSkills: item.relatedSkills, relevantBackgrounds: item.relevantBackgrounds })} className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-pink-500/30 shadow-sm hover:shadow-lg transition-all h-[220px] flex flex-col group">
                     <CardHeader className="flex flex-row items-start gap-3 p-4 pb-2">
                       <div className="p-2.5 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 text-white shadow-md flex-shrink-0">
                         <BookOpen className="h-5 w-5" />
@@ -137,6 +140,7 @@ export function BlogsTab({ blogsAndPapers, blogsLoading }: BlogsTabProps) {
       ) : (
         <EmptyState icon={FileText} title="No blogs or papers yet" description="Complete your onboarding to get personalized blog and research paper recommendations!" />
       )}
+      <ResourceDetailsDialog resource={selectedResource} onClose={() => setSelectedResource(null)} />
     </section>
   );
 }

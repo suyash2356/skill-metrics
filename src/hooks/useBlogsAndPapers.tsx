@@ -16,6 +16,7 @@ export interface BlogOrPaper {
   educationLevels: string[];
   isFeatured: boolean;
   rating: number | null;
+  avg_rating: number | null;
   // Rating aggregates
   avg_rating?: number | null;
   weighted_rating?: number | null;
@@ -131,6 +132,7 @@ export function useBlogsAndPapers() {
         educationLevels: r.education_levels || [],
         isFeatured: r.is_featured || false,
         rating: r.rating,
+        avg_rating: r.avg_rating,
         // Add rating aggregates
         avg_rating: r.avg_rating,
         weighted_rating: r.weighted_rating,

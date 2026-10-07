@@ -2,7 +2,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowUpRight, BookOpen, Clock, GraduationCap, Star } from "lucide-react";
+import { ArrowUpRight, BookOpen, Clock, GraduationCap, Star, type LucideIcon } from "lucide-react";
 
 export interface ResourcePreviewData {
   title: string;
@@ -37,7 +37,7 @@ function safeExternalUrl(link?: string | null): string | null {
   }
 }
 
-function DetailTags({ title, values, icon: Icon }: { title: string; values?: string[] | null; icon?: typeof BookOpen }) {
+function DetailTags({ title, values, icon: Icon }: { title: string; values?: string[] | null; icon?: LucideIcon }) {
   if (!values?.length) return null;
   return (
     <section className="space-y-2">
