@@ -101,7 +101,6 @@ export function ResourcesTab({ personalizedData }: ResourcesTabProps) {
                     relatedSkills: res.relatedSkills,
                     prerequisites: res.prerequisites,
                     relevantBackgrounds: res.relevantBackgrounds,
-                    relevantBackgrounds: res.relevantBackgrounds,
                   })}
                   className="cursor-pointer bg-card hover:bg-card/80 border border-border/50 hover:border-orange-500/30 shadow-sm hover:shadow-lg transition-all h-[180px] flex flex-col group"
                 >

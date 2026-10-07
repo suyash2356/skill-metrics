@@ -7,4 +7,4 @@
 - [x] Match each roadmap step to active admin resources with a two-use cap.
 - [x] Verify build and tests.
 - [x] Add a saved-description preview dialog to every Explore resource card, including recommended items.
-- [ ] Verify previews display existing resource details and build cleanly.
+- [x] Verify previews display existing resource details and build cleanly.
