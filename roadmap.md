@@ -8,3 +8,10 @@
 - [x] Verify build and tests.
 - [x] Add a saved-description preview dialog to every Explore resource card, including recommended items.
 - [x] Verify previews display existing resource details and build cleanly.
+
+## Production content moderation
+- [ ] Map existing content, admin controls, storage buckets, and encrypted-message boundaries.
+- [ ] Add additive moderation schema, safe access rules, and quarantine storage.
+- [ ] Implement server-side moderation checks and administrator review actions.
+- [ ] Integrate moderation states into user submissions and admin screens without changing existing content visibility.
+- [ ] Verify changes, protect private/encrypted content, and document any external setup still required.
