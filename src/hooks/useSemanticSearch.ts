@@ -126,16 +126,38 @@ export async function callSearchItems(
   }
 }
 
+function generatePKeyCandidates(pKey: string): string[] {
+  if (!pKey) return [];
+  const parts = pKey.split(':');
+  const prefix = parts.length > 1 ? parts[0] : '';
+  const val = parts.length > 1 ? parts.slice(1).join(':') : parts[0];
+
+  const words = val.toLowerCase().replace(/[^a-z0-9+#]/g, ' ').split(/\s+/).filter(Boolean);
+  if (words.length === 0) return [pKey];
+
+  const valSpaced = words.join(' ');
+  const valHyphen = words.join('-');
+  const valSlash  = words.join('/');
+
+  const prefixes = prefix ? [prefix, prefix === 'skill' ? 'domain' : 'skill'] : ['skill', 'domain'];
+
+  const candidates = new Set<string>();
+  candidates.add(pKey);
+
+  for (const p of prefixes) {
+    candidates.add(`${p}:${val}`);
+    candidates.add(`${p}:${valSpaced}`);
+    candidates.add(`${p}:${valHyphen}`);
+    candidates.add(`${p}:${valSlash}`);
+  }
+
+  return Array.from(candidates);
+}
+
 /** Items semantically related to p_key, sorted by score. */
 export async function callRelatedItems(pKey: string, pK = 8): Promise<RelatedRow[]> {
   if (!pKey) return [];
-  const keysToTry = Array.from(new Set([
-    pKey,
-    pKey.replace(/-/g, ' '),
-    pKey.replace(/\s+/g, '-'),
-    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:') : pKey.replace(/^domain:/, 'skill:'),
-    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:').replace(/-/g, ' ') : pKey.replace(/^domain:/, 'skill:').replace(/-/g, ' '),
-  ]));
+  const keysToTry = generatePKeyCandidates(pKey);
 
   for (const key of keysToTry) {
     try {
@@ -153,13 +175,7 @@ export async function callRelatedItems(pKey: string, pK = 8): Promise<RelatedRow
 /** Recommended next steps after p_key (for skills). */
 export async function callNextSteps(pKey: string, pK = 5): Promise<NextStepRow[]> {
   if (!pKey) return [];
-  const keysToTry = Array.from(new Set([
-    pKey,
-    pKey.replace(/-/g, ' '),
-    pKey.replace(/\s+/g, '-'),
-    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:') : pKey.replace(/^domain:/, 'skill:'),
-    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:').replace(/-/g, ' ') : pKey.replace(/^domain:/, 'skill:').replace(/-/g, ' '),
-  ]));
+  const keysToTry = generatePKeyCandidates(pKey);
 
   for (const key of keysToTry) {
     try {

@@ -145,12 +145,26 @@ export const CATEGORY_MAPPING: Record<string, CategoryMap> = {
 export function resolveCategoryMapping(category: string | null | undefined): CategoryMap | null {
   if (!category) return null;
   if (CATEGORY_MAPPING[category]) return CATEGORY_MAPPING[category];
-  const lower = category.toLowerCase().trim();
-  const normalized = lower.replace(/-/g, ' ');
+
+  const words = category.toLowerCase().replace(/[^a-z0-9+#]/g, ' ').split(/\s+/).filter(Boolean);
+  if (words.length === 0) return null;
+
+  const cleanSpaced = words.join(' ');
+  const cleanJoined = words.join('');
+  const rawLower = category.toLowerCase().trim();
+
   for (const [key, value] of Object.entries(CATEGORY_MAPPING)) {
-    const keyLower = key.toLowerCase();
-    const keyNorm = keyLower.replace(/-/g, ' ');
-    if (keyLower === lower || keyNorm === normalized) return value;
+    const keyWords = key.toLowerCase().replace(/[^a-z0-9+#]/g, ' ').split(/\s+/).filter(Boolean);
+    const keySpaced = keyWords.join(' ');
+    const keyJoined = keyWords.join('');
+
+    if (
+      cleanSpaced === keySpaced ||
+      cleanJoined === keyJoined ||
+      rawLower === key.toLowerCase()
+    ) {
+      return value;
+    }
   }
   return null;
 }

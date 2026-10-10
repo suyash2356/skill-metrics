@@ -274,18 +274,39 @@ function useDomainResources(graphDomain: string | null, query: string) {
       // ~180 Exam-Prep rows. The broad `resourceDomain` is only used as a
       // last-resort fallback when no query is provided.
       if (q || graphDomain) {
-        const safeRaw = (q || "").replace(/[,()]/g, " ").trim();
-        const safeSpaced = safeRaw.replace(/-/g, " ");
-        const safeHyphenated = safeRaw.replace(/\s+/g, "-");
-        const domainSpaced = (graphDomain || "").replace(/-/g, " ");
+        const terms = new Set<string>();
 
-        const terms = Array.from(
-          new Set([safeRaw, safeSpaced, safeHyphenated, graphDomain, domainSpaced].filter(Boolean))
-        );
+        const addTextVariations = (text: string) => {
+          if (!text) return;
+          terms.add(text.trim());
+          const words = text.toLowerCase().replace(/[^a-z0-9+#]/g, ' ').split(/\s+/).filter(Boolean);
+          if (words.length > 0) {
+            terms.add(words.join(' '));
+            terms.add(words.join('-'));
+            terms.add(words.join('/'));
+          }
+        };
 
-        const orConditions = terms.flatMap((t) => [
+        if (q) addTextVariations(q);
+        if (graphDomain) {
+          addTextVariations(graphDomain);
+          if (graphDomain === 'Machine Learning' || graphDomain === 'AI & Data') {
+            terms.add('AI/ML');
+            terms.add('AI');
+            terms.add('ML');
+            terms.add('Artificial Intelligence');
+            terms.add('Machine Learning');
+          }
+        }
+
+        const safeTerms = Array.from(terms)
+          .map((t) => t.replace(/[,()"'\\]/g, ' ').trim())
+          .filter((t) => t.length >= 2);
+
+        const orConditions = safeTerms.flatMap((t) => [
           `subdomain.ilike.%${t}%`,
           `category.ilike.%${t}%`,
+          `title.ilike.%${t}%`,
         ]).join(",");
 
         req = req.or(orConditions);

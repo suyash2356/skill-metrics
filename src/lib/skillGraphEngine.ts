@@ -274,21 +274,46 @@ export function matchDomainToSkillGraph(skillName: string): string | null {
     'Journalism': ['journalism', 'reporting'],
   };
 
-  const rawNorm = skillName.toLowerCase().trim();
-  const normalizedWithSpaces = rawNorm.replace(/-/g, ' ');
+  if (!skillName) return null;
+
+  // Extract clean word tokens (preserving + and # for C++, C#, etc.)
+  const rawWords = skillName.toLowerCase().replace(/[^a-z0-9+#]/g, ' ').trim().split(/\s+/).filter(Boolean);
+  if (rawWords.length === 0) return skillName;
+
+  const cleanSpaced = rawWords.join(' ');        // "computer science", "ai ml"
+  const cleanJoined = rawWords.join('');         // "computerscience", "aiml"
+  const cleanHyphen = rawWords.join('-');        // "computer-science", "ai-ml"
+  const cleanSlash  = rawWords.join('/');        // "computer/science", "ai/ml"
+  const rawLower    = skillName.toLowerCase().trim();
 
   for (const [domain, keywords] of Object.entries(domainMappings)) {
-    if (keywords.some(k => {
-      const kLower = k.toLowerCase();
-      const kSpaced = kLower.replace(/-/g, ' ');
-      if (rawNorm === kLower || normalizedWithSpaces === kSpaced) return true;
+    const isMatch = keywords.some(k => {
+      const kWords = k.toLowerCase().replace(/[^a-z0-9+#]/g, ' ').trim().split(/\s+/).filter(Boolean);
+      const kSpaced = kWords.join(' ');
+      const kJoined = kWords.join('');
+
+      if (
+        cleanSpaced === kSpaced ||
+        cleanJoined === kJoined ||
+        cleanHyphen === k.toLowerCase() ||
+        cleanSlash  === k.toLowerCase() ||
+        rawLower    === k.toLowerCase()
+      ) {
+        return true;
+      }
+
       const escapedK = kSpaced.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(`(^|\\b|\\s|_|-)${escapedK}(\\b|\\s|_|-|$)`, 'i');
-      const isSubMatch = normalizedWithSpaces.length >= 4 && (kSpaced.includes(normalizedWithSpaces) || normalizedWithSpaces.includes(kSpaced));
-      return regex.test(normalizedWithSpaces) || isSubMatch;
-    })) {
-      return domain;
-    }
+      if (regex.test(cleanSpaced) || regex.test(rawLower)) return true;
+
+      if (cleanSpaced.length >= 4 && (kSpaced.includes(cleanSpaced) || cleanSpaced.includes(kSpaced))) {
+        return true;
+      }
+
+      return false;
+    });
+
+    if (isMatch) return domain;
   }
 
   // Fallback: return the query itself so `useSkillNodes` can attempt an
