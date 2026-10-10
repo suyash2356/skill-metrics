@@ -273,11 +273,22 @@ function useDomainResources(graphDomain: string | null, query: string) {
       // domain bucket. e.g. for "GRE" we want only the 13 GRE rows, not all
       // ~180 Exam-Prep rows. The broad `resourceDomain` is only used as a
       // last-resort fallback when no query is provided.
-      if (q) {
-        const safe = q.replace(/[,()]/g, " ").trim();
-        req = req.or(
-          `subdomain.ilike.${safe},category.ilike.${safe},subdomain.ilike.%${safe}%,category.ilike.%${safe}%`,
+      if (q || graphDomain) {
+        const safeRaw = (q || "").replace(/[,()]/g, " ").trim();
+        const safeSpaced = safeRaw.replace(/-/g, " ");
+        const safeHyphenated = safeRaw.replace(/\s+/g, "-");
+        const domainSpaced = (graphDomain || "").replace(/-/g, " ");
+
+        const terms = Array.from(
+          new Set([safeRaw, safeSpaced, safeHyphenated, graphDomain, domainSpaced].filter(Boolean))
         );
+
+        const orConditions = terms.flatMap((t) => [
+          `subdomain.ilike.%${t}%`,
+          `category.ilike.%${t}%`,
+        ]).join(",");
+
+        req = req.or(orConditions);
       } else if (resourceDomain) {
         req = req.eq("domain", resourceDomain);
       }

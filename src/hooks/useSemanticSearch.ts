@@ -129,27 +129,49 @@ export async function callSearchItems(
 /** Items semantically related to p_key, sorted by score. */
 export async function callRelatedItems(pKey: string, pK = 8): Promise<RelatedRow[]> {
   if (!pKey) return [];
-  try {
-    const { data, error } = await _rpc('related_items', { p_key: pKey, p_k: pK });
-    if (error) { console.warn('[related_items]', error.message); return []; }
-    return (data as RelatedRow[]) ?? [];
-  } catch (e) {
-    console.warn('[related_items] exception', e);
-    return [];
+  const keysToTry = Array.from(new Set([
+    pKey,
+    pKey.replace(/-/g, ' '),
+    pKey.replace(/\s+/g, '-'),
+    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:') : pKey.replace(/^domain:/, 'skill:'),
+    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:').replace(/-/g, ' ') : pKey.replace(/^domain:/, 'skill:').replace(/-/g, ' '),
+  ]));
+
+  for (const key of keysToTry) {
+    try {
+      const { data, error } = await _rpc('related_items', { p_key: key, p_k: pK });
+      if (!error && data && (data as RelatedRow[]).length > 0) {
+        return data as RelatedRow[];
+      }
+    } catch (e) {
+      console.warn('[related_items] exception for key:', key, e);
+    }
   }
+  return [];
 }
 
 /** Recommended next steps after p_key (for skills). */
 export async function callNextSteps(pKey: string, pK = 5): Promise<NextStepRow[]> {
   if (!pKey) return [];
-  try {
-    const { data, error } = await _rpc('next_steps', { p_key: pKey, p_k: pK });
-    if (error) { console.warn('[next_steps]', error.message); return []; }
-    return (data as NextStepRow[]) ?? [];
-  } catch (e) {
-    console.warn('[next_steps] exception', e);
-    return [];
+  const keysToTry = Array.from(new Set([
+    pKey,
+    pKey.replace(/-/g, ' '),
+    pKey.replace(/\s+/g, '-'),
+    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:') : pKey.replace(/^domain:/, 'skill:'),
+    pKey.startsWith('skill:') ? pKey.replace(/^skill:/, 'domain:').replace(/-/g, ' ') : pKey.replace(/^domain:/, 'skill:').replace(/-/g, ' '),
+  ]));
+
+  for (const key of keysToTry) {
+    try {
+      const { data, error } = await _rpc('next_steps', { p_key: key, p_k: pK });
+      if (!error && data && (data as NextStepRow[]).length > 0) {
+        return data as NextStepRow[];
+      }
+    } catch (e) {
+      console.warn('[next_steps] exception for key:', key, e);
+    }
   }
+  return [];
 }
 
 // ── Event logging ─────────────────────────────────────────────────────────────

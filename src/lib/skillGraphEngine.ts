@@ -274,15 +274,18 @@ export function matchDomainToSkillGraph(skillName: string): string | null {
     'Journalism': ['journalism', 'reporting'],
   };
 
-  const normalized = skillName.toLowerCase().trim();
+  const rawNorm = skillName.toLowerCase().trim();
+  const normalizedWithSpaces = rawNorm.replace(/-/g, ' ');
 
   for (const [domain, keywords] of Object.entries(domainMappings)) {
     if (keywords.some(k => {
-      if (normalized === k) return true;
-      const escapedK = k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const kLower = k.toLowerCase();
+      const kSpaced = kLower.replace(/-/g, ' ');
+      if (rawNorm === kLower || normalizedWithSpaces === kSpaced) return true;
+      const escapedK = kSpaced.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(`(^|\\b|\\s|_|-)${escapedK}(\\b|\\s|_|-|$)`, 'i');
-      const isSubMatch = normalized.length >= 4 && k.includes(normalized);
-      return regex.test(normalized) || isSubMatch;
+      const isSubMatch = normalizedWithSpaces.length >= 4 && (kSpaced.includes(normalizedWithSpaces) || normalizedWithSpaces.includes(kSpaced));
+      return regex.test(normalizedWithSpaces) || isSubMatch;
     })) {
       return domain;
     }

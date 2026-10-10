@@ -146,8 +146,11 @@ export function resolveCategoryMapping(category: string | null | undefined): Cat
   if (!category) return null;
   if (CATEGORY_MAPPING[category]) return CATEGORY_MAPPING[category];
   const lower = category.toLowerCase().trim();
+  const normalized = lower.replace(/-/g, ' ');
   for (const [key, value] of Object.entries(CATEGORY_MAPPING)) {
-    if (key.toLowerCase() === lower) return value;
+    const keyLower = key.toLowerCase();
+    const keyNorm = keyLower.replace(/-/g, ' ');
+    if (keyLower === lower || keyNorm === normalized) return value;
   }
   return null;
 }
