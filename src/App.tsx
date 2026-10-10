@@ -28,6 +28,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Explore = lazy(() => import("./pages/Explore"));
 const CreateRoadmap = lazy(() => import("./pages/CreateRoadmap"));
 const SearchResults = lazy(() => import("./pages/SearchResults"));
+const SemanticSearch = lazy(() => import("./pages/SemanticSearch"));
 const CreatePost = lazy(() => import("./pages/CreatePost"));
 const MyRoadmaps = lazy(() => import("./pages/MyRoadmaps"));
 const RoadmapView = lazy(() => import("./pages/RoadmapView"));
@@ -95,6 +96,7 @@ const AnimatedRoutes = () => {
           <Route path="/explore" element={<ProtectedRoute><PageTransition><Explore /></PageTransition></ProtectedRoute>} />
           <Route path="/create-roadmap" element={<ProtectedRoute><PageTransition><CreateRoadmap /></PageTransition></ProtectedRoute>} />
           <Route path="/search" element={<ProtectedRoute><PageTransition><SearchResults /></PageTransition></ProtectedRoute>} />
+          <Route path="/semantic-search" element={<ProtectedRoute><PageTransition><SemanticSearch /></PageTransition></ProtectedRoute>} />
           <Route path="/create-post" element={<ProtectedRoute><PageTransition><CreatePost /></PageTransition></ProtectedRoute>} />
           <Route path="/roadmaps" element={<ProtectedRoute><PageTransition><MyRoadmaps /></PageTransition></ProtectedRoute>} />
           <Route path="/roadmaps/:id" element={<ProtectedRoute><PageTransition><RoadmapView /></PageTransition></ProtectedRoute>} />

@@ -24,6 +24,7 @@ import { BlogsTab } from "@/components/explore/BlogsTab";
 import { ResourcesTab } from "@/components/explore/ResourcesTab";
 import { CommunityTab } from "@/components/explore/CommunityTab";
 import { PageSEO } from "@/components/PageSEO";
+import { SemanticSearchBar } from "@/components/SemanticSearchBar";
 
 // Inline debounce
 function debounce<T extends (...args: any[]) => any>(fn: T, ms: number) {
@@ -152,104 +153,8 @@ function Explore() {
               </div>
             </motion.div>
 
-            {/* Search Bar */}
-            <motion.form
-              onSubmit={handleSearch}
-              className="relative max-w-xl mx-auto"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <div className="relative flex items-center">
-                <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Search anything — skills, courses, topics, people..."
-                  value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                    fetchSuggestionsDebounced(e.target.value);
-                    setShowSuggestions(true);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleSearch();
-                    }
-                  }}
-                  onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  onFocus={() => searchTerm.trim() && setShowSuggestions(true)}
-                  className="pl-12 pr-28 h-14 text-base rounded-2xl border-2 border-border/50 bg-background/80 backdrop-blur-sm focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:border-primary transition-all"
-                />
-                <Button
-                  type="submit"
-                  className="absolute right-2 h-10 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-lg shadow-primary/25"
-                >
-                  Search
-                </Button>
-              </div>
-
-              {/* Suggestions Dropdown */}
-              <AnimatePresence>
-                {showSuggestions && suggestions.length > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute mt-2 bg-card border border-border rounded-xl shadow-xl z-50 w-full overflow-hidden"
-                  >
-                    {suggestions.map((s: any, idx: number) => (
-                      <button
-                        key={`exp-${idx}`}
-                        className="w-full text-left px-4 py-3 hover:bg-muted/50 flex items-center gap-3 transition-colors border-b border-border/50 last:border-0"
-                        onMouseDown={(ev) => {
-                          ev.preventDefault();
-                          if (s.kind === "domain") {
-                            navigate(`/skills/${encodeURIComponent(s.name)}`);
-                          } else if (s.link) {
-                            window.open(s.link, "_blank");
-                          } else if (s.kind === "skill") {
-                            navigate(`/skills/${encodeURIComponent(s.name)}`);
-                          } else if (s.kind === "explore") {
-                            navigate(`/search?q=${encodeURIComponent(s.name)}&scope=explore`);
-                          }
-                          setShowSuggestions(false);
-                        }}
-                      >
-                        <div className={`p-2 rounded-lg ${
-                          s.kind === "domain" ? "bg-accent/20" :
-                          s.kind === "skill" ? "bg-primary/10" :
-                          "bg-muted"
-                        }`}>
-                          {s.kind === "domain" ? (
-                            <Compass className="h-4 w-4 text-accent-foreground" />
-                          ) : s.kind === "skill" ? (
-                            <Rocket className="h-4 w-4 text-primary" />
-                          ) : (
-                            <Search className="h-4 w-4 text-muted-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium truncate">{s.name}</div>
-                          {s.description && <div className="text-xs text-muted-foreground truncate">{s.description}</div>}
-                          {s.kind === "domain" && (
-                            <div className="text-xs text-primary font-medium mt-0.5 flex items-center gap-1">
-                              View all resources <ArrowRight className="h-3 w-3" />
-                            </div>
-                          )}
-                        </div>
-                        {s.kind === "domain" && (
-                          <Badge variant="secondary" className="text-[10px] shrink-0">Domain</Badge>
-                        )}
-                        {s.kind === "skill" && (
-                          <Badge variant="outline" className="text-[10px] shrink-0">Skill</Badge>
-                        )}
-                        {s.link && <ExternalLink className="h-4 w-4 text-muted-foreground flex-shrink-0" />}
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.form>
+            {/* Semantic Search Bar */}
+            <SemanticSearchBar className="max-w-xl mx-auto" placeholder="Search anything — skills, courses, topics, domains…" />
           </section>
 
           {/* Tabs */}

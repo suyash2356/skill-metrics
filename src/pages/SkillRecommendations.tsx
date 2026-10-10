@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 import { useUserProfileDetails } from "@/hooks/useUserProfileDetails";
 import { useAuth } from "@/hooks/useAuth";
+import {
+  callRelatedItems, callNextSteps, RelatedRow, NextStepRow, getItemRoute,
+} from "@/hooks/useSemanticSearch";
 import {
   useSkillNodes, useSkillDependencies, useUserSkillProgress, useUpdateSkillProgress,
 } from "@/hooks/useSkillGraph";
@@ -182,6 +185,7 @@ export default function SkillRecommendations() {
             )}
           </TabsContent>
         </Tabs>
+        <RelatedSection skillSlug={graphDomain || decoded} />
       </div>
     </Layout>
   );
@@ -570,3 +574,104 @@ function EmptyState({ query }: { query: string }) {
     </Card>
   );
 }
+
+/* ────────────────────────────────────────────────────────────
+ *  RELATED & NEXT STEPS SECTION
+ * ──────────────────────────────────────────────────────────── */
+function RelatedSection({ skillSlug }: { skillSlug: string }) {
+  const navigate = useNavigate();
+  const [related, setRelated] = useState<RelatedRow[]>([]);
+  const [nextSteps, setNextSteps] = useState<NextStepRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      if (!skillSlug) return;
+      setLoading(true);
+      const itemKey = `skill:${skillSlug.toLowerCase().trim().replace(/\s+/g, '-')}`;
+      const [relRes, nextRes] = await Promise.all([
+        callRelatedItems(itemKey, 6),
+        callNextSteps(itemKey, 5),
+      ]);
+      if (!cancelled) {
+        setRelated(relRes);
+        setNextSteps(nextRes);
+        setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [skillSlug]);
+
+  if (loading || (related.length === 0 && nextSteps.length === 0)) return null;
+
+  return (
+    <div className="mt-12 space-y-8 border-t border-border/50 pt-8">
+      {nextSteps.length > 0 && (
+        <section>
+          <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+            <Rocket className="w-5 h-5 text-primary" />
+            Recommended Next Steps
+          </h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {nextSteps.map((step, idx) => (
+              <Card
+                key={idx}
+                className="group cursor-pointer hover:border-primary/40 hover:shadow-md transition-all border-border/60"
+                onClick={() => navigate(`/skills/${encodeURIComponent(step.display_title)}`)}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-sm group-hover:text-primary transition-colors">
+                      {step.display_title}
+                    </span>
+                    <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                  </div>
+                  {step.reason && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{step.reason}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {related.length > 0 && (
+        <section>
+          <h3 className="text-lg font-bold flex items-center gap-2 mb-4">
+            <Network className="w-5 h-5 text-purple-500" />
+            Related Skills & Topics
+          </h3>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {related.map((item, idx) => (
+              <Card
+                key={idx}
+                className="group cursor-pointer hover:border-purple-500/40 hover:shadow-md transition-all border-border/60"
+                onClick={() => navigate(getItemRoute(item as any))}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-semibold text-sm group-hover:text-purple-500 transition-colors">
+                      {item.display_title}
+                    </span>
+                    <Badge variant="secondary" className="text-[10px] capitalize">
+                      {item.entity_type}
+                    </Badge>
+                  </div>
+                  {item.reason && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1">{item.reason}</p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
